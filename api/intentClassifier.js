@@ -28,10 +28,21 @@ const INTENT = {
 function classifyIntent(message) {
   const m = message.toLowerCase();
 
+  // ── PERSONAL GUARD (runs before everything) ────────────────────
+  // Personal/possessive queries always go to memory even if they contain
+  // time words that would otherwise fire NEWS ("my fleet this week").
+  const personalPatterns = [
+    /\bmy (fleet|drivers?|bikes?|team|schedule|earnings|salary|riders?|performance|data|stats|numbers)\b/,
+    /\b(our|my) .{0,25}(this week|this month|today|last week|last month|yesterday)\b/,
+  ];
+  if (personalPatterns.some((p) => p.test(m))) return INTENT.NONE;
+
   // ── FACT_CHECK ─────────────────────────────────────────────────
-  // Binary yes/no questions about external events
+  // Binary yes/no questions about external events or current status
   const factPatterns = [
     /^(did |has |is it true|was |were |هل )/,
+    // "Is the metro operational?" / "Is X available/open/working?"
+    /^is (the |a |an |there ).{2,50}(operational|available|open|closed|working|live|active|running|fully|complete|finished|real|accurate)\b/,
     /did .*(launch|open|clos|merg|acqui|announc|releas)/,
     /هل (أطلق|أعلن|فتح|أغلق)/,
   ];
@@ -90,8 +101,10 @@ function classifyIntent(message) {
     /\bin (riyadh|jeddah|dammam|khobar|alexandria|cairo|mecca|medina|saudi|ksa|egypt)\b/,
     /\b(restaurant|school|hospital|clinic|pharmacy|gym|mall|salon|معلم|مدرسة|مطعم|مستشفى|صيدلية)\b/,
 
-    // Explicit fetch intent
-    /\b(find me|show me|get me|give me options|list .{1,20} options|أحضر|ابحث عن|أوجد)\b/,
+    // Explicit fetch intent & list/enumerate queries
+    /\b(find me|show me|get me|give me options|أحضر|ابحث عن|أوجد)\b/,
+    /\b(list|enumerate|name) (the |a )?(top|best|major|leading|main|biggest|largest)\b/,
+    /\b(top|best|leading|major) \d+ \b/,
   ];
   if (lookupPatterns.some((p) => p.test(m))) return INTENT.LOOKUP;
 

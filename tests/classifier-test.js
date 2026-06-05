@@ -2,7 +2,7 @@
  * M8 Classifier Test Suite — tests/classifier-test.js
  *
  * Run: node tests/classifier-test.js
- * Tests all 6 intent categories with 28 realistic queries.
+ * Tests all 6 intent categories with 33 realistic queries.
  */
 
 const { classifyIntent, INTENT } = require("../api/intentClassifier");
@@ -23,6 +23,8 @@ const testCases = [
   { query: "nearby logistics companies in north riyadh",                    expected: "LOOKUP" },
   { query: "how much does it cost to ship from riyadh to jeddah",          expected: "LOOKUP" },
   { query: "find me a good gym near al malqa",                             expected: "LOOKUP" },
+  { query: "list the top 5 logistics companies in saudi arabia",           expected: "LOOKUP" },
+  { query: "top 3 courier services operating in riyadh",                   expected: "LOOKUP" },
 
   // ── NEWS ───────────────────────────────────────────────────────
   { query: "latest keeta news",                                            expected: "NEWS" },
@@ -33,6 +35,8 @@ const testCases = [
   { query: "did keeta launch in bahrain",                                  expected: "FACT_CHECK" },
   { query: "has noon food expanded to north riyadh",                       expected: "FACT_CHECK" },
   { query: "was uber eats available in riyadh last year",                  expected: "FACT_CHECK" },
+  { query: "is the riyadh metro fully operational on all lines",           expected: "FACT_CHECK" },
+  { query: "is uber eats available in riyadh",                             expected: "FACT_CHECK" },
 
   // ── RESEARCH ───────────────────────────────────────────────────
   { query: "explain rider utilization metrics",                            expected: "RESEARCH" },
@@ -47,6 +51,8 @@ const testCases = [
   { query: "how are you",                                                  expected: "NONE" },
   { query: "remind me what we agreed on for the drivers",                  expected: "NONE" },
   { query: "thanks",                                                       expected: "NONE" },
+  { query: "my fleet performance this week",                               expected: "NONE" },
+  { query: "my drivers stats today",                                       expected: "NONE" },
 ];
 
 // ── Runner ─────────────────────────────────────────────────────────
