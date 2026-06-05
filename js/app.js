@@ -115,13 +115,18 @@ async function sendMessage(text) {
   setStatus("thinking");
 
   try {
+    // FIX: Send history WITHOUT the current message — backend appends it explicitly.
+    // chat.addMessage("user", text) was already called above, so getHistory() would
+    // include it. Slicing off the last item avoids duplicating it in the Gemini payload.
+    const pastHistory = chat.getHistory().slice(0, -1);
+
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         message: text,
         sessionId: chat.sessionId,
-        history: chat.getHistory(),
+        history: pastHistory,
       }),
     });
 
@@ -148,9 +153,12 @@ function toggleMic() {
   if (voice.isListening) {
     voice.stopListening();
     UI.micBtn.classList.remove("active");
+    delete UI.micBtn.dataset.lang;
   } else {
     voice.startListening();
     UI.micBtn.classList.add("active");
+    // FIX: Tag mic button with active language so CSS badge shows "AR" or "EN"
+    UI.micBtn.dataset.lang = currentLang === "ar" ? "AR" : "EN";
   }
 }
 
@@ -165,13 +173,23 @@ function setLanguage(lang) {
   document.documentElement.lang = lang;
   document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
 
-  UI.langToggle.textContent = lang === "ar" ? "EN" : "عر";
+  // FIX: Show the ACTIVE language (not the switch target) + tooltip explains intent
+  UI.langToggle.textContent = lang === "ar" ? "عر" : "EN";
+  UI.langToggle.dataset.lang = lang;
+  UI.langToggle.title = lang === "ar"
+    ? "النشط: عربي (ar-SA) · اضغط للتبديل إلى الإنجليزية"
+    : "Active: English (en-US) · tap to switch to Arabic";
+
   UI.textInput.placeholder = LABELS[lang].placeholder;
   setStatus("idle");
 }
 
 function setStatus(status) {
-  const label = LABELS[currentLang][status] || LABELS[currentLang].idle;
+  let label = LABELS[currentLang][status] || LABELS[currentLang].idle;
+  // FIX: Append active language code to status text when mic is recording
+  if (status === "listening") {
+    label += currentLang === "ar" ? " · عر" : " · EN";
+  }
   UI.statusText.textContent = label;
 
   // Update orb class
@@ -180,6 +198,7 @@ function setStatus(status) {
   // Update mic button
   if (status !== "listening") {
     UI.micBtn.classList.remove("active");
+    delete UI.micBtn.dataset.lang;
   }
 }
 

@@ -149,7 +149,7 @@ html, body {
 .btn-lang {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  color: var(--accent);
+  color: var(--text-muted);
   cursor: pointer;
   padding: 5px 13px;
   border-radius: 20px;
@@ -159,10 +159,23 @@ html, body {
   transition: all 0.2s;
 }
 
+/* Active language indicator — green = Arabic, blue = English */
+.btn-lang[data-lang="ar"] {
+  color: var(--green);
+  border-color: rgba(76, 175, 80, 0.4);
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.15);
+}
+
+.btn-lang[data-lang="en"] {
+  color: var(--accent);
+  border-color: var(--border);
+}
+
 .btn-lang:hover {
   background: var(--accent);
   color: #fff;
   border-color: var(--accent);
+  box-shadow: none;
 }
 
 /* =====================
@@ -325,6 +338,7 @@ html, body {
 }
 
 .btn-mic {
+  position: relative;
   background: var(--bg-card);
   border: 1px solid var(--border);
   color: var(--text-muted);
@@ -336,6 +350,22 @@ html, body {
   border-color: var(--red);
   color: #fff;
   box-shadow: 0 0 18px rgba(244, 67, 54, 0.38);
+}
+
+/* Language badge on mic button when recording */
+.btn-mic.active[data-lang]::after {
+  content: attr(data-lang);
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 8px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+  pointer-events: none;
 }
 
 .btn-send {
