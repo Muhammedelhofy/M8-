@@ -8,10 +8,10 @@
  * Phase 2 (NEXT):   Memory(summaries) → Search(Tavily) → LLM → Store
  * Phase 3 (FUTURE): Memory(semantic) → Search → Analysis(dashboard) → LLM → Store
  */
-const { generate }           = require("./llm");
+const { generate }                 = require("./llm");
 const { recallMemory, saveMemory } = require("./memory");
-const { search }             = require("./search");
-const { classifyIntent, INTENT } = require("./intentClassifier");
+const { search }                   = require("./search");
+const { classifyIntent, INTENT }   = require("./intentClassifier");
 
 // ─────────────────────────────────────────────────────────────────
 // SYSTEM PROMPT
@@ -31,19 +31,47 @@ CONTEXT: Muhammad manages a Bolt KSA bike delivery fleet (~102 bikes). He overse
 
 RESPONSE STYLE: Keep responses short and clear. You are often read aloud. Be direct.`;
 
+// Per-intent closing directives injected with search results
+const SEARCH_DIRECTIVES = {
+  LIVE_DATA: `LIVE DATA RULES — follow strictly:
+1. Only state what is explicitly in the search results above. Never invent prices, dates, or availability.
+2. If the exact date or price requested is not in the results, say: "I couldn't find exact data for [request]. Closest found: [what was found]."
+3. Never substitute a different date for the one the user asked for.
+4. Give specific options (airline, price, time) when the data exists. Do not say "try Skyscanner."`,
+
+  LOOKUP: `Give specific options or answers from these results directly. Do NOT tell the user how to search — act like Jarvis and present what you found.`,
+
+  NEWS:       `Report what the results say. Cite sources naturally.`,
+  RESEARCH:   `Use these results to give a thorough, accurate answer. Cite sources naturally.`,
+  FACT_CHECK: `Answer yes or no directly, then cite the source. If unclear, say so.`,
+};
+
 async function orchestrate({ message, sessionId, history }) {
 
+  // ── DEBUG LOG (Vercel logs only — never sent to user) ──────────
+  const dbg = {
+    intent:         null,
+    memoryRows:     0,
+    searchExecuted: false,
+    searchResults:  0,
+    llmCalled:      false,
+  };
+
   // ── SLOT 1: MEMORY ─────────────────────────────────────────────
-  // Phase 1: keyword-filtered recall from raw history
   // Phase 2: swap recallMemory() → recallSummaries() (one-line change)
   // Phase 3: swap → semanticRecall()
   const pastMemory = await recallMemory(sessionId, message);
+  dbg.memoryRows = pastMemory.length;
 
   // ── SLOT 2: SEARCH ─────────────────────────────────────────────
   const intent = classifyIntent(message);
+  dbg.intent = intent;
+
   let searchData = null;
   if (intent !== INTENT.NONE) {
+    dbg.searchExecuted = true;
     searchData = await search(message, intent);
+    dbg.searchResults = searchData?.results?.length ?? 0;
   }
 
   // ── SLOT 3: ANALYSIS ───────────────────────────────────────────
@@ -65,19 +93,16 @@ async function orchestrate({ message, sessionId, history }) {
       `\n\nRELEVANT MEMORY (past sessions — use for context, do not repeat verbatim):\n${memoryBlock}`;
   }
 
-  // Phase 2: inject search results as static context above the dynamic conversation
+  // Inject search results with intent-specific directive
   if (searchData && searchData.results.length > 0) {
     const snippets = searchData.results
       .slice(0, 5)
       .map((r, i) => `[${i + 1}] ${r.title}\n    ${r.url}\n    ${r.content?.slice(0, 300) ?? ""}`)
       .join("\n\n");
     const answerLine = searchData.answer ? `\nDirect answer: ${searchData.answer}\n` : "";
-    // LOOKUP queries need an explicit directive — Gemini defaults to generic advice otherwise
-    const closingDirective = intent === INTENT.LOOKUP
-      ? "Give the user specific options or answers from these results directly. Do NOT tell them how to search — act like Jarvis and present what you found."
-      : "Cite sources naturally in your response.";
+    const directive  = SEARCH_DIRECTIVES[intent] ?? "Cite sources naturally.";
     systemInstruction +=
-      `\n\nWEB SEARCH RESULTS (live, retrieved now — use these to answer):${answerLine}\n${snippets}\n\n${closingDirective}`;
+      `\n\nWEB SEARCH RESULTS (live, retrieved now — use these to answer):${answerLine}\n${snippets}\n\n${directive}`;
   }
 
   // Phase 3 addition (analysis context injected into systemInstruction here)
@@ -96,8 +121,11 @@ async function orchestrate({ message, sessionId, history }) {
   contents.push({ role: "user", parts: [{ text: message }] });
 
   // ── EXECUTE ────────────────────────────────────────────────────
-  // Orchestrator is provider-agnostic — all model details live in llm.js
+  dbg.llmCalled = true;
   const response = await generate({ systemInstruction, contents });
+
+  // ── DEBUG OUTPUT ───────────────────────────────────────────────
+  console.log("[M8]", JSON.stringify(dbg));
 
   // ── STORE ──────────────────────────────────────────────────────
   await saveMemory(sessionId, message, response);
