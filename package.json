@@ -1,0 +1,12 @@
+{
+  "name": "m8-agent",
+  "version": "1.0.0",
+  "description": "M8 - Personal AI Agent for Muhammad El-Hofy",
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "@supabase/supabase-js": "^2.39.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

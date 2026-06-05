@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0d0f1a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>M8 — Personal AI Agent</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ── HEADER ────────────────────────────── -->
+  <header class="header">
+    <div class="header-left">
+      <div id="m8-orb" class="orb idle"></div>
+      <div>
+        <span class="m8-name">M8</span>
+        <span id="status-text" class="m8-status">جاهز</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <button id="stop-btn" class="btn-icon" title="Stop speaking">
+        &#9646;&#9646;
+      </button>
+      <button id="lang-toggle" class="btn-lang">EN</button>
+    </div>
+  </header>
+
+  <!-- ── CHAT AREA ──────────────────────────── -->
+  <div class="chat-wrap">
+    <div id="messages" class="messages"></div>
+  </div>
+
+  <!-- ── INPUT BAR ──────────────────────────── -->
+  <footer class="input-bar">
+    <textarea
+      id="text-input"
+      class="text-input"
+      rows="1"
+      placeholder="اكتب رسالة أو اضغط على المايك..."
+      autocomplete="off"
+      autocorrect="off"
+      spellcheck="false"
+    ></textarea>
+
+    <button id="mic-btn" class="btn-mic" title="Voice input">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+        <line x1="12" y1="19" x2="12" y2="23"/>
+        <line x1="8"  y1="23" x2="16" y2="23"/>
+      </svg>
+    </button>
+
+    <button id="send-btn" class="btn-send" title="Send message">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+    </button>
+  </footer>
+
+  <!-- ── SCRIPTS ────────────────────────────── -->
+  <script src="js/voice.js"></script>
+  <script src="js/chat.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
