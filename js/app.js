@@ -81,7 +81,7 @@ function init() {
   });
 
   // Set default language and show welcome
-  setLanguage("ar");
+  setLanguage("en");
   setTimeout(showWelcome, 600);
 }
 
