@@ -79,7 +79,10 @@ module.exports = async function handler(req, res) {
 
     return res.status(200).json({ response });
   } catch (error) {
-    console.error("Chat handler error:", error);
+console.error("Chat handler error:", error?.message || error);
+console.error("Full error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+console.error("API key present:", !!process.env.GEMINI_API_KEY);
+console.error("API key length:", process.env.GEMINI_API_KEY?.length || 0);
     return res.status(500).json({ error: error.message || "Internal server error" });
   }
 };
