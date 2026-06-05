@@ -10,6 +10,49 @@
  */
 const { generate }      = require("./llm");
 const { recallMemory, saveMemory } = require("./memory");
+const { search }        = require("./search");
+
+// ─────────────────────────────────────────────────────────────────
+// INTENT CLASSIFIER
+// Categories: NONE | NEWS | RESEARCH | FACT_CHECK
+// NONE  → skip search (personal/operational/conversational)
+// NEWS  → Tavily news topic, last 7 days
+// RESEARCH → Tavily advanced, general topic
+// FACT_CHECK → Tavily advanced + include_answer
+// ─────────────────────────────────────────────────────────────────
+const INTENT = { NONE: "NONE", NEWS: "NEWS", RESEARCH: "RESEARCH", FACT_CHECK: "FACT_CHECK" };
+
+function classifyIntent(message) {
+  const m = message.toLowerCase();
+
+  // FACT_CHECK first — binary yes/no about external events
+  const factPatterns = [
+    /^(did |has |is it true|was |were |هل )/,
+    /did .*(launch|open|clos|merg|acqui|announc|releas)/,
+    /هل (أطلق|أعلن|فتح|أغلق)/,
+  ];
+  if (factPatterns.some((p) => p.test(m))) return INTENT.FACT_CHECK;
+
+  // NEWS — recency signals (before NONE so "latest Keeta news" → NEWS not NONE)
+  const newsPatterns = [
+    /\b(latest|recent|today|news|update|happened|breaking|جديد|آخر|اليوم|أخبار|تحديث)\b/,
+    /this (week|month|year)/,
+    /هذا (الأسبوع|الشهر)/,
+  ];
+  if (newsPatterns.some((p) => p.test(m))) return INTENT.NEWS;
+
+  // RESEARCH — explanatory or summary queries
+  const researchPatterns = [
+    /\b(summarize|summary|explain|what is|what are|how does|how do|tell me about|شرح|ملخص|ما هو|ما هي|كيف)\b/,
+    /\b(book|article|study|research|report|paper|كتاب|تقرير|دراسة)\b/,
+    /\b(history|background|overview|introduction|نبذة|مقدمة|تاريخ)\b/,
+  ];
+  if (researchPatterns.some((p) => p.test(m))) return INTENT.RESEARCH;
+
+  // NONE — personal, conversational, or fleet-operational (M8 knows from memory)
+  // Note: only reached if no search signals matched above
+  return INTENT.NONE;
+}
 
 // ─────────────────────────────────────────────────────────────────
 // SYSTEM PROMPT
@@ -38,8 +81,11 @@ async function orchestrate({ message, sessionId, history }) {
   const pastMemory = await recallMemory(sessionId, message);
 
   // ── SLOT 2: SEARCH ─────────────────────────────────────────────
-  // Phase 2: const searchResults = await search(message);
-  // (api/search.js — Tavily integration, stubbed until Milestone 2)
+  const intent = classifyIntent(message);
+  let searchData = null;
+  if (intent !== INTENT.NONE) {
+    searchData = await search(message, intent);
+  }
 
   // ── SLOT 3: ANALYSIS ───────────────────────────────────────────
   // Phase 3: const analysisContext = await analyze(message);
@@ -60,7 +106,17 @@ async function orchestrate({ message, sessionId, history }) {
       `\n\nRELEVANT MEMORY (past sessions — use for context, do not repeat verbatim):\n${memoryBlock}`;
   }
 
-  // Phase 2 addition (search results injected into systemInstruction here)
+  // Phase 2: inject search results as static context above the dynamic conversation
+  if (searchData && searchData.results.length > 0) {
+    const snippets = searchData.results
+      .slice(0, 5)
+      .map((r, i) => `[${i + 1}] ${r.title}\n    ${r.url}\n    ${r.content?.slice(0, 300) ?? ""}`)
+      .join("\n\n");
+    const answerLine = searchData.answer ? `\nDirect answer: ${searchData.answer}\n` : "";
+    systemInstruction +=
+      `\n\nWEB SEARCH RESULTS (live, retrieved now — use these to answer):${answerLine}\n${snippets}\n\nCite sources naturally in your response.`;
+  }
+
   // Phase 3 addition (analysis context injected into systemInstruction here)
 
   // Dynamic: current session history (strip leading model turns — Gemini requirement)
