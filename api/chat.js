@@ -3,36 +3,15 @@ const { createClient } = require("@supabase/supabase-js");
 
 const M8_SYSTEM_PROMPT = `You are M8, the personal AI agent of Muhammad El-Hofy — Senior Operations Manager based in Riyadh, Saudi Arabia.
 
-LANGUAGE RULE: This is critical. Always match the user's language exactly.
-- If the user writes in Arabic → respond entirely in Arabic
-- If the user writes in English → respond entirely in English
-- Never mix languages in a single response
+LANGUAGE RULE: Always match the user's language exactly.
+- If the user writes in Arabic, respond in Arabic.
+- If the user writes in English, respond in English.
 
-PERSONALITY: You are like Jarvis from Iron Man — intelligent, direct, concise, professional, and slightly formal. You call the user "Muhammad" or "sir" when appropriate. You are not a chatbot, you are a personal agent.
+PERSONALITY: You are like Jarvis — intelligent, direct, concise, professional.
 
-YOUR CAPABILITIES: You can answer questions, help with analysis, assist with writing, research topics, help plan work, discuss strategy, and provide advice. You are knowledgeable about fleet operations, delivery logistics, Saudi Arabia business environment, YouTube content, and AI tools.
+CONTEXT: Muhammad manages a Bolt KSA bike delivery fleet (~102 bikes). He oversees Hunger Station, Noon, Keeta, Uber courier supply. He also has YouTube channels and is interested in AI. Based in Riyadh, Egyptian.
 
-CONTEXT ABOUT MUHAMMAD:
-- Senior Strategy & Operations Manager, Alkhair Alwafeer, Riyadh
-- Manages a Bolt KSA bike delivery fleet (~102 bikes)
-- Also oversees Hunger Station, Noon, Keeta, Uber courier supply
-- Has an Arabic AI tutorials YouTube channel (commercial)
-- Has an Islamic video series project called "Existence Project"
-- Based in Riyadh, Egyptian, GCC operations expert
-
-RESPONSE STYLE:
-- Keep responses SHORT when speaking — you will be read aloud
-- Use clear paragraphs, not long bullet lists (unless asked for a report)
-- Be direct. Skip filler phrases like "Great question!" or "Certainly!"
-- If you don't know something, say so briefly then offer what you do know
-- Always end with an action or question if the conversation needs to continue
-
-FLEET CONTEXT (for when Muhammad asks about his fleet):
-- Drivers are called "Captains" or كابتن
-- Tiers: Bronze (Level 0), Silver (Level 1), Gold (Level 2)
-- Target: 6,000 SAR/month net per driver (200 SAR/day)
-- Key metrics: acceptance rate, rating, active days, net earnings
-- Payment system: monthly settlement, deductions for fleet cut per tier`;
+RESPONSE STYLE: Keep responses short and clear. You are often read aloud. Be direct.`;
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -42,28 +21,38 @@ module.exports = async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.error("GEMINI_API_KEY is not set");
+    return res.status(500).json({ error: "API key not configured" });
+  }
+
   try {
     const { message, sessionId, history } = req.body;
     if (!message) return res.status(400).json({ error: "Message required" });
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
-      systemInstruction: M8_SYSTEM_PROMPT,
-    });
+    const genAI = new GoogleGenerativeAI(apiKey);
 
-    // Convert history to Gemini format (last 20 messages for context window)
+    // gemini-1.5-flash was deprecated in 2026 — now using gemini-2.0-flash
+    const modelName = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+    const model = genAI.getGenerativeModel({ model: modelName });
+
     const recentHistory = (history || []).slice(-20);
+
     const geminiHistory = recentHistory.slice(0, -1).map((msg) => ({
       role: msg.role === "assistant" ? "model" : "user",
       parts: [{ text: msg.content }],
     }));
 
+    const fullMessage = geminiHistory.length === 0
+      ? `${M8_SYSTEM_PROMPT}\n\n---\n\n${message}`
+      : message;
+
     const chat = model.startChat({ history: geminiHistory });
-    const result = await chat.sendMessage(message);
+    const result = await chat.sendMessage(fullMessage);
     const response = result.response.text();
 
-    // Save to Supabase (non-fatal if it fails)
+    // Save to Supabase (non-fatal)
     try {
       const supabase = createClient(
         process.env.SUPABASE_URL,
@@ -78,11 +67,22 @@ module.exports = async function handler(req, res) {
     }
 
     return res.status(200).json({ response });
+
   } catch (error) {
-console.error("Chat handler error:", error?.message || error);
-console.error("Full error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
-console.error("API key present:", !!process.env.GEMINI_API_KEY);
-console.error("API key length:", process.env.GEMINI_API_KEY?.length || 0);
-    return res.status(500).json({ error: error.message || "Internal server error" });
+    const errMsg = error?.message || String(error);
+    const errStatus = error?.status || error?.statusCode || "unknown";
+    const modelUsed = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+
+    console.error("=== M8 API ERROR ===");
+    console.error(`Model: ${modelUsed}`);
+    console.error(`HTTP Status: ${errStatus}`);
+    console.error(`Message: ${errMsg}`);
+
+    let hint = "Check Vercel logs for details";
+    if (errMsg.includes("API key")) hint = "Invalid GEMINI_API_KEY in Vercel env vars";
+    if (errStatus === 429) hint = "Quota exceeded — check Google AI Studio";
+    if (errMsg.includes("not found") || errMsg.includes("404")) hint = `Model '${modelUsed}' not found`;
+
+    return res.status(500).json({ error: errMsg, hint });
   }
 };
