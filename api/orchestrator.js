@@ -8,51 +8,10 @@
  * Phase 2 (NEXT):   Memory(summaries) → Search(Tavily) → LLM → Store
  * Phase 3 (FUTURE): Memory(semantic) → Search → Analysis(dashboard) → LLM → Store
  */
-const { generate }      = require("./llm");
+const { generate }           = require("./llm");
 const { recallMemory, saveMemory } = require("./memory");
-const { search }        = require("./search");
-
-// ─────────────────────────────────────────────────────────────────
-// INTENT CLASSIFIER
-// Categories: NONE | NEWS | RESEARCH | FACT_CHECK
-// NONE  → skip search (personal/operational/conversational)
-// NEWS  → Tavily news topic, last 7 days
-// RESEARCH → Tavily advanced, general topic
-// FACT_CHECK → Tavily advanced + include_answer
-// ─────────────────────────────────────────────────────────────────
-const INTENT = { NONE: "NONE", NEWS: "NEWS", RESEARCH: "RESEARCH", FACT_CHECK: "FACT_CHECK" };
-
-function classifyIntent(message) {
-  const m = message.toLowerCase();
-
-  // FACT_CHECK first — binary yes/no about external events
-  const factPatterns = [
-    /^(did |has |is it true|was |were |هل )/,
-    /did .*(launch|open|clos|merg|acqui|announc|releas)/,
-    /هل (أطلق|أعلن|فتح|أغلق)/,
-  ];
-  if (factPatterns.some((p) => p.test(m))) return INTENT.FACT_CHECK;
-
-  // NEWS — recency signals (before NONE so "latest Keeta news" → NEWS not NONE)
-  const newsPatterns = [
-    /\b(latest|recent|today|news|update|happened|breaking|جديد|آخر|اليوم|أخبار|تحديث)\b/,
-    /this (week|month|year)/,
-    /هذا (الأسبوع|الشهر)/,
-  ];
-  if (newsPatterns.some((p) => p.test(m))) return INTENT.NEWS;
-
-  // RESEARCH — explanatory or summary queries
-  const researchPatterns = [
-    /\b(summarize|summary|explain|what is|what are|how does|how do|tell me about|شرح|ملخص|ما هو|ما هي|كيف)\b/,
-    /\b(book|article|study|research|report|paper|كتاب|تقرير|دراسة)\b/,
-    /\b(history|background|overview|introduction|نبذة|مقدمة|تاريخ)\b/,
-  ];
-  if (researchPatterns.some((p) => p.test(m))) return INTENT.RESEARCH;
-
-  // NONE — personal, conversational, or fleet-operational (M8 knows from memory)
-  // Note: only reached if no search signals matched above
-  return INTENT.NONE;
-}
+const { search }             = require("./search");
+const { classifyIntent, INTENT } = require("./intentClassifier");
 
 // ─────────────────────────────────────────────────────────────────
 // SYSTEM PROMPT
@@ -113,8 +72,12 @@ async function orchestrate({ message, sessionId, history }) {
       .map((r, i) => `[${i + 1}] ${r.title}\n    ${r.url}\n    ${r.content?.slice(0, 300) ?? ""}`)
       .join("\n\n");
     const answerLine = searchData.answer ? `\nDirect answer: ${searchData.answer}\n` : "";
+    // LOOKUP queries need an explicit directive — Gemini defaults to generic advice otherwise
+    const closingDirective = intent === INTENT.LOOKUP
+      ? "Give the user specific options or answers from these results directly. Do NOT tell them how to search — act like Jarvis and present what you found."
+      : "Cite sources naturally in your response.";
     systemInstruction +=
-      `\n\nWEB SEARCH RESULTS (live, retrieved now — use these to answer):${answerLine}\n${snippets}\n\nCite sources naturally in your response.`;
+      `\n\nWEB SEARCH RESULTS (live, retrieved now — use these to answer):${answerLine}\n${snippets}\n\n${closingDirective}`;
   }
 
   // Phase 3 addition (analysis context injected into systemInstruction here)

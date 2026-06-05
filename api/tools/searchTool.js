@@ -10,6 +10,7 @@ const TAVILY_URL = "https://api.tavily.com/search";
 // Per-category Tavily parameters
 const CATEGORY_PARAMS = {
   NEWS:       { search_depth: "basic",    topic: "news",    days: 7,  max_results: 5 },
+  LOOKUP:     { search_depth: "basic",    topic: "general",           max_results: 5 },
   RESEARCH:   { search_depth: "advanced", topic: "general",           max_results: 5 },
   FACT_CHECK: { search_depth: "advanced", topic: "general",           max_results: 5, include_answer: true },
 };
