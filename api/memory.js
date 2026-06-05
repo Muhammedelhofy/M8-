@@ -63,7 +63,7 @@ async function recallMemory(currentSessionId, currentMessage = "", limit = 6) {
     const supabase = getClient();
     const { data, error } = await supabase
       .from("m8_conversations")
-      .select("role, content, session_id, importance")
+      .select("id, role, content, session_id, importance")  // id needed for chronological re-sort
       .neq("session_id", currentSessionId)
       .order("id", { ascending: false })
       .limit(80); // cast wide net, then score down
@@ -73,7 +73,7 @@ async function recallMemory(currentSessionId, currentMessage = "", limit = 6) {
     const keywords = extractKeywords(currentMessage);
 
     if (keywords.length === 0) {
-      // No keywords → fallback to most-recent N rows
+      // No keywords → return most-recent N rows in chronological order
       return data.slice(0, limit).reverse();
     }
 
@@ -86,9 +86,12 @@ async function recallMemory(currentSessionId, currentMessage = "", limit = 6) {
       .filter((row) => row._score > 0)
       .sort((a, b) => b._score - a._score);
 
-    const results = scored.length > 0 ? scored.slice(0, limit) : data.slice(0, limit);
+    const top = scored.length > 0 ? scored.slice(0, limit) : data.slice(0, limit);
 
-    return results.reverse(); // chronological for prompt readability
+    // Re-sort by id ASC to restore true chronological order for prompt injection.
+    // .reverse() would only be correct if the array were still in DESC order —
+    // it is NOT after a relevance sort, so we sort explicitly instead.
+    return top.sort((a, b) => a.id - b.id);
   } catch (err) {
     console.error("Memory recall error (non-fatal):", err.message);
     return [];
