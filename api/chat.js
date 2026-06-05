@@ -32,7 +32,9 @@ module.exports = async function handler(req, res) {
     if (!message) return res.status(400).json({ error: "Message required" });
 
     const ai = new GoogleGenAI({ apiKey });
-    const modelName = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+    
+    // FIX 1: Swapped to a model with an active free tier
+    const modelName = process.env.GEMINI_MODEL || "gemini-1.5-flash";
 
     // Build conversation history for context
     const recentHistory = (history || []).slice(-20);
@@ -46,6 +48,12 @@ module.exports = async function handler(req, res) {
     while (contents.length > 0 && contents[0].role === "model") {
       contents.shift();
     }
+
+    // FIX 2: Explicitly append the current user message to the end of the context array
+    contents.push({
+      role: "user",
+      parts: [{ text: message }]
+    });
 
     const result = await ai.models.generateContent({
       model: modelName,
@@ -76,7 +84,7 @@ module.exports = async function handler(req, res) {
   } catch (error) {
     const errMsg = error?.message || String(error);
     const errStatus = error?.status || error?.statusCode || "unknown";
-    const modelUsed = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+    const modelUsed = process.env.GEMINI_MODEL || "gemini-1.5-flash";
 
     console.error("=== M8 API ERROR ===");
     console.error(`Model: ${modelUsed}`);
