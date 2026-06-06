@@ -203,9 +203,11 @@ const PROVIDERS = {
   grok:       generateGrok,
 };
 
-async function generate({ systemInstruction, contents }) {
+async function generate({ systemInstruction, contents, providerOrder }) {
   // Default order favours FREE providers first (gemini, groq), then paid.
-  const order = (process.env.LLM_PROVIDER_ORDER || "gemini,groq,cerebras,openrouter,openai,grok")
+  // An optional per-call providerOrder overrides the env order — used e.g. by
+  // background summarization to prefer free non-Gemini providers and spare quota.
+  const order = (providerOrder || process.env.LLM_PROVIDER_ORDER || "gemini,groq,cerebras,openrouter,openai,grok")
     .split(",")
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);

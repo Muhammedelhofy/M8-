@@ -15,7 +15,7 @@
  * orchestrate() NEVER throws — always returns a string.
  */
 const { generate }                 = require("./llm");
-const { recallMemory, saveMemory } = require("./memory");
+const { recallMemory, saveMemory, summarizeSession } = require("./memory");
 const { search }                   = require("./search");
 const { classifyIntent, INTENT }   = require("./intentClassifier");
 
@@ -116,8 +116,12 @@ async function orchestrate({ message, sessionId, history }) {
       M8_SYSTEM_PROMPT;
 
     if (pastMemory.length > 0) {
+      // Summary/fact rows (role 'summary') are compact statements → bullet them.
+      // Raw turns keep speaker labels so dialogue context reads naturally.
       const memoryBlock = pastMemory
-        .map((m) => `${m.role === "assistant" ? "M8" : "Muhammad"}: ${m.content}`)
+        .map((m) => (m.role === "summary"
+          ? `• ${m.content}`
+          : `${m.role === "assistant" ? "M8" : "Muhammad"}: ${m.content}`))
         .join("\n");
       systemInstruction += `\n\nRELEVANT MEMORY (past sessions — use for context, do not repeat verbatim):\n${memoryBlock}`;
     }
@@ -173,6 +177,16 @@ async function orchestrate({ message, sessionId, history }) {
     // ── STORE ────────────────────────────────────────────────────
     log("store_start");
     await saveMemory(sessionId, message, response);
+
+    // ── ROLLING SUMMARY ──────────────────────────────────────────
+    // Self-gating: only fires once enough new raw rows have accumulated,
+    // and runs on free providers (spares Gemini quota). Non-fatal.
+    try {
+      const sum = await summarizeSession(sessionId);
+      if (sum && sum.status === "summarized") log("summarized", { summaryFacts: sum.facts });
+    } catch (sumErr) {
+      console.error("[M8] summary trigger error (non-fatal):", sumErr.message);
+    }
     log("complete");
 
     return response;
