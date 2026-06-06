@@ -102,3 +102,9 @@ These are the hardest cases. M8 must combine past context with live data.
 | Date | Scenario | Pass/Fail | Notes |
 |------|----------|-----------|-------|
 | 2026-06-06 | L1 (flights) | — | First real-world test that exposed the LOOKUP gap |
+| 2026-06-06 | LIVE_DATA (weather riyadh tomorrow) | PASS | 9.6s. Temp ranges + temporal awareness ("June 7, 2026"); honest about no exact daily data, no punt-to-app |
+| 2026-06-06 | LOOKUP (iphone 16 price KSA) | PASS | 4.1s. Real SAR prices w/ sources (Pricena, Apple SA, Amazon) |
+| 2026-06-06 | NEWS (latest keeta news) | PARTIAL | 4.5s. Routed+searched OK, but Tavily news returned irrelevant crypto hits. Model detected mismatch + referenced memory ("the Keeta you oversee"). Data-quality issue, not pipeline |
+| 2026-06-06 | FACT_CHECK (keeta launch bahrain) | PASS | 4.2s. Direct "yes launched"; weak on citation/date |
+| 2026-06-06 | RESEARCH (last mile delivery optimization) | PASS | 6.5s. Clear explanation + citations [1][2][3][5] + real stat (53% shipping cost) |
+| 2026-06-06 | NONE (who am i) | PASS | 2.6s. Full profile recall, no search fired |
