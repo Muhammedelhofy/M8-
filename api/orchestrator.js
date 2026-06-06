@@ -21,6 +21,7 @@ const { classifyIntent, INTENT, isPersonal } = require("./intentClassifier");
 const { checkSpecificity, rewriteQuery, isArabic }   = require("./slots");
 const { decideAction }             = require("./router");
 const { generateArtifact }         = require("./docgen");
+const { detectSkills, buildSkillContext } = require("./skillRouter");
 
 // ─────────────────────────────────────────────────────────────────
 // SYSTEM PROMPT
@@ -248,6 +249,13 @@ async function orchestrate({ message, sessionId, history }) {
       `the projection date has passed and the situation is likely further along, and ` +
       `lead with the most recent information available rather than the stale forecast.\n\n` +
       M8_SYSTEM_PROMPT;
+
+    // ── SKILLS: domain expertise injection ───────────────────────
+    const activeSkills = detectSkills(message);
+    if (activeSkills.length > 0) {
+      systemInstruction += buildSkillContext(activeSkills);
+      log("skills_active", { skills: activeSkills.map((s) => s.id) });
+    }
 
     if (pastMemory.length > 0) {
       // Summary/fact rows (role 'summary') are compact statements → bullet them.
