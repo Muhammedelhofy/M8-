@@ -38,15 +38,19 @@ const { GoogleGenAI } = require("@google/genai");
 // ─────────────────────────────────────────────────────────────────
 // PROVIDER: Google Gemini (via @google/genai SDK)
 // ─────────────────────────────────────────────────────────────────
-async function generateGeminiWith(apiKey, model, { systemInstruction, contents }) {
+async function generateGeminiWith(apiKey, model, { systemInstruction, contents, genConfig }) {
   if (!apiKey) throw new Error("Gemini API key not set");
 
   const ai = new GoogleGenAI({ apiKey });
 
+  const config = { systemInstruction };
+  if (genConfig?.temperature != null) config.temperature = genConfig.temperature;
+  if (genConfig?.maxOutputTokens)     config.maxOutputTokens = genConfig.maxOutputTokens;
+
   const result = await ai.models.generateContent({
     model,
     contents,
-    config: { systemInstruction },
+    config,
   });
 
   // ── ROBUST TEXT EXTRACTION ────────────────────────────────────
@@ -107,7 +111,7 @@ async function generateGemini2(args) {
 // Shared by OpenAI and xAI Grok — both expose the same /chat/completions
 // schema, so only the base URL, key, and default model differ.
 // ─────────────────────────────────────────────────────────────────
-async function generateOpenAICompatible({ providerName, apiKey, baseUrl, model, systemInstruction, contents }) {
+async function generateOpenAICompatible({ providerName, apiKey, baseUrl, model, systemInstruction, contents, genConfig }) {
   if (!apiKey) throw new Error(`${providerName} API key not set`);
 
   // Translate Gemini-shaped inputs → OpenAI-style chat messages.
@@ -122,13 +126,16 @@ async function generateOpenAICompatible({ providerName, apiKey, baseUrl, model, 
     if (text) messages.push({ role, content: text });
   }
 
+  const payload = { model, messages, temperature: genConfig?.temperature ?? 0.7 };
+  if (genConfig?.maxOutputTokens) payload.max_tokens = genConfig.maxOutputTokens;
+
   const res = await fetch(baseUrl, {
     method:  "POST",
     headers: {
       "Content-Type":  "application/json",
       "Authorization": `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({ model, messages, temperature: 0.7 }),
+    body: JSON.stringify(payload),
   });
 
   if (!res.ok) {
@@ -152,6 +159,7 @@ async function generateOpenAI(args) {
     model:             process.env.OPENAI_MODEL || "gpt-4o-mini",
     systemInstruction: args.systemInstruction,
     contents:          args.contents,
+    genConfig:         args.genConfig,
   });
 }
 
@@ -166,6 +174,7 @@ async function generateGrok(args) {
     model:             process.env.XAI_MODEL || "grok-2-latest",
     systemInstruction: args.systemInstruction,
     contents:          args.contents,
+    genConfig:         args.genConfig,
   });
 }
 
@@ -180,6 +189,7 @@ async function generateGroq(args) {
     model:             process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
     systemInstruction: args.systemInstruction,
     contents:          args.contents,
+    genConfig:         args.genConfig,
   });
 }
 
@@ -193,6 +203,7 @@ async function generateCerebras(args) {
     model:             process.env.CEREBRAS_MODEL || "llama-3.3-70b",
     systemInstruction: args.systemInstruction,
     contents:          args.contents,
+    genConfig:         args.genConfig,
   });
 }
 
@@ -206,6 +217,7 @@ async function generateOpenRouter(args) {
     model:             process.env.OPENROUTER_MODEL || "meta-llama/llama-3.3-70b-instruct:free",
     systemInstruction: args.systemInstruction,
     contents:          args.contents,
+    genConfig:         args.genConfig,
   });
 }
 
@@ -222,7 +234,7 @@ const PROVIDERS = {
   grok:       generateGrok,
 };
 
-async function generate({ systemInstruction, contents, providerOrder }) {
+async function generate({ systemInstruction, contents, providerOrder, genConfig }) {
   // Default order favours FREE providers first (gemini, groq), then paid.
   // An optional per-call providerOrder overrides the env order — used e.g. by
   // background summarization to prefer free non-Gemini providers and spare quota.
@@ -237,7 +249,7 @@ async function generate({ systemInstruction, contents, providerOrder }) {
     if (!fn) continue;
 
     try {
-      const text = await fn({ systemInstruction, contents });
+      const text = await fn({ systemInstruction, contents, genConfig });
       if (text && typeof text === "string") {
         if (errors.length) {
           console.warn(`[LLM] recovered via ${name} after failures: ${errors.join(" | ")}`);

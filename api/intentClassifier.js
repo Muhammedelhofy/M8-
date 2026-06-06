@@ -82,6 +82,9 @@ function classifyIntent(message) {
 
     // Hotel availability
     /\b(hotel|accommodation|hostel|airbnb).{0,30}(book|available|price|cost|night)\b/,
+
+    // Arabic travel / flights / hotels (no \b — JS word boundaries are ASCII-only)
+    /سفر|أسافر|اسافر|طيران|تذكرة طيران|تذاكر|رحلة طيران|حجز (طيران|تذكرة|رحلة|فندق)|فندق|فنادق/,
   ];
   if (liveDataPatterns.some((p) => p.test(m))) return INTENT.LIVE_DATA;
 

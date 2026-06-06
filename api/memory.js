@@ -276,6 +276,7 @@ async function summarizeSession(sessionId) {
       systemInstruction: SUMMARY_SYSTEM,
       contents: [{ role: "user", parts: [{ text: transcript }] }],
       providerOrder: SUMMARY_PROVIDER_ORDER,
+      genConfig: { temperature: 0.2, maxOutputTokens: 1024 },
     });
     const parsed = parseJsonLoose(out);
     if (!parsed || !parsed.summary) {

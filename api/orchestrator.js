@@ -18,6 +18,7 @@ const { generate }                 = require("./llm");
 const { recallMemory, saveMemory, summarizeSession } = require("./memory");
 const { search }                   = require("./search");
 const { classifyIntent, INTENT }   = require("./intentClassifier");
+const { checkSpecificity, rewriteQuery, isArabic }   = require("./slots");
 
 // ─────────────────────────────────────────────────────────────────
 // SYSTEM PROMPT
@@ -50,6 +51,28 @@ const SEARCH_DIRECTIVES = {
 
 const FALLBACK_RESPONSE = "I'm having trouble connecting right now. Please try again in a moment.";
 
+// Task-based model routing: best provider order per intent. Quick
+// fetch-and-summarize tasks → fast free providers first (speed + spare Gemini
+// quota); reasoning/conversation → Gemini first (quality). An undefined intent
+// falls back to the env/default order inside generate().
+const ROUTING = {
+  LOOKUP:    "groq,cerebras,gemini,gemini2,openrouter,openai,grok",
+  LIVE_DATA: "groq,cerebras,gemini,gemini2,openrouter,openai,grok",
+};
+
+// If the previous assistant turn was a clarification question, return the user's
+// original query so this turn's answer can be merged into it (slot-filling).
+function findClarificationContext(history) {
+  const h = (history || []).filter((m) => m && typeof m.content === "string");
+  if (h.length < 2) return null;
+  const last = h[h.length - 1];
+  if (last.role !== "assistant" || !/[?؟]\s*$/.test(last.content.trim())) return null;
+  for (let i = h.length - 2; i >= 0; i--) {
+    if (h[i].role === "user") return h[i].content;
+  }
+  return null;
+}
+
 async function orchestrate({ message, sessionId, history }) {
 
   // ── DEBUG TRACE (Vercel logs — never sent to user) ─────────────
@@ -62,6 +85,16 @@ async function orchestrate({ message, sessionId, history }) {
 
   try {
 
+    // ── TRIVIAL-INPUT BYPASS ─────────────────────────────────────
+    // Empty/garbage input previously triggered runaway repetition loops.
+    const trimmed = (message || "").trim();
+    if (trimmed.length < 2) {
+      log("trivial_bypass");
+      return isArabic(message)
+        ? "لم أسمعك جيدًا، ممكن تعيد؟"
+        : "I didn't quite catch that — could you repeat that?";
+    }
+
     // ── SLOT 1: MEMORY ───────────────────────────────────────────
     log("memory_start");
     let pastMemory = [];
@@ -73,16 +106,46 @@ async function orchestrate({ message, sessionId, history }) {
       log("memory_failed");
     }
 
-    // ── SLOT 2: SEARCH ───────────────────────────────────────────
-    const intent = classifyIntent(message);
+    // ── CLASSIFY (+ slot-fill continuation) ──────────────────────
+    let effectiveMessage = message;
+    let intent = classifyIntent(message);
+    if (intent === INTENT.NONE) {
+      // This turn may be answering a clarification we just asked — merge it
+      // with the original query so the search has the full picture.
+      const prevQuery = findClarificationContext(history);
+      if (prevQuery) {
+        const merged = `${prevQuery} ${message}`;
+        const mergedIntent = classifyIntent(merged);
+        if (mergedIntent !== INTENT.NONE) {
+          effectiveMessage = merged;
+          intent = mergedIntent;
+          log("slotfill_merged");
+        }
+      }
+    }
     trace.intent = intent;
-    log("search_start");
 
+    // ── CLARIFICATION GATE (deterministic, BEFORE search) ────────
+    // Searchable ≠ answerable. If a slot-requiring query is missing its
+    // parameters, ask instead of searching blindly. Zero LLM cost.
+    let topic = null;
+    if (intent !== INTENT.NONE) {
+      const spec = checkSpecificity(effectiveMessage);
+      topic = spec.topic;
+      if (!spec.specific) {
+        log("clarify", { topic: spec.topic });
+        await saveMemory(sessionId, message, spec.question);
+        return spec.question;
+      }
+    }
+
+    // ── SLOT 2: SEARCH (lazy — only well-specified queries) ──────
+    log("search_start");
     let searchData = null;
     if (intent !== INTENT.NONE) {
       trace.searchExecuted = true;
       try {
-        searchData = await search(message, intent);
+        searchData = await search(rewriteQuery(effectiveMessage, topic), intent);
         log("search_done", { searchResults: searchData?.results?.length ?? 0 });
       } catch (searchErr) {
         console.error("[M8] search error (non-fatal):", searchErr.message);
@@ -160,7 +223,12 @@ async function orchestrate({ message, sessionId, history }) {
     log("llm_start");
     let response;
     try {
-      response = await generate({ systemInstruction, contents });
+      response = await generate({
+        systemInstruction,
+        contents,
+        providerOrder: ROUTING[intent],   // undefined → default (gemini-first)
+        genConfig: { temperature: 0.4, maxOutputTokens: 800 },
+      });
       if (!response || typeof response !== "string") {
         console.error("[M8] LLM returned empty/invalid response:", response);
         log("llm_empty");
