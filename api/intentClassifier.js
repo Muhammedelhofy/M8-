@@ -87,6 +87,15 @@ function classifyIntent(message) {
 
     // Arabic travel / flights / hotels (no \b — JS word boundaries are ASCII-only)
     /سفر|أسافر|اسافر|طيران|تذكرة طيران|تذاكر|رحلة طيران|حجز (طيران|تذكرة|رحلة|فندق)|فندق|فنادق/,
+
+    // Sports fixtures / live events / schedules (time-sensitive → MUST search, never answer stale)
+    /\b(match|matches|fixture|fixtures|kick-?off|line-?up|scoreline|standings|results?)\b/,
+    /\b(playing|plays|play)\s+(against|vs\.?|versus|with)\b/,
+    /\b(vs\.?|versus)\b/,
+    /\bwhat time\b/,
+    /\bwhen (is|are|does|do|will|s)\b/,
+    /\b(world cup|premier league|champions league|la ?liga|bundesliga|serie a|euros?|afcon|olympics|formula ?1|f1)\b/,
+    /متى (يلعب|تلعب|المباراة|مباراة)|مباراة|الدوري|كأس العالم/,
   ];
   if (liveDataPatterns.some((p) => p.test(m))) return INTENT.LIVE_DATA;
 
