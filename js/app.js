@@ -20,7 +20,7 @@ const LABELS = {
     thinking: "أفكر...",
     speaking: "أتكلم...",
     placeholder: "اكتب رسالة أو اضغط على المايك...",
-    welcome: "مرحباً، أنا M8 — مساعدك الشخصي. كيف يمكنني مساعدتك اليوم؟",
+    welcome: "M8 في خدمتك.",
     error: "عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.",
   },
   en: {
@@ -29,7 +29,7 @@ const LABELS = {
     thinking: "Thinking...",
     speaking: "Speaking...",
     placeholder: "Type a message or press the mic...",
-    welcome: "Hello, I'm M8 — your personal AI agent. How can I help you today?",
+    welcome: "M8 at your service.",
     error: "Sorry, something went wrong. Please try again.",
   },
 };
