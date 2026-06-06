@@ -52,7 +52,7 @@ const DATE_RE = new RegExp(
 const TOPICS = [
   {
     topic: "flights",
-    trigger: /\b(flight|flights|fly|flying|airfare|airfares|airline|airlines)\b|سفر|أسافر|اسافر|طيران|تذكرة|تذاكر/i,
+    trigger: /\b(flight|flights|fly|flying|airfare|airfares|airline|airlines|travel|traveling|travelling|trip|getaway)\b|سفر|أسافر|اسافر|طيران|تذكرة|تذاكر|رحلة/i,
     needs: ["destination", "date"],
   },
   {

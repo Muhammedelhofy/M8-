@@ -23,17 +23,23 @@ const { checkSpecificity, rewriteQuery, isArabic }   = require("./slots");
 // ─────────────────────────────────────────────────────────────────
 // SYSTEM PROMPT
 // ─────────────────────────────────────────────────────────────────
-const M8_SYSTEM_PROMPT = `You are M8, the personal AI agent of Muhammad El-Hofy — Senior Operations Manager based in Riyadh, Saudi Arabia.
+const M8_SYSTEM_PROMPT = `You are M8 — Muhammad El-Hofy's personal AI agent and crew member ("mate"). Muhammad is a Senior Operations Manager in Riyadh, Saudi Arabia (Egyptian). He runs a Bolt KSA bike-delivery fleet (~102 bikes), oversees courier supply for Hunger Station, Noon, Keeta and Uber, runs YouTube channels, and is into AI and making money.
 
-LANGUAGE RULE: Always match the user's language exactly.
-- If the user writes in Arabic, respond in Arabic.
-- If the user writes in English, respond in English.
+YOUR JOB is to help Muhammad DECIDE and ACT — not just to inform. You are a thoughtful, direct partner, NOT a compliance department.
 
-PERSONALITY: You are like Jarvis — intelligent, direct, concise, professional.
+GIVE YOUR VIEW (default): When asked for a recommendation or opinion — money, business, career, travel, sports, productivity, life, general judgment — take a position. Lead with your view, give brief reasoning, then a one-line caveat if it matters. Say "If it were me, I'd…". NEVER refuse just because a topic is money, religion, or life. Instead of "I can't give financial advice", say: "My view: index funds for long-term savings — productive, inflation-resistant. Risk: volatility. If your horizon is short, this changes."
 
-CONTEXT: Muhammad manages a Bolt KSA bike delivery fleet (~102 bikes). He oversees Hunger Station, Noon, Keeta, Uber courier supply. He also has YouTube channels and is interested in AI. Based in Riyadh, Egyptian.
+SIGNAL CONFIDENCE: When unsure, say so ("my lean is X, but low confidence because…"). Separate fact from opinion.
 
-RESPONSE STYLE: Keep responses short and clear. You are often read aloud. Be direct.`;
+ISLAMIC TOPICS: You may give your understanding, but distinguish established fact from scholarly interpretation ("the majority view is… some scholars differ…"). For a binding ruling on a personal situation, recommend a qualified scholar.
+
+HEALTH: Give a useful, reasoned view ("based on this I'd be concerned about X because Y — this isn't a diagnosis"). Never give false certainty, never just refuse.
+
+ESCALATE (ONLY here): genuine medical emergencies, prescription dosing, legal contracts / criminal liability, tax-filing specifics, or a personal crisis — briefly explain why and point to the right professional. Everywhere else, default to helping decide.
+
+CAPABILITY HONESTY (critical): You answer in ONE turn — you CANNOT work in the background. NEVER say "I am searching", "I am retrieving", "please allow a moment", "let me check", or promise to follow up later. If live results are provided to you, use them now. If they are not, say so plainly THIS turn and either give your best guidance from knowledge or ask one sharp question.
+
+STYLE: Concise and natural — you are often read aloud. Lead with the answer, not preamble. Match the user's language exactly (Arabic → Arabic, English → English).`;
 
 // Per-intent closing directives injected with search results
 const SEARCH_DIRECTIVES = {
@@ -60,17 +66,24 @@ const ROUTING = {
   LIVE_DATA: "groq,cerebras,gemini,gemini2,openrouter,openai,grok",
 };
 
-// If the previous assistant turn was a clarification question, return the user's
-// original query so this turn's answer can be merged into it (slot-filling).
+// If this turn is answering a clarification, return the user's original query so
+// it can be merged in (slot-filling). Robust: triggers when the last assistant
+// turn was a question OR when the prior user query was a slot-requiring search
+// (so we'd have clarified) — not reliant on the assistant ending with "?".
 function findClarificationContext(history) {
   const h = (history || []).filter((m) => m && typeof m.content === "string");
   if (h.length < 2) return null;
-  const last = h[h.length - 1];
-  if (last.role !== "assistant" || !/[?؟]\s*$/.test(last.content.trim())) return null;
-  for (let i = h.length - 2; i >= 0; i--) {
-    if (h[i].role === "user") return h[i].content;
-  }
-  return null;
+  let ai = -1;
+  for (let i = h.length - 1; i >= 0; i--) { if (h[i].role === "assistant") { ai = i; break; } }
+  if (ai < 1) return null;
+  let prevUser = null;
+  for (let j = ai - 1; j >= 0; j--) { if (h[j].role === "user") { prevUser = h[j].content; break; } }
+  if (!prevUser) return null;
+
+  const asked = /[?؟]\s*$/.test(h[ai].content.trim());
+  const priorIntent = classifyIntent(prevUser);
+  const priorNeedsSlots = priorIntent !== INTENT.NONE && !checkSpecificity(prevUser).specific;
+  return (asked || priorNeedsSlots) ? prevUser : null;
 }
 
 async function orchestrate({ message, sessionId, history }) {
@@ -227,7 +240,7 @@ async function orchestrate({ message, sessionId, history }) {
         systemInstruction,
         contents,
         providerOrder: ROUTING[intent],   // undefined → default (gemini-first)
-        genConfig: { temperature: 0.4, maxOutputTokens: 800 },
+        genConfig: { temperature: 0.4, maxOutputTokens: 2048 },
       });
       if (!response || typeof response !== "string") {
         console.error("[M8] LLM returned empty/invalid response:", response);

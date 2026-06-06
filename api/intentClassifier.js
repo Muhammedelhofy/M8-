@@ -61,10 +61,12 @@ function classifyIntent(message) {
   // Real-time transactional data — exact dates, prices, schedules, live rates.
   // Tavily searches, but Gemini must NOT extrapolate or invent missing specifics.
   const liveDataPatterns = [
-    // Flights & travel booking
+    // Flights & travel booking (incl. natural phrasings — "travel/trip to X")
     /\bflights?\b/,
     /\bbook(ing)? (a )?(flight|ticket|seat)\b/,
-    /\bfly(ing)? from\b/,
+    /\bfly(ing)? (from|to)\b/,
+    /\b(travel|traveling|travelling|trip|getaway)\b/,
+    /\b(travel|trip|getaway)\s+to\b/,
     /\b(depart|arrive|departure|arrival|layover|stopover)\b/,
     /\bairline(s)?\b/,
 
