@@ -20,7 +20,7 @@
  *   GROQ_API_KEY         Groq key — FREE, console.groq.com (NOT xAI Grok)
  *   GROQ_MODEL           default "llama-3.3-70b-versatile"
  *   CEREBRAS_API_KEY     Cerebras key — FREE, cloud.cerebras.ai (fast Llama)
- *   CEREBRAS_MODEL       default "llama-3.3-70b"
+ *   CEREBRAS_MODEL       default "llama3.3-70b"  (Cerebras naming: no hyphen after 'llama')
  *   OPENROUTER_API_KEY   OpenRouter key — FREE models available, openrouter.ai
  *   OPENROUTER_MODEL     default "meta-llama/llama-3.3-70b-instruct:free"
  *   OPENAI_API_KEY       OpenAI key             (paid)
@@ -212,7 +212,7 @@ async function generateCerebras(args) {
     providerName:      "cerebras",
     apiKey:            process.env.CEREBRAS_API_KEY,
     baseUrl:           "https://api.cerebras.ai/v1/chat/completions",
-    model:             process.env.CEREBRAS_MODEL || "llama-3.3-70b",
+    model:             process.env.CEREBRAS_MODEL || "llama3.3-70b",
     systemInstruction: args.systemInstruction,
     contents:          args.contents,
     genConfig:         args.genConfig,
