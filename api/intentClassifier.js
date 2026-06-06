@@ -25,17 +25,20 @@ const INTENT = {
   LIVE_DATA:  "LIVE_DATA",
 };
 
+// Personal/possessive queries → memory (NOT web search, NOT the knowledge router).
+const PERSONAL_PATTERNS = [
+  /\bmy (fleet|drivers?|bikes?|team|schedule|earnings|salary|riders?|performance|data|stats|numbers)\b/,
+  /\b(our|my) .{0,25}(this week|this month|today|last week|last month|yesterday)\b/,
+];
+function isPersonal(message) {
+  return PERSONAL_PATTERNS.some((p) => p.test((message || "").toLowerCase()));
+}
+
 function classifyIntent(message) {
   const m = message.toLowerCase();
 
   // ── PERSONAL GUARD (runs before everything) ────────────────────
-  // Personal/possessive queries always go to memory even if they contain
-  // time words that would otherwise fire NEWS ("my fleet this week").
-  const personalPatterns = [
-    /\bmy (fleet|drivers?|bikes?|team|schedule|earnings|salary|riders?|performance|data|stats|numbers)\b/,
-    /\b(our|my) .{0,25}(this week|this month|today|last week|last month|yesterday)\b/,
-  ];
-  if (personalPatterns.some((p) => p.test(m))) return INTENT.NONE;
+  if (isPersonal(m)) return INTENT.NONE;
 
   // ── FACT_CHECK ─────────────────────────────────────────────────
   // Binary yes/no questions about external events or current status
@@ -136,4 +139,4 @@ function classifyIntent(message) {
   return INTENT.NONE;
 }
 
-module.exports = { classifyIntent, INTENT };
+module.exports = { classifyIntent, INTENT, isPersonal };

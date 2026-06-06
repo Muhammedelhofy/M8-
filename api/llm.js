@@ -43,7 +43,19 @@ async function generateGeminiWith(apiKey, model, { systemInstruction, contents, 
 
   const ai = new GoogleGenAI({ apiKey });
 
-  const config = { systemInstruction };
+  const config = {
+    systemInstruction,
+    // Default Gemini filters silently block legit non-mainstream discussion
+    // (conspiracy/power-structures/jinn) under DANGEROUS_CONTENT / HARASSMENT.
+    // Relax to BLOCK_ONLY_HIGH so M8 can engage these honestly. (Owner is single
+    // adult user; we still block the genuinely high-severity tier.)
+    safetySettings: [
+      { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" },
+      { category: "HARM_CATEGORY_HARASSMENT",        threshold: "BLOCK_ONLY_HIGH" },
+      { category: "HARM_CATEGORY_HATE_SPEECH",       threshold: "BLOCK_ONLY_HIGH" },
+      { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
+    ],
+  };
   if (genConfig?.temperature != null) config.temperature = genConfig.temperature;
   if (genConfig?.maxOutputTokens)     config.maxOutputTokens = genConfig.maxOutputTokens;
 

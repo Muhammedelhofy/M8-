@@ -17,8 +17,9 @@
 const { generate }                 = require("./llm");
 const { recallMemory, saveMemory, summarizeSession } = require("./memory");
 const { search }                   = require("./search");
-const { classifyIntent, INTENT }   = require("./intentClassifier");
+const { classifyIntent, INTENT, isPersonal } = require("./intentClassifier");
 const { checkSpecificity, rewriteQuery, isArabic }   = require("./slots");
+const { decideAction }             = require("./router");
 
 // ─────────────────────────────────────────────────────────────────
 // SYSTEM PROMPT
@@ -144,7 +145,34 @@ async function orchestrate({ message, sessionId, history }) {
     }
     trace.intent = intent;
 
-    // ── CLARIFICATION GATE (deterministic, BEFORE search) ────────
+    let searchData = null;
+
+    // ── KNOWLEDGE-DECISION ROUTER (anti-whack-a-mole) ────────────
+    // Regex left this as NONE and it isn't personal/fleet or trivial chat →
+    // let the model decide answer/search/clarify instead of us enumerating
+    // every topic in regex. Fails SAFE (any error → answer from knowledge).
+    const conversational = /^(hi|hello|hey|yo|thanks|thank you|thx|ok|okay|cool|nice|great|good (morning|afternoon|evening|night)|salam|سلام|شكرا|مرحبا|تمام|أهلا)\b/i
+      .test(effectiveMessage.trim());
+    if (intent === INTENT.NONE && !isPersonal(effectiveMessage) && !conversational) {
+      try {
+        const decision = await decideAction({ message: effectiveMessage, history });
+        log("router", { action: decision.action });
+        if (decision.action === "clarify" && decision.question) {
+          await saveMemory(sessionId, message, decision.question);
+          return decision.question;
+        }
+        if (decision.action === "search" && decision.query) {
+          try {
+            searchData = await search(decision.query, INTENT.LOOKUP);
+            trace.searchExecuted = true;
+            log("router_search_done", { searchResults: searchData?.results?.length ?? 0 });
+          } catch (e) { console.error("[M8] router search error (non-fatal):", e.message); }
+        }
+        // action === "answer" → fall through to normal generate (no search)
+      } catch (e) { console.error("[M8] router error (non-fatal):", e.message); }
+    }
+
+    // ── CLARIFICATION GATE (deterministic, for regex search intents) ──
     // Searchable ≠ answerable. If a slot-requiring query is missing its
     // parameters, ask instead of searching blindly. Zero LLM cost.
     let topic = null;
@@ -158,9 +186,8 @@ async function orchestrate({ message, sessionId, history }) {
       }
     }
 
-    // ── SLOT 2: SEARCH (lazy — only well-specified queries) ──────
+    // ── SLOT 2: SEARCH (regex search intents) ────────────────────
     log("search_start");
-    let searchData = null;
     if (intent !== INTENT.NONE) {
       trace.searchExecuted = true;
       try {
