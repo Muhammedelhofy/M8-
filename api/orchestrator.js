@@ -107,9 +107,12 @@ async function orchestrate({ message, sessionId, history }) {
     });
     let systemInstruction =
       `CURRENT DATE: Today is ${today} (Riyadh time). ` +
-      `Treat any date before today as the PAST. If a source describes something as ` +
-      `"projected", "planned", or "expected" for a date that has already passed, that ` +
-      `information is outdated — say so rather than presenting it as still upcoming.\n\n` +
+      `Treat any date before today as the PAST. When sources cite a "projected", ` +
+      `"planned", or "expected" date that has already passed, do NOT present that date ` +
+      `as the current status or the takeaway. The deadline has passed, so the real ` +
+      `status has almost certainly advanced beyond what older sources describe — say ` +
+      `the projection date has passed and the situation is likely further along, and ` +
+      `lead with the most recent information available rather than the stale forecast.\n\n` +
       M8_SYSTEM_PROMPT;
 
     if (pastMemory.length > 0) {

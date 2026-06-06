@@ -193,8 +193,10 @@ async function generate({ systemInstruction, contents }) {
       }
       errors.push(`${name}: empty response`);
     } catch (err) {
-      console.error(`[LLM] provider ${name} failed:`, err.message);
-      errors.push(`${name}: ${err.message}`);
+      // Trim noisy provider payloads (e.g. Gemini dumps a ~800-char 429 JSON).
+      const brief = String(err.message || err).replace(/\s+/g, " ").slice(0, 140);
+      console.error(`[LLM] provider ${name} failed:`, brief);
+      errors.push(`${name}: ${brief}`);
       // fall through to next provider
     }
   }

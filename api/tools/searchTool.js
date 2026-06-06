@@ -11,12 +11,16 @@ const TAVILY_URL = "https://api.tavily.com/search";
 // include_answer is intentionally omitted — it triggers Tavily's internal LLM
 // which adds 3-8s latency and causes Vercel function timeouts. Gemini handles
 // answer synthesis instead.
+// time_range biases Tavily toward fresh results. FACT_CHECK asks about CURRENT
+// status ("is the metro operating?") — without it Tavily returns evergreen/old
+// articles citing stale projections (e.g. "fully operational in 2025"). "year"
+// pulls the last 12 months so answers reflect the present, not old forecasts.
 const CATEGORY_PARAMS = {
-  NEWS:       { search_depth: "basic",    topic: "news",    days: 7, max_results: 5 },
-  LIVE_DATA:  { search_depth: "basic",    topic: "general",          max_results: 5 },
-  LOOKUP:     { search_depth: "basic",    topic: "general",          max_results: 5 },
-  RESEARCH:   { search_depth: "advanced", topic: "general",          max_results: 5 },
-  FACT_CHECK: { search_depth: "advanced", topic: "general",          max_results: 5 },
+  NEWS:       { search_depth: "basic",    topic: "news",    days: 7,            max_results: 5 },
+  LIVE_DATA:  { search_depth: "basic",    topic: "general",                     max_results: 5 },
+  LOOKUP:     { search_depth: "basic",    topic: "general",                     max_results: 5 },
+  RESEARCH:   { search_depth: "advanced", topic: "general",                     max_results: 5 },
+  FACT_CHECK: { search_depth: "advanced", topic: "general", time_range: "year", max_results: 5 },
 };
 
 // 7-second hard timeout — leaves room for Gemini call within Vercel's 15s window
