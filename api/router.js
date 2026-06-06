@@ -13,7 +13,7 @@
 const { generate } = require("./llm");
 
 // Free, fast providers first — this is a cheap routing decision, not the answer.
-const ROUTER_PROVIDER_ORDER = process.env.ROUTER_PROVIDER_ORDER || "groq,cerebras,gemini,gemini2,openrouter";
+const ROUTER_PROVIDER_ORDER = process.env.ROUTER_PROVIDER_ORDER || "groq,cerebras,mistral,gemini,gemini2,openrouter";
 
 function parseJsonLoose(text) {
   if (!text || typeof text !== "string") return null;

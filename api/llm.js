@@ -5,28 +5,35 @@
  * about the underlying model(s). To change providers or priority: edit here only.
  *
  * MULTI-PROVIDER FALLBACK CHAIN
- * Default order: Gemini → Gemini2 → Groq → Cerebras → OpenRouter → OpenAI → Grok (free first).
- * If a provider fails for ANY reason — 429 quota, safety block, empty
+ * Default order: Gemini → Gemini2 → Groq → Cerebras → Mistral → OpenRouter → OpenAI → Grok.
+ * If a provider fails for ANY reason — 429 quota, safety block, timeout, empty
  * response, network, missing key — generate() tries the next provider.
  * A provider with no API key set throws immediately and is skipped, so
  * listing one in the order before you have its key is harmless.
  *
+ * TIMEOUTS: each provider has a hard cap (default 8s for REST, 10s for Gemini SDK)
+ * to prevent one slow/hung provider from eating the Vercel 30s request window.
+ *
  * Configure via env:
- *   LLM_PROVIDER_ORDER   comma list, default "gemini,gemini2,groq,cerebras,openrouter,openai,grok"
- *   GEMINI_API_KEY       Google Gemini key      (free tier — personal account, primary)
- *   GEMINI_MODEL         default "gemini-1.5-flash"
- *   GEMINI_API_KEY_2     2nd Gemini account key (separate free quota bucket — work account)
- *   GEMINI_MODEL_2       default = GEMINI_MODEL
- *   GROQ_API_KEY         Groq key — FREE, console.groq.com (NOT xAI Grok)
- *   GROQ_MODEL           default "llama-3.3-70b-versatile"
- *   CEREBRAS_API_KEY     Cerebras key — FREE, cloud.cerebras.ai (fast Llama)
- *   CEREBRAS_MODEL       default "llama3.3-70b"  (Cerebras naming: no hyphen after 'llama')
- *   OPENROUTER_API_KEY   OpenRouter key — FREE models available, openrouter.ai
- *   OPENROUTER_MODEL     default "meta-llama/llama-3.3-70b-instruct:free"
- *   OPENAI_API_KEY       OpenAI key             (paid)
- *   OPENAI_MODEL         default "gpt-4o-mini"
- *   XAI_API_KEY          xAI Grok key           (paid)
- *   XAI_MODEL            default "grok-2-latest"
+ *   LLM_PROVIDER_ORDER      comma list, default "gemini,gemini2,groq,cerebras,mistral,openrouter,openai,grok"
+ *   LLM_TIMEOUT_GEMINI      ms cap for Gemini SDK calls (default 10000)
+ *   LLM_TIMEOUT_PROVIDER    ms cap for all REST provider calls (default 8000)
+ *   GEMINI_API_KEY          Google Gemini key      (free tier — personal account, primary)
+ *   GEMINI_MODEL            default "gemini-1.5-flash"
+ *   GEMINI_API_KEY_2        2nd Gemini account key (separate free quota bucket — work account)
+ *   GEMINI_MODEL_2          default = GEMINI_MODEL
+ *   GROQ_API_KEY            Groq key — FREE, console.groq.com (NOT xAI Grok)
+ *   GROQ_MODEL              default "llama-3.3-70b-versatile"
+ *   CEREBRAS_API_KEY        Cerebras key — FREE, cloud.cerebras.ai (fast Llama)
+ *   CEREBRAS_MODEL          default "llama3.3-70b"  (Cerebras naming: no hyphen after 'llama')
+ *   MISTRAL_API_KEY         Mistral key — FREE generous tier, console.mistral.ai
+ *   MISTRAL_MODEL           default "mistral-small-latest"
+ *   OPENROUTER_API_KEY      OpenRouter key — FREE models available, openrouter.ai
+ *   OPENROUTER_MODEL        default "meta-llama/llama-3.3-70b-instruct:free"
+ *   OPENAI_API_KEY          OpenAI key             (paid)
+ *   OPENAI_MODEL            default "gpt-4o-mini"
+ *   XAI_API_KEY             xAI Grok key           (paid)
+ *   XAI_MODEL               default "grok-2-latest"
  *
  * Both providers receive the SAME inputs:
  *   systemInstruction : string
@@ -34,6 +41,20 @@
  * and return a plain string. Each provider translates as needed.
  */
 const { GoogleGenAI } = require("@google/genai");
+
+// Hard cap per provider so one slow/hanging provider can't eat the Vercel 30s window.
+// Gemini gets slightly longer because the SDK may have internal startup overhead.
+const GEMINI_TIMEOUT_MS  = parseInt(process.env.LLM_TIMEOUT_GEMINI  || "10000", 10);
+const PROVIDER_TIMEOUT_MS = parseInt(process.env.LLM_TIMEOUT_PROVIDER || "8000",  10);
+
+function withTimeout(promise, ms, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms)
+    ),
+  ]);
+}
 
 // ─────────────────────────────────────────────────────────────────
 // PROVIDER: Google Gemini (via @google/genai SDK)
@@ -59,11 +80,11 @@ async function generateGeminiWith(apiKey, model, { systemInstruction, contents, 
   if (genConfig?.temperature != null) config.temperature = genConfig.temperature;
   if (genConfig?.maxOutputTokens)     config.maxOutputTokens = genConfig.maxOutputTokens;
 
-  const result = await ai.models.generateContent({
-    model,
-    contents,
-    config,
-  });
+  const result = await withTimeout(
+    ai.models.generateContent({ model, contents, config }),
+    GEMINI_TIMEOUT_MS,
+    `gemini(${model})`
+  );
 
   // ── ROBUST TEXT EXTRACTION ────────────────────────────────────
   // result.text is a getter that throws if the response has no text parts
@@ -141,14 +162,28 @@ async function generateOpenAICompatible({ providerName, apiKey, baseUrl, model, 
   const payload = { model, messages, temperature: genConfig?.temperature ?? 0.7 };
   if (genConfig?.maxOutputTokens) payload.max_tokens = genConfig.maxOutputTokens;
 
-  const res = await fetch(baseUrl, {
-    method:  "POST",
-    headers: {
-      "Content-Type":  "application/json",
-      "Authorization": `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(payload),
-  });
+  const controller = new AbortController();
+  const timeoutId  = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
+
+  let res;
+  try {
+    res = await fetch(baseUrl, {
+      method:  "POST",
+      headers: {
+        "Content-Type":  "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body:   JSON.stringify(payload),
+      signal: controller.signal,
+    });
+  } catch (fetchErr) {
+    clearTimeout(timeoutId);
+    const msg = fetchErr.name === "AbortError"
+      ? `${providerName} timed out after ${PROVIDER_TIMEOUT_MS}ms`
+      : `${providerName} fetch error: ${fetchErr.message}`;
+    throw new Error(msg);
+  }
+  clearTimeout(timeoutId);
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
@@ -233,6 +268,22 @@ async function generateOpenRouter(args) {
   });
 }
 
+// Mistral — FREE generous tier, no daily cap, OpenAI-compatible (console.mistral.ai).
+// Get a free key at: https://console.mistral.ai
+// Default model: mistral-small-latest (fast, capable, free tier).
+// Override via MISTRAL_MODEL env var.
+async function generateMistral(args) {
+  return generateOpenAICompatible({
+    providerName:      "mistral",
+    apiKey:            process.env.MISTRAL_API_KEY,
+    baseUrl:           "https://api.mistral.ai/v1/chat/completions",
+    model:             process.env.MISTRAL_MODEL || "mistral-small-latest",
+    systemInstruction: args.systemInstruction,
+    contents:          args.contents,
+    genConfig:         args.genConfig,
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────
 // FALLBACK CHAIN
 // ─────────────────────────────────────────────────────────────────
@@ -241,6 +292,7 @@ const PROVIDERS = {
   gemini2:    generateGemini2,
   groq:       generateGroq,
   cerebras:   generateCerebras,
+  mistral:    generateMistral,
   openrouter: generateOpenRouter,
   openai:     generateOpenAI,
   grok:       generateGrok,
@@ -250,7 +302,7 @@ async function generate({ systemInstruction, contents, providerOrder, genConfig 
   // Default order favours FREE providers first (gemini, groq), then paid.
   // An optional per-call providerOrder overrides the env order — used e.g. by
   // background summarization to prefer free non-Gemini providers and spare quota.
-  const order = (providerOrder || process.env.LLM_PROVIDER_ORDER || "gemini,gemini2,groq,cerebras,openrouter,openai,grok")
+  const order = (providerOrder || process.env.LLM_PROVIDER_ORDER || "gemini,gemini2,groq,cerebras,mistral,openrouter,openai,grok")
     .split(",")
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
