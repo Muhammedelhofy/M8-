@@ -5,16 +5,18 @@
  * about the underlying model(s). To change providers or priority: edit here only.
  *
  * MULTI-PROVIDER FALLBACK CHAIN
- * Default order: Gemini → Groq → Cerebras → OpenRouter → OpenAI → Grok (free first).
+ * Default order: Gemini → Gemini2 → Groq → Cerebras → OpenRouter → OpenAI → Grok (free first).
  * If a provider fails for ANY reason — 429 quota, safety block, empty
  * response, network, missing key — generate() tries the next provider.
  * A provider with no API key set throws immediately and is skipped, so
  * listing one in the order before you have its key is harmless.
  *
  * Configure via env:
- *   LLM_PROVIDER_ORDER   comma list, default "gemini,groq,cerebras,openrouter,openai,grok"
- *   GEMINI_API_KEY       Google Gemini key      (free tier)
+ *   LLM_PROVIDER_ORDER   comma list, default "gemini,gemini2,groq,cerebras,openrouter,openai,grok"
+ *   GEMINI_API_KEY       Google Gemini key      (free tier — personal account, primary)
  *   GEMINI_MODEL         default "gemini-1.5-flash"
+ *   GEMINI_API_KEY_2     2nd Gemini account key (separate free quota bucket — work account)
+ *   GEMINI_MODEL_2       default = GEMINI_MODEL
  *   GROQ_API_KEY         Groq key — FREE, console.groq.com (NOT xAI Grok)
  *   GROQ_MODEL           default "llama-3.3-70b-versatile"
  *   CEREBRAS_API_KEY     Cerebras key — FREE, cloud.cerebras.ai (fast Llama)
@@ -36,12 +38,10 @@ const { GoogleGenAI } = require("@google/genai");
 // ─────────────────────────────────────────────────────────────────
 // PROVIDER: Google Gemini (via @google/genai SDK)
 // ─────────────────────────────────────────────────────────────────
-async function generateGemini({ systemInstruction, contents }) {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY not set");
+async function generateGeminiWith(apiKey, model, { systemInstruction, contents }) {
+  if (!apiKey) throw new Error("Gemini API key not set");
 
-  const ai    = new GoogleGenAI({ apiKey });
-  const model = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+  const ai = new GoogleGenAI({ apiKey });
 
   const result = await ai.models.generateContent({
     model,
@@ -82,6 +82,24 @@ async function generateGemini({ systemInstruction, contents }) {
 
   const reason = blockReason ?? finishReason ?? "unknown";
   throw new Error(`Gemini returned no text. Reason: ${reason}`);
+}
+
+async function generateGemini(args) {
+  return generateGeminiWith(
+    process.env.GEMINI_API_KEY,
+    process.env.GEMINI_MODEL || "gemini-1.5-flash",
+    args
+  );
+}
+
+// Second Gemini account = separate free-tier quota bucket. Used when the
+// primary (personal) account hits its ~20/day cap, before falling to Groq.
+async function generateGemini2(args) {
+  return generateGeminiWith(
+    process.env.GEMINI_API_KEY_2,
+    process.env.GEMINI_MODEL_2 || process.env.GEMINI_MODEL || "gemini-1.5-flash",
+    args
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -196,6 +214,7 @@ async function generateOpenRouter(args) {
 // ─────────────────────────────────────────────────────────────────
 const PROVIDERS = {
   gemini:     generateGemini,
+  gemini2:    generateGemini2,
   groq:       generateGroq,
   cerebras:   generateCerebras,
   openrouter: generateOpenRouter,
@@ -207,7 +226,7 @@ async function generate({ systemInstruction, contents, providerOrder }) {
   // Default order favours FREE providers first (gemini, groq), then paid.
   // An optional per-call providerOrder overrides the env order — used e.g. by
   // background summarization to prefer free non-Gemini providers and spare quota.
-  const order = (providerOrder || process.env.LLM_PROVIDER_ORDER || "gemini,groq,cerebras,openrouter,openai,grok")
+  const order = (providerOrder || process.env.LLM_PROVIDER_ORDER || "gemini,gemini2,groq,cerebras,openrouter,openai,grok")
     .split(",")
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
