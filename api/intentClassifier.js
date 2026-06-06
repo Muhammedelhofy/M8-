@@ -23,6 +23,7 @@ const INTENT = {
   FACT_CHECK: "FACT_CHECK",
   LOOKUP:     "LOOKUP",
   LIVE_DATA:  "LIVE_DATA",
+  DOC:        "DOC",
 };
 
 // Personal/possessive queries → memory (NOT web search, NOT the knowledge router).
@@ -39,6 +40,13 @@ function classifyIntent(message) {
 
   // ── PERSONAL GUARD (runs before everything) ────────────────────
   if (isPersonal(m)) return INTENT.NONE;
+
+  // ── DOC (artifact generation: plans, briefs, decks, proposals) ──
+  const docPatterns = [
+    /\b(make|create|write|draft|build|generate|prepare|put together|design|give me|i need)\b.{0,40}\b(plan|brief|summary|report|deck|slides?|presentation|proposal|outline|document|memo|minutes|agenda|one[- ]?pager|action plan|checklist)\b/,
+    /\b(slide deck|pitch deck|power ?point)\b/,
+  ];
+  if (docPatterns.some((p) => p.test(m))) return INTENT.DOC;
 
   // ── FACT_CHECK ─────────────────────────────────────────────────
   // Binary yes/no questions about external events or current status

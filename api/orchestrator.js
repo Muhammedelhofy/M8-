@@ -20,6 +20,7 @@ const { search }                   = require("./search");
 const { classifyIntent, INTENT, isPersonal } = require("./intentClassifier");
 const { checkSpecificity, rewriteQuery, isArabic }   = require("./slots");
 const { decideAction }             = require("./router");
+const { generateArtifact }         = require("./docgen");
 
 // ─────────────────────────────────────────────────────────────────
 // SYSTEM PROMPT
@@ -148,6 +149,26 @@ async function orchestrate({ message, sessionId, history }) {
       }
     }
     trace.intent = intent;
+
+    // ── DOC: artifact generation (own pipeline — no search/analysis) ──
+    if (intent === INTENT.DOC) {
+      log("docgen_start");
+      try {
+        const memBlock = pastMemory.length
+          ? pastMemory.map((mm) => (mm.role === "summary" ? `• ${mm.content}` : `${mm.role === "assistant" ? "M8" : "Muhammad"}: ${mm.content}`)).join("\n")
+          : "";
+        const art = await generateArtifact({ message: effectiveMessage, history, memoryBlock: memBlock });
+        if (art && art.markdown) {
+          // Store metadata, not the whole file (per design).
+          await saveMemory(sessionId, message, `[Generated a ${art.title}: "${effectiveMessage.slice(0, 80)}"]`);
+          log("docgen_done", { artifact: art.artifact });
+          return art.markdown;
+        }
+      } catch (docErr) {
+        console.error("[M8] docgen error (non-fatal):", docErr.message);
+        // fall through to normal handling if generation fails
+      }
+    }
 
     let searchData = null;
 
