@@ -166,7 +166,7 @@ async function orchestrate({ message, sessionId, history }) {
         }
       } catch (docErr) {
         console.error("[M8] docgen error (non-fatal):", docErr.message);
-        // fall through to normal handling if generation fails
+        return "DOC_DIAG: " + (docErr && docErr.message ? docErr.message : String(docErr));
       }
     }
 
