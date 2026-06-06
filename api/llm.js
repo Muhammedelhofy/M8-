@@ -5,18 +5,22 @@
  * about the underlying model(s). To change providers or priority: edit here only.
  *
  * MULTI-PROVIDER FALLBACK CHAIN
- * Default order: Gemini → Groq → OpenAI → Grok (free providers first).
+ * Default order: Gemini → Groq → Cerebras → OpenRouter → OpenAI → Grok (free first).
  * If a provider fails for ANY reason — 429 quota, safety block, empty
  * response, network, missing key — generate() tries the next provider.
  * A provider with no API key set throws immediately and is skipped, so
  * listing one in the order before you have its key is harmless.
  *
  * Configure via env:
- *   LLM_PROVIDER_ORDER   comma list, default "gemini,groq,openai,grok"
+ *   LLM_PROVIDER_ORDER   comma list, default "gemini,groq,cerebras,openrouter,openai,grok"
  *   GEMINI_API_KEY       Google Gemini key      (free tier)
  *   GEMINI_MODEL         default "gemini-1.5-flash"
  *   GROQ_API_KEY         Groq key — FREE, console.groq.com (NOT xAI Grok)
  *   GROQ_MODEL           default "llama-3.3-70b-versatile"
+ *   CEREBRAS_API_KEY     Cerebras key — FREE, cloud.cerebras.ai (fast Llama)
+ *   CEREBRAS_MODEL       default "llama-3.3-70b"
+ *   OPENROUTER_API_KEY   OpenRouter key — FREE models available, openrouter.ai
+ *   OPENROUTER_MODEL     default "meta-llama/llama-3.3-70b-instruct:free"
  *   OPENAI_API_KEY       OpenAI key             (paid)
  *   OPENAI_MODEL         default "gpt-4o-mini"
  *   XAI_API_KEY          xAI Grok key           (paid)
@@ -161,19 +165,47 @@ async function generateGroq(args) {
   });
 }
 
+// Cerebras — FREE, extremely fast Llama inference, OpenAI-compatible (cloud.cerebras.ai).
+// Confirm the current model name in the Cerebras console and set CEREBRAS_MODEL.
+async function generateCerebras(args) {
+  return generateOpenAICompatible({
+    providerName:      "cerebras",
+    apiKey:            process.env.CEREBRAS_API_KEY,
+    baseUrl:           "https://api.cerebras.ai/v1/chat/completions",
+    model:             process.env.CEREBRAS_MODEL || "llama-3.3-70b",
+    systemInstruction: args.systemInstruction,
+    contents:          args.contents,
+  });
+}
+
+// OpenRouter — aggregator; one key → many models incl. free ":free" variants
+// (openrouter.ai). Default targets a free model; override via OPENROUTER_MODEL.
+async function generateOpenRouter(args) {
+  return generateOpenAICompatible({
+    providerName:      "openrouter",
+    apiKey:            process.env.OPENROUTER_API_KEY,
+    baseUrl:           "https://openrouter.ai/api/v1/chat/completions",
+    model:             process.env.OPENROUTER_MODEL || "meta-llama/llama-3.3-70b-instruct:free",
+    systemInstruction: args.systemInstruction,
+    contents:          args.contents,
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────
 // FALLBACK CHAIN
 // ─────────────────────────────────────────────────────────────────
 const PROVIDERS = {
-  gemini: generateGemini,
-  groq:   generateGroq,
-  openai: generateOpenAI,
-  grok:   generateGrok,
+  gemini:     generateGemini,
+  groq:       generateGroq,
+  cerebras:   generateCerebras,
+  openrouter: generateOpenRouter,
+  openai:     generateOpenAI,
+  grok:       generateGrok,
 };
 
 async function generate({ systemInstruction, contents }) {
   // Default order favours FREE providers first (gemini, groq), then paid.
-  const order = (process.env.LLM_PROVIDER_ORDER || "gemini,groq,openai,grok")
+  const order = (process.env.LLM_PROVIDER_ORDER || "gemini,groq,cerebras,openrouter,openai,grok")
     .split(",")
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
