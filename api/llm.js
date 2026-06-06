@@ -2,14 +2,41 @@
  * M8 LLM Adapter — api/llm.js
  *
  * Single provider interface. Orchestrator calls generate() and knows nothing
- * about the underlying model. To hot-swap providers: replace this file only.
+ * about the underlying model(s). To change providers or priority: edit here only.
  *
- * Current provider: Google Gemini (via @google/genai SDK)
+ * MULTI-PROVIDER FALLBACK CHAIN
+ * Default order: Gemini → Groq → OpenAI → Grok (free providers first).
+ * If a provider fails for ANY reason — 429 quota, safety block, empty
+ * response, network, missing key — generate() tries the next provider.
+ * A provider with no API key set throws immediately and is skipped, so
+ * listing one in the order before you have its key is harmless.
+ *
+ * Configure via env:
+ *   LLM_PROVIDER_ORDER   comma list, default "gemini,groq,openai,grok"
+ *   GEMINI_API_KEY       Google Gemini key      (free tier)
+ *   GEMINI_MODEL         default "gemini-1.5-flash"
+ *   GROQ_API_KEY         Groq key — FREE, console.groq.com (NOT xAI Grok)
+ *   GROQ_MODEL           default "llama-3.3-70b-versatile"
+ *   OPENAI_API_KEY       OpenAI key             (paid)
+ *   OPENAI_MODEL         default "gpt-4o-mini"
+ *   XAI_API_KEY          xAI Grok key           (paid)
+ *   XAI_MODEL            default "grok-2-latest"
+ *
+ * Both providers receive the SAME inputs:
+ *   systemInstruction : string
+ *   contents          : [{ role: "user"|"model", parts: [{ text }] }]
+ * and return a plain string. Each provider translates as needed.
  */
 const { GoogleGenAI } = require("@google/genai");
 
-async function generate({ systemInstruction, contents }) {
-  const ai    = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// ─────────────────────────────────────────────────────────────────
+// PROVIDER: Google Gemini (via @google/genai SDK)
+// ─────────────────────────────────────────────────────────────────
+async function generateGemini({ systemInstruction, contents }) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY not set");
+
+  const ai    = new GoogleGenAI({ apiKey });
   const model = process.env.GEMINI_MODEL || "gemini-1.5-flash";
 
   const result = await ai.models.generateContent({
@@ -27,33 +54,153 @@ async function generate({ systemInstruction, contents }) {
     const text = result.text;
     if (text && typeof text === "string") return text;
   } catch (textGetterErr) {
-    // Log the SDK getter error and fall through to manual extraction
-    console.error("[LLM] result.text threw:", textGetterErr.message);
+    console.error("[LLM] gemini result.text threw:", textGetterErr.message);
   }
 
   // Manual extraction — works across SDK versions
-  const candidate = result?.candidates?.[0];
+  const candidate    = result?.candidates?.[0];
   const finishReason = candidate?.finishReason;
   const blockReason  = result?.promptFeedback?.blockReason;
 
-  console.error("[LLM] Extracting text manually:", JSON.stringify({
+  console.error("[LLM] gemini extracting text manually:", JSON.stringify({
     model,
-    candidateCount:  result?.candidates?.length ?? 0,
-    finishReason:    finishReason ?? "none",
-    blockReason:     blockReason ?? "none",
-    hasParts:        !!candidate?.content?.parts?.length,
+    candidateCount: result?.candidates?.length ?? 0,
+    finishReason:   finishReason ?? "none",
+    blockReason:    blockReason ?? "none",
+    hasParts:       !!candidate?.content?.parts?.length,
   }));
 
-  // Try manual part extraction
-  const parts = candidate?.content?.parts ?? [];
+  const parts     = candidate?.content?.parts ?? [];
   const textParts = parts.filter((p) => typeof p.text === "string" && p.text.length > 0);
   if (textParts.length > 0) {
     return textParts.map((p) => p.text).join("");
   }
 
-  // Response was blocked or empty — throw with useful context
   const reason = blockReason ?? finishReason ?? "unknown";
   throw new Error(`Gemini returned no text. Reason: ${reason}`);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// PROVIDER: OpenAI-compatible (via fetch — no SDK dependency; Node 18+)
+// Shared by OpenAI and xAI Grok — both expose the same /chat/completions
+// schema, so only the base URL, key, and default model differ.
+// ─────────────────────────────────────────────────────────────────
+async function generateOpenAICompatible({ providerName, apiKey, baseUrl, model, systemInstruction, contents }) {
+  if (!apiKey) throw new Error(`${providerName} API key not set`);
+
+  // Translate Gemini-shaped inputs → OpenAI-style chat messages.
+  // model → assistant, user → user; systemInstruction → leading system message.
+  const messages = [];
+  if (systemInstruction) {
+    messages.push({ role: "system", content: systemInstruction });
+  }
+  for (const c of contents || []) {
+    const role = c.role === "model" ? "assistant" : "user";
+    const text = (c.parts || []).map((p) => p?.text || "").join("");
+    if (text) messages.push({ role, content: text });
+  }
+
+  const res = await fetch(baseUrl, {
+    method:  "POST",
+    headers: {
+      "Content-Type":  "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({ model, messages, temperature: 0.7 }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`${providerName} ${res.status}: ${body.slice(0, 300)}`);
+  }
+
+  const data = await res.json();
+  const text = data?.choices?.[0]?.message?.content;
+  if (!text || typeof text !== "string") {
+    throw new Error(`${providerName} returned no text`);
+  }
+  return text;
+}
+
+async function generateOpenAI(args) {
+  return generateOpenAICompatible({
+    providerName:      "openai",
+    apiKey:            process.env.OPENAI_API_KEY,
+    baseUrl:           "https://api.openai.com/v1/chat/completions",
+    model:             process.env.OPENAI_MODEL || "gpt-4o-mini",
+    systemInstruction: args.systemInstruction,
+    contents:          args.contents,
+  });
+}
+
+// xAI Grok — OpenAI-compatible endpoint. PAID API (console.x.ai).
+// NOTE: confirm the exact model string in your xAI console and set XAI_MODEL.
+// The "-latest" alias tracks the newest stable Grok; override if you want a pin.
+async function generateGrok(args) {
+  return generateOpenAICompatible({
+    providerName:      "grok",
+    apiKey:            process.env.XAI_API_KEY,
+    baseUrl:           "https://api.x.ai/v1/chat/completions",
+    model:             process.env.XAI_MODEL || "grok-2-latest",
+    systemInstruction: args.systemInstruction,
+    contents:          args.contents,
+  });
+}
+
+// Groq — FREE, fast, OpenAI-compatible (console.groq.com). NOT xAI's Grok.
+// Generous free tier running Llama models — ideal for stacking free quota.
+// Confirm the current model name in the Groq console and set GROQ_MODEL.
+async function generateGroq(args) {
+  return generateOpenAICompatible({
+    providerName:      "groq",
+    apiKey:            process.env.GROQ_API_KEY,
+    baseUrl:           "https://api.groq.com/openai/v1/chat/completions",
+    model:             process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+    systemInstruction: args.systemInstruction,
+    contents:          args.contents,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────
+// FALLBACK CHAIN
+// ─────────────────────────────────────────────────────────────────
+const PROVIDERS = {
+  gemini: generateGemini,
+  groq:   generateGroq,
+  openai: generateOpenAI,
+  grok:   generateGrok,
+};
+
+async function generate({ systemInstruction, contents }) {
+  // Default order favours FREE providers first (gemini, groq), then paid.
+  const order = (process.env.LLM_PROVIDER_ORDER || "gemini,groq,openai,grok")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+
+  const errors = [];
+  for (const name of order) {
+    const fn = PROVIDERS[name];
+    if (!fn) continue;
+
+    try {
+      const text = await fn({ systemInstruction, contents });
+      if (text && typeof text === "string") {
+        if (errors.length) {
+          console.warn(`[LLM] recovered via ${name} after failures: ${errors.join(" | ")}`);
+        }
+        return text;
+      }
+      errors.push(`${name}: empty response`);
+    } catch (err) {
+      console.error(`[LLM] provider ${name} failed:`, err.message);
+      errors.push(`${name}: ${err.message}`);
+      // fall through to next provider
+    }
+  }
+
+  // Every configured provider failed — let orchestrator catch and show fallback.
+  throw new Error(`All LLM providers failed → ${errors.join(" | ")}`);
 }
 
 module.exports = { generate };

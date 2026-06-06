@@ -97,7 +97,20 @@ async function orchestrate({ message, sessionId, history }) {
 
     // ── COMPOSE: STATIC TOP → DYNAMIC BOTTOM ─────────────────────
     log("compose_start");
-    let systemInstruction = M8_SYSTEM_PROMPT;
+
+    // TEMPORAL ANCHOR — without this the model has no idea what "now" is and
+    // will repeat stale projections as if current (e.g. "Metro projected for
+    // 2025" answered in 2026). Inject today's date so it can reason about
+    // whether dated info in the search results is past or future.
+    const today = new Date().toLocaleDateString("en-CA", {
+      timeZone: "Asia/Riyadh", year: "numeric", month: "long", day: "numeric", weekday: "long",
+    });
+    let systemInstruction =
+      `CURRENT DATE: Today is ${today} (Riyadh time). ` +
+      `Treat any date before today as the PAST. If a source describes something as ` +
+      `"projected", "planned", or "expected" for a date that has already passed, that ` +
+      `information is outdated — say so rather than presenting it as still upcoming.\n\n` +
+      M8_SYSTEM_PROMPT;
 
     if (pastMemory.length > 0) {
       const memoryBlock = pastMemory
