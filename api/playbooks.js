@@ -1,11 +1,18 @@
 /**
  * M8 Domain Playbooks — api/playbooks.js
  *
- * NOT separate agents — injectable EXPERTISE (per GPT/Grok/Gemini consensus).
- * When a domain is detected, its playbook (principles + frameworks + common
- * mistakes) is appended to the system prompt so the ONE brain reasons like an
- * expert. Deterministic, zero extra LLM calls, no new infrastructure.
+ * Injectable EXPERTISE (not agents). When a domain is detected, its playbook
+ * (principles + frameworks + common mistakes + "never invent" list) is appended
+ * to the system prompt so the ONE brain reasons like an expert.
+ *
+ * CORE RULE (unanimous team consensus): playbooks contribute REASONING, never
+ * AUTHORITY. A playbook tells M8 HOW to think — it is never a source of facts.
+ * Any concrete number/stat/rate/price must come from search or memory, else be
+ * hedged. The PLAYBOOK_GUARD below enforces this on every injected playbook.
  */
+
+const PLAYBOOK_GUARD =
+`PLAYBOOK RULE — the expertise below tells you HOW to reason; it is NOT a source of facts. Never state a concrete number, statistic, rate, price, or benchmark as fact unless it came from search results or memory. If you lack a verified figure, mark it a clear estimate ("roughly", "typically") or say you'd need to look it up — never invent precise data. Keep Principle (general) separate from Fact (verified) and My take (opinion).`;
 
 const PLAYBOOKS = {
   operations: {
@@ -17,7 +24,8 @@ const PLAYBOOKS = {
 - Fix utilisation of the EXISTING fleet before adding bikes.
 - Retention is cheaper than recruitment — learn why every churned driver left.
 - Tie every decision to a metric (deliveries/bike/day, net per active driver).
-- Common mistakes: scaling fleet before demand; vanity headcount; ignoring idle drivers; no payment reconciliation.`,
+- Common mistakes: scaling fleet before demand; vanity headcount; ignoring idle drivers; no payment reconciliation.
+- NEVER INVENT: utilisation %, earnings, market share, or benchmarks — use real fleet data/search or clearly qualify.`,
   },
 
   finance: {
@@ -29,7 +37,8 @@ const PLAYBOOKS = {
 - Split fixed vs variable cost; know the breakeven point.
 - Decide by expected value + downside + reversibility, not gut.
 - KSA context: factor Zakat where relevant. For binding tax/legal specifics, say it's not formal advice.
-- Common mistakes: confusing revenue with profit; ignoring cash timing; scaling a loss-maker; sunk-cost thinking.`,
+- Common mistakes: confusing revenue with profit; ignoring cash timing; scaling a loss-maker; sunk-cost thinking.
+- NEVER INVENT: returns, interest/inflation rates, prices, ROI figures, or market stats — fetch them or mark as estimate.`,
   },
 
   negotiation: {
@@ -41,7 +50,8 @@ const PLAYBOOKS = {
 - Trade, never just concede — get something for every give.
 - Address the interest behind the position; expand the pie before splitting it.
 - Silence is leverage; never negotiate against yourself.
-- Common mistakes: revealing your ceiling; no BATNA; reflexively splitting the difference; emotional anchoring.`,
+- Common mistakes: revealing your ceiling; no BATNA; reflexively splitting the difference; emotional anchoring.
+- NEVER INVENT: market rates, competitor prices, or "fair value" numbers — base them on search/data or label as rough.`,
   },
 
   youtube: {
@@ -52,7 +62,8 @@ const PLAYBOOKS = {
 - Packaging (title + thumbnail / CTR) drives clicks more than the video itself.
 - One clear idea per video; consistency beats perfection.
 - Read the retention graph and cut the dips.
-- Common mistakes: weak hooks; burying the value; inconsistent posting; chasing views over watch-time.`,
+- Common mistakes: weak hooks; burying the value; inconsistent posting; chasing views over watch-time.
+- NEVER INVENT: RPM, CPM, CTR benchmarks, or view/subscriber stats — fetch them or clearly qualify.`,
   },
 
   decision: {
@@ -63,7 +74,8 @@ const PLAYBOOKS = {
 - List options with expected value (upside × likelihood) AND the downside.
 - Weight by REVERSIBILITY: reversible → decide fast; irreversible → slow down and de-risk.
 - Name the key uncertainty — can you cheaply test it before committing?
-- Common mistakes: paralysis on reversible calls; ignoring the downside; evaluating only one option.`,
+- Common mistakes: paralysis on reversible calls; ignoring the downside; evaluating only one option.
+- NEVER INVENT: probabilities or figures — reason qualitatively unless you have real data.`,
   },
 
   islamic: {
@@ -74,17 +86,30 @@ const PLAYBOOKS = {
 - Reference the basis (Qur'an / Sunnah / consensus) at a general level — never fabricate rulings or citations.
 - You may give your understanding, but for a BINDING ruling on a personal situation, recommend a qualified scholar.
 - Be respectful and non-dismissive of the user's beliefs, including the unseen (e.g. jinn).
-- Common mistakes: issuing confident fatwas; flattening scholarly differences; condescension.`,
+- Common mistakes: issuing confident fatwas; flattening scholarly differences; condescension.
+- NEVER INVENT: hadith/Qur'an citations, specific rulings, or named scholarly positions.`,
   },
 };
 
-// First match wins; operations is checked first (Muhammad's core domain).
-function detectPlaybook(message) {
+// Detect up to `max` relevant domains (operations first = Muhammad's core).
+function detectPlaybooks(message, max = 2) {
   const m = message || "";
+  const hits = [];
   for (const domain of Object.keys(PLAYBOOKS)) {
-    if (PLAYBOOKS[domain].triggers.test(m)) return { domain, text: PLAYBOOKS[domain].text };
+    if (PLAYBOOKS[domain].triggers.test(m)) {
+      hits.push(domain);
+      if (hits.length >= max) break;
+    }
   }
-  return null;
+  return hits;
 }
 
-module.exports = { detectPlaybook, PLAYBOOKS };
+// Build the combined playbook context (guard + matched blocks) to inject.
+function buildPlaybookContext(message) {
+  const domains = detectPlaybooks(message);
+  if (domains.length === 0) return { domains: [], text: "" };
+  const blocks = domains.map((d) => PLAYBOOKS[d].text).join("\n\n");
+  return { domains, text: `${PLAYBOOK_GUARD}\n\n${blocks}` };
+}
+
+module.exports = { buildPlaybookContext, detectPlaybooks, PLAYBOOKS };

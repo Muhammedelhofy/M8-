@@ -21,7 +21,7 @@ const { classifyIntent, INTENT, isPersonal } = require("./intentClassifier");
 const { checkSpecificity, rewriteQuery, isArabic }   = require("./slots");
 const { decideAction }             = require("./router");
 const { generateArtifact }         = require("./docgen");
-const { detectPlaybook }           = require("./playbooks");
+const { buildPlaybookContext }     = require("./playbooks");
 
 // ─────────────────────────────────────────────────────────────────
 // SYSTEM PROMPT
@@ -291,11 +291,11 @@ async function orchestrate({ message, sessionId, history }) {
     }
     contents.push({ role: "user", parts: [{ text: message }] });
 
-    // ── DOMAIN PLAYBOOK: inject expert context if a domain is detected ──
-    const playbook = detectPlaybook(effectiveMessage);
-    if (playbook) {
-      systemInstruction += `\n\n${playbook.text}`;
-      log("playbook", { domain: playbook.domain });
+    // ── DOMAIN PLAYBOOKS: inject expert context (+ anti-fabrication guard) ──
+    const pb = buildPlaybookContext(effectiveMessage);
+    if (pb.text) {
+      systemInstruction += `\n\n${pb.text}`;
+      log("playbook", { domains: pb.domains });
     }
 
     // ── EXECUTE ──────────────────────────────────────────────────
