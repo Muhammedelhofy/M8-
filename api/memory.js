@@ -26,7 +26,7 @@ const SUMMARY_ROW_THRESHOLD = parseInt(process.env.SUMMARY_ROW_THRESHOLD || "10"
 
 // Summaries are background work — prefer FREE non-Gemini providers so the
 // scarce Gemini daily quota stays available for live user turns.
-const SUMMARY_PROVIDER_ORDER = process.env.SUMMARY_PROVIDER_ORDER || "groq,cerebras,openrouter,gemini";
+const SUMMARY_PROVIDER_ORDER = process.env.SUMMARY_PROVIDER_ORDER || "groq,cerebras,mistral,openrouter,gemini2,gemini";
 
 // ─────────────────────────────────────────────────────────────────
 // KEYWORD ENGINE
