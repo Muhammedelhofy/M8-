@@ -21,6 +21,20 @@ function getClient() {
   return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 }
 
+// Observability: log each summarization OUTCOME so failures are visible, not
+// silent. Non-fatal + tolerant of the summary_runs table not existing yet.
+async function logSummaryRun(supabase, fields) {
+  try {
+    await (supabase || getClient()).from("summary_runs").insert([{
+      session_id:  fields.session_id ?? null,
+      status:      fields.status ?? null,
+      new_rows:    fields.new_rows ?? null,
+      facts_count: fields.facts_count ?? null,
+      error:       fields.error ? String(fields.error).slice(0, 300) : null,
+    }]);
+  } catch (_) { /* table may not exist yet — never block summarization */ }
+}
+
 // How many NEW raw rows must accumulate before we (re)summarize a session.
 const SUMMARY_ROW_THRESHOLD = parseInt(process.env.SUMMARY_ROW_THRESHOLD || "10", 10);
 
@@ -282,6 +296,7 @@ async function summarizeSession(sessionId) {
     const parsed = parseJsonLoose(out);
     if (!parsed || !parsed.summary) {
       console.error("[M8] summarize: unparseable summary output");
+      await logSummaryRun(supabase, { session_id: sessionId, status: "parse_failed", new_rows: newRows });
       return { status: "parse_failed" };
     }
 
@@ -320,10 +335,40 @@ async function summarizeSession(sessionId) {
     }
 
     console.log(`[M8] summarized session ${sessionId}: ${newRows} new rows, ${metadata.facts.length} facts`);
+    await logSummaryRun(supabase, { session_id: sessionId, status: "success", new_rows: newRows, facts_count: metadata.facts.length });
     return { status: "summarized", newRows, facts: metadata.facts.length };
   } catch (err) {
     console.error("[M8] summarizeSession error (non-fatal):", err.message);
+    await logSummaryRun(null, { session_id: sessionId, status: "error", error: err.message });
     return { status: "error", error: err.message };
+  }
+}
+
+/**
+ * Self-heal sweep (for the daily cron): re-run summarizeSession on recent
+ * sessions. summarizeSession self-gates (skips below-threshold / already-done),
+ * so this only actually summarizes sessions that are stuck. Bounded.
+ */
+async function sweepStuckSessions(maxSessions = 8) {
+  try {
+    const supabase = getClient();
+    const since = new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString();
+    const { data } = await supabase
+      .from("m8_conversations")
+      .select("session_id")
+      .in("role", ["user", "assistant"])
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(500);
+    const sessions = [...new Set((data || []).map((r) => r.session_id))].slice(0, maxSessions);
+    const results = [];
+    for (const sid of sessions) {
+      const r = await summarizeSession(sid);
+      results.push({ sid, status: r?.status });
+    }
+    return { swept: sessions.length, results };
+  } catch (e) {
+    return { error: e.message };
   }
 }
 
@@ -339,5 +384,6 @@ module.exports = {
   recallMemory,
   saveMemory,
   summarizeSession,
+  sweepStuckSessions,
   semanticRecall,
 };

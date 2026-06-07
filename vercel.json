@@ -3,6 +3,10 @@
     { "source": "/api/(.*)", "destination": "/api/$1" }
   ],
   "functions": {
-    "api/chat.js": { "maxDuration": 30 }
-  }
+    "api/chat.js": { "maxDuration": 30 },
+    "api/cron-summarize.js": { "maxDuration": 60 }
+  },
+  "crons": [
+    { "path": "/api/cron-summarize", "schedule": "0 2 * * *" }
+  ]
 }

@@ -89,6 +89,45 @@ const PLAYBOOKS = {
 - Common mistakes: issuing confident fatwas; flattening scholarly differences; condescension.
 - NEVER INVENT: hadith/Qur'an citations, specific rulings, or named scholarly positions.`,
   },
+
+  recruitment: {
+    triggers: /\b(hire|hiring|recruit\w*|candidates?|interview\w*|screening|onboard\w*|talent|applicants?|staffing|job (post|ad))\b/i,
+    text:
+`RECRUITMENT PLAYBOOK:
+- Define the role's must-have OUTCOMES before sourcing — hire for the result, not the CV.
+- Widen the top of funnel (referrals, local hubs, social), then screen ruthlessly for the 2-3 non-negotiables.
+- Speed wins talent: short time-to-offer; slow processes lose the best people.
+- Structure interviews (same questions + scorecard) to cut bias and gut-calls.
+- Onboarding is part of hiring — a fast, clear first week drives retention.
+- Common mistakes: vague role specs; hiring on likability; slow process; no track-record check; no onboarding.
+- NEVER INVENT: salary benchmarks, market pay rates, or applicant numbers — verify or clearly qualify.`,
+  },
+
+  sales: {
+    triggers: /\b(sales|selling|sell\b|clients?|business development|\bbd\b|pipeline|leads?|prospect\w*|acquire (customers|clients)|grow revenue|outreach|cold (call|email)|partnerships?)\b/i,
+    text:
+`SALES / BUSINESS-DEVELOPMENT PLAYBOOK:
+- Sell outcomes and ROI, not features — lead with the buyer's problem.
+- Qualify hard (budget, authority, need, timing) before investing time.
+- Work the pipeline by stage; always know the next step and a target close date.
+- Make the ask, then follow up persistently — most deals die from silence, not "no".
+- Build trust for repeat + referral business, not one-off wins.
+- Common mistakes: pitching before qualifying; talking more than listening; no follow-up; chasing unqualified leads.
+- NEVER INVENT: conversion rates, deal sizes, or market figures — base on data/search or label as rough.`,
+  },
+
+  project: {
+    triggers: /\b(projects?|roadmap|milestones?|deadlines?|deliverables?|sprint|execution|delegate|prioriti[sz]e|kickoff|scope creep|gantt|timeline)\b/i,
+    text:
+`PROJECT-MANAGEMENT PLAYBOOK:
+- Start from the outcome + a hard deadline; work backwards into milestones.
+- One owner per task, a due date, and a clear "done" definition — no orphan tasks.
+- Prioritise by impact × urgency; cut or defer the rest (guard against scope creep).
+- Short feedback loops: weekly check-ins, unblock fast, surface risks early.
+- Delegate outcomes, not steps — and follow up on what you delegate.
+- Common mistakes: no single owner; vague "done"; scope creep; no risk plan; over-planning instead of shipping.
+- NEVER INVENT: effort estimates or costs as fact — present them as estimates to refine.`,
+  },
 };
 
 // Detect up to `max` relevant domains (operations first = Muhammad's core).
