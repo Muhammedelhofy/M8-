@@ -2,7 +2,7 @@
  * M8 Chat Endpoint — POST /api/chat
  * Thin HTTP handler only. All logic lives in orchestrator.js.
  */
-const { orchestrate } = require("./orchestrator");
+const { orchestrate } = require("../lib/orchestrator");
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");

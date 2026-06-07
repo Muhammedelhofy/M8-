@@ -4,7 +4,7 @@
  * that are stuck (summarizeSession self-gates, so it only acts on real gaps).
  * Catches sessions abandoned before their summary succeeded.
  */
-const { sweepStuckSessions } = require("./memory");
+const { sweepStuckSessions } = require("../lib/memory");
 
 module.exports = async function handler(req, res) {
   // Optional protection: if CRON_SECRET is set, require it (Vercel cron sends it).
