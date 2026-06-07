@@ -13,7 +13,7 @@
 const {
   decodeHistory, missionControl, renderPacket, isFleetQuery, periodSortKey,
   resolveTarget, parseRequestedDate, recentlyDiscussedFleet,
-  resolveRange, rollup, rangeRef, extractDates,
+  resolveRange, rollup, rangeRef, extractDates, dayMetrics,
 } = require("../lib/fleet");
 
 // ── helpers: mirror index.html packDriver (omit zeros/empties) ────────────────
@@ -120,6 +120,14 @@ eq("rollup: dailyBreakdown has 4 entries", rngRoll.dailyBreakdown.length, 4);
 check("rangeRef: 'daily breakdown' → true (sticks as follow-up)", rangeRef("can you get me a daily breakdown"));
 const bd = resolveRange("give me a daily breakdown", entries);
 check("resolveRange: 'daily breakdown' (no dates) → last 7, perDay", bd.indices.length === 7 && bd.perDay === true);
+
+// 1e) active-only totals — an inactive driver who earned (tip/campaign) must NOT count
+const mixedEntry = { period: "1 Jun 2026", drivers: [
+  { name: "A", isActive: true,  netEarnings: 100, orders: 5, grossEarnings: 140 },
+  { name: "B", isActive: false, netEarnings: 50,  orders: 0, grossEarnings: 60 },  // earned but inactive
+]};
+eq("dayMetrics: net active-only (100 not 150)", dayMetrics(mixedEntry).net, 100);
+eq("dayMetrics: gross active-only (140 not 200)", dayMetrics(mixedEntry).gross, 140);
 
 // 2) mission control (target = the synthetic latest day, 27 May, index 7)
 const mc = missionControl(entries, resolveTarget("how did the fleet do", entries).index);
