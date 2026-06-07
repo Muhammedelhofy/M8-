@@ -12,7 +12,7 @@
 
 const {
   decodeHistory, missionControl, renderPacket, isFleetQuery, periodSortKey,
-  resolveTarget, parseRequestedDate,
+  resolveTarget, parseRequestedDate, recentlyDiscussedFleet,
 } = require("../lib/fleet");
 
 // ── helpers: mirror index.html packDriver (omit zeros/empties) ────────────────
@@ -132,9 +132,16 @@ eq("legacy: decodes + sorts", legacy.map((e) => e.period).join(","), "01 Jun 202
 // 6) intent gate
 check("intent: 'how did my fleet do' → true", isFleetQuery("how did my fleet do yesterday"));
 check("intent: 'top earner this week' → true", isFleetQuery("who was the top earner this week"));
+check("intent: 'net earning' (singular) → true", isFleetQuery("what is the net earning on the 5th of june"));
 check("intent: Arabic 'الأسطول' → true", isFleetQuery("كيف كان أداء الأسطول"));
 check("intent: 'weather in riyadh' → false", !isFleetQuery("weather in riyadh tomorrow"));
+check("intent: 'Tesla earnings' → false (not fleet-flavoured)", !isFleetQuery("what were tesla earnings last quarter"));
 check("intent: empty → false", !isFleetQuery(""));
+
+// follow-up stickiness: bare date + recent fleet history
+const fleetHist = [{ role: "user", content: "net earnings June 6" }, { role: "assistant", content: "Net earnings were 2,993 SAR for the fleet." }];
+check("followup: bare date follows fleet history", !isFleetQuery("what about the 4th of june?") && !!parseRequestedDate("what about the 4th of june?", 2026) && recentlyDiscussedFleet(fleetHist));
+check("followup: no fleet history → not sticky", !recentlyDiscussedFleet([{ role: "user", content: "what's the weather" }]));
 
 console.log("=".repeat(72));
 console.log(`\nResults: ${passed}/${passed + failed} passed`);
