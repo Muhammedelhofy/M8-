@@ -56,7 +56,7 @@ Rules:
     systemInstruction: system,
     contents: [{ role: "user", parts: [{ text: userMsg }] }],
     providerOrder: process.env.DOC_PROVIDER_ORDER || "gemini,gemini2,groq,cerebras,openrouter",
-    genConfig: { temperature: 0.5, maxOutputTokens: 1800 },
+    genConfig: { temperature: 0.5, maxOutputTokens: 3000 },
   });
 
   return { artifact: key, type: tpl.type, title: tpl.title, markdown };
