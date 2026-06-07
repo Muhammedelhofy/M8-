@@ -90,21 +90,21 @@ async function recallMemory(currentSessionId, currentMessage = "", limit = 6) {
     // Tier 1 — current canonical facts (uncapped by recency).
     const factsRes = await supabase
       .from("m8_conversations")
-      .select("id, role, content, importance, memory_type")
+      .select("id, role, content, importance, memory_type, created_at")
       .neq("session_id", currentSessionId)
       .eq("is_current", true)
       .in("memory_type", ["profile", "operational"])
-      .order("id", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(20);
     const facts = factsRes.data || [];
 
     // Tier 2 — recent pool (summaries + raw), excluding the canonical facts.
     const poolRes = await supabase
       .from("m8_conversations")
-      .select("id, role, content, importance, memory_type")
+      .select("id, role, content, importance, memory_type, created_at")
       .neq("session_id", currentSessionId)
       .eq("is_current", true)
-      .order("id", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(120);
     const pool = (poolRes.data || []).filter(
       (r) => r.memory_type !== "profile" && r.memory_type !== "operational"
@@ -123,14 +123,14 @@ async function recallMemory(currentSessionId, currentMessage = "", limit = 6) {
           return { ...row, _score: relevanceScore(row.content, keywords) * typeWeight + imp * 2 };
         })
         .filter((row) => row._score > 0)
-        .sort((a, b) => (b._score - a._score) || (b.id - a.id)) // recency breaks ties
+        .sort((a, b) => (b._score - a._score) || (new Date(b.created_at) - new Date(a.created_at))) // recency breaks ties
         .slice(0, limit);
     }
 
     // Merge facts + scored pool, dedupe by id, return in chronological order.
     const byId = new Map();
     for (const r of [...facts, ...scoredPool]) byId.set(r.id, r);
-    return [...byId.values()].sort((a, b) => a.id - b.id);
+    return [...byId.values()].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
   } catch (err) {
     console.error("Memory recall error (non-fatal):", err.message);
     return [];
@@ -243,13 +243,13 @@ async function summarizeSession(sessionId) {
     // Raw turns for this session, oldest first.
     const rawRes = await supabase
       .from("m8_conversations")
-      .select("id, role, content")
+      .select("id, role, content, created_at")
       .eq("session_id", sessionId)
       .in("role", ["user", "assistant"])
-      .order("id", { ascending: true });
+      .order("created_at", { ascending: true });
     const raw = rawRes.data || [];
     if (raw.length === 0) return { status: "empty" };
-    const maxRawId = raw[raw.length - 1].id;
+    const lastCreatedAt = raw[raw.length - 1].created_at;
 
     // Last summary marker for this session.
     const markRes = await supabase
@@ -259,12 +259,13 @@ async function summarizeSession(sessionId) {
       .eq("role", "summary")
       .eq("memory_type", "session")
       .eq("is_current", true)
-      .order("id", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(1);
     const lastSummary = markRes.data?.[0];
-    const lastRowId   = lastSummary?.metadata?.last_row_id || 0;
+    const lastAt      = lastSummary?.metadata?.last_summarized_at || "";
 
-    const newRows = raw.filter((r) => r.id > lastRowId).length;
+    // NOTE: id is a UUID (not numeric) — order/compare by created_at (sortable ISO).
+    const newRows = raw.filter((r) => r.created_at > lastAt).length;
     if (newRows < SUMMARY_ROW_THRESHOLD) return { status: "below_threshold", newRows };
 
     // Build transcript and compress.
@@ -286,11 +287,10 @@ async function summarizeSession(sessionId) {
 
     const importance = Math.min(3, Math.max(1, parseInt(parsed.importance, 10) || 2));
     const metadata = {
-      entities:      Array.isArray(parsed.entities) ? parsed.entities.slice(0, 30) : [],
-      facts:         Array.isArray(parsed.facts) ? parsed.facts : [],
-      session_start: raw[0].id,
-      session_end:   maxRawId,
-      last_row_id:   maxRawId,
+      entities:           Array.isArray(parsed.entities) ? parsed.entities.slice(0, 30) : [],
+      facts:              Array.isArray(parsed.facts) ? parsed.facts : [],
+      session_start:      raw[0].created_at,
+      last_summarized_at: lastCreatedAt,
     };
 
     // One current session summary per session: supersede the prior one.
