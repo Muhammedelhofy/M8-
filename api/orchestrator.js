@@ -21,6 +21,7 @@ const { classifyIntent, INTENT, isPersonal } = require("./intentClassifier");
 const { checkSpecificity, rewriteQuery, isArabic }   = require("./slots");
 const { decideAction }             = require("./router");
 const { generateArtifact }         = require("./docgen");
+const { detectPlaybook }           = require("./playbooks");
 
 // ─────────────────────────────────────────────────────────────────
 // SYSTEM PROMPT
@@ -289,6 +290,13 @@ async function orchestrate({ message, sessionId, history }) {
       contents.shift();
     }
     contents.push({ role: "user", parts: [{ text: message }] });
+
+    // ── DOMAIN PLAYBOOK: inject expert context if a domain is detected ──
+    const playbook = detectPlaybook(effectiveMessage);
+    if (playbook) {
+      systemInstruction += `\n\n${playbook.text}`;
+      log("playbook", { domain: playbook.domain });
+    }
 
     // ── EXECUTE ──────────────────────────────────────────────────
     log("llm_start");
