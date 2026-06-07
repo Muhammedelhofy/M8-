@@ -60,6 +60,9 @@ async function generateGeminiWith(apiKey, model, { systemInstruction, contents, 
   };
   if (genConfig?.temperature != null) config.temperature = genConfig.temperature;
   if (genConfig?.maxOutputTokens)     config.maxOutputTokens = genConfig.maxOutputTokens;
+  // 2.5-flash "thinking" eats maxOutputTokens (caused truncation) + adds latency/cost.
+  // Default OFF (0); override with GEMINI_THINKING_BUDGET if deep reasoning needs it.
+  config.thinkingConfig = { thinkingBudget: process.env.GEMINI_THINKING_BUDGET ? parseInt(process.env.GEMINI_THINKING_BUDGET, 10) : 0 };
 
   const result = await ai.models.generateContent({
     model,
