@@ -12,6 +12,7 @@
 
 const {
   decodeHistory, missionControl, renderPacket, isFleetQuery, periodSortKey,
+  resolveTarget, parseRequestedDate,
 } = require("../lib/fleet");
 
 // ── helpers: mirror index.html packDriver (omit zeros/empties) ────────────────
@@ -83,9 +84,17 @@ check("sort: strictly ascending", entries.every((e, i) => i === 0 || periodSortK
 eq("decode: driver key map (ne→netEarnings)", entries[7].drivers[0].netEarnings, 300);
 eq("decode: inactive driver flagged", entries[7].drivers[2].isActive, false);
 
-// 2) mission control
-const mc = missionControl(entries);
-eq("mc: period = latest day", mc.period, "27 May 2026");
+// 1b) date resolution (all synthetic days are < today, so no-date → latest = 27 May)
+eq("resolveTarget: no date → most recent completed day (27 May)", resolveTarget("how did the fleet do", entries).index, 7);
+eq("resolveTarget: explicit '20 may' → that day", resolveTarget("net on 20 may", entries).index, 0);
+eq("resolveTarget: unknown date → not found", resolveTarget("net on 1 jan 2020", entries).found, false);
+eq("parseRequestedDate: 'june 6' → m5 d6", (() => { const r = parseRequestedDate("net june 6", 2026); return `${r.m}-${r.d}`; })(), "5-6");
+eq("parseRequestedDate: '6th of june' → m5 d6", (() => { const r = parseRequestedDate("the 6th of june", 2026); return `${r.m}-${r.d}`; })(), "5-6");
+eq("parseRequestedDate: 'yesterday' → rel", (parseRequestedDate("how did we do yesterday", 2026) || {}).rel, "yesterday");
+
+// 2) mission control (target = the synthetic latest day, 27 May, index 7)
+const mc = missionControl(entries, resolveTarget("how did the fleet do", entries).index);
+eq("mc: period = target day", mc.period, "27 May 2026");
 eq("mc: net = 500", mc.fleet.net, 500);
 eq("mc: gross = 680", mc.fleet.gross, 680);
 eq("mc: orders = 52", mc.fleet.orders, 52);
