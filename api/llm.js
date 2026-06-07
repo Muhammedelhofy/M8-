@@ -12,7 +12,7 @@
  * listing one in the order before you have its key is harmless.
  *
  * Configure via env:
- *   LLM_PROVIDER_ORDER   comma list, default "gemini,gemini2,groq,cerebras,openrouter,openai,grok"
+ *   LLM_PROVIDER_ORDER   comma list, default "gemini,gemini2,groq,cerebras,openrouter,mistral,openai,grok"
  *   GEMINI_API_KEY       Google Gemini key      (free tier — personal account, primary)
  *   GEMINI_MODEL         default "gemini-1.5-flash"
  *   GEMINI_API_KEY_2     2nd Gemini account key (separate free quota bucket — work account)
@@ -23,6 +23,8 @@
  *   CEREBRAS_MODEL       default "llama3.3-70b"  (Cerebras naming: no hyphen after 'llama')
  *   OPENROUTER_API_KEY   OpenRouter key — FREE models available, openrouter.ai
  *   OPENROUTER_MODEL     default "meta-llama/llama-3.3-70b-instruct:free"
+ *   MISTRAL_API_KEY      Mistral key — FREE tier, console.mistral.ai
+ *   MISTRAL_MODEL        default "mistral-small-latest"
  *   OPENAI_API_KEY       OpenAI key             (paid)
  *   OPENAI_MODEL         default "gpt-4o-mini"
  *   XAI_API_KEY          xAI Grok key           (paid)
@@ -233,6 +235,19 @@ async function generateOpenRouter(args) {
   });
 }
 
+// Mistral La Plateforme — FREE tier, OpenAI-compatible (api.mistral.ai).
+async function generateMistral(args) {
+  return generateOpenAICompatible({
+    providerName:      "mistral",
+    apiKey:            process.env.MISTRAL_API_KEY,
+    baseUrl:           "https://api.mistral.ai/v1/chat/completions",
+    model:             process.env.MISTRAL_MODEL || "mistral-small-latest",
+    systemInstruction: args.systemInstruction,
+    contents:          args.contents,
+    genConfig:         args.genConfig,
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────
 // FALLBACK CHAIN
 // ─────────────────────────────────────────────────────────────────
@@ -242,6 +257,7 @@ const PROVIDERS = {
   groq:       generateGroq,
   cerebras:   generateCerebras,
   openrouter: generateOpenRouter,
+  mistral:    generateMistral,
   openai:     generateOpenAI,
   grok:       generateGrok,
 };
@@ -250,7 +266,7 @@ async function generate({ systemInstruction, contents, providerOrder, genConfig 
   // Default order favours FREE providers first (gemini, groq), then paid.
   // An optional per-call providerOrder overrides the env order — used e.g. by
   // background summarization to prefer free non-Gemini providers and spare quota.
-  const order = (providerOrder || process.env.LLM_PROVIDER_ORDER || "gemini,gemini2,groq,cerebras,openrouter,openai,grok")
+  const order = (providerOrder || process.env.LLM_PROVIDER_ORDER || "gemini,gemini2,groq,cerebras,openrouter,mistral,openai,grok")
     .split(",")
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
