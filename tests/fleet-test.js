@@ -103,6 +103,10 @@ eq("rollup: net = 6×400 + 500 = 2900", wkRoll.net, 2900);    // days 21-27 May
 eq("rollup: 7 days", wkRoll.days, 7);
 eq("rollup: best day = 27 May (500)", `${wkRoll.best.period}:${wkRoll.best.net}`, "27 May 2026:500");
 eq("rollup: top performer is Ahmed", wkRoll.top[0].name, "Ahmed");
+const r3 = rollup(entries, resolveRange("last 3 days", entries).indices, "the last 3 days");
+eq("rollup: 'last 3 days' net = 1300 (400+400+500)", r3.net, 1300);
+eq("rollup: period-over-period +8% (1300 vs prior 1200)", r3.netVsPrevPct, 8);
+eq("rollup: 'this week' prior-window too short → null", wkRoll.netVsPrevPct, null);
 
 // 2) mission control (target = the synthetic latest day, 27 May, index 7)
 const mc = missionControl(entries, resolveTarget("how did the fleet do", entries).index);
@@ -117,6 +121,9 @@ eq("mc: avg acceptance 80%", mc.fleet.avgAccept, 80);    // (95+65)/2
 eq("mc: avg utilisation 68%", mc.fleet.avgUtil, 68);     // (80+55)/2
 eq("mc: trend +25% vs trailing", mc.trend.netVsTrailPct, 25);  // 500 vs 400
 eq("mc: trailing window = 7 days", mc.trend.trailingDays, 7);
+eq("mc: day-over-day +25% (500 vs 400)", mc.trend.dayOverDayPct, 25);
+eq("mc: no dropped regulars (Ahmed/Basma worked)", mc.anomalies.droppedRegulars.length, 0);
+eq("mc: no net-drop alert (positive trend)", mc.anomalies.netDropAlert, null);
 
 // 3) ranking + attention
 eq("rank: top earner Ahmed", mc.top[0].name, "Ahmed");
