@@ -13,7 +13,7 @@
 const {
   decodeHistory, missionControl, renderPacket, isFleetQuery, periodSortKey,
   resolveTarget, parseRequestedDate, recentlyDiscussedFleet,
-  resolveRange, rollup, rangeRef,
+  resolveRange, rollup, rangeRef, extractDates,
 } = require("../lib/fleet");
 
 // ── helpers: mirror index.html packDriver (omit zeros/empties) ────────────────
@@ -107,6 +107,19 @@ const r3 = rollup(entries, resolveRange("last 3 days", entries).indices, "the la
 eq("rollup: 'last 3 days' net = 1300 (400+400+500)", r3.net, 1300);
 eq("rollup: period-over-period +8% (1300 vs prior 1200)", r3.netVsPrevPct, 8);
 eq("rollup: 'this week' prior-window too short → null", wkRoll.netVsPrevPct, null);
+
+// 1d) explicit date ranges + daily breakdown
+eq("extractDates: 'from 21 may to 24 may' → 2 dates", extractDates("net from 21 may to 24 may", { y: 2026, m: 4 }).length, 2);
+eq("extractDates: 'day 4 and day 5' (bare) → 2 dates", extractDates("breakdown day 4 and day 5", { y: 2026, m: 4 }).length, 2);
+const rng = resolveRange("net from 21 may to 24 may", entries);
+eq("resolveRange: explicit range → 4 days (21-24 May)", rng.indices.length, 4);
+check("resolveRange: explicit range → perDay", rng.perDay === true);
+const rngRoll = rollup(entries, rng.indices, rng.label, { perDay: rng.perDay });
+eq("rollup: explicit range net = 4×400 = 1600", rngRoll.net, 1600);
+eq("rollup: dailyBreakdown has 4 entries", rngRoll.dailyBreakdown.length, 4);
+check("rangeRef: 'daily breakdown' → true (sticks as follow-up)", rangeRef("can you get me a daily breakdown"));
+const bd = resolveRange("give me a daily breakdown", entries);
+check("resolveRange: 'daily breakdown' (no dates) → last 7, perDay", bd.indices.length === 7 && bd.perDay === true);
 
 // 2) mission control (target = the synthetic latest day, 27 May, index 7)
 const mc = missionControl(entries, resolveTarget("how did the fleet do", entries).index);
