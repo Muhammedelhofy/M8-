@@ -13,6 +13,7 @@
 const {
   decodeHistory, missionControl, renderPacket, isFleetQuery, periodSortKey,
   resolveTarget, parseRequestedDate, recentlyDiscussedFleet,
+  resolveRange, rollup, rangeRef,
 } = require("../lib/fleet");
 
 // ── helpers: mirror index.html packDriver (omit zeros/empties) ────────────────
@@ -91,6 +92,17 @@ eq("resolveTarget: unknown date → not found", resolveTarget("net on 1 jan 2020
 eq("parseRequestedDate: 'june 6' → m5 d6", (() => { const r = parseRequestedDate("net june 6", 2026); return `${r.m}-${r.d}`; })(), "5-6");
 eq("parseRequestedDate: '6th of june' → m5 d6", (() => { const r = parseRequestedDate("the 6th of june", 2026); return `${r.m}-${r.d}`; })(), "5-6");
 eq("parseRequestedDate: 'yesterday' → rel", (parseRequestedDate("how did we do yesterday", 2026) || {}).rel, "yesterday");
+
+// 1c) multi-day rollups (8 synthetic complete days; latest=27 May net 500, others net 400)
+check("rangeRef: 'this week' → true", rangeRef("how did the fleet do this week"));
+check("rangeRef: 'on the 6th' → false", !rangeRef("net on the 6th of june"));
+const wk = resolveRange("how did we do this week", entries);
+eq("resolveRange: 'this week' → 7 days", wk.indices.length, 7);
+const wkRoll = rollup(entries, wk.indices, wk.label);
+eq("rollup: net = 6×400 + 500 = 2900", wkRoll.net, 2900);    // days 21-27 May
+eq("rollup: 7 days", wkRoll.days, 7);
+eq("rollup: best day = 27 May (500)", `${wkRoll.best.period}:${wkRoll.best.net}`, "27 May 2026:500");
+eq("rollup: top performer is Ahmed", wkRoll.top[0].name, "Ahmed");
 
 // 2) mission control (target = the synthetic latest day, 27 May, index 7)
 const mc = missionControl(entries, resolveTarget("how did the fleet do", entries).index);
