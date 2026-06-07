@@ -13,7 +13,7 @@
 const {
   decodeHistory, missionControl, renderPacket, isFleetQuery, periodSortKey,
   resolveTarget, parseRequestedDate, recentlyDiscussedFleet,
-  resolveRange, rollup, rangeRef, extractDates, dayMetrics,
+  resolveRange, rollup, rangeRef, extractDates, dayMetrics, driverCandidate, findDriver,
 } = require("../lib/fleet");
 
 // ── helpers: mirror index.html packDriver (omit zeros/empties) ────────────────
@@ -128,6 +128,13 @@ const mixedEntry = { period: "1 Jun 2026", drivers: [
 ]};
 eq("dayMetrics: net active-only (100 not 150)", dayMetrics(mixedEntry).net, 100);
 eq("dayMetrics: gross active-only (140 not 200)", dayMetrics(mixedEntry).gross, 140);
+
+// 1f) single-driver lookup (anti-fabrication)
+eq("driverCandidate: 'what about Ahmed' → Ahmed", driverCandidate("what about Ahmed"), "Ahmed");
+eq("driverCandidate: 'what about the weather' → null", driverCandidate("what about the weather"), null);
+eq("findDriver: 'Ahmed' on 27 May → net 300", findDriver(entries[7], "Ahmed").netEarnings, 300);
+eq("findDriver: 'Basma' → net 200", findDriver(entries[7], "Basma").netEarnings, 200);
+check("findDriver: unknown name → null (no fabrication)", findDriver(entries[7], "Habib") === null);
 
 // 2) mission control (target = the synthetic latest day, 27 May, index 7)
 const mc = missionControl(entries, resolveTarget("how did the fleet do", entries).index);
