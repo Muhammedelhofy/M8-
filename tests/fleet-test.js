@@ -16,7 +16,7 @@ const {
   resolveRange, rollup, rangeRef, extractDates, dayMetrics, driverCandidates, findDriver, findDrivers,
   buildDriverRegistry, isKnownDriver, looksFleet,
   tierWatch, tierWatchRef,
-  briefRef, buildMorningBrief, renderBriefPacket, belowDailyTarget,
+  briefRef, buildMorningBrief, renderBriefPacket, belowDailyTarget, fleetFreshness,
   cashRef, cashCollection, renderCashPacket,
 } = require("../lib/fleet");
 
@@ -274,6 +274,16 @@ eq("belowTarget: lowest-first ordering", bt.drivers[0].name, "Lowest");
 const bpBelow = renderBriefPacket(Object.assign({}, brief, { belowTarget: bt }));
 check("brief packet: below-target line lists laggards lowest-first",
   bpBelow.includes("Below target") && bpBelow.indexOf("Lowest") < bpBelow.indexOf("Mid"));
+
+// 1i.3) DATA FRESHNESS (L3 Step 0) — stale-sync guard on the brief
+const hoursAgoISO = (h) => new Date(Date.now() - h * 3600000).toISOString();
+eq("freshness: no _syncedAt → unknown", fleetFreshness({}).unknown, true);
+eq("freshness: synced 2h ago → not stale", fleetFreshness({ _syncedAt: hoursAgoISO(2) }).stale, false);
+eq("freshness: synced 20h ago → stale (default 18h)", fleetFreshness({ _syncedAt: hoursAgoISO(20) }).stale, true);
+const bpStale = renderBriefPacket(Object.assign({}, brief, { fresh: fleetFreshness({ _syncedAt: hoursAgoISO(20) }) }));
+check("brief packet: stale data leads with a FRESHNESS warning (before Headline)",
+  bpStale.includes("DATA FRESHNESS") && bpStale.indexOf("DATA FRESHNESS") < bpStale.indexOf("Headline"));
+check("brief packet: fresh/unknown data → no freshness warning", !bp.includes("DATA FRESHNESS"));
 
 // 1j) CASH COLLECTION (L3) — per-driver / fleet outstanding cash gap over a window
 const cashDays = decodeHistory({ khair_history: [
