@@ -141,6 +141,15 @@ eq("driverCandidates: 'how did the team do today' → null", dc("how did the tea
 eq("findDriver: 'Ahmed' on 27 May → net 300", findDriver(entries[7], "Ahmed").netEarnings, 300);
 eq("findDriver: 'Basma' → net 200", findDriver(entries[7], "Basma").netEarnings, 200);
 check("findDriver: unknown name → null (no fabrication)", findDriver(entries[7], "Habib") === null);
+// findDriver PRECISION — shared surname / substring must NOT return the wrong driver
+const surnameEntry = { period: "1 Jun 2026", drivers: [
+  { name: "ABDULRAHMAN ALSHAHRANI", isActive: true, netEarnings: 316.73 },
+  { name: "FAISAL ALMANSOUR",       isActive: true, netEarnings: 180 },
+] };
+check("findDriver: 'ALI ALSHAHRANI' (absent) → null, not the other ALSHAHRANI", findDriver(surnameEntry, "ALI ALSHAHRANI") === null);
+check("findDriver: 'Mansour' → null, not 'ALMANSOUR' substring", findDriver(surnameEntry, "Mansour") === null);
+eq("findDriver: 'ABDULRAHMAN ALSHAHRANI' → exact match", findDriver(surnameEntry, "ABDULRAHMAN ALSHAHRANI").netEarnings, 316.73);
+eq("findDriver: 'ABDULRAHMAN' (one distinctive name) → match", findDriver(surnameEntry, "ABDULRAHMAN").netEarnings, 316.73);
 
 // 2) mission control (target = the synthetic latest day, 27 May, index 7)
 const mc = missionControl(entries, resolveTarget("how did the fleet do", entries).index);
