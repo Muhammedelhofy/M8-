@@ -57,7 +57,8 @@ t("claim-check injects HOLD-GROUND block", () => {
 t("tally injects LEDGER block", () => {
   const ctx = buildStateContext("Subtract 3. What's the total now?", [U("Start at 10."), A("Counting from 10."), U("Add 5."), A("Now 15.")]);
   assert.strictEqual(ctx.kind, "tally");
-  assert.ok(/Current total = 12/.test(ctx.text));
+  assert.ok(/total 12\b/.test(ctx.text));
+  assert.ok(/do NOT print this instruction/i.test(ctx.text));   // anti-echo guard present
 });
 
 console.log(`state-engine-test: ${pass} checks passed${process.exitCode ? " (with failures above)" : ""}`);
