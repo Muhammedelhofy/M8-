@@ -16,7 +16,7 @@ const {
   resolveRange, rollup, rangeRef, extractDates, dayMetrics, driverCandidates, findDriver, findDrivers,
   buildDriverRegistry, isKnownDriver, looksFleet,
   tierWatch, tierWatchRef,
-  briefRef, buildMorningBrief, renderBriefPacket,
+  briefRef, buildMorningBrief, renderBriefPacket, belowDailyTarget,
   cashRef, cashCollection, renderCashPacket,
 } = require("../lib/fleet");
 
@@ -255,6 +255,25 @@ check("brief packet: has week-context line", bp.includes("Week context"));
 check("brief packet: flags missing tier data honestly", bp.includes("no tier data"));
 check("brief packet: carries GROUND TRUTH guard", bp.includes("GROUND TRUTH"));
 check("brief packet: no cash line when no gap in feed", !bp.includes("Cash:"));
+
+// 1i.2) BELOW DAILY TARGET (L3) — mirrors dashboard dailyTarget = round(6000/30) = 200
+eq("brief: carries belowTarget block (target 200)", brief.belowTarget.target, 200);
+eq("brief: 27-May has 0 below target (Basma=200 not <200, Ahmed=300)", brief.belowTarget.count, 0);
+check("brief packet: no below-target line when none under target", !bp.includes("Below target"));
+const btEntry = { period: "1 Jun 2026", drivers: [
+  { name: "AboveT",  isActive: true,  netEarnings: 250 },
+  { name: "Mid",     isActive: true,  netEarnings: 150 },
+  { name: "Lowest",  isActive: true,  netEarnings: 80  },
+  { name: "OffDuty", isActive: false, netEarnings: 0   },   // inactive → excluded
+] };
+const bt = belowDailyTarget(btEntry);
+eq("belowTarget: daily target 200 (6000/30 default)", bt.target, 200);
+eq("belowTarget: 2 active under target", bt.count, 2);
+eq("belowTarget: active count 3 (inactive excluded)", bt.activeCount, 3);
+eq("belowTarget: lowest-first ordering", bt.drivers[0].name, "Lowest");
+const bpBelow = renderBriefPacket(Object.assign({}, brief, { belowTarget: bt }));
+check("brief packet: below-target line lists laggards lowest-first",
+  bpBelow.includes("Below target") && bpBelow.indexOf("Lowest") < bpBelow.indexOf("Mid"));
 
 // 1j) CASH COLLECTION (L3) — per-driver / fleet outstanding cash gap over a window
 const cashDays = decodeHistory({ khair_history: [
