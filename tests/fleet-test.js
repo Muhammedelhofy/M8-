@@ -140,6 +140,7 @@ const dc = (msg) => JSON.stringify(driverCandidates(msg));
 eq("driverCandidates: 'what about Ahmed' → [Ahmed]", dc("what about Ahmed"), JSON.stringify(["Ahmed"]));
 eq("driverCandidates: 'how much did Ahmed make' → [Ahmed]", dc("how much did Ahmed make"), JSON.stringify(["Ahmed"]));
 eq("driverCandidates: possessive \"Ahmed's net\" → [Ahmed]", dc("what is Ahmed's net"), JSON.stringify(["Ahmed"]));
+eq("driverCandidates: possessive FULL name \"Mansour Alshehri's net\" → [Mansour Alshehri]", dc("give me Mansour Alshehri's net"), JSON.stringify(["Mansour Alshehri"]));
 eq("driverCandidates: multi 'compare Ahmed and Basma' → [Ahmed,Basma]", dc("compare Ahmed and Basma"), JSON.stringify(["Ahmed", "Basma"]));
 eq("driverCandidates: collective 'how did the fleet do' → null", dc("how did the fleet do"), JSON.stringify(null));
 eq("driverCandidates: pronoun 'how much did we make' → null", dc("how much did we make"), JSON.stringify(null));
