@@ -308,6 +308,14 @@ eq("driverSeries: total = 7×240 + 300 = 1980", aSer.total, 1980);
 const ghostSer = driverDailySeries(entries, "Habib", allIdxK);
 eq("driverSeries: unknown driver → 0 worked days", ghostSer.daysWorked, 0);
 check("driverSeries packet: marks absent days, never invents a number", renderDriverSeriesPacket(ghostSer, "every day").includes("absent"));
+// avg divides by ACTIVE days, not present-but-inactive 0-net days
+const dsAct = driverDailySeries(
+  [{ period: "1 Jun 2026", drivers: [{ name: "Sam", isActive: true, netEarnings: 200 }] },
+   { period: "2 Jun 2026", drivers: [{ name: "Sam", isActive: false, netEarnings: 0 }] }],
+  "Sam", [0, 1]);
+eq("driverSeries: daysWorked = ACTIVE days only (1 of 2)", dsAct.daysWorked, 1);
+eq("driverSeries: total = earnings (200)", dsAct.total, 200);
+eq("driverSeries: avg over active days (200/1 = 200, not 200/2)", dsAct.avg, 200);
 check("driverWindow: 'from 21 may to 24 may' → 4 days", (resolveDriverWindow("daily breakdown from 21 may to 24 may", entries) || { indices: [] }).indices.length === 4);
 check("driverWindow: 'since he started' → all 8 days", (resolveDriverWindow("net since he started", entries) || { indices: [] }).indices.length === 8);
 check("driverWindow: 'all of may' → all 8 synthetic May days", (resolveDriverWindow("all of may", entries) || { indices: [] }).indices.length === 8);
