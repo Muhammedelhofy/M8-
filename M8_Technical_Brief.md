@@ -148,5 +148,5 @@ Output: `## Recommended M3 design` / `## Your-lane` / `## One thing to tell Clau
 
 ## 15. Operational notes
 - M8 is its own git repo (`Muhammedelhofy/M8-`, `main`); Vercel auto-deploys on push. **A new endpoint that 404s = CHECK the Vercel deploy status** (don't assume "lag" — a failed build serves the last good commit).
-- **Pending migration:** run the `request_traces` table SQL (so `/api/traces` populates). `summary_runs` + the 2b columns already migrated.
+- **Migrations:** `request_traces`, `summary_runs`, and the 2b columns are all migrated and live — `/api/traces` verified populating 2026-06-08 (tableError null, 40 rows). Schema version-controlled at `migrations/request_traces.sql`.
 - No Node on the dev Windows box (only git) — unit tests run via live e2e. PowerShell mangles Arabic + here-strings; use `curl --data-binary @utf8file` for Arabic tests and multiple `-m` flags for commits.
