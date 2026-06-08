@@ -14,6 +14,7 @@ const {
   decodeHistory, missionControl, renderPacket, isFleetQuery, periodSortKey,
   resolveTarget, parseRequestedDate, recentlyDiscussedFleet,
   resolveRange, rollup, rangeRef, extractDates, dayMetrics, driverCandidates, findDriver,
+  buildDriverRegistry, isKnownDriver,
 } = require("../lib/fleet");
 
 // ── helpers: mirror index.html packDriver (omit zeros/empties) ────────────────
@@ -150,6 +151,33 @@ check("findDriver: 'ALI ALSHAHRANI' (absent) → null, not the other ALSHAHRANI"
 check("findDriver: 'Mansour' → null, not 'ALMANSOUR' substring", findDriver(surnameEntry, "Mansour") === null);
 eq("findDriver: 'ABDULRAHMAN ALSHAHRANI' → exact match", findDriver(surnameEntry, "ABDULRAHMAN ALSHAHRANI").netEarnings, 316.73);
 eq("findDriver: 'ABDULRAHMAN' (one distinctive name) → match", findDriver(surnameEntry, "ABDULRAHMAN").netEarnings, 316.73);
+
+// 1g) KNOWN-DRIVER REGISTRY + GATE (Crack #2 fix) — a driver query with no fleet
+//     keyword and no recent fleet history (fresh session) must route to fleet,
+//     while an arbitrary compare target must NOT bleed into a web search.
+const reg = buildDriverRegistry(entries);
+check("registry: knows Ahmed (token)", reg.tokens.includes("ahmed"));
+check("registry: knows Basma (token)", reg.tokens.includes("basma"));
+check("registry: includes inactive Carol (union of ALL names ever seen)", reg.tokens.includes("carol"));
+eq("registry: drivers list deduped by id → 3 (Ahmed/Basma/Carol)", reg.drivers.length, 3);
+check("isKnownDriver: 'Ahmed' → true", isKnownDriver("Ahmed", reg));
+check("isKnownDriver: 'ahmed' (case-folded) → true", isKnownDriver("ahmed", reg));
+check("isKnownDriver: 'Carol' (inactive but on record) → true", isKnownDriver("Carol", reg));
+check("isKnownDriver: 'Ahm' (prefix of Ahmed) → true", isKnownDriver("Ahm", reg));
+check("isKnownDriver: 'iPhone' → false", !isKnownDriver("iPhone", reg));
+check("isKnownDriver: 'Samsung' → false", !isKnownDriver("Samsung", reg));
+check("isKnownDriver: 'Carolyn' (longer ≠ prefix of 'carol') → false", !isKnownDriver("Carolyn", reg));
+check("isKnownDriver: empty → false", !isKnownDriver("", reg));
+// End-to-end gate decision = driverCandidates() ∩ registry. Mirrors the
+// `maybeDriver` branch in buildFleetContext (which needs network, so isn't unit-
+// tested directly): does this message resolve to a REAL driver → fleet path?
+const gate = (msg) => { const c = driverCandidates(msg); return !!(c && c.some((x) => isKnownDriver(x, reg))); };
+check("gate: 'compare Ahmed and Basma yesterday' (no kw, fresh) → fleet", gate("compare Ahmed and Basma yesterday"));
+check("gate: 'how much did Basma make' → fleet", gate("how much did Basma make"));
+check("gate: 'what about Ahmed?' → fleet", gate("what about Ahmed?"));
+check("gate: 'compare iPhone and Samsung' → NOT fleet (→ web search)", !gate("compare iPhone and Samsung"));
+check("gate: 'compare my job offers this week' → NOT fleet", !gate("compare my job offers this week"));
+check("gate: 'what about the weather' → NOT fleet", !gate("what about the weather"));
 
 // 2) mission control (target = the synthetic latest day, 27 May, index 7)
 const mc = missionControl(entries, resolveTarget("how did the fleet do", entries).index);
