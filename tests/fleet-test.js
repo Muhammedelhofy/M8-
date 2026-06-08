@@ -17,6 +17,7 @@ const {
   buildDriverRegistry, isKnownDriver,
   tierWatch, tierWatchRef,
   briefRef, buildMorningBrief, renderBriefPacket,
+  cashRef, cashCollection, renderCashPacket,
 } = require("../lib/fleet");
 
 // ── helpers: mirror index.html packDriver (omit zeros/empties) ────────────────
@@ -232,6 +233,35 @@ check("brief packet: names top performer Ahmed", bp.includes("Ahmed"));
 check("brief packet: has week-context line", bp.includes("Week context"));
 check("brief packet: flags missing tier data honestly", bp.includes("no tier data"));
 check("brief packet: carries GROUND TRUTH guard", bp.includes("GROUND TRUTH"));
+check("brief packet: no cash line when no gap in feed", !bp.includes("Cash:"));
+
+// 1j) CASH COLLECTION (L3) — per-driver / fleet outstanding cash gap over a window
+const cashDays = decodeHistory({ khair_history: [
+  { period: "05 Jun 2026", drivers: [
+    { name: "Owes",  driverId: "O1", isActive: true, cashEarnings: 300, cashGap: 120 },   // outstanding
+    { name: "Clean", driverId: "L1", isActive: true, cashEarnings: 200, cashGap: 0 },     // fully collected
+    { name: "Small", driverId: "M1", isActive: true, cashEarnings: 100, cashGap: 10 },    // below 20 floor
+    { name: "Over",  driverId: "V1", isActive: true, cashEarnings: 50,  cashGap: -30 },   // remitted more → clamp 0
+  ] },
+] });
+const cc = cashCollection(cashDays, [0]);
+eq("cash: fleet uncollected = 130 (120+10, -30 clamped to 0)", cc.fleetUncollected, 130);
+eq("cash: fleet cash handled = 650", cc.fleetCashHandled, 650);
+eq("cash: collected pct = 80", cc.collectedPct, 80);
+eq("cash: 1 driver flagged ≥20 SAR", cc.flagged.length, 1);
+eq("cash: flagged = Owes 120 (largest first)", `${cc.flagged[0].name} ${cc.flagged[0].uncollected}`, "Owes 120");
+check("cash: Small (10 < 20) not flagged", !cc.flagged.some((d) => d.name === "Small"));
+check("cash: Over (negative gap clamped) not flagged", !cc.flagged.some((d) => d.name === "Over"));
+const cp = renderCashPacket(cc);
+check("cash packet: fleet '130 SAR uncollected'", cp.includes("130 SAR uncollected"));
+check("cash packet: names the debtor Owes", cp.includes("Owes"));
+check("cash packet: GROUND TRUTH guard", cp.includes("GROUND TRUTH"));
+check("cashRef: 'who owes cash' → true", cashRef("who owes cash"));
+check("cashRef: 'cash gap this week' → true", cashRef("show me the cash gap this week"));
+check("cashRef: 'uncollected cash' → true", cashRef("how much uncollected cash"));
+check("cashRef: \"who hasn't paid\" → true", cashRef("who hasn't paid"));
+check("cashRef: 'cash flow forecast' → false (not collection)", !cashRef("build me a cash flow forecast"));
+check("cashRef: 'net earnings today' → false", !cashRef("net earnings today"));
 
 // 2) mission control (target = the synthetic latest day, 27 May, index 7)
 const mc = missionControl(entries, resolveTarget("how did the fleet do", entries).index);
