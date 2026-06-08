@@ -1,0 +1,5 @@
+# Per-run scorecards are generated artifacts — ignore them, but keep the
+# tracked-over-time trend file (history.jsonl) and this dir.
+*
+!.gitignore
+!history.jsonl
