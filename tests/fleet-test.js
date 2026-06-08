@@ -18,6 +18,7 @@ const {
   tierWatch, tierWatchRef,
   briefRef, buildMorningBrief, renderBriefPacket, belowDailyTarget, fleetFreshness,
   isGenericFleetOpener, firstFleetTurn,
+  driverDailySeries, renderDriverSeriesPacket, resolveDriverWindow, resolveDriverName,
   cashRef, cashCollection, renderCashPacket,
 } = require("../lib/fleet");
 
@@ -294,6 +295,23 @@ check("autoBrief: 'who owes cash' → bypass (cash surface)", !isGenericFleetOpe
 check("autoBrief: 'net on 20 may' → bypass (specific date)", !isGenericFleetOpener("net on 20 may"));
 check("autoBrief: empty history → first fleet turn of session", firstFleetTurn([]));
 check("autoBrief: prior fleet turn in history → not first", !firstFleetTurn([{ role: "assistant", content: "Net earnings were 2,993 SAR for the fleet." }]));
+
+// 1k) PER-DRIVER DAILY SERIES (L3) — deterministic; never invents or interpolates
+const allIdxK = entries.map((_, i) => i);
+const aSer = driverDailySeries(entries, "Ahmed", allIdxK);
+eq("driverSeries: 8 days in range", aSer.daysInRange, 8);
+eq("driverSeries: Ahmed worked all 8 days", aSer.daysWorked, 8);
+eq("driverSeries: 27 May net = 300", aSer.series.find((r) => r.period === "27 May 2026").net, 300);
+eq("driverSeries: prior day (20 May) net = 240", aSer.series.find((r) => r.period === "20 May 2026").net, 240);
+eq("driverSeries: total = 7×240 + 300 = 1980", aSer.total, 1980);
+const ghostSer = driverDailySeries(entries, "Habib", allIdxK);
+eq("driverSeries: unknown driver → 0 worked days", ghostSer.daysWorked, 0);
+check("driverSeries packet: marks absent days, never invents a number", renderDriverSeriesPacket(ghostSer, "every day").includes("absent"));
+check("driverWindow: 'from 21 may to 24 may' → 4 days", (resolveDriverWindow("daily breakdown from 21 may to 24 may", entries) || { indices: [] }).indices.length === 4);
+check("driverWindow: 'since he started' → all 8 days", (resolveDriverWindow("net since he started", entries) || { indices: [] }).indices.length === 8);
+check("driverWindow: 'all of may' → all 8 synthetic May days", (resolveDriverWindow("all of may", entries) || { indices: [] }).indices.length === 8);
+eq("driverWindow: 'yesterday' (single day) → null", resolveDriverWindow("what about him yesterday", entries), null);
+eq("resolveDriverName: 'Ahmed' → 1 unique match", resolveDriverName("Ahmed", buildDriverRegistry(entries)).length, 1);
 
 // 1j) CASH COLLECTION (L3) — per-driver / fleet outstanding cash gap over a window
 const cashDays = decodeHistory({ khair_history: [
