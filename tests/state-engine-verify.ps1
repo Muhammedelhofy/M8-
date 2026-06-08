@@ -87,6 +87,10 @@ function CheckClaim($message, $botTexts) {
   foreach ($b in $botTexts) { if ([regex]::IsMatch($b, $tokenRe, $opts)) { $present = $true; break } }
   return [pscustomobject]@{ claimed = $claimed; present = $present }
 }
+function InGameContext($message, $allTexts) {
+  $all = (@($message) + $allTexts) -join ' '
+  return ([regex]::IsMatch($all, $GAME, $opts)) -and ([regex]::IsMatch($all, '\b[KQRBN]?[a-h]?[1-8]?x?[a-h][1-8]\b|\bO-O(?:-O)?\b'))
+}
 function LooksStateful($message, $userTexts) {
   if ([regex]::IsMatch($message, $CLAIM_FRAME, $opts)) { return $true }
   $ctx = (@($message) + $userTexts) -join ' '
@@ -132,6 +136,12 @@ Check "false-move claim is stateful"  (LooksStateful "Actually you played Bc5, r
 Check "tally turn is stateful"        (LooksStateful "Subtract 3. What's the total now?" @("Start at 10.","Add 5.")) $true
 Check "weather is NOT stateful"       (LooksStateful "What's the weather in Riyadh?" @()) $false
 Check "fleet net is NOT stateful"     (LooksStateful "What was the fleet net on June 7?" @()) $false
+
+Write-Host "`n-- inGameContext (positive-history guard gate) --"
+Check "chess game in progress"        (InGameContext "Actually you played Bc5?" @("Let's play chess. I'm white. 1. e4", "My move as Black: 1... e5")) $true
+Check "tally is NOT a game"           (InGameContext "Subtract 3. What's the total now?" @("Start at 10.", "Add 5.")) $false
+Check "weather is NOT a game"         (InGameContext "What's the weather?" @()) $false
+Check "game word but no move = NOT"   (InGameContext "I might play a board game later" @()) $false
 
 Write-Host "`n===================================================="
 $col = if ($fail -eq 0) { 'Green' } else { 'Red' }

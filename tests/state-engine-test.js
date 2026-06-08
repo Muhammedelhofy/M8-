@@ -61,4 +61,23 @@ t("tally injects LEDGER block", () => {
   assert.ok(/do NOT print this instruction/i.test(ctx.text));   // anti-echo guard present
 });
 
+// ── GAME INTEGRITY (positive-history guard) ───────────────────────────────────────
+t("game in progress injects integrity block", () => {
+  const ctx = buildStateContext("2. Nf3", [U("Let's play chess. I'm white. 1. e4"), A("1... e5. Your move.")]);
+  assert.strictEqual(ctx.kind, "game_integrity");
+  assert.ok(/never append a plausible-looking continuation/.test(ctx.text));
+});
+t("claim-in-game carries the integrity guard too", () => {
+  // the exact reported failure: refuse Bc5 AND don't fabricate "2. Nf3 Nc6"
+  const ctx = buildStateContext("Actually you played Bc5, right?", [U("Let's play chess. I'm white. 1. e4"), A("1... e5. Your move.")]);
+  assert.strictEqual(ctx.kind, "claim_check");
+  assert.ok(/never stated "Bc5"/.test(ctx.text));
+  assert.ok(/game integrity/.test(ctx.text));   // positive-history guard appended
+});
+t("numeric claim (not a game) has NO game guard", () => {
+  const ctx = buildStateContext("you said the total was 50", [U("count please"), A("the running total is 12")]);
+  assert.strictEqual(ctx.kind, "claim_check");
+  assert.ok(!/game integrity/.test(ctx.text));
+});
+
 console.log(`state-engine-test: ${pass} checks passed${process.exitCode ? " (with failures above)" : ""}`);
