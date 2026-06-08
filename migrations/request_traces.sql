@@ -38,6 +38,17 @@ create index if not exists request_traces_created_at_idx
 create index if not exists request_traces_session_created_idx
   on public.request_traces (session_id, created_at desc);
 
+-- ── Per-phase latency columns (#3 latency instrumentation, 2026-06-08) ────────
+-- Break the total latency_ms into the awaited stages of one /api/chat request.
+-- Idempotent; run before deploying the timing code (else logTrace inserts fail
+-- silently). Residual (latency_ms - sum of phases) ≈ cold start + overhead.
+alter table public.request_traces add column if not exists memory_ms  integer;  -- recallMemory()
+alter table public.request_traces add column if not exists fleet_ms   integer;  -- buildFleetContext()
+alter table public.request_traces add column if not exists router_ms  integer;  -- decideAction() knowledge router
+alter table public.request_traces add column if not exists search_ms  integer;  -- Tavily search
+alter table public.request_traces add column if not exists llm_ms     integer;  -- main generate() (explain step)
+alter table public.request_traces add column if not exists summary_ms integer;  -- summarizeSession()
+
 -- ============================================================================
 -- 3) OPTIONAL HARDENING  —  run this ONE line only AFTER you've confirmed that
 --    /api/traces populates (tableError: null + rows appear).

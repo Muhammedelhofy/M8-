@@ -14,7 +14,7 @@ module.exports = async function handler(req, res) {
 
     let q = sb
       .from("request_traces")
-      .select("session_id, intent, provider, recovered, search_fired, search_results, memory_rows, playbooks, latency_ms, ok, error, created_at")
+      .select("session_id, intent, provider, recovered, search_fired, search_results, memory_rows, playbooks, latency_ms, memory_ms, fleet_ms, router_ms, search_ms, llm_ms, summary_ms, ok, error, created_at")
       .order("created_at", { ascending: false })
       .limit(40);
     if (session) q = q.eq("session_id", session);
