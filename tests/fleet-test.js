@@ -16,6 +16,7 @@ const {
   resolveRange, rollup, rangeRef, extractDates, dayMetrics, driverCandidates, findDriver,
   buildDriverRegistry, isKnownDriver,
   tierWatch, tierWatchRef,
+  briefRef, buildMorningBrief, renderBriefPacket,
 } = require("../lib/fleet");
 
 // ── helpers: mirror index.html packDriver (omit zeros/empties) ────────────────
@@ -213,6 +214,24 @@ check("tierWatchRef: 'who needs coaching' → true", tierWatchRef("who needs coa
 check("tierWatchRef: 'which drivers to coach' → true", tierWatchRef("which drivers should I coach"));
 check("tierWatchRef: 'coaching plan for my youtube' → false", !tierWatchRef("make a coaching plan for my youtube channel"));
 check("tierWatchRef: 'weather in riyadh' → false", !tierWatchRef("weather in riyadh"));
+
+// 1i) MORNING / EXEC BRIEF (L3) — composite of most-recent-complete-day + week + tier
+check("briefRef: 'give me the morning brief' → true", briefRef("give me the morning brief"));
+check("briefRef: 'state of the fleet' → true", briefRef("what's the state of the fleet"));
+check("briefRef: 'fleet rundown' → true", briefRef("fleet rundown please"));
+check("briefRef: 'how did Ahmed do' → false (plain query, not a brief)", !briefRef("how did Ahmed do"));
+check("briefRef: 'brief me on the meeting' → false (not fleet)", !briefRef("brief me on the meeting"));
+const brief = buildMorningBrief(entries);
+eq("brief: targets most recent complete day (27 May)", brief.period, "27 May 2026");
+eq("brief: headline day net = 500", brief.mc.fleet.net, 500);
+eq("brief: week context = last-7 net 2900", brief.week.net, 2900);
+eq("brief: synthetic feed has no tier data", brief.tw.hasTierData, false);
+const bp = renderBriefPacket(brief);
+check("brief packet: headline 'net 500 SAR'", bp.includes("net 500 SAR"));
+check("brief packet: names top performer Ahmed", bp.includes("Ahmed"));
+check("brief packet: has week-context line", bp.includes("Week context"));
+check("brief packet: flags missing tier data honestly", bp.includes("no tier data"));
+check("brief packet: carries GROUND TRUTH guard", bp.includes("GROUND TRUTH"));
 
 // 2) mission control (target = the synthetic latest day, 27 May, index 7)
 const mc = missionControl(entries, resolveTarget("how did the fleet do", entries).index);
