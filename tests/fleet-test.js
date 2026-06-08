@@ -15,6 +15,7 @@ const {
   resolveTarget, parseRequestedDate, recentlyDiscussedFleet,
   resolveRange, rollup, rangeRef, extractDates, dayMetrics, driverCandidates, findDriver,
   buildDriverRegistry, isKnownDriver,
+  tierWatch, tierWatchRef,
 } = require("../lib/fleet");
 
 // ── helpers: mirror index.html packDriver (omit zeros/empties) ────────────────
@@ -178,6 +179,40 @@ check("gate: 'what about Ahmed?' → fleet", gate("what about Ahmed?"));
 check("gate: 'compare iPhone and Samsung' → NOT fleet (→ web search)", !gate("compare iPhone and Samsung"));
 check("gate: 'compare my job offers this week' → NOT fleet", !gate("compare my job offers this week"));
 check("gate: 'what about the weather' → NOT fleet", !gate("what about the weather"));
+
+// 1h) TIER WATCH (L3) — slip / improve / watch over a window, from Bolt tier.level
+const tierDays = decodeHistory({ khair_history: [
+  { period: "01 Jun 2026", drivers: [
+    { name: "Slipper", driverId: "S1", isActive: true, netEarnings: 100, tier: { level: 2, englishName: "Gold" },   acceptance: 90, finishRate: 95, rating: 4.8 },
+    { name: "Climber", driverId: "C1", isActive: true, netEarnings: 100, tier: { level: 1, englishName: "Silver" }, acceptance: 88, finishRate: 92, rating: 4.7 },
+    { name: "Risky",   driverId: "R1", isActive: true, netEarnings: 100, tier: { level: 2, englishName: "Gold" },   acceptance: 55, finishRate: 70, rating: 4.2 },
+    { name: "Steady",  driverId: "T1", isActive: true, netEarnings: 100, tier: { level: 1, englishName: "Silver" }, acceptance: 92, finishRate: 95, rating: 4.9 },
+  ] },
+  { period: "05 Jun 2026", drivers: [
+    { name: "Slipper", driverId: "S1", isActive: true, netEarnings: 100, tier: { level: 1, englishName: "Silver" }, acceptance: 60, finishRate: 78, rating: 4.3 },
+    { name: "Climber", driverId: "C1", isActive: true, netEarnings: 100, tier: { level: 2, englishName: "Gold" },   acceptance: 91, finishRate: 96, rating: 4.8 },
+    { name: "Risky",   driverId: "R1", isActive: true, netEarnings: 100, tier: { level: 2, englishName: "Gold" },   acceptance: 52, finishRate: 68, rating: 4.1 },
+    { name: "Steady",  driverId: "T1", isActive: true, netEarnings: 100, tier: { level: 1, englishName: "Silver" }, acceptance: 93, finishRate: 96, rating: 4.9 },
+  ] },
+] });
+const tw = tierWatch(tierDays, [0, 1]);
+check("tierWatch: has tier data", tw.hasTierData === true);
+eq("tierWatch: 1 slipped", tw.slipped.length, 1);
+eq("tierWatch: slip = Slipper Gold→Silver", `${tw.slipped[0].name} ${tw.slipped[0].from}→${tw.slipped[0].to}`, "Slipper Gold→Silver");
+eq("tierWatch: slip carries recent metrics (60% acc)", tw.slipped[0].accept, 60);
+eq("tierWatch: 1 improved", tw.improved.length, 1);
+eq("tierWatch: improve = Climber Silver→Gold", `${tw.improved[0].name} ${tw.improved[0].from}→${tw.improved[0].to}`, "Climber Silver→Gold");
+check("tierWatch: Risky on watch (Gold, 52% acc / 68% finish)", tw.watch.some((w) => w.name === "Risky"));
+check("tierWatch: Steady NOT on watch (strong metrics)", !tw.watch.some((w) => w.name === "Steady"));
+check("tierWatch: Slipper not double-counted on watch", !tw.watch.some((w) => w.name === "Slipper"));
+eq("tierWatch: no tier field → hasTierData false", tierWatch(decodeHistory({ khair_history: [
+  { period: "01 Jun 2026", drivers: [{ name: "X", isActive: true, netEarnings: 5 }] }] }), [0]).hasTierData, false);
+check("tierWatchRef: 'who is slipping a tier' → true", tierWatchRef("who is slipping a tier this week"));
+check("tierWatchRef: 'show me tier slips' → true", tierWatchRef("show me tier slips"));
+check("tierWatchRef: 'who needs coaching' → true", tierWatchRef("who needs coaching"));
+check("tierWatchRef: 'which drivers to coach' → true", tierWatchRef("which drivers should I coach"));
+check("tierWatchRef: 'coaching plan for my youtube' → false", !tierWatchRef("make a coaching plan for my youtube channel"));
+check("tierWatchRef: 'weather in riyadh' → false", !tierWatchRef("weather in riyadh"));
 
 // 2) mission control (target = the synthetic latest day, 27 May, index 7)
 const mc = missionControl(entries, resolveTarget("how did the fleet do", entries).index);
