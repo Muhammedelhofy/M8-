@@ -17,6 +17,7 @@ const {
   buildDriverRegistry, isKnownDriver, looksFleet,
   tierWatch, tierWatchRef,
   briefRef, buildMorningBrief, renderBriefPacket, belowDailyTarget, fleetFreshness,
+  isGenericFleetOpener, firstFleetTurn,
   cashRef, cashCollection, renderCashPacket,
 } = require("../lib/fleet");
 
@@ -284,6 +285,15 @@ const bpStale = renderBriefPacket(Object.assign({}, brief, { fresh: fleetFreshne
 check("brief packet: stale data leads with a FRESHNESS warning (before Headline)",
   bpStale.includes("DATA FRESHNESS") && bpStale.indexOf("DATA FRESHNESS") < bpStale.indexOf("Headline"));
 check("brief packet: fresh/unknown data → no freshness warning", !bp.includes("DATA FRESHNESS"));
+
+// 1i.4) AUTO-FIRING BRIEF (L3 Step 1) — generic opener auto-fires; specific query bypasses
+check("autoBrief: 'what is our net earnings' → generic opener (auto-fires)", isGenericFleetOpener("what is our net earnings"));
+check("autoBrief: explicit 'morning brief' → not a generic opener", !isGenericFleetOpener("give me the morning brief"));
+check("autoBrief: 'how much did Ahmed make' → bypass (specific driver)", !isGenericFleetOpener("how much did Ahmed make"));
+check("autoBrief: 'who owes cash' → bypass (cash surface)", !isGenericFleetOpener("who owes cash"));
+check("autoBrief: 'net on 20 may' → bypass (specific date)", !isGenericFleetOpener("net on 20 may"));
+check("autoBrief: empty history → first fleet turn of session", firstFleetTurn([]));
+check("autoBrief: prior fleet turn in history → not first", !firstFleetTurn([{ role: "assistant", content: "Net earnings were 2,993 SAR for the fleet." }]));
 
 // 1j) CASH COLLECTION (L3) — per-driver / fleet outstanding cash gap over a window
 const cashDays = decodeHistory({ khair_history: [
