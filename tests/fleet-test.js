@@ -13,7 +13,7 @@
 const {
   decodeHistory, missionControl, renderPacket, isFleetQuery, periodSortKey,
   resolveTarget, parseRequestedDate, recentlyDiscussedFleet,
-  resolveRange, rollup, rangeRef, extractDates, dayMetrics, driverCandidate, findDriver,
+  resolveRange, rollup, rangeRef, extractDates, dayMetrics, driverCandidates, findDriver,
 } = require("../lib/fleet");
 
 // ── helpers: mirror index.html packDriver (omit zeros/empties) ────────────────
@@ -129,9 +129,15 @@ const mixedEntry = { period: "1 Jun 2026", drivers: [
 eq("dayMetrics: net active-only (100 not 150)", dayMetrics(mixedEntry).net, 100);
 eq("dayMetrics: gross active-only (140 not 200)", dayMetrics(mixedEntry).gross, 140);
 
-// 1f) single-driver lookup (anti-fabrication)
-eq("driverCandidate: 'what about Ahmed' → Ahmed", driverCandidate("what about Ahmed"), "Ahmed");
-eq("driverCandidate: 'what about the weather' → null", driverCandidate("what about the weather"), null);
+// 1f) driver lookup: anti-fabrication + multi-driver + must NOT hijack generic Qs
+const dc = (msg) => JSON.stringify(driverCandidates(msg));
+eq("driverCandidates: 'what about Ahmed' → [Ahmed]", dc("what about Ahmed"), JSON.stringify(["Ahmed"]));
+eq("driverCandidates: 'how much did Ahmed make' → [Ahmed]", dc("how much did Ahmed make"), JSON.stringify(["Ahmed"]));
+eq("driverCandidates: possessive \"Ahmed's net\" → [Ahmed]", dc("what is Ahmed's net"), JSON.stringify(["Ahmed"]));
+eq("driverCandidates: multi 'compare Ahmed and Basma' → [Ahmed,Basma]", dc("compare Ahmed and Basma"), JSON.stringify(["Ahmed", "Basma"]));
+eq("driverCandidates: collective 'how did the fleet do' → null", dc("how did the fleet do"), JSON.stringify(null));
+eq("driverCandidates: pronoun 'how much did we make' → null", dc("how much did we make"), JSON.stringify(null));
+eq("driverCandidates: 'how did the team do today' → null", dc("how did the team do today"), JSON.stringify(null));
 eq("findDriver: 'Ahmed' on 27 May → net 300", findDriver(entries[7], "Ahmed").netEarnings, 300);
 eq("findDriver: 'Basma' → net 200", findDriver(entries[7], "Basma").netEarnings, 200);
 check("findDriver: unknown name → null (no fabrication)", findDriver(entries[7], "Habib") === null);
