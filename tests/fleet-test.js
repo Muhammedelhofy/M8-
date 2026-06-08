@@ -18,7 +18,7 @@ const {
   tierWatch, tierWatchRef,
   briefRef, buildMorningBrief, renderBriefPacket, belowDailyTarget, fleetFreshness,
   isGenericFleetOpener, firstFleetTurn,
-  driverDailySeries, renderDriverSeriesPacket, resolveDriverWindow, resolveDriverName,
+  driverDailySeries, renderDriverSeriesPacket, resolveDriverWindow, resolveDriverName, lastDriverMentioned,
   cashRef, cashCollection, renderCashPacket,
 } = require("../lib/fleet");
 
@@ -311,8 +311,10 @@ check("driverSeries packet: marks absent days, never invents a number", renderDr
 check("driverWindow: 'from 21 may to 24 may' → 4 days", (resolveDriverWindow("daily breakdown from 21 may to 24 may", entries) || { indices: [] }).indices.length === 4);
 check("driverWindow: 'since he started' → all 8 days", (resolveDriverWindow("net since he started", entries) || { indices: [] }).indices.length === 8);
 check("driverWindow: 'all of may' → all 8 synthetic May days", (resolveDriverWindow("all of may", entries) || { indices: [] }).indices.length === 8);
+check("driverWindow: 'daily net for all of may' → month WINS over daily→last7 (8 days)", (resolveDriverWindow("daily net for all of may", entries) || { indices: [] }).indices.length === 8);
 eq("driverWindow: 'yesterday' (single day) → null", resolveDriverWindow("what about him yesterday", entries), null);
 eq("resolveDriverName: 'Ahmed' → 1 unique match", resolveDriverName("Ahmed", buildDriverRegistry(entries)).length, 1);
+eq("lastDriverMentioned: finds a driver named anywhere in the message", lastDriverMentioned([{ content: "give me Ahmed's daily net for all of may" }], buildDriverRegistry(entries)), "Ahmed");
 
 // 1j) CASH COLLECTION (L3) — per-driver / fleet outstanding cash gap over a window
 const cashDays = decodeHistory({ khair_history: [
