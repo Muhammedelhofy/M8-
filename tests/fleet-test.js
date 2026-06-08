@@ -13,8 +13,8 @@
 const {
   decodeHistory, missionControl, renderPacket, isFleetQuery, periodSortKey,
   resolveTarget, parseRequestedDate, recentlyDiscussedFleet,
-  resolveRange, rollup, rangeRef, extractDates, dayMetrics, driverCandidates, findDriver,
-  buildDriverRegistry, isKnownDriver,
+  resolveRange, rollup, rangeRef, extractDates, dayMetrics, driverCandidates, findDriver, findDrivers,
+  buildDriverRegistry, isKnownDriver, looksFleet,
   tierWatch, tierWatchRef,
   briefRef, buildMorningBrief, renderBriefPacket,
   cashRef, cashCollection, renderCashPacket,
@@ -154,6 +154,27 @@ check("findDriver: 'ALI ALSHAHRANI' (absent) → null, not the other ALSHAHRANI"
 check("findDriver: 'Mansour' → null, not 'ALMANSOUR' substring", findDriver(surnameEntry, "Mansour") === null);
 eq("findDriver: 'ABDULRAHMAN ALSHAHRANI' → exact match", findDriver(surnameEntry, "ABDULRAHMAN ALSHAHRANI").netEarnings, 316.73);
 eq("findDriver: 'ABDULRAHMAN' (one distinctive name) → match", findDriver(surnameEntry, "ABDULRAHMAN").netEarnings, 316.73);
+// AMBIGUOUS NAME (live bug: two "Ali" → must NOT silently pick one)
+const twoAli = { period: "7 Jun 2026", drivers: [
+  { name: "ALI ALSHAHRANI",   isActive: true, netEarnings: 425.92 },
+  { name: "ALI MOHAMMED",     isActive: true, netEarnings: 300 },
+  { name: "MANSOUR ALSHEHRI", isActive: true, netEarnings: 262.23 },
+] };
+eq("findDrivers: 'Ali' → 2 matches (ambiguous)", findDrivers(twoAli, "Ali").length, 2);
+eq("findDrivers: 'Mansour' → 1 match", findDrivers(twoAli, "Mansour").length, 1);
+eq("findDrivers: 'ALI ALSHAHRANI' (full) → 1 match", findDrivers(twoAli, "ALI ALSHAHRANI").length, 1);
+eq("findDrivers: 'ALI MOHAMMED' (full) → 1 match", findDrivers(twoAli, "ALI MOHAMMED").length, 1);
+eq("findDrivers: unknown 'Khalid' → 0", findDrivers(twoAli, "Khalid").length, 0);
+check("findDriver: 'Ali' (ambiguous) → null, no silent pick", findDriver(twoAli, "Ali") === null);
+eq("findDriver: 'Mansour' (unique) → still resolves", findDriver(twoAli, "Mansour").netEarnings, 262.23);
+eq("findDriver: 'ALI ALSHAHRANI' (full) → the right Ali", findDriver(twoAli, "ALI ALSHAHRANI").netEarnings, 425.92);
+// looksFleet: requests that must beat doc-gen and never web-search
+check("looksFleet: 'give me the morning brief' → true", looksFleet("give me the morning brief"));
+check("looksFleet: 'who slipped a tier' → true", looksFleet("who slipped a tier this week"));
+check("looksFleet: 'who owes cash' → true", looksFleet("who owes cash"));
+check("looksFleet: 'how did the fleet do' → true", looksFleet("how did the fleet do"));
+check("looksFleet: 'write me a business plan' → false (real doc)", !looksFleet("write me a business plan"));
+check("looksFleet: 'summarize this article' → false", !looksFleet("summarize this article"));
 
 // 1g) KNOWN-DRIVER REGISTRY + GATE (Crack #2 fix) — a driver query with no fleet
 //     keyword and no recent fleet history (fresh session) must route to fleet,
