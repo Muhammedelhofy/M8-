@@ -80,9 +80,9 @@ Ran a ~30-question team eval. M8 scored strongly: reasoning traps ✓, finance �
 
 ## 5. ★ THE NORTH STAR — M8 as a hard-problem exploration system
 
-**Honest framing.** The goal is NOT "win a $1M Millennium Prize" (essentially out of reach for a solo builder on cheap infra — even DeepMind hasn't). The goal is to **evolve M8 from a personal ops agent into a system that can genuinely *explore* hard mathematical/logical problems.** The capabilities are real and learnable; building them makes M8 (and Muhammad) dramatically sharper regardless of any prize. The Millennium 7 are the romantic north star; the machine that climbs toward them is the real payoff.
+**Framing (corrected 2026-06-10 — Muhammad's words).** The North Star IS to make M8 genuinely capable of helping Muhammad **resolve unsolved problems — the $1M-prize tier (Millennium-class) is the bar we build toward**, and we do our best to actually reach it. Honesty about the odds stays (a solo builder on cheap infra is a long shot — even DeepMind hasn't), and the honesty layer never bends: **M8 must never claim an unverified proof.** But the ambition is the prize-class problems themselves, not just "capability building." Strategy unchanged: computational discovery first (Collatz/Goldbach/OEIS-class), Riemann is not the opening move. **The fleet is NOT part of this North Star** — the dashboard already runs the business; fleet data is only a live *test bench* for M8's logic, thinking and accuracy.
 
-**The 4 capabilities to build — each ALSO serves the fleet:**
+**The 4 capabilities to build (fleet column = side-benefit on the test bench, not the goal):**
 | # | Capability | Unlocks for math | Unlocks for the fleet |
 |---|---|---|---|
 | 1 | **Code execution** (Python sandbox) | verify Collatz/Goldbach to huge N, search patterns/counterexamples | ad-hoc what-if math on the blob, simulations |

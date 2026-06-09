@@ -1,7 +1,13 @@
 # M8 — STATUS (the one living page)
-*The single source of truth for "where are we." Updated every session. If this disagrees with a chat or memory, THIS wins. Last updated: 2026-06-09 (L4 Build-3 shipped).*
+*The single source of truth for "where are we." Updated every session. If this disagrees with a chat or memory, THIS wins. Last updated: 2026-06-10 (North-Star correction + Build-4 next).*
 
 ---
+
+## NORTH STAR (corrected 2026-06-10 — Muhammad's words, supersedes all earlier framings)
+**Make M8 genuinely capable of helping resolve UNSOLVED problems — prize-class open problems in math/logic (the $1M Millennium-prize tier is the bar).**
+- **The fleet is NOT the North Star.** The Bolt dashboard already runs the business. Fleet data = a live **test bench** for M8's logic, thinking and accuracy — nothing more. Never frame "autonomous logistics" as the mission (M8 fabricated exactly that on 2026-06-09; root cause was the old `buildState.js` northStar string saying the fleet track "is the CURRENT milestone" — fixed).
+- Math-surface strategy unchanged (Fork D): computational discovery first, not "solve Riemann" head-on.
+- Honesty never bends: **no unverified proof claim, ever** — at this North Star a fabricated proof is the worst possible failure.
 
 ## CURRENT RUNG
 **L3 Proactive Operator (~85%) → climbing to L4.**
