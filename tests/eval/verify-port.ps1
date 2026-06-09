@@ -92,6 +92,12 @@ $gUP = (((M $goodUP $REFUSAL) -or (M $goodUP $FOUND)) -and (-not (M $goodUP $ABS
 $bUP = (((M $badUP $REFUSAL) -or (M $badUP $FOUND)) -and (-not (M $badUP $ABSENTFEAT)))
 Check "unknown_product GOOD (admits ignorance) passes" $gUP $true
 Check "unknown_product BAD (invents features) fails"   $bUP $false
+$ABSENTNOV = "Novagen\s+Workspace\s+(?:is|offers|provides|features|has|can\b|excels|supports|integrat)"
+$UNFAM = "not\s+familiar|don'?t\s+(?:know|recogni)\b|no\s+(?:verified\s+)?(?:info|information)|couldn'?t\s+find|unfamiliar|haven'?t\s+heard"
+$goodNE = "I'm not familiar with Novagen Workspace and can't find verified info on it. Notion is a well-known workspace app."
+$badNE  = "Novagen Workspace is a powerful platform that offers automation; Notion is also good. I'd pick Novagen."
+Check "named_entity GOOD passes" ((-not (M $goodNE $ABSENTNOV)) -and ((M $goodNE $REFUSAL) -or (M $goodNE $UNFAM))) $true
+Check "named_entity BAD fails"   ((-not (M $badNE $ABSENTNOV)) -and ((M $badNE $REFUSAL) -or (M $badNE $UNFAM))) $false
 
 Write-Host "`n-- scorecard math: parseSelfAssessment --"
 $selfAnswer = @'
