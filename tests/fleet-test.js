@@ -16,6 +16,7 @@ const {
   resolveRange, rollup, rangeRef, extractDates, dayMetrics, driverCandidates, findDriver, findDrivers,
   buildDriverRegistry, isKnownDriver, looksFleet,
   tierWatch, tierWatchRef,
+  driverChurn, churnRef, renderChurnPacket,
   briefRef, buildMorningBrief, renderBriefPacket, belowDailyTarget, fleetFreshness,
   isGenericFleetOpener, isGreetingOpener, firstFleetTurn,
   driverDailySeries, renderDriverSeriesPacket, resolveDriverWindow, resolveDriverName, lastDriverMentioned,
@@ -310,6 +311,42 @@ check("greetingOpener: 'hi how are you' → bypass (social question)", !isGreeti
 check("greetingOpener: 'high priority task' → not a greeting", !isGreetingOpener("high priority task today"));
 check("greetingOpener: 'morning brief' → handled by briefRef, not greeting", !isGreetingOpener("morning brief"));
 check("greetingOpener: 'morningstar report' → not a greeting", !isGreetingOpener("morningstar report"));
+
+// 1i.6) DRIVER-CHURN COMPOSITE (L3) — trigger precision + deterministic signals
+check("churnRef: 'who's at risk of churning' → fires", churnRef("who's at risk of churning"));
+check("churnRef: 'show me driver churn' → fires", churnRef("show me driver churn"));
+check("churnRef: 'which drivers are going dark' → fires", churnRef("which drivers are going dark"));
+check("churnRef: 'who's dropping off lately' → fires", churnRef("who's dropping off lately"));
+check("churnRef: 'any attrition risk' → fires", churnRef("any attrition risk this week"));
+check("churnRef: 'who might quit soon' → fires", churnRef("who might quit soon"));
+check("churnRef: 'who slipped a tier' → bypass (tier, not churn)", !churnRef("who slipped a tier this week"));
+check("churnRef: 'at-risk drivers' → bypass (stays with tier)", !churnRef("at-risk drivers"));
+check("churnRef: 'data retention policy' → bypass (no fleet noun)", !churnRef("data retention policy for logs"));
+check("churnRef: 'who owes cash' → bypass", !churnRef("who owes cash"));
+// Deterministic signals on a synthetic 14-day window (decoded-shape entries).
+const mkDrv = (name, active, net, acc, util) => ({ name, driverId: name, isActive: active, netEarnings: net, acceptance: acc, utilization: util, tier: { level: 2 } });
+const churnEntries = [];
+for (let i = 0; i < 14; i++) {
+  churnEntries.push({ period: `churnday ${i}`, drivers: [
+    mkDrv("AAA", i <= 9, 400, 90, 85),                                   // regular then dark (days 10-13)
+    mkDrv("BBB", true, i >= 11 ? 150 : 400, i >= 11 ? 55 : 90, 85),      // acceptance decline + below-target streak
+    mkDrv("CCC", true, 400, 90, 85),                                     // healthy
+    mkDrv("DDD", true, i >= 11 ? 150 : 400, 85, 85),                     // streak only (score 1)
+    mkDrv("EEE", i === 0, 400, 90, 85),                                  // dark but never a regular
+  ] });
+}
+const ch = driverChurn(churnEntries, churnEntries.map((_, i) => i));
+const churnFlag = (nm) => (ch.flagged || []).find((d) => d.name === nm);
+check("churn: AAA flagged (went dark)", !!churnFlag("AAA"));
+check("churn: AAA score = 2 (going dark only)", churnFlag("AAA") && churnFlag("AAA").score === 2);
+check("churn: AAA reason names going dark", churnFlag("AAA") && /went dark/.test(churnFlag("AAA").reasons.join(" ")));
+check("churn: BBB flagged (decline + streak)", !!churnFlag("BBB"));
+check("churn: BBB score = 2", churnFlag("BBB") && churnFlag("BBB").score === 2);
+check("churn: BBB reasons name acceptance + streak", churnFlag("BBB") && /acceptance/.test(churnFlag("BBB").reasons.join(" ")) && /straight active/.test(churnFlag("BBB").reasons.join(" ")));
+check("churn: CCC NOT flagged (healthy)", !churnFlag("CCC"));
+check("churn: DDD NOT flagged (streak alone = score 1 < threshold)", !churnFlag("DDD"));
+check("churn: EEE NOT flagged (dark but never a regular)", !churnFlag("EEE"));
+check("churn: empty packet renders an honest no-risk line", /no drivers cross|stable/i.test(renderChurnPacket({ range: "x", flagged: [] })));
 
 // 1k) PER-DRIVER DAILY SERIES (L3) — deterministic; never invents or interpolates
 const allIdxK = entries.map((_, i) => i);
