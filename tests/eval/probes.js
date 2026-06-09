@@ -333,6 +333,21 @@ const PROBES = [
     }],
     note: "L4 Build-4 (tool-selected — the NEGATIVE that protects the layer): an opinion/advice question that reaches the LLM tool-decision layer must stay 'answer' — never over-routed to compute (faking a calculation) or to a search-citation dump. The absent-compute check is the load-bearing 'no fabricated tool use'; the present-opinion check confirms it actually answered rather than deflecting. LIVE-VERIFIED 2026-06-10: substantive cash-flow-first opinion, no compute/search hijack.",
   },
+  {
+    id: "tool.compute_no_search_cofire",
+    category: "tool_decision",
+    title: "Build-6: a computed answer does NOT co-fire web search (no laundered citation)",
+    weight: 1,
+    turns: [{
+      send: "what is 9 to the power of 11?",
+      checks: [
+        { kind: "present", re: /31[,٬]?381[,٬]?059[,٬]?609/, label: "exact 31,381,059,609 (computed)" },
+        { kind: "present", re: /comput(?:ed|ation)?|ran\s+(?:the\s+)?code|python|executed?|sandbox/i, label: "computed, not searched" },
+        { kind: "absent", re: /confirmed\s+by\s+\w|according\s+to\s+(?:the\s+)?[A-Z]\w|\b[a-z0-9][a-z0-9-]{2,}\.(?:com|io|org|net)\b|mathcelebrity/i, label: "no web-source citation laundered onto a self-computed number (search was suppressed)" },
+      ],
+    }],
+    note: "L4 Build-6 (the deterministic compute/search gate — team-consensus GPT/Grok/Gemini/Manus/M8): a 'to the power of' query matches BOTH computeMode (regex) AND the RESEARCH/LOOKUP intent classifier — PRE-FIX it co-fired web search and tacked 'confirmed by MathCelebrity' onto the Python result (a self-computed number has no external source). The gate suppresses the search slot when computeMode fires (compute owns the number). The absent web-citation check proves no search result was laundered onto the computed answer. LIVE-VERIFIED 2026-06-10: '…31,381,059,609, computed in Python' with search_fired=false in the trace.",
+  },
 
   // ── STATE / SEQUENCE TRACKING (the weakest aspect — chess caved/lost board) ─
   {

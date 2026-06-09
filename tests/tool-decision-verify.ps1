@@ -36,6 +36,14 @@ function ToolDecision($fleet, $state, $computeMode, $routerCompute, $searchFired
   else                                 { return "answer" }
 }
 
+# ---- (3) SEARCH-slot eligibility (Build-6 compute/search gate, orchestrator.js ~L560) ----
+# if (intent!=NONE && !computeMode && !fleet && !fleetLike && !state)  -> web search fires.
+# The !computeMode term is the gate: a self-contained computation suppresses search
+# so a computed number is never laundered with a phantom web citation.
+function SearchEligible($intentNone, $computeMode, $fleet, $fleetLike, $state) {
+  return ((-not $intentNone) -and -not $computeMode -and -not $fleet -and -not $fleetLike -and -not $state)
+}
+
 Write-Host "== (1) Router eligibility (the LLM tool-decision layer only fires in the safe slice) ==" -ForegroundColor Cyan
 # plain knowledge question -> eligible
 Check "knowledge-Q eligible"        (RouterEligible $true  $false $false $false $false $false $false $false) $true
@@ -69,6 +77,20 @@ Check "build_state"             (ToolDecision $false $false $false $false $false
 Check "fleet beats compute"     (ToolDecision $true  $false $true  $false $false $false $false) "fleet"
 Check "fleet beats search"      (ToolDecision $true  $false $false $false $true  $false $false) "fleet"
 Check "compute beats search"    (ToolDecision $false $false $false $true  $true  $false $false) "compute"
+
+Write-Host "== (3) compute/search gate (Build-6: compute owns its number -> search suppressed) ==" -ForegroundColor Cyan
+# normal RESEARCH/LOOKUP query, no compute -> search fires
+Check "research query searches"      (SearchEligible $false $false $false $false $false) $true
+# THE FIX: a math query also tagged RESEARCH (computeMode true) -> search SUPPRESSED (no co-fire)
+Check "compute suppresses search"    (SearchEligible $false $true  $false $false $false) $false
+# fleet/state still own their turns (search never fires there)
+Check "fleet no search"              (SearchEligible $false $false $true  $false $false) $false
+Check "fleetLike no search"          (SearchEligible $false $false $false $true  $false) $false
+Check "state no search"              (SearchEligible $false $false $false $false $true ) $false
+# a NONE-intent query is the LLM router's slice, not the regex search slot
+Check "NONE intent not regex-search" (SearchEligible $true  $false $false $false $false) $false
+# compound 'search a live value then compute': primary signal is search, regex compute did NOT fire -> search still runs
+Check "compound search+compute runs" (SearchEligible $false $false $false $false $false) $true
 
 Write-Host ""
 if ($fail -eq 0) { Write-Host "ALL $pass CHECKS PASSED" -ForegroundColor Green }
