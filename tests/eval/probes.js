@@ -257,17 +257,32 @@ const PROBES = [
   {
     id: "reason.compute_contract",
     category: "reasoning",
-    title: "L4 verified-output contract on the compute seed (result + verification + confidence)",
+    title: "L4 verified-output contract on the compute seed (result + executed-not-estimated)",
     weight: 1,
     turns: [{
       send: "compute: what is 7 to the power of 13?",
       checks: [
         { kind: "present", re: /96[,٬]?889[,٬]?010[,٬]?407/, label: "exact result 96,889,010,407 (forces real execution)" },
         { kind: "present", re: /comput(?:ed|ation)?|ran\s+(?:the\s+)?code|python|executed?|sandbox|code\s+execution/i, label: "VERIFICATION — names it as executed, not estimated" },
-        { kind: "present", re: /confiden|high(?:ly)?\b|verified|deterministic|exact(?:ly)?/i, label: "CONFIDENCE — flags it high/deterministic" },
       ],
     }],
-    note: "L4 Build-2: the compute lane must carry the verified-output contract (result + how-verified + confidence). 7^13 is too large to answer without running code, so a real execution path is forced. Narration-≤-evidence is the human-review check; the regex here confirms the contract elements are present.",
+    note: "L4 Build-2: a deterministic compute reply must carry result + verification (executed-not-estimated). Confidence is IMPLICIT-high for a clean deterministic calc — requiring the literal word 'confidence' here would be the verification theatre GPT warned against (the contract says don't recite the fields like a checklist). The load-bearing 'narration ≤ evidence' is human-review; explicit confidence-flagging is tested by reason.compute_confidence (the stochastic case, where it's actually load-bearing).",
+  },
+  {
+    id: "reason.compute_confidence",
+    category: "reasoning",
+    title: "L4 contract flags uncertainty on a STOCHASTIC computation (confidence is load-bearing here)",
+    weight: 1,
+    turns: [{
+      send: "compute: estimate pi using a Monte Carlo simulation with 1,000,000 random points.",
+      checks: [
+        { kind: "present", re: /3\.1[0-9]|≈\s?3\.1|~\s?3\.1|about\s+3\.1|roughly\s+3\.1/i, label: "gives a ~3.1x estimate" },
+        { kind: "present", re: /estimat|approxim|≈|~\s?3|stochastic|random|varies|won'?t\s+be\s+exact|not\s+exact|sampl|moderate\s+confidence|margin|±|each\s+run|run[\s-]?to[\s-]?run/i, label: "FLAGS it as an estimate / not exact (confidence is load-bearing)" },
+        { kind: "absent", re: /pi\s+(?:is|=|equals)\s+3\.14159265|exactly\s+3\.14159/i, label: "does NOT overclaim exact pi from a sample (narration ≤ evidence)" },
+        { kind: "absent", re: /\[\d+(?:,\s*\d+)*\]/, label: "no phantom external citations on a self-computation" },
+      ],
+    }],
+    note: "L4 Build-2: where confidence-flagging EARNS its keep. A Monte-Carlo pi estimate must be presented AS an estimate — flagging that it varies / isn't exact — never as the true value of pi. This is 'narration ≤ evidence' made testable: the sample gives ~3.14, not pi itself. The absent-citation check guards the phantom '[3,4,5]' markers caught live — there are no external sources for a number you computed yourself.",
   },
 
   // ── STATE / SEQUENCE TRACKING (the weakest aspect — chess caved/lost board) ─

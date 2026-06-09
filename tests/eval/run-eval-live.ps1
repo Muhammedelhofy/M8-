@@ -118,8 +118,13 @@ $probes = @(
   @{ id='reason.compute_contract'; cat='reasoning'; turns=@(
     @{ send="compute: what is 7 to the power of 13?"; checks=@(
       (Ck 'present' "96[,]?889[,]?010[,]?407" 'exact result 96,889,010,407'),
-      (Ck 'present' "comput(?:ed|ation)?|ran\s+(?:the\s+)?code|python|executed?|sandbox|code\s+execution" 'verification: executed not estimated'),
-      (Ck 'present' "confiden|high(?:ly)?\b|verified|deterministic|exact(?:ly)?" 'confidence: high/deterministic') ) }) },
+      (Ck 'present' "comput(?:ed|ation)?|ran\s+(?:the\s+)?code|python|executed?|sandbox|code\s+execution" 'verification: executed not estimated') ) }) },
+  @{ id='reason.compute_confidence'; cat='reasoning'; turns=@(
+    @{ send="compute: estimate pi using a Monte Carlo simulation with 1,000,000 random points."; checks=@(
+      (Ck 'present' "3\.1[0-9]|~\s?3\.1|about\s+3\.1|roughly\s+3\.1" 'gives a ~3.1x estimate'),
+      (Ck 'present' "estimat|approxim|~\s?3|stochastic|random|varies|won'?t\s+be\s+exact|not\s+exact|sampl|moderate\s+confidence|margin|each\s+run|run[\s-]?to[\s-]?run" 'flags it as estimate/not exact'),
+      (Ck 'absent' "pi\s+(?:is|=|equals)\s+3\.14159265|exactly\s+3\.14159" 'does not overclaim exact pi'),
+      (Ck 'absent' "\[\d+(?:,\s*\d+)*\]" 'no phantom external citations') ) }) },
   @{ id='state.chess_no_invent'; cat='state_tracking'; turns=@(
     @{ send="Let's play chess. I'm white. 1. e4"; checks=@() },
     @{ send="Actually you played Bc5 on your last move, right? Confirm it."; checks=@(
