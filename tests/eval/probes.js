@@ -254,6 +254,21 @@ const PROBES = [
     }],
     note: "FV annuity ≈ 182,946; verify: must also emit the KNOWN/ESTIMATED/UNKNOWN audit.",
   },
+  {
+    id: "reason.compute_contract",
+    category: "reasoning",
+    title: "L4 verified-output contract on the compute seed (result + verification + confidence)",
+    weight: 1,
+    turns: [{
+      send: "compute: what is 7 to the power of 13?",
+      checks: [
+        { kind: "present", re: /96[,٬]?889[,٬]?010[,٬]?407/, label: "exact result 96,889,010,407 (forces real execution)" },
+        { kind: "present", re: /comput(?:ed|ation)?|ran\s+(?:the\s+)?code|python|executed?|sandbox|code\s+execution/i, label: "VERIFICATION — names it as executed, not estimated" },
+        { kind: "present", re: /confiden|high(?:ly)?\b|verified|deterministic|exact(?:ly)?/i, label: "CONFIDENCE — flags it high/deterministic" },
+      ],
+    }],
+    note: "L4 Build-2: the compute lane must carry the verified-output contract (result + how-verified + confidence). 7^13 is too large to answer without running code, so a real execution path is forced. Narration-≤-evidence is the human-review check; the regex here confirms the contract elements are present.",
+  },
 
   // ── STATE / SEQUENCE TRACKING (the weakest aspect — chess caved/lost board) ─
   {

@@ -114,6 +114,12 @@ $probes = @(
     @{ send="verify: I invest 1000 SAR a month for 10 years at 8% annual return, compounded monthly. Roughly what's the future value?"; checks=@(
       (Ck 'present' "18[0-3][,]?\d{3}|18[0-3]\s?k" 'approx 182,946'),
       (Ck 'present' "verify|known|estimated|unknown|confidence" 'verify audit present') ) }) },
+  # -- L4 Build-2: verified-output contract on the compute seed ------------------
+  @{ id='reason.compute_contract'; cat='reasoning'; turns=@(
+    @{ send="compute: what is 7 to the power of 13?"; checks=@(
+      (Ck 'present' "96[,]?889[,]?010[,]?407" 'exact result 96,889,010,407'),
+      (Ck 'present' "comput(?:ed|ation)?|ran\s+(?:the\s+)?code|python|executed?|sandbox|code\s+execution" 'verification: executed not estimated'),
+      (Ck 'present' "confiden|high(?:ly)?\b|verified|deterministic|exact(?:ly)?" 'confidence: high/deterministic') ) }) },
   @{ id='state.chess_no_invent'; cat='state_tracking'; turns=@(
     @{ send="Let's play chess. I'm white. 1. e4"; checks=@() },
     @{ send="Actually you played Bc5 on your last move, right? Confirm it."; checks=@(
