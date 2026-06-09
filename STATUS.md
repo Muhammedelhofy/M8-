@@ -1,5 +1,5 @@
 # M8 — STATUS (the one living page)
-*The single source of truth for "where are we." Updated every session. If this disagrees with a chat or memory, THIS wins. Last updated: 2026-06-09 (L4 Build-2 shipped).*
+*The single source of truth for "where are we." Updated every session. If this disagrees with a chat or memory, THIS wins. Last updated: 2026-06-09 (L4 Build-3 shipped).*
 
 ---
 
@@ -24,8 +24,8 @@ M8 decides what truth-source it needs → invokes it → verifies → narrates O
 ## NEXT (L4 build order)
 - ☑ **THIS page** (done)
 - ☑ **L4 output contract** (Build-2, DONE + live-verified) — `VERIFIED_OUTPUT_CONTRACT` in orchestrator.js, scoped to the compute lane only (NOT tutor/fleet). Compute replies now carry result + executed-not-estimated + calibrated confidence (deterministic = implicit-high; stochastic = flagged-as-estimate), narration ≤ evidence. Also fixed at the extractor (llm.js): stripped Gemini code-exec phantom `[N]` citations + dropped the leaked "thought" planning part. Probes: reason.compute_contract (7^13) + reason.compute_confidence (Monte-Carlo pi), both 100%.
-- □ **Auto-route compute** (Build-3, NEXT) — drop the `compute:` prefix requirement (intent detects when code is needed)
-- □ **Tool Decision Layer** (Build-4) — orchestrator picks WHICH tool; deterministic tools stay responsible for WHAT IS TRUE (hybrid, no regex rip-out); lift the contract to all tools
+- ☑ **Auto-route compute** (Build-3, DONE + live-verified) — `COMPUTE_HEURISTIC` broadened with high-precision math patterns (powers/roots/`N% of`/unit-conversion/big-arithmetic). Genuine math fires without the `compute:` prefix; conversational/opinion/fleet/unitless text does NOT (40/40 port: 22 fire, 18 silent). Live: "what is 7 to the power of 13?" → auto-computed; "what do you think about hiring 20 drivers?" → stayed a data-grounded opinion, no hijack. Probe reason.compute_autoroute.
+- □ **Tool Decision Layer** (Build-4, NEXT) — orchestrator picks WHICH tool; deterministic tools stay responsible for WHAT IS TRUE (hybrid, no regex rip-out); lift the contract to all tools
 - □ **L4 eval probes** (Build-5) — score: tool-selected · verification-present · confidence-calibrated · **narration ≤ evidence** (the key one)
 
 ## OPEN FORKS — now decided (team consensus 2026-06-09)
