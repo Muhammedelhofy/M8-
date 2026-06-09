@@ -211,10 +211,17 @@ function Ask($message, $sessionId, $history) {
   $resp = Invoke-RestMethod -Uri "$Base/api/chat" -Method Post -ContentType 'application/json' -Body $json -TimeoutSec 90
   return @{ text = ($resp.response + ""); ms = [int]((Get-Date) - $t0).TotalMilliseconds }
 }
-# Retry ONCE on a fallback reply (transient throttle), then give up and flag it.
+# Retry on transient HTTP errors AND on a throttle fallback reply, up to 4 attempts
+# with linear backoff. A single provider spill recovers within seconds, so a few
+# backed-off retries clear it instead of the fallback nuking the whole run (the
+# recurring 1-probe contamination that kept runs from being recorded).
 function AskR($message, $sessionId, $history) {
-  $r = Ask $message $sessionId $history
-  if ($r.text -match $FALLBACK) { Start-Sleep -Milliseconds 1500; $r = Ask $message $sessionId $history }
+  $r = @{ text = 'try again in a moment'; ms = 0 }
+  for ($attempt = 0; $attempt -lt 4; $attempt++) {
+    if ($attempt -gt 0) { Start-Sleep -Milliseconds (2000 * $attempt) }
+    try { $r = Ask $message $sessionId $history } catch { continue }
+    if ($r.text -notmatch $FALLBACK) { break }
+  }
   return $r
 }
 
@@ -242,6 +249,9 @@ foreach ($p in $probes) {
   $results += [pscustomobject]@{ id=$p.id; cat=$p.cat; score01=$score01; sum=$sumScore; total=$totN; ms=$lastMs; throttled=$hitFallback }
   $mark = if ($failed) { 'ERR' } elseif ($hitFallback) { 'THROTL' } else { "{0:0.0}/{1}" -f $sumScore, $totN }
   Write-Host ("  {0,-32} {1,-9} {2,6}ms  [{3}]" -f $p.id, $mark, $lastMs, $p.cat)
+  # Pace between probes so the free-tier providers in the chain don't 429 under
+  # burst (the throttle spillover that was contaminating otherwise-clean runs).
+  Start-Sleep -Milliseconds 2000
 }
 
 # -- aggregate -----------------------------------------------------------------
