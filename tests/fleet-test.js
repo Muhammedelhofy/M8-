@@ -17,7 +17,7 @@ const {
   buildDriverRegistry, isKnownDriver, looksFleet,
   tierWatch, tierWatchRef,
   briefRef, buildMorningBrief, renderBriefPacket, belowDailyTarget, fleetFreshness,
-  isGenericFleetOpener, firstFleetTurn,
+  isGenericFleetOpener, isGreetingOpener, firstFleetTurn,
   driverDailySeries, renderDriverSeriesPacket, resolveDriverWindow, resolveDriverName, lastDriverMentioned,
   cashRef, cashCollection, renderCashPacket,
 } = require("../lib/fleet");
@@ -296,6 +296,20 @@ check("autoBrief: 'who owes cash' → bypass (cash surface)", !isGenericFleetOpe
 check("autoBrief: 'net on 20 may' → bypass (specific date)", !isGenericFleetOpener("net on 20 may"));
 check("autoBrief: empty history → first fleet turn of session", firstFleetTurn([]));
 check("autoBrief: prior fleet turn in history → not first", !firstFleetTurn([{ role: "assistant", content: "Net earnings were 2,993 SAR for the fleet." }]));
+
+// 1i.5) GREETING-OPENER BRIEF (L3 Step 2) — a bare hello on session open fires the brief
+check("greetingOpener: 'good morning' → fires", isGreetingOpener("good morning"));
+check("greetingOpener: 'Good morning, Boss!' → fires", isGreetingOpener("Good morning, Boss!"));
+check("greetingOpener: 'hey' → fires", isGreetingOpener("hey"));
+check("greetingOpener: 'hey boss' → fires", isGreetingOpener("hey boss"));
+check("greetingOpener: 'salam' → fires", isGreetingOpener("salam"));
+check("greetingOpener: 'صباح الخير' → fires", isGreetingOpener("صباح الخير"));
+check("greetingOpener: 'hey, what is the weather' → bypass (real ask)", !isGreetingOpener("hey, what is the weather"));
+check("greetingOpener: 'good morning, how did ALI do' → bypass (real ask)", !isGreetingOpener("good morning, how did ALI do yesterday"));
+check("greetingOpener: 'hi how are you' → bypass (social question)", !isGreetingOpener("hi how are you"));
+check("greetingOpener: 'high priority task' → not a greeting", !isGreetingOpener("high priority task today"));
+check("greetingOpener: 'morning brief' → handled by briefRef, not greeting", !isGreetingOpener("morning brief"));
+check("greetingOpener: 'morningstar report' → not a greeting", !isGreetingOpener("morningstar report"));
 
 // 1k) PER-DRIVER DAILY SERIES (L3) — deterministic; never invents or interpolates
 const allIdxK = entries.map((_, i) => i);
