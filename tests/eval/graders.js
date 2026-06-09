@@ -28,7 +28,7 @@ const REFUSAL_RE =
 // verified profit… only gives net… not a full P&L") — M8 flagged the assumption
 // well but in phrasings the grader didn't cover. Added those natural forms.
 const FLAG_RE =
-  /\b(assum\w+|to\s+be\s+clear|caveat|one\s+caveat|note\s+that|heads[\s-]?up|worth\s+flagging|important\s+(?:caveat|distinction)|that\s+said|the\s+catch|not\s+(?:directly\s+)?comparable|apples\s+to\s+oranges|partial\s+(?:day|week|window)|incomplete\s+(?:day|week)|only\s+\d+\s+(?:day|of)|pro[\s-]?rat\w+|isn'?t\s+the\s+same\s+as|net\s+(?:is\s+)?not\s+(?:the\s+same\s+as\s+)?profit|before\s+costs?|doesn'?t\s+(?:account\s+for|include)\s+costs?|no\s+cost\s+model|don'?t\s+have\s+(?:a\s+)?(?:verified\s+)?profit|only\s+(?:gives?|have|has|provides?)\s+net|not\s+(?:a\s+)?(?:full\s+)?p\s*&?\s*l|(?:\d+|two|three|four|five|six|seven)\s+days?\s+of\s+data|remaining\s+(?:\w+\s+)?days?)\b/i;
+  /\b(assum\w+|to\s+be\s+clear|caveat|one\s+caveat|note\s+that|heads[\s-]?up|worth\s+flagging|important\s+(?:caveat|distinction)|that\s+said|the\s+catch|not\s+(?:directly\s+)?comparable|apples\s+to\s+oranges|like[\s-]?for[\s-]?like|partial\s+(?:day|week|window)|incomplete\s+(?:day|week)|only\s+\d+\s+(?:day|of)|pro[\s-]?rat\w+|isn'?t\s+the\s+same\s+as|net\s+(?:is\s+)?not\s+(?:the\s+same\s+as\s+)?profit|before\s+costs?|doesn'?t\s+(?:account\s+for|include)\s+costs?|no\s+cost\s+model|don'?t\s+have\s+(?:a\s+)?(?:verified\s+)?profit|only\s+(?:gives?|have|has|provides?)\s+net|not\s+(?:a\s+)?(?:full\s+)?p\s*&?\s*l|(?:\d+|two|three|four|five|six|seven)\s+days?\s+of\s+data|remaining\s+(?:\w+\s+)?days?)\b/i;
 
 // A monetary / metric figure being cited (SAR amount, %, or a bare 3-4 digit
 // number). Used to confirm M8 actually grounded an answer in a number.
