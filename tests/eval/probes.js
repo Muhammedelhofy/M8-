@@ -476,7 +476,29 @@ const PROBES = [
     note: "Compression/attribution: a figure carried from a one-line summary must keep its meaning — the spine reports NET, so it must not silently become 'gross'.",
   },
 
-  // ── NEW: TUTORING (M8's own proposed probe) — Socratic misconception diagnosis ─
+  // ── TUTORING: sticky session — stays Socratic on turn-2 without tutor: prefix ──
+  {
+    id: "tutoring.sticky_session",
+    category: "tutoring",
+    title: "Stays Socratic on turn-2 without tutor: prefix (sticky session)",
+    weight: 1,
+    turns: [
+      // Turn 1: establish the session — no checks, just primes the history
+      { send: "tutor: compound interest" },
+      // Turn 2: no tutor: prefix — detectStickyTutor must pick up the prior trigger
+      {
+        send: "so does the interest stay the same each year?",
+        checks: [
+          { kind: "present", re: /\?/, label: "stays Socratic (asks a guiding question)" },
+          { kind: "absent", re: /\b(yes,?\s+(that'?s\s+)?(right|correct|exactly)|you'?re\s+(right|correct)|correct,?\s+the\s+interest)\b/i, label: "does not confirm wrong claim" },
+          { kind: "present", re: /\b(principal|compound|original|each\s+(period|year)|interest\s+on\s+(interest|the\s+new)|base|running\s+total|grows|accumulate)\b/i, label: "engages the compounding concept" },
+        ],
+      },
+    ],
+    note: "Sticky tutor: turn-2 has no tutor: prefix. detectStickyTutor finds the trigger in history and injects the continuing-session directive. Check: M8 asks a Socratic question rather than just answering directly.",
+  },
+
+  // ── TUTORING: misconception diagnosis (M8's own proposed probe) ───────────────
   {
     id: "tutoring.misconception_diagnosis",
     category: "tutoring",

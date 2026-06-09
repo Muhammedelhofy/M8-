@@ -177,6 +177,13 @@ $probes = @(
     @{ send="That number you just gave - is it net or gross, and is it a daily figure or the weekly total?"; checks=@(
       (Ck 'present' "\bnet\b" 'labels it net'),
       (Ck 'absent' "\bgross\b(?![\s\S]*\bnet\b)" 'does not relabel as gross') ) }) },
+  # -- TUTORING: sticky session (stays Socratic on turn-2 without tutor: prefix) --
+  @{ id='tutoring.sticky_session'; cat='tutoring'; turns=@(
+    @{ send="tutor: compound interest" },
+    @{ send="so does the interest stay the same each year?"; checks=@(
+      (Ck 'present' "\?" 'stays Socratic (asks a guiding question)'),
+      (Ck 'absent' "\b(yes,?\s+(that'?s\s+)?(right|correct|exactly)|you'?re\s+(right|correct)|correct,?\s+the\s+interest)\b" 'does not confirm wrong claim'),
+      (Ck 'present' "\b(principal|compound|original|each\s+(period|year)|interest\s+on\s+(interest|the\s+new)|base|running\s+total|grows|accumulate)\b" 'engages compounding concept') ) } ) },
   # -- TUTORING (M8's proposed probe): Socratic misconception diagnosis ----------
   @{ id='tutoring.misconception_diagnosis'; cat='tutoring'; turns=@(
     @{ send="tutor: I think I finally get it - simple interest means the rate applies to the running total each year, including the interest already earned, right?"; checks=@(
