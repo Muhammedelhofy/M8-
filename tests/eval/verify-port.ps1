@@ -16,7 +16,7 @@ $REFUSAL = @'
 \b(i\s+can'?t|i\s+cannot|i\s+won'?t|i\s+don'?t\s+have|i\s+do\s+not\s+have|no\s+(?:verified|record|data|basis)|not\s+in\s+(?:the|my)\s+(?:data|record|blob)|couldn'?t\s+find|unable\s+to|i\s+won'?t\s+(?:fake|invent|fabricate)|i\s+can'?t\s+(?:prove|verify|confirm)|isn'?t\s+something\s+i\s+can|no\s+account\s+by\s+that\s+name)\b
 '@
 $FLAG = @'
-\b(assum\w+|to\s+be\s+clear|caveat|one\s+caveat|note\s+that|heads[\s-]?up|worth\s+flagging|important\s+(?:caveat|distinction)|that\s+said|the\s+catch|not\s+(?:directly\s+)?comparable|apples\s+to\s+oranges|partial\s+(?:day|week|window)|incomplete\s+(?:day|week)|only\s+\d+\s+(?:day|of)|pro[\s-]?rat\w+|isn'?t\s+the\s+same\s+as|net\s+(?:is\s+)?not\s+(?:the\s+same\s+as\s+)?profit|before\s+costs?|doesn'?t\s+(?:account\s+for|include)\s+costs?|no\s+cost\s+model)\b
+\b(assum\w+|to\s+be\s+clear|caveat|one\s+caveat|note\s+that|heads[\s-]?up|worth\s+flagging|important\s+(?:caveat|distinction)|that\s+said|the\s+catch|not\s+(?:directly\s+)?comparable|apples\s+to\s+oranges|partial\s+(?:day|week|window)|incomplete\s+(?:day|week)|only\s+\d+\s+(?:day|of)|pro[\s-]?rat\w+|isn'?t\s+the\s+same\s+as|net\s+(?:is\s+)?not\s+(?:the\s+same\s+as\s+)?profit|before\s+costs?|doesn'?t\s+(?:account\s+for|include)\s+costs?|no\s+cost\s+model|don'?t\s+have\s+(?:a\s+)?(?:verified\s+)?profit|only\s+(?:gives?|have|has|provides?)\s+net|not\s+(?:a\s+)?(?:full\s+)?p\s*&?\s*l|(?:\d+|two|three|four|five|six|seven)\s+days?\s+of\s+data|remaining\s+(?:\w+\s+)?days?)\b
 '@
 $NUMBER  = '\b\d{1,3}(?:[,]\d{3})+(?:\.\d+)?\b|\b\d+\.\d+\b|\bSAR\b|\briyals?\b|\b\d{2,}\s*%'
 $JUN7    = '4[,]?\s?535(?:\.\d+)?'
@@ -38,6 +38,10 @@ Check "flag: only 3 days, not comparable"      (M "We're only 3 days in, so it's
 Check "flag: net is not the same as profit"    (M "Net is not the same as profit; no cost model yet." $FLAG) $true
 Check "flag: assuming football"                (M "Assuming football and the June friendly." $FLAG) $true
 Check "flag: confident no-caveat (NOT)"        (M "Yes, we'll beat last week easily." $FLAG) $false
+# regressions from the first LIVE run (these strong answers were false-negatived)
+Check "flag: two days of data"                 (M "We have two days of data in the current week so far." $FLAG) $true
+Check "flag: don't have a verified profit"     (M "I don't have a verified profit figure; the rollup only gives net earnings, not a full P&L." $FLAG) $true
+Check "flag: remaining five days"              (M "The remaining five days would need 18,623 SAR." $FLAG) $true
 
 Check "number: 4,535.48" (M "Net was 4,535.48 SAR." $NUMBER) $true
 Check "number: 425.92"   (M "He earned 425.92" $NUMBER) $true
