@@ -59,6 +59,42 @@ class ChatManager {
     });
   }
 
+  // ── streaming support (SSE) ──────────────────────────────────────
+  // Create an empty assistant bubble we can grow as token chunks arrive.
+  addStreamingMessage() {
+    const msg = { role: "assistant", content: "", timestamp: new Date() };
+    this.messages.push(msg);
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "message assistant";
+    const bubble = document.createElement("div");
+    bubble.className = "message-bubble";
+    const timeEl = document.createElement("div");
+    timeEl.className = "message-time";
+    timeEl.textContent = msg.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    wrapper.appendChild(bubble);
+    wrapper.appendChild(timeEl);
+    this.container.appendChild(wrapper);
+
+    msg._bubble = bubble;
+    this._scrollToBottom();
+    return msg;
+  }
+
+  appendToStreaming(msg, delta) {
+    msg.content += delta;
+    if (msg._bubble) msg._bubble.textContent = msg.content;
+    this._scrollToBottom();
+  }
+
+  // On completion, prefer the server's authoritative `full` text (covers any
+  // chunk we might have dropped); never shrink what's already shown.
+  finalizeStreaming(msg, fullText) {
+    if (typeof fullText === "string" && fullText.length >= msg.content.length) msg.content = fullText;
+    if (msg._bubble) msg._bubble.textContent = msg.content;
+    this._scrollToBottom();
+  }
+
   getHistory() {
     return this.messages.map((m) => ({ role: m.role, content: m.content }));
   }

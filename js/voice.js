@@ -136,6 +136,65 @@ class VoiceManager {
   stopSpeaking() {
     this.synthesis.cancel();
     this.isSpeaking = false;
+    this._pending = "";
+  }
+
+  // ── streaming TTS ────────────────────────────────────────────────
+  // Speak sentences AS they arrive (queued utterances) so the voice starts on
+  // the first sentence while the model is still generating — the whole point of
+  // streaming. beginStream() resets; feedStream(delta) speaks each completed
+  // sentence; endStream() flushes the tail.
+  beginStream() {
+    this.synthesis.cancel();
+    this._pending = "";
+    this.isSpeaking = false;
+  }
+
+  feedStream(delta) {
+    this._pending = (this._pending || "") + (delta || "");
+    const boundary = /[.!?؟\n]+["')\]]?\s*/;   // sentence end (+ optional closer)
+    let m;
+    while ((m = boundary.exec(this._pending)) !== null) {
+      const end = m.index + m[0].length;
+      const sentence = this._pending.slice(0, end).trim();
+      this._pending = this._pending.slice(end);
+      if (sentence) this._enqueueUtterance(sentence);
+    }
+  }
+
+  endStream() {
+    if (this._pending && this._pending.trim()) {
+      this._enqueueUtterance(this._pending.trim());
+    }
+    this._pending = "";
+  }
+
+  // Queue an utterance WITHOUT cancelling the ones already speaking/queued.
+  _enqueueUtterance(text) {
+    if (!text) return;
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = this.currentLang;
+    u.rate = 1.0; u.pitch = 1.0; u.volume = 1.0;
+    const voice = this._getBestVoice(this.currentLang);
+    if (voice) u.voice = voice;
+    u.onstart = () => {
+      this.isSpeaking = true;
+      if (this.onStatusChange) this.onStatusChange("speaking");
+    };
+    u.onend = () => {
+      // Only return to idle once the whole queue has drained.
+      if (!this.synthesis.speaking && !this.synthesis.pending) {
+        this.isSpeaking = false;
+        if (this.onStatusChange) this.onStatusChange("idle");
+      }
+    };
+    u.onerror = () => {
+      if (!this.synthesis.speaking && !this.synthesis.pending) {
+        this.isSpeaking = false;
+        if (this.onStatusChange) this.onStatusChange("idle");
+      }
+    };
+    this.synthesis.speak(u);
   }
 
   isSupported() {

@@ -96,6 +96,9 @@ function handleSend() {
   if (text) sendMessage(text);
 }
 
+// Flip to false to force the proven buffered path (no streaming) without a redeploy.
+const STREAMING_ENABLED = true;
+
 async function sendMessage(text) {
   if (!text || isProcessing) return;
   isProcessing = true;
@@ -114,31 +117,16 @@ async function sendMessage(text) {
   chat.showTyping();
   setStatus("thinking");
 
+  // FIX: Send history WITHOUT the current message — backend appends it explicitly.
+  const pastHistory = chat.getHistory().slice(0, -1);
+
   try {
-    // FIX: Send history WITHOUT the current message — backend appends it explicitly.
-    // chat.addMessage("user", text) was already called above, so getHistory() would
-    // include it. Slicing off the last item avoids duplicating it in the Gemini payload.
-    const pastHistory = chat.getHistory().slice(0, -1);
-
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message: text,
-        sessionId: chat.sessionId,
-        history: pastHistory,
-      }),
-    });
-
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      throw new Error(errData.error || `HTTP ${res.status}`);
+    let streamed = false;
+    if (STREAMING_ENABLED) {
+      try { streamed = await streamMessage(text, pastHistory); }
+      catch (streamErr) { console.warn("Stream failed, falling back to buffered:", streamErr); streamed = false; }
     }
-
-    const data = await res.json();
-    chat.hideTyping();
-    chat.addMessage("assistant", data.response);
-    voice.speak(data.response);
+    if (!streamed) await bufferedMessage(text, pastHistory);
   } catch (err) {
     console.error("Send error:", err);
     chat.hideTyping();
@@ -147,6 +135,69 @@ async function sendMessage(text) {
   } finally {
     isProcessing = false;
   }
+}
+
+// Streaming path (SSE). Returns true if it delivered a reply; false → caller
+// falls back to the buffered path. Throwing also triggers the fallback.
+async function streamMessage(text, pastHistory) {
+  const res = await fetch("/api/chat-stream", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: text, sessionId: chat.sessionId, history: pastHistory }),
+  });
+  if (!res.ok || !res.body) return false;
+  if (!(res.headers.get("content-type") || "").includes("text/event-stream")) return false;
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "", msg = null, got = false, errored = false;
+  voice.beginStream();
+
+  const handle = (line) => {
+    const payload = line.replace(/^data:\s?/, "").trim();
+    if (!payload || payload === "[DONE]") return;
+    let obj; try { obj = JSON.parse(payload); } catch { return; }
+    if (obj.error) { errored = true; return; }
+    if (obj.delta) {
+      if (!got) { chat.hideTyping(); setStatus("speaking"); msg = chat.addStreamingMessage(); got = true; }
+      chat.appendToStreaming(msg, obj.delta);
+      voice.feedStream(obj.delta);
+    }
+    if (obj.done) {
+      if (!got) { chat.hideTyping(); msg = chat.addStreamingMessage(); got = true; }
+      chat.finalizeStreaming(msg, obj.full);
+    }
+  };
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    let nl;
+    while ((nl = buf.indexOf("\n\n")) >= 0) { handle(buf.slice(0, nl)); buf = buf.slice(nl + 2); }
+  }
+  if (buf.trim()) handle(buf);
+
+  if (!got) return false;        // server errored before any content → fall back
+  voice.endStream();
+  return true;
+}
+
+// Buffered path (the original /api/chat flow) — also the streaming fallback.
+async function bufferedMessage(text, pastHistory) {
+  const res = await fetch("/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: text, sessionId: chat.sessionId, history: pastHistory }),
+  });
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error || `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  chat.hideTyping();
+  chat.addMessage("assistant", data.response);
+  voice.speak(data.response);
 }
 
 function toggleMic() {
