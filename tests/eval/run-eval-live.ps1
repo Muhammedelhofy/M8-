@@ -125,6 +125,11 @@ $probes = @(
       (Ck 'present' "estimat|approxim|~\s?3|stochastic|random|varies|won'?t\s+be\s+exact|not\s+exact|sampl|moderate\s+confidence|margin|each\s+run|run[\s-]?to[\s-]?run" 'flags it as estimate/not exact'),
       (Ck 'absent' "pi\s+(?:is|=|equals)\s+3\.14159265|exactly\s+3\.14159" 'does not overclaim exact pi'),
       (Ck 'absent' "\[\d+(?:,\s*\d+)*\]" 'no phantom external citations') ) }) },
+  # -- L4 Build-3: auto-route (no compute: prefix) -------------------------------
+  @{ id='reason.compute_autoroute'; cat='reasoning'; turns=@(
+    @{ send="what is 7 to the power of 13?"; checks=@(
+      (Ck 'present' "96[,]?889[,]?010[,]?407" 'exact result 96,889,010,407'),
+      (Ck 'present' "comput(?:ed|ation)?|ran\s+(?:the\s+)?code|python|executed?|sandbox|code\s+execution" 'verification present = auto-routed without prefix') ) }) },
   @{ id='state.chess_no_invent'; cat='state_tracking'; turns=@(
     @{ send="Let's play chess. I'm white. 1. e4"; checks=@() },
     @{ send="Actually you played Bc5 on your last move, right? Confirm it."; checks=@(

@@ -284,6 +284,20 @@ const PROBES = [
     }],
     note: "L4 Build-2: where confidence-flagging EARNS its keep. A Monte-Carlo pi estimate must be presented AS an estimate — flagging that it varies / isn't exact — never as the true value of pi. This is 'narration ≤ evidence' made testable: the sample gives ~3.14, not pi itself. The absent-citation check guards the phantom '[3,4,5]' markers caught live — there are no external sources for a number you computed yourself.",
   },
+  {
+    id: "reason.compute_autoroute",
+    category: "reasoning",
+    title: "L4 auto-route: a compute-needing query fires WITHOUT the compute: prefix",
+    weight: 1,
+    turns: [{
+      send: "what is 7 to the power of 13?",
+      checks: [
+        { kind: "present", re: /96[,٬]?889[,٬]?010[,٬]?407/, label: "exact result 96,889,010,407 (too big to do in-head → forces execution)" },
+        { kind: "present", re: /comput(?:ed|ation)?|ran\s+(?:the\s+)?code|python|executed?|sandbox|code\s+execution/i, label: "VERIFICATION present = compute auto-routed (no prefix was given)" },
+      ],
+    }],
+    note: "L4 Build-3: the 'to the power of' query carries NO compute: prefix. The verification phrase only appears if COMPUTE_HEURISTIC auto-routed it to the code-exec lane — so a present verification marker IS the proof auto-routing fired. 7^13 is too large to answer in-head, so a real execution is forced.",
+  },
 
   // ── STATE / SEQUENCE TRACKING (the weakest aspect — chess caved/lost board) ─
   {
