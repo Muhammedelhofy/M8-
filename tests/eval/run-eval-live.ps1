@@ -15,7 +15,16 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $opts = [Text.RegularExpressions.RegexOptions]::IgnoreCase
-function M([string]$t, [string]$p) { return [regex]::IsMatch(($t + ""), $p, $opts) }
+# Normalise the curly punctuation LLMs emit (’ “ ” ‐) to ASCII BEFORE matching, so
+# patterns like don'?t / can'?t / didn'?t (written with straight quotes) actually
+# fire on "I don't…" with a curly apostrophe. This was THE dominant false-negative
+# noise source — 5 correct answers (refusals/flags) were silently scored 0 because
+# Gemini uses ’ not '. Pure scoring hygiene; it never changes M8's behaviour.
+function Norm([string]$t) {
+  return ($t + "") -replace [char]0x2019,"'" -replace [char]0x2018,"'" -replace [char]0x201B,"'" `
+                   -replace [char]0x201C,'"' -replace [char]0x201D,'"' -replace [char]0x2010,'-' -replace [char]0x2011,'-'
+}
+function M([string]$t, [string]$p) { return [regex]::IsMatch((Norm $t), $p, $opts) }
 
 # -- shared grader regexes (verbatim from graders.js; Arabic sep dropped) -------
 $REFUSAL = @'
@@ -231,6 +240,7 @@ $results = @(); $throttled = 0
 foreach ($p in $probes) {
   $sid = "evallive_$($p.id)_$([DateTimeOffset]::Now.ToUnixTimeMilliseconds())"
   $history = @(); $captures = @{}; $sumScore = 0.0; $totN = 0; $lastMs = 0; $failed = $false; $hitFallback = $false
+  $failLabels = @(); $replies = @()
   foreach ($turn in $p.turns) {
     try { $r = AskR $turn.send $sid $history } catch {
       $totN += @($turn.checks).Count
@@ -239,16 +249,25 @@ foreach ($p in $probes) {
     }
     if ($r.text -match $FALLBACK) { $hitFallback = $true }
     $lastMs = $r.ms
+    $replies += $r.text
     $history += @{ role='user'; content=$turn.send }
     $history += @{ role='assistant'; content=$r.text }
-    $ctx = @{ text=$r.text; latencyMs=$r.ms; captures=$captures }
-    foreach ($c in $turn.checks) { $sumScore += [double](Grade $c $ctx); $totN += 1 }
+    $ctx = @{ text=(Norm $r.text); latencyMs=$r.ms; captures=$captures }   # graded on normalised text; $replies keeps the raw
+    foreach ($c in $turn.checks) {
+      $s = [double](Grade $c $ctx); $sumScore += $s; $totN += 1
+      if ($s -lt 1.0) { $failLabels += "[$($c.kind)] $($c.label)" }   # which check missed → diagnose noise vs real
+    }
   }
   if ($hitFallback) { $throttled++ }
   $score01 = if ($totN) { $sumScore / $totN } else { 0 }
-  $results += [pscustomobject]@{ id=$p.id; cat=$p.cat; score01=$score01; sum=$sumScore; total=$totN; ms=$lastMs; throttled=$hitFallback }
+  # replies/fails captured so a 1/2 can be read as 'M8 was right, regex missed' vs
+  # 'M8 actually wrong' — without re-probing blind. Per-run JSON is gitignored.
+  $results += [pscustomobject]@{ id=$p.id; cat=$p.cat; score01=$score01; sum=$sumScore; total=$totN; ms=$lastMs; throttled=$hitFallback; fails=$failLabels; replies=$replies }
   $mark = if ($failed) { 'ERR' } elseif ($hitFallback) { 'THROTL' } else { "{0:0.0}/{1}" -f $sumScore, $totN }
   Write-Host ("  {0,-32} {1,-9} {2,6}ms  [{3}]" -f $p.id, $mark, $lastMs, $p.cat)
+  if (-not $failed -and -not $hitFallback -and $failLabels.Count -gt 0) {
+    Write-Host ("        MISS: " + ($failLabels -join '  |  ')) -ForegroundColor DarkYellow
+  }
   # Pace between probes so the free-tier providers in the chain don't 429 under
   # burst (the throttle spillover that was contaminating otherwise-clean runs).
   Start-Sleep -Milliseconds 2000
