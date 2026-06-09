@@ -22,6 +22,7 @@ const CATEGORIES = [
   "grounding", "honesty", "fleet_intel", "reasoning",
   "state_tracking", "memory", "latency",
   "compression", "silent_fail", "prompt_bypass", "tutoring",
+  "tool_decision",
 ];
 
 // Per-category target weight in the OVERALL score (sums need not be 1; scorecard
@@ -31,6 +32,7 @@ const CATEGORY_WEIGHTS = {
   grounding: 1.5, honesty: 1.5, fleet_intel: 1.2, reasoning: 1.0,
   state_tracking: 1.3, memory: 1.0, latency: 0.8,
   compression: 1.0, silent_fail: 1.2, prompt_bypass: 1.3, tutoring: 1.0,
+  tool_decision: 1.2,   // L4 lane (Build-4/5) — first-class so L4 progress moves the number
 };
 
 // Immutable completed-day ground truth (see GROUNDING RULE above).
@@ -297,6 +299,39 @@ const PROBES = [
       ],
     }],
     note: "L4 Build-3: the 'to the power of' query carries NO compute: prefix. The verification phrase only appears if COMPUTE_HEURISTIC auto-routed it to the code-exec lane — so a present verification marker IS the proof auto-routing fired. 7^13 is too large to answer in-head, so a real execution is forced.",
+  },
+
+  // ── L4 TOOL DECISION LAYER (Build-4/5: the LLM picks the tool; deterministic
+  //    tools own the truth). tool-selected · verification-present · narration ≤
+  //    evidence. (confidence-calibrated is covered by reason.compute_confidence.)
+  {
+    id: "tool.decision_compute",
+    category: "tool_decision",
+    title: "Build-4: the tool-decision layer routes a regex-MISSED computation to the compute tool",
+    weight: 1,
+    turns: [{
+      send: "Add these up and give me the exact total: 48213, 92177, 15334, 88041, 66502, 22195, 77418, 33986, 55607, 41250, 79934. No estimate, I need the precise number.",
+      checks: [
+        { kind: "present", re: /620[,٬]?657\b/, label: "exact total 620,657 (11 five-digit numbers — too error-prone in-head, forces real execution)" },
+        { kind: "present", re: /comput(?:ed|ation)?|ran\s+(?:the\s+)?code|python|executed?|sandbox|code\s+execution/i, label: "VERIFICATION present = the LLM tool-decision routed to compute (no prefix; the regex does not match a bare comma list)" },
+        { kind: "absent", re: /\[\d+(?:,\s*\d+)*\]/, label: "no phantom external citations on a self-computation (narration ≤ evidence)" },
+      ],
+    }],
+    note: "L4 Build-4 (tool-selected + verification-present): a bare comma-separated sum carries NO compute: prefix and does NOT match COMPUTE_HEURISTIC (no power/factorial/×/÷/percent-of/unit), so the ONLY route to code execution is the LLM Tool Decision Layer picking 'compute'. The exact total + a verification phrase together ARE the proof it routed correctly. 11 five-digit numbers are too error-prone to total in-head, so a real run is forced. LIVE-VERIFIED 2026-06-10: '...computed in Python', total 620,657, no phantom citation.",
+  },
+  {
+    id: "tool.decision_no_hijack",
+    category: "tool_decision",
+    title: "Build-4: an opinion reaching the tool-decision layer is NOT hijacked to a tool",
+    weight: 1,
+    turns: [{
+      send: "What do you think actually makes a small business worth buying?",
+      checks: [
+        { kind: "absent", re: /computed\s+in\s+(?:python|code)|ran\s+the\s+code|in\s+the\s+sandbox|monte[\s-]?carlo/i, label: "did NOT fake a code execution for a judgment question (no fabricated tool use)" },
+        { kind: "present", re: /\b(cash\s*flow|profit|revenue|owner|recurring|margin|depends|my\s+read|worth|buy)\b/i, label: "gave a substantive opinion (tool-decision picked 'answer', not a deflection)" },
+      ],
+    }],
+    note: "L4 Build-4 (tool-selected — the NEGATIVE that protects the layer): an opinion/advice question that reaches the LLM tool-decision layer must stay 'answer' — never over-routed to compute (faking a calculation) or to a search-citation dump. The absent-compute check is the load-bearing 'no fabricated tool use'; the present-opinion check confirms it actually answered rather than deflecting. LIVE-VERIFIED 2026-06-10: substantive cash-flow-first opinion, no compute/search hijack.",
   },
 
   // ── STATE / SEQUENCE TRACKING (the weakest aspect — chess caved/lost board) ─

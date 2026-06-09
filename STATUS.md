@@ -1,5 +1,5 @@
 # M8 — STATUS (the one living page)
-*The single source of truth for "where are we." Updated every session. If this disagrees with a chat or memory, THIS wins. Last updated: 2026-06-10 (North-Star correction + Build-4 next).*
+*The single source of truth for "where are we." Updated every session. If this disagrees with a chat or memory, THIS wins. Last updated: 2026-06-10 (North-Star correction + L4 Build-4 Tool Decision Layer + Build-5 probes — all live-verified).*
 
 ---
 
@@ -10,8 +10,8 @@
 - Honesty never bends: **no unverified proof claim, ever** — at this North Star a fabricated proof is the worst possible failure.
 
 ## CURRENT RUNG
-**L3 Proactive Operator (~85%) → climbing to L4.**
-L1 ✅ · L2 ✅ (solid) · **L3 🟢 ~85%** · L4 🟡 ~15% · L5 ⚪ ~5%
+**L4 Verified Tool Orchestration — climbing (Tool Decision Layer live). L3 stays ~85% (fleet frozen at rider-risk).**
+L1 ✅ · L2 ✅ (solid) · **L3 🟢 ~85%** · **L4 🟡 ~45%** (compute + auto-route + output contract + tool-decision layer all live) · L5 ⚪ ~5%
 
 ## ACTIVE LANE
 **Verified Tool Orchestration (= L4 "Mastermind").**
@@ -31,8 +31,9 @@ M8 decides what truth-source it needs → invokes it → verifies → narrates O
 - ☑ **THIS page** (done)
 - ☑ **L4 output contract** (Build-2, DONE + live-verified) — `VERIFIED_OUTPUT_CONTRACT` in orchestrator.js, scoped to the compute lane only (NOT tutor/fleet). Compute replies now carry result + executed-not-estimated + calibrated confidence (deterministic = implicit-high; stochastic = flagged-as-estimate), narration ≤ evidence. Also fixed at the extractor (llm.js): stripped Gemini code-exec phantom `[N]` citations + dropped the leaked "thought" planning part. Probes: reason.compute_contract (7^13) + reason.compute_confidence (Monte-Carlo pi), both 100%.
 - ☑ **Auto-route compute** (Build-3, DONE + live-verified) — `COMPUTE_HEURISTIC` broadened with high-precision math patterns (powers/roots/`N% of`/unit-conversion/big-arithmetic). Genuine math fires without the `compute:` prefix; conversational/opinion/fleet/unitless text does NOT (40/40 port: 22 fire, 18 silent). Live: "what is 7 to the power of 13?" → auto-computed; "what do you think about hiring 20 drivers?" → stayed a data-grounded opinion, no hijack. Probe reason.compute_autoroute.
-- □ **Tool Decision Layer** (Build-4, NEXT) — orchestrator picks WHICH tool; deterministic tools stay responsible for WHAT IS TRUE (hybrid, no regex rip-out); lift the contract to all tools
-- □ **L4 eval probes** (Build-5) — score: tool-selected · verification-present · confidence-calibrated · **narration ≤ evidence** (the key one)
+- ☑ **Tool Decision Layer** (Build-4, DONE + live-verified) — `decideAction` (router.js) gained a 4th tool: the orchestrator LLM now picks `answer | search | compute | clarify` in the slice the deterministic gates haven't claimed. Fleet/state/open-problem stay deterministic HARD-ROUTES above the LLM (the integrity moat — the LLM can't route away from them; false-consensus + override gates untouched). Hybrid: the regex compute auto-route is the fast-path; the LLM catches the compute-worthy queries it missed. Lifted `VERIFIED_OUTPUT_CONTRACT` off the compute lane onto the SEARCH tool via a per-tool dispatcher (`verifiedOutputContract(tool)`); compute keeps its tuned contract verbatim (zero probe regression); fleet/state already carry their own integrity packets. Tool decision traced in both `orchestrate()` + `orchestrateStream()` (console channel; idempotent `tool_decision` column shipped in the migration for the user to run, NOT wired into the insert yet). LIVE both ways: a regex-missed 11-number exact sum → routed to compute, "computed in Python" 620,657 no phantom citation; an opinion ("what makes a business worth buying") → stayed a substantive answer, no compute/search hijack.
+- ☑ **L4 eval probes** (Build-5, DONE + live 5/5) — new first-class `tool_decision` category (weight 1.2) + 2 probes in BOTH probes.js (canonical) and run-eval-live.ps1 (PS port): `tool.decision_compute` (tool-selected + verification-present + narration≤evidence via no-phantom-citation) and `tool.decision_no_hijack` (the negative — an opinion must NOT be over-routed to a tool / fake a computation). confidence-calibrated stays covered by reason.compute_confidence. Port-verified offline (graders vs the real live replies + a faked-compute negative control) then live 5/5 via `-Only tool_decision`.
+- □ **NEXT** — (a) router calibration: it sometimes prefers SEARCH over compute for arithmetic dressed in a real-world concept (a "bill-split" query searched calculator sites + cited [1,2]; numbers stayed correct) — tighten the compute-vs-search boundary in the router prompt; (b) wire the `tool_decision` column into logTrace once the migration is run (persist the tool mix for trend analysis); (c) fresh full 30+2-probe baseline (NOT back-to-back); (d) lift the contract onto future tools (calendar/Lean) as they join.
 
 ## OPEN FORKS — now decided (team consensus 2026-06-09)
 - **A. Where code runs** → ✅ **Gemini-native NOW**, Cloud Run later (move only when persistent files / custom libs / long jobs / repeated sims / Lean force it)
