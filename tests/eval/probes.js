@@ -110,11 +110,13 @@ const PROBES = [
       send: "Give me the morning brief.",
       checks: [
         { kind: "citesNumber", label: "leads with a real net figure" },
-        { kind: "present", re: /net|earn|driver|fleet|active|week|target|tier|cash/i, label: "covers ops dimensions" },
+        { kind: "present", re: /\b(up|down|increase|decrease|higher|lower|vs\b|compared|trend|\+\s?\d|\-\s?\d|\d+\s?%)/i, label: "shows a trend / comparison" },
+        { kind: "present", re: /\b[A-Z][A-Za-z]{2,}\s+[A-Z][A-Za-z]{2,}\b/, label: "names a specific driver" },
+        { kind: "present", re: /\b(attention|below|target|tier|slip|cash|gap|idle|acceptance|util|coaching|low)/i, label: "flags an attention item" },
         { kind: "absent", re: /executive\s+summary[\s\S]*background[\s\S]*recommendation/i, label: "NOT hijacked into a generic doc" },
       ],
     }],
-    note: "Regression guard for the doc-gen hijack bug (bdb99ff): a brief must be the FLEET brief.",
+    note: "Partial-credit: a rich brief (net + trend + named driver + attention) scores higher than a thin one. Also the doc-gen hijack regression guard (bdb99ff).",
   },
   {
     id: "fleet.tier_slip",
@@ -219,16 +221,30 @@ const PROBES = [
   {
     id: "latency.simple_turn",
     category: "latency",
-    title: "A simple conversational turn returns under the voice budget",
+    title: "A simple conversational turn — graded against the <4s voice target",
     weight: 1,
     turns: [{
       send: "Hey M8, quick — what's 2+2?",
       checks: [
         { kind: "present", re: /\b4\b/, label: "answers 4" },
-        { kind: "latencyUnder", ms: 6000, label: "≤ 6s (voice-tolerable)" },
+        { kind: "latencyScore", label: "voice latency (graded, <4s target)" },
       ],
     }],
-    note: "No search, no fleet, no deep mode → should be near the floor. <4s is the real target; 6s = pass-with-headroom.",
+    note: "No search/fleet/deep mode → the latency floor. Graded so the score moves with the ~2.6s fixed per-turn tax (recallMemory) and any future streaming/optimisation.",
+  },
+  {
+    id: "latency.fleet_turn",
+    category: "latency",
+    title: "A heavier fleet turn — latency under real load",
+    weight: 1,
+    turns: [{
+      send: "What was the fleet's net on June 6, 2026?",
+      checks: [
+        { kind: "citesNumber", label: "answers with a figure" },
+        { kind: "latencyScore", label: "fleet-turn latency (graded)" },
+      ],
+    }],
+    note: "Samples the slow path (fleet spine fetch + LLM). Paired with the simple turn so the latency category reflects the real spread, not just the floor.",
   },
 
   // ── NEW: COMPRESSION (GPT) — consistency across compress→expand→attribute ───

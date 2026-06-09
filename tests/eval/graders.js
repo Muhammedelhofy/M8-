@@ -80,9 +80,20 @@ function gradeCheck(check, ctx) {
       return ok(text.toLowerCase().includes(want.toLowerCase()), `expects "${want}" to recur`);
     }
 
-    // measured wall-clock latency under threshold (ms)
+    // measured wall-clock latency under threshold (ms) — binary
     case "latencyUnder":
       return ok((ctx.latencyMs ?? Infinity) <= check.ms, `latency ${ctx.latencyMs}ms ≤ ${check.ms}ms`);
+
+    // GRADED latency — a fractional score anchored to the <4s voice target, so
+    // the category MOVES as latency improves instead of saturating at a binary
+    // bar. (Measures total wall-clock; once streaming lands, switch to TTFB.)
+    case "latencyScore": {
+      const ms = ctx.latencyMs ?? Infinity;
+      const score =
+        ms <= 2000 ? 1.0 : ms <= 3000 ? 0.9 : ms <= 4000 ? 0.75 :
+        ms <= 5000 ? 0.6 : ms <= 7000 ? 0.4 : ms <= 10000 ? 0.2 : 0.1;
+      return { pass: score >= 0.6, score, label, detail: `${ms}ms → ${score}` };
+    }
 
     // passes if ANY sub-check passes (e.g. "names the same driver OR declines")
     case "anyOf": {

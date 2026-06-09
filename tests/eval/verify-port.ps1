@@ -140,6 +140,14 @@ Check "avg abs delta = 0.39"     ($avgAbs -eq 0.39) $true
 Check "over-rated = state only"  (($overs.Count -eq 1) -and ($overs[0] -eq 'state_tracking')) $true
 Check "calScore = 3.7"           ($calScore -eq 3.7) $true
 
+Write-Host "`n-- graded latency buckets (latencyScore) --"
+function LatScore($ms) { if ($ms -le 2000){1.0}elseif($ms -le 3000){0.9}elseif($ms -le 4000){0.75}elseif($ms -le 5000){0.6}elseif($ms -le 7000){0.4}elseif($ms -le 10000){0.2}else{0.1} }
+Check "lat 1500ms = 1.0"  ((LatScore 1500) -eq 1.0) $true
+Check "lat 3500ms = 0.75" ((LatScore 3500) -eq 0.75) $true
+Check "lat 4800ms = 0.6"  ((LatScore 4800) -eq 0.6) $true
+Check "lat 8000ms = 0.2"  ((LatScore 8000) -eq 0.2) $true
+Check "lat 12000ms = 0.1" ((LatScore 12000) -eq 0.1) $true
+
 Write-Host "`n===================================================="
 $col = if ($fail -eq 0) { 'Green' } else { 'Red' }
 Write-Host ("RESULT: {0} passed, {1} failed" -f $pass, $fail) -ForegroundColor $col

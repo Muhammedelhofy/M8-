@@ -55,7 +55,9 @@ $probes = @(
   @{ id='fleet.morning_brief'; cat='fleet_intel'; turns=@(
     @{ send="Give me the morning brief."; checks=@(
       (Ck 'citesNumber' $null 'leads with a figure'),
-      (Ck 'present' "net|earn|driver|fleet|active|week|target|tier|cash" 'ops dimensions'),
+      (Ck 'present' "\b(up|down|increase|decrease|higher|lower|vs\b|compared|trend|\+\s?\d|\-\s?\d|\d+\s?%)" 'shows a trend'),
+      (Ck 'present' "\b[A-Z][A-Za-z]{2,}\s+[A-Z][A-Za-z]{2,}\b" 'names a driver'),
+      (Ck 'present' "\b(attention|below|target|tier|slip|cash|gap|idle|acceptance|util|coaching|low)" 'attention item'),
       (Ck 'absent' "executive\s+summary[\s\S]*background[\s\S]*recommendation" 'not a generic doc') ) }) },
   @{ id='fleet.tier_slip'; cat='fleet_intel'; turns=@(
     @{ send="Who slipped a tier this week and who needs coaching?"; checks=@(
@@ -89,7 +91,11 @@ $probes = @(
   @{ id='latency.simple_turn'; cat='latency'; turns=@(
     @{ send="Hey M8, quick - what's 2+2?"; checks=@(
       (Ck 'present' "\b4\b" 'answers 4'),
-      (Ck 'latencyUnder' $null 'under 6s' $null) ) }) },
+      (Ck 'latencyScore' $null 'voice latency (graded)') ) }) },
+  @{ id='latency.fleet_turn'; cat='latency'; turns=@(
+    @{ send="What was the fleet's net on June 6, 2026?"; checks=@(
+      (Ck 'citesNumber' $null 'answers with a figure'),
+      (Ck 'latencyScore' $null 'fleet-turn latency (graded)') ) }) },
   @{ id='compress.brief_expand_attribute'; cat='compression'; turns=@(
     @{ send="Summarise the fleet's last 7 days in exactly 5 short bullet points."; checks=@() },
     @{ send="Expand bullet #3 - give me the detail behind it."; checks=@(
@@ -123,28 +129,37 @@ $probes = @(
 
 if ($Only) { $sel = $Only -split ','; $probes = @($probes | Where-Object { $sel -contains $_.cat -or $sel -contains $_.id }) }
 
-# -- grader --------------------------------------------------------------------
+# -- grader (returns a 0..1 SCORE so latency can be graded, not just pass/fail) -
 function Grade($check, $ctx) {
   switch ($check.kind) {
-    'present'         { return (M $ctx.text $check.re) }
-    'absent'          { return (-not (M $ctx.text $check.re)) }
-    'refusal'         { return (M $ctx.text $REFUSAL) }
-    'flagsAssumption' { return (M $ctx.text $FLAG) }
-    'citesNumber'     { return (M $ctx.text $NUMBER) }
-    'latencyUnder'    { return ($ctx.latencyMs -le 6000) }
+    'present'         { if (M $ctx.text $check.re) { 1.0 } else { 0.0 } }
+    'absent'          { if (-not (M $ctx.text $check.re)) { 1.0 } else { 0.0 } }
+    'refusal'         { if (M $ctx.text $REFUSAL) { 1.0 } else { 0.0 } }
+    'flagsAssumption' { if (M $ctx.text $FLAG) { 1.0 } else { 0.0 } }
+    'citesNumber'     { if (M $ctx.text $NUMBER) { 1.0 } else { 0.0 } }
+    'latencyUnder'    { if ($ctx.latencyMs -le 6000) { 1.0 } else { 0.0 } }
+    'latencyScore'    {
+      $ms = $ctx.latencyMs
+      if ($ms -le 2000) { 1.0 } elseif ($ms -le 3000) { 0.9 } elseif ($ms -le 4000) { 0.75 }
+      elseif ($ms -le 5000) { 0.6 } elseif ($ms -le 7000) { 0.4 } elseif ($ms -le 10000) { 0.2 } else { 0.1 } }
     'capture'         {
       $mm = [regex]::Match($ctx.text, $check.re, $opts)
       if ($mm.Success) { $v = if ($mm.Groups[1].Success) { $mm.Groups[1].Value } else { $mm.Value }; $ctx.captures['b3'] = $v.Trim() }
-      return $mm.Success }
+      if ($mm.Success) { 1.0 } else { 0.0 } }
     'consistentWith'  {
-      $want = $ctx.captures['b3']; if (-not $want) { return $false }
-      return ($ctx.text.ToLower().Contains($want.ToLower())) }
-    'anyOf'           { foreach ($c in $check.checks) { if (Grade $c $ctx) { return $true } }; return $false }
-    default           { return $false }
+      $want = $ctx.captures['b3']; if (-not $want) { 0.0 }
+      elseif ($ctx.text.ToLower().Contains($want.ToLower())) { 1.0 } else { 0.0 } }
+    'anyOf'           { $mx = 0.0; foreach ($c in $check.checks) { $s = [double](Grade $c $ctx); if ($s -gt $mx) { $mx = $s } }; $mx }
+    default           { 0.0 }
   }
 }
 
 # -- HTTP ----------------------------------------------------------------------
+# The orchestrator's graceful-degrade string when every LLM provider is
+# throttled. A reply that IS this isn't an M8 failure — it's a quota artifact,
+# and it would score 0 on every check. Detect it so a contaminated run doesn't
+# masquerade as a low score.
+$FALLBACK = 'trouble connecting|try again in a moment'
 function Ask($message, $sessionId, $history) {
   $bodyObj = [ordered]@{ message = $message; sessionId = $sessionId }
   if (@($history).Count -gt 0) { $bodyObj.history = @($history) }
@@ -153,31 +168,37 @@ function Ask($message, $sessionId, $history) {
   $resp = Invoke-RestMethod -Uri "$Base/api/chat" -Method Post -ContentType 'application/json' -Body $json -TimeoutSec 90
   return @{ text = ($resp.response + ""); ms = [int]((Get-Date) - $t0).TotalMilliseconds }
 }
+# Retry ONCE on a fallback reply (transient throttle), then give up and flag it.
+function AskR($message, $sessionId, $history) {
+  $r = Ask $message $sessionId $history
+  if ($r.text -match $FALLBACK) { Start-Sleep -Milliseconds 1500; $r = Ask $message $sessionId $history }
+  return $r
+}
 
 # -- run -----------------------------------------------------------------------
 Write-Host "M8 LIVE eval -> $Base   ($($probes.Count) probes)`n"
-$results = @()
+$results = @(); $throttled = 0
 foreach ($p in $probes) {
   $sid = "evallive_$($p.id)_$([DateTimeOffset]::Now.ToUnixTimeMilliseconds())"
-  $history = @(); $captures = @{}; $checkResults = @(); $lastMs = 0; $failed = $false
+  $history = @(); $captures = @{}; $sumScore = 0.0; $totN = 0; $lastMs = 0; $failed = $false; $hitFallback = $false
   foreach ($turn in $p.turns) {
-    try { $r = Ask $turn.send $sid $history } catch {
-      foreach ($c in $turn.checks) { $checkResults += @{ label=$c.label; pass=$false } }
-      if ($turn.checks.Count -eq 0) { $checkResults += @{ label='call'; pass=$false } }
+    try { $r = AskR $turn.send $sid $history } catch {
+      $totN += @($turn.checks).Count
+      if (@($turn.checks).Count -eq 0) { $totN += 1 }   # the call itself counts as a failed check
       $failed = $true; break
     }
+    if ($r.text -match $FALLBACK) { $hitFallback = $true }
     $lastMs = $r.ms
     $history += @{ role='user'; content=$turn.send }
     $history += @{ role='assistant'; content=$r.text }
     $ctx = @{ text=$r.text; latencyMs=$r.ms; captures=$captures }
-    foreach ($c in $turn.checks) { $checkResults += @{ label=$c.label; pass=([bool](Grade $c $ctx)) } }
+    foreach ($c in $turn.checks) { $sumScore += [double](Grade $c $ctx); $totN += 1 }
   }
-  $passN = (@($checkResults | Where-Object { $_.pass }).Count)
-  $totN  = (@($checkResults).Count)
-  $score01 = if ($totN) { $passN / $totN } else { 0 }
-  $results += [pscustomobject]@{ id=$p.id; cat=$p.cat; score01=$score01; pass=$passN; total=$totN; ms=$lastMs }
-  $mark = if ($failed) { 'ERR' } else { "$passN/$totN" }
-  Write-Host ("  {0,-32} {1,-7} {2,6}ms  [{3}]" -f $p.id, $mark, $lastMs, $p.cat)
+  if ($hitFallback) { $throttled++ }
+  $score01 = if ($totN) { $sumScore / $totN } else { 0 }
+  $results += [pscustomobject]@{ id=$p.id; cat=$p.cat; score01=$score01; sum=$sumScore; total=$totN; ms=$lastMs; throttled=$hitFallback }
+  $mark = if ($failed) { 'ERR' } elseif ($hitFallback) { 'THROTL' } else { "{0:0.0}/{1}" -f $sumScore, $totN }
+  Write-Host ("  {0,-32} {1,-9} {2,6}ms  [{3}]" -f $p.id, $mark, $lastMs, $p.cat)
 }
 
 # -- aggregate -----------------------------------------------------------------
@@ -213,6 +234,9 @@ foreach ($cat in $CATS) {
 Write-Host "`n-- Calibration vs self-assessment (calScore $calScore/5) --"
 $calRows | Format-Table -AutoSize | Out-String | Write-Host
 Write-Host ("avg abs delta = {0}   over-rated = [{1}]" -f $avgAbs, ($overs -join ','))
+if ($throttled -gt 0) {
+  Write-Host ("`n*** WARNING: {0} probe(s) hit the throttle fallback - this run is CONTAMINATED and is NOT recorded in the trend. Re-run when free-tier quota recovers (or on the paid key). ***" -f $throttled) -ForegroundColor Yellow
+}
 
 # -- persist -------------------------------------------------------------------
 $runId = (Get-Date).ToString('yyyy-MM-ddTHH-mm-ss')
@@ -224,10 +248,12 @@ $full | ConvertTo-Json -Depth 6 | Out-File (Join-Path $resDir "$runId.json") -En
 # Only FULL-battery runs go in the trend (a category slice isn't a comparable
 # overall). Build the line as a pscustomobject — Select-Object on an [ordered]
 # hashtable reads non-existent PROPERTIES and writes nulls.
-if (-not $Only) {
+if (-not $Only -and $throttled -eq 0) {
   ([pscustomobject]@{ runId=$runId; overall=$overall; calScore=$calScore } | ConvertTo-Json -Compress) |
     Out-File (Join-Path $resDir 'history.jsonl') -Append -Encoding utf8
   Write-Host "`n-> results/$runId.json + appended history.jsonl"
+} elseif ($throttled -gt 0) {
+  Write-Host "`n-> results/$runId.json (throttle-contaminated; NOT added to the trend)"
 } else {
   Write-Host "`n-> results/$runId.json (slice run; not added to the history trend)"
 }
