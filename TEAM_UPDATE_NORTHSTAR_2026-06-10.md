@@ -1,5 +1,5 @@
-# M8 — Team Update: North Star corrected + Build-4 starting (2026-06-10)
-*From Muhammad. Paste to GPT / Grok / Gemini — and to M8 itself. This is a **one-way update**, not a round. No reply needed. I'm correcting one thing the whole crew has to be aligned on, and telling you what's being built next. The **full team round comes AFTER Build-4 ships** (verified tool orchestration), when there'll be something real to gut-check.*
+# M8 — Team Round: North Star corrected + Build-4/5 SHIPPED (2026-06-10)
+*From Muhammad. Paste to GPT / Grok / Gemini — and to M8 itself. Two parts: (1) a correction the whole crew has to absorb (the North Star), and (2) **Build-4 + Build-5 are now shipped and live** on the L4 lane — so this IS the gut-check round I promised "after Build-4 ships." Read §1 (absorb, no debate needed), then spend your reply on §4–§5: critique what shipped and answer the one open design question. Ground it in our constraints — single-user, Vercel Hobby 12-fn cap, deterministic-first honesty that never bends.*
 
 ---
 
@@ -22,15 +22,21 @@ So M8 was being *grounded into* the wrong mission. Honesty layer worked — it s
 - **Supabase memory superseded:** the stale `north_star_goal` fact marked `is_current=false`; a corrected current fact inserted (same supersession model the app uses).
 - **Live-verified** on deployed M8 in a fresh session: "what is our North Star?" → returns unsolved-problems / $1M-prize-tier + fleet-is-a-test-bench, with the 5-rung path and the honesty clause. No logistics. ✅
 
-## 4. What's being built now — Build-4, per the locked Fork-B consensus
-We're mid-lane on **Verified Tool Orchestration (L4 "Mastermind")**. Builds 1–3 are shipped + live (this status page; the verified-output contract on the compute lane; auto-routed compute). **Build-4 = the Tool Decision Layer**, and it follows the consensus you all converged on:
-- The orchestrator LLM picks **WHICH** tool (fleet / search / compute). Deterministic tools stay responsible for **WHAT IS TRUE** — **hybrid, no regex rip-out** (Fork B). Existing gates, hard-routes and the false-consensus protection are untouched.
-- The `VERIFIED_OUTPUT_CONTRACT` lifts from the compute lane to **all** tools (Fork C): result + executed-not-estimated + calibrated confidence, **narration ≤ evidence** (the load-bearing eval).
-- Stays **in-process inside `/api/chat`** (Vercel Hobby 12-fn cap, at 6).
-- Wired into both `orchestrate()` and `orchestrateStream()`, the tool decision is traced, port-verified before deploy, live-verified both ways (a tool turn + a conversational turn that must NOT be hijacked).
-- Then **Build-5 = L4 eval probes**: tool-selected · verification-present · confidence-calibrated · narration ≤ evidence.
+## 4. What just shipped — Build-4 (Tool Decision Layer) + Build-5 (L4 probes), live-verified
+The L4 lane (**Verified Tool Orchestration / "Mastermind"**) is now past its centerpiece. Builds 1–3 were already live (this status page; the verified-output contract on the compute lane; auto-routed compute). As of today, **Build-4 and Build-5 are shipped, deployed, and live-verified** — following the consensus you all converged on:
+- **The orchestrator LLM now picks WHICH tool** — `answer / search / compute / clarify` — in the slice the deterministic gates haven't already claimed. Deterministic tools still own **WHAT IS TRUE**. **Hybrid, no regex rip-out** (Fork B): fleet / state / open-problem stay deterministic HARD-ROUTES *above* the LLM (it can't route away from them — the integrity moat; false-consensus + override gates untouched). The regex compute auto-route is the fast-path; the LLM only catches the compute-worthy queries the regex missed.
+- **`VERIFIED_OUTPUT_CONTRACT` lifted off the compute lane onto the SEARCH tool** via a per-tool dispatcher (Fork C). Compute keeps its tuned contract verbatim (zero probe regression); fleet/state already carry their own integrity packets. Load-bearing rule enforced everywhere: **narration ≤ evidence**.
+- **In-process inside `/api/chat`** (still 6/12 functions). Wired into both `orchestrate()` and `orchestrateStream()`; the tool decision is traced and persisted to `request_traces.tool_decision` (queryable in `/api/traces`).
+- **Verification:** a 20/20 no-node control-flow port (fleet always wins · conversational/personal never reach the router · compute beats search) + the existing 40/40 and 49/49 regression guards. **Live both ways:** a regex-*missed* 11-number exact sum → routed to compute → "computed in Python" 620,657, no phantom citation; an opinion ("what makes a business worth buying?") → stayed a substantive answer, no compute/search hijack.
+- **Build-5 = L4 eval probes:** a first-class `tool_decision` eval category + 2 probes (`tool.decision_compute`, `tool.decision_no_hijack`) scoring tool-selected · verification-present · narration ≤ evidence (confidence-calibrated stays covered by the Monte-Carlo compute probe). **Live 5/5.**
 
-## 5. What I need from you right now
-**Nothing.** Just internalize the corrected North Star so no future answer drifts back to "logistics." The real ask — gut-check Build-4 — comes when it's live.
+## 5. What I actually want from you — gut-check + one open question
+This is the round. Two asks:
+
+**(a) Gut-check the cut.** The design is: *the LLM chooses the tool; deterministic code stays the source of truth; fleet/state/open-problem are hard-routes the LLM can't override.* Is that the right boundary, or are we under/over-trusting the LLM's tool choice? One thing to PROTECT, one thing to KILL.
+
+**(b) The one real open question (it'll decide the next build).** The router sometimes prefers **SEARCH over COMPUTE** for arithmetic dressed in a real-world concept — e.g. a "split the 87,346 bill, one pays 37%…" query got web-searched (cited calculator sites) instead of routed to compute. The numbers stayed correct, but it's the wrong tool + a noisy citation. **Should the compute-vs-search boundary be fixed in the router prompt, or does it need a deterministic backstop (a "this is pure math → force compute" gate) the way fleet has one?** Argue your call against our deterministic-first principle.
+
+Everything else (the corrected North Star in §1) is **absorb-only** — no debate, just don't let a future answer drift back to "logistics."
 
 *Guardrails unchanged: deterministic-first, honesty never bends, fleet is FROZEN (test bench only — no new fleet features), breadth and depth are one ladder not two tracks.*

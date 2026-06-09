@@ -49,13 +49,12 @@ alter table public.request_traces add column if not exists search_ms  integer;  
 alter table public.request_traces add column if not exists llm_ms     integer;  -- main generate() (explain step)
 alter table public.request_traces add column if not exists summary_ms integer;  -- summarizeSession()
 
--- ── L4 tool-decision column (Build-4, 2026-06-10) ────────────────────────────
+-- ── L4 tool-decision column (Build-4, 2026-06-10 — APPLIED + WIRED) ──────────
 -- Which truth-tool handled the turn: fleet | state | compute | search |
--- open_problem | build_state | answer. Lets the Build-5 eval and /api/traces
--- show the tool-selection mix. Idempotent. RUN THIS FIRST, then uncomment the
--- `tool_decision: toolDecision` line in lib/memory.js logTrace() + the two
--- orchestrator call sites — adding the field to the insert BEFORE the column
--- exists makes the whole insert fail silently and kills ALL tracing.
+-- open_problem | build_state | answer. Surfaces the tool-selection mix in
+-- /api/traces (api/traces.js select) and is written by lib/memory.js logTrace()
+-- from both orchestrator call sites. Idempotent. (Was run-first to avoid a
+-- silent insert failure killing all tracing; the column is live as of 2026-06-10.)
 alter table public.request_traces add column if not exists tool_decision text;
 
 -- ============================================================================
