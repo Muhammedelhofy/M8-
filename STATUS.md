@@ -1,5 +1,5 @@
 # M8 — STATUS (the one living page)
-*The single source of truth for "where are we." Updated every session. If this disagrees with a chat or memory, THIS wins. Last updated: 2026-06-09.*
+*The single source of truth for "where are we." Updated every session. If this disagrees with a chat or memory, THIS wins. Last updated: 2026-06-09 (L4 Build-2 shipped).*
 
 ---
 
@@ -22,11 +22,11 @@ M8 decides what truth-source it needs → invokes it → verifies → narrates O
 - ✓ `compute:` seed — Gemini-native code execution, gated OFF the fleet packet (17! / 2^1000 digit-sum / π(100000) verified live)
 
 ## NEXT (L4 build order)
-- □ **THIS page** ✓ (done)
-- □ **L4 output contract** — `RESULT / VERIFICATION / CONFIDENCE / SOURCES` (+ "my read"); prove it on the live `compute:` seed first
-- □ **Auto-route compute** — drop the `compute:` prefix requirement (intent detects when code is needed)
-- □ **Tool Decision Layer** — orchestrator picks WHICH tool; deterministic tools stay responsible for WHAT IS TRUE (hybrid, no regex rip-out)
-- □ **L4 eval probes** — score: tool-selected · verification-present · confidence-calibrated · sources-present · **narration ≤ evidence** (the key one)
+- ☑ **THIS page** (done)
+- ☑ **L4 output contract** (Build-2, DONE + live-verified) — `VERIFIED_OUTPUT_CONTRACT` in orchestrator.js, scoped to the compute lane only (NOT tutor/fleet). Compute replies now carry result + executed-not-estimated + calibrated confidence (deterministic = implicit-high; stochastic = flagged-as-estimate), narration ≤ evidence. Also fixed at the extractor (llm.js): stripped Gemini code-exec phantom `[N]` citations + dropped the leaked "thought" planning part. Probes: reason.compute_contract (7^13) + reason.compute_confidence (Monte-Carlo pi), both 100%.
+- □ **Auto-route compute** (Build-3, NEXT) — drop the `compute:` prefix requirement (intent detects when code is needed)
+- □ **Tool Decision Layer** (Build-4) — orchestrator picks WHICH tool; deterministic tools stay responsible for WHAT IS TRUE (hybrid, no regex rip-out); lift the contract to all tools
+- □ **L4 eval probes** (Build-5) — score: tool-selected · verification-present · confidence-calibrated · **narration ≤ evidence** (the key one)
 
 ## OPEN FORKS — now decided (team consensus 2026-06-09)
 - **A. Where code runs** → ✅ **Gemini-native NOW**, Cloud Run later (move only when persistent files / custom libs / long jobs / repeated sims / Lean force it)
