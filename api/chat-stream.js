@@ -40,6 +40,7 @@ module.exports = async function handler(req, res) {
     const full = await orchestrateStream({
       message, sessionId, history,
       onChunk: (delta) => send({ delta }),
+      onReset: () => send({ reset: true }),   // discard a partial that's being superseded by a fallback
     });
     send({ done: true, full });
   } catch (err) {

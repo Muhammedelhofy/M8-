@@ -87,10 +87,11 @@ class ChatManager {
     this._scrollToBottom();
   }
 
-  // On completion, prefer the server's authoritative `full` text (covers any
-  // chunk we might have dropped); never shrink what's already shown.
+  // On completion, ALWAYS take the server's authoritative `full` text — it is
+  // the true returned reply, so it corrects any streamed-then-superseded partial
+  // (the double-emit splice) even if that garbled accumulation was longer.
   finalizeStreaming(msg, fullText) {
-    if (typeof fullText === "string" && fullText.length >= msg.content.length) msg.content = fullText;
+    if (typeof fullText === "string" && fullText.trim()) msg.content = fullText;
     if (msg._bubble) msg._bubble.textContent = msg.content;
     this._scrollToBottom();
   }

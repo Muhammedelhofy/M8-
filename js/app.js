@@ -158,6 +158,13 @@ async function streamMessage(text, pastHistory) {
     if (!payload || payload === "[DONE]") return;
     let obj; try { obj = JSON.parse(payload); } catch { return; }
     if (obj.error) { errored = true; return; }
+    if (obj.reset) {
+      // Server is replacing a partial reply (a Gemini stream failed and it fell
+      // back). Discard what we've shown and cancel queued speech, then continue.
+      if (msg) { msg.content = ""; if (msg._bubble) msg._bubble.textContent = ""; }
+      voice.beginStream();
+      return;
+    }
     if (obj.delta) {
       if (!got) { chat.hideTyping(); setStatus("speaking"); msg = chat.addStreamingMessage(); got = true; }
       chat.appendToStreaming(msg, obj.delta);
