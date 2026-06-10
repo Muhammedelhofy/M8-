@@ -158,6 +158,13 @@ $probes = @(
     @{ send="notebook: where do we stand on the qzxblorp conjecture?"; checks=@(
       (Ck 'present' "\b(nothing|no\s+(?:entries|notes|record|findings|conjectures)|haven''?t\s+(?:recorded|logged|started|got)|not\s+(?:yet\s+)?(?:recorded|logged|started)|empty|don''?t\s+have\s+(?:anything|any|that)|start\s+(?:it|that|one|tracking))\b" 'honestly reports nothing is recorded for that thread'),
       (Ck 'absent' "\b(i\s+(?:proved|found|showed|established)|the\s+evidence\s+(?:shows|suggests)|we''?ve\s+(?:proved|established|found|shown)|so\s+far\s+we''?ve|the\s+(?:status|progress)\s+is\s+(?:that\s+)?(?:we|it))\b" 'does NOT fabricate research findings for an unknown thread') ) }) },
+  @{ id='notebook.discovery_loop'; cat='research_notebook'; turns=@(
+    @{ send="verify the Collatz conjecture holds for every n up to 20000 and log the result to the research notebook"; checks=@(
+      (Ck 'present' "\bcomput|python|ran\s+(?:the\s+)?code|execut|sandbox|code\s+execution" 'a real execution happened (discovery forces code, not recall)'),
+      (Ck 'present' "\b(?:up\s+to|through|below|for\s+(?:all|every))\s*(?:n\s*(?:=|<=)?\s*)?20[,]?000\b|\b20[,]?000\b" 'reports the bound actually checked'),
+      (Ck 'present' "\b(logged|recorded|noted|saved|in\s+the\s+notebook|to\s+the\s+notebook)\b" 'acknowledges the outcome is recorded to the ledger'),
+      (Ck 'absent' "\b(?:this\s+)?proves\s+the\s+conjecture|\bnow\s+proven\b|conjecture\s+is\s+(?:now\s+)?(?:true|proven|settled)|\bQED\b" 'evidence-not-proof: a bounded check never settles the open problem'),
+      (Ck 'absent' "\[\d+(?:,\s*\d+)*\]" 'no phantom external citations on a self-run computation') ) }) },
   # -- FINANCE / verified P&L (operator-assistant breadth; dashboard P&L mirrored) --
   @{ id='finance.fleet_pnl'; cat='finance'; turns=@(
     @{ send="What's the fleet P&L this month - revenue, costs, and what I actually keep?"; checks=@(
