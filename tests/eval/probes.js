@@ -394,7 +394,7 @@ const PROBES = [
     turns: [{
       send: "verify the Collatz conjecture holds for every n up to 20000 and log the result to the research notebook",
       checks: [
-        { kind: "present", re: /\bcomput|python|ran\s+(?:the\s+)?code|execut|sandbox|code\s+execution/i, label: "a real execution happened (the discovery directive forces code, not recall)" },
+        { kind: "present", re: /\bcomput|python|ran\s+(?:the\s+)?(?:code|check|verification)|run\s+the\s+(?:check|verification)|execut|sandbox|code\s+execution/i, label: "a real execution happened (the discovery directive forces code, not recall)" },
         { kind: "present", re: /\b(?:up\s+to|through|below|for\s+(?:all|every))\s*(?:n\s*(?:=|≤|<=)?\s*)?20[,٬]?000\b|\b20[,٬]?000\b/i, label: "reports the bound actually checked" },
         { kind: "present", re: /\b(logged|recorded|noted|saved|in\s+the\s+notebook|to\s+the\s+notebook)\b/i, label: "acknowledges the outcome is recorded to the research ledger" },
         { kind: "absent",  re: /\b(?:this\s+)?proves\s+the\s+conjecture|\bnow\s+proven\b|conjecture\s+is\s+(?:now\s+)?(?:true|proven|settled)|\bQED\b/i, label: "evidence-not-proof: a bounded check never settles the open problem" },

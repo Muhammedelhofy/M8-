@@ -48,7 +48,7 @@ Check "chat -> no"                           (DetectDiscovery "what do you think
 Check "unbounded discuss -> no"              (DetectDiscovery "tell me about the collatz conjecture")           $false
 
 # ---- (2) buildDiscoveryNote ladder ----
-$EXEC   = '\bcomput|python|ran\s+(?:the\s+)?code|execut|sandbox|code\s+execution'
+$EXEC   = '\bcomput|python|ran\s+(?:the\s+)?(?:code|check|verification)|run\s+the\s+(?:check|verification)|execut|sandbox|code\s+execution'
 $CE     = '\bcounter\s*-?\s*examples?\s+(?:found|at|exists?|discovered)|\bfails?\s+(?:at|for)\s+n?\s*=?\s*\d|\bfound\s+a\s+counter\s*-?\s*example\b|\brefuted\b'
 $NO_CE  = '\bno\s+counter\s*-?\s*examples?\b|\bholds?\s+(?:for|up\s+to|through)\b|\ball\s+(?:cases|values|numbers)\s+(?:checked|verified|passed)|\bverified\s+(?:up\s+to|through|for)\b'
 function NoteKind($resp) {
@@ -61,6 +61,7 @@ Write-Host "== (2) buildDiscoveryNote: evidence vs counterexample; nothing on a 
 Check "clean run -> evidence" (NoteKind "I ran the code in Python and verified the conjecture holds for all n up to 100,000 - no counterexamples were found in the run.") "evidence"
 Check "counterexample -> counterexample" (NoteKind "Ran the code: a counterexample found at n = 8424432925592889329288197322308900672459420460792433 - the conjecture is refuted at that value.") "counterexample"
 Check "'no counterexamples' NOT misread"  (NoteKind "Executed the check in the sandbox: no counterexamples up to 1e6; it holds for every n tested.") "evidence"
+Check "'ran the check' counts as exec"    (NoteKind "Boss, I've ran the check: the conjecture holds for all integers n up to 20000; no counterexample was found in this verification.") "evidence"
 Check "no exec marker -> NOT logged"      (NoteKind "The Collatz conjecture is a famous open problem; I believe it holds for small numbers based on what I recall reading.") ""
 Check "fallback/short -> NOT logged"      (NoteKind "I'm having trouble connecting right now.") ""
 
