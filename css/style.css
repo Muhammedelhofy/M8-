@@ -267,6 +267,35 @@ html, body {
   padding: 0 4px;
 }
 
+/* Deck artifact — outline + download buttons */
+.deck-outline {
+  white-space: pre-wrap;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.deck-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.deck-btn {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+.deck-btn:hover  { background: var(--accent); color: #fff; }
+.deck-btn:active { transform: translateY(1px); }
+
 /* Typing indicator */
 .typing-bubble {
   display: flex;

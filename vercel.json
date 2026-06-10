@@ -4,6 +4,7 @@
   ],
   "functions": {
     "api/chat.js": { "maxDuration": 30 },
+    "api/deck.js": { "maxDuration": 30 },
     "api/cron-summarize.js": { "maxDuration": 60 }
   },
   "crons": [

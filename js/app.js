@@ -99,6 +99,11 @@ function handleSend() {
 // Flip to false to force the proven buffered path (no streaming) without a redeploy.
 const STREAMING_ENABLED = true;
 
+// Deck/presentation requests route to the dedicated /api/deck path (rich download
+// buttons + client-side file build), bypassing the voice/streaming chat flow.
+// Mirrors lib/deckgen.js looksDeck so the UI and backend agree on what's a deck.
+const DECK_RE = /\b(decks?|slides?|slide\s*deck|presentations?|pitch(?:\s*deck)?|power\s?point|ppt|pptx|keynote)\b/i;
+
 async function sendMessage(text) {
   if (!text || isProcessing) return;
   isProcessing = true;
@@ -121,6 +126,12 @@ async function sendMessage(text) {
   const pastHistory = chat.getHistory().slice(0, -1);
 
   try {
+    // Deck path first — its own endpoint + download buttons. On any failure we
+    // fall through to the normal chat so a deck request is never a dead end.
+    if (DECK_RE.test(text)) {
+      try { await deckMessage(text, pastHistory); return; }
+      catch (deckErr) { console.warn("Deck path failed, falling back to chat:", deckErr); }
+    }
     let streamed = false;
     if (STREAMING_ENABLED) {
       try { streamed = await streamMessage(text, pastHistory); }
@@ -188,6 +199,32 @@ async function streamMessage(text, pastHistory) {
   if (!got) return false;        // server errored before any content → fall back
   voice.endStream();
   return true;
+}
+
+// Deck path — calls /api/deck, renders an outline + .pptx/.html/.md download
+// buttons (built client-side), and speaks a short confirmation (NOT the outline).
+// Throws on a transport/HTTP failure so sendMessage falls back to normal chat.
+async function deckMessage(text, pastHistory) {
+  const res = await fetch("/api/deck", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: text, sessionId: chat.sessionId, history: pastHistory }),
+  });
+  if (!res.ok) throw new Error("deck HTTP " + res.status);
+  const data = await res.json();
+  chat.hideTyping();
+  if (!data.ok) {
+    const m = data.error || "I couldn't build that deck.";
+    chat.addMessage("assistant", m);
+    voice.speak(m);
+    setStatus("idle");
+    return;
+  }
+  chat.addDeckMessage(data);
+  const n = (data.spec && Array.isArray(data.spec.slides)) ? data.spec.slides.length : 0;
+  const summary = `Built your ${data.title}${n ? " — " + n + " slides" : ""}. Download it as PowerPoint, web slides, or markdown using the buttons below.`;
+  voice.speak(summary);
+  setStatus("idle");
 }
 
 // Buffered path (the original /api/chat flow) — also the streaming fallback.
