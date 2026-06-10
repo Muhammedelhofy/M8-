@@ -15,7 +15,7 @@ function Check($name, $got, $expected) {
 $IC = [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
 
 # ---- ported regexes ----
-$MULTI = '\b(my\s+companies|all\s+(?:my\s+)?(?:companies|businesses|ventures)|across\s+(?:my\s+)?(?:companies|businesses|ventures)|which\s+(?:of\s+my\s+)?(?:compan|business)|other\s+(?:compan|business)|each\s+(?:of\s+my\s+)?(?:compan|business)|company\s+(?:breakdown|comparison|roster)|between\s+my\s+(?:compan|business))\b'
+$MULTI = '\b(?:my\s+companies|all\s+(?:my\s+)?(?:companies|businesses|ventures)|across\s+(?:my\s+)?(?:companies|businesses|ventures)|which\s+(?:of\s+my\s+)?(?:compan|business)|other\s+(?:compan|business)|each\s+(?:of\s+my\s+)?(?:compan|business)|company\s+(?:breakdown|comparison|roster)|between\s+my\s+(?:compan|business)|(?:list|name|show)\s+(?:me\s+)?(?:all\s+)?(?:my\s+|the\s+)?(?:companies|businesses|ventures)|what\s+(?:are\s+)?(?:all\s+)?(?:my|the)\s+(?:companies|businesses|ventures))\b|\b(?:companies|businesses|ventures)\b[^.?!]{0,20}\bi\s+(?:run|own|manage|have|operate)\b'
 # COMPANIES order: bolt (no soloAlias), thrivve, noon
 $ALIASES = @(
   @{ id = 'thrivve'; re = '\bthrivve(?:\.sa)?\b' },
@@ -51,7 +51,14 @@ Check "across my companies -> multi"   (IsMulti "across my companies how am I do
 Check "all my businesses -> multi"     (IsMulti "give me all my businesses at a glance") $true
 Check "which of my companies -> multi" (IsMulti "which of my companies is most profitable?") $true
 Check "company breakdown -> multi"     (IsMulti "show me a company breakdown")           $true
+# the LIVE-MISS that fabricated a wrong-Muhammad result -> must now match
+Check "companies you know I run -> multi" (IsMulti "what companies do you know that I run?") $true
+Check "what are my companies -> multi" (IsMulti "what are my companies?")                $true
+Check "list my businesses -> multi"    (IsMulti "list my businesses")                    $true
+Check "businesses I run -> multi"      (IsMulti "what businesses do I run?")             $true
 Check "fleet net -> not multi"         (IsMulti "what was the fleet net yesterday?")     $false
+# singular 'my business' is usually Bolt -> must NOT trigger the roster
+Check "my business (singular) -> not multi" (IsMulti "how's my business doing this week?") $false
 
 # ---- (3) buildCompanyContext mode ladder ----
 Write-Host "== (3) context mode: roster / company_unprofiled / none ==" -ForegroundColor Cyan
@@ -68,7 +75,8 @@ $src = Get-Content -Raw "$PSScriptRoot/../lib/companies.js"
 function SrcHas($name, $needle) { if ($src.Contains($needle)) { $script:pass++ } else { $script:fail++; Write-Host "  FAIL: $name (source missing '$needle')" -ForegroundColor Red } }
 SrcHas "never-invent unprofiled" "Do NOT invent what"
 SrcHas "ask Boss to fill in"     "ASK him to fill you in"
-SrcHas "roster don't-conflate"   "Do NOT conflate them"
+SrcHas "roster don't-conflate"   "do NOT conflate them"
+SrcHas "roster anti-launder"     "Do NOT present a web-search result as one of his companies"
 SrcHas "noon platform disambig"  "disambiguate"
 SrcHas "separate public vs internal" "separate that from his INTERNAL specifics"
 
