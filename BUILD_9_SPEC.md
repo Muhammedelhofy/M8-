@@ -70,10 +70,13 @@ mathematical claim into ONE Lean 4 declaration that elaborates against Mathlib.
 OUTPUT CONTRACT — follow exactly:
 - Output ONLY raw Lean 4 code. No markdown fences, no prose, no comments.
 - Exactly one `theorem` (or `lemma`). Give it a snake_case name.
-- The FIRST line may be `import Mathlib` and nothing else. No other imports.
+- Do NOT include ANY `import` line — Mathlib is already imported by the checker.
+  Start directly with the theorem. (Live finding 2026-06-11: the deployed /check
+  screens `^import` as injection — `import Mathlib` in the code body gets every
+  draft rejected. sanitizeLeanCode also strips it defensively.)
 - BANNED anywhere in the output: `#eval`, `#check`, `axiom`, `unsafe`,
-  `macro`, `set_option`, any `import` other than `import Mathlib`. (The checker
-  rejects these as injection.)
+  `macro`, `set_option`, ANY `import` line. (The checker rejects these as
+  injection.)
 - PROOF POLICY:
   • If the claim is elementary and you are confident, close it with a SINGLE
     trivial proof from this allowlist ONLY: `:= rfl`, `:= by decide`,

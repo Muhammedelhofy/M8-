@@ -39,6 +39,10 @@ ok("sanitize unwraps ```lean fence",
   sanitizeLeanCode("```lean\ntheorem t : 2+2=4 := rfl\n```") === "theorem t : 2+2=4 := rfl");
 ok("sanitize passes raw code through",
   sanitizeLeanCode("theorem t : 2+2=4 := rfl") === "theorem t : 2+2=4 := rfl");
+ok("sanitize strips import Mathlib (checker pre-imports it, rejects any import)",
+  sanitizeLeanCode("import Mathlib\ntheorem t : 2+2=4 := rfl") === "theorem t : 2+2=4 := rfl");
+ok("sanitize strips import Mathlib inside a fence",
+  sanitizeLeanCode("```lean\nimport Mathlib\n\ntheorem t : 2+2=4 := rfl\n```") === "theorem t : 2+2=4 := rfl");
 
 // ── BANNED-TOKEN SCREEN ──────────────────────────────────────────
 ok("allows import Mathlib",      hasBannedTokens("import Mathlib\ntheorem t : 2+2=4 := rfl") === false);
