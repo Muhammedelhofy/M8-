@@ -3,6 +3,11 @@
  * Daily Vercel cron: sweeps recent sessions and re-runs the summarizer on any
  * that are stuck (summarizeSession self-gates, so it only acts on real gaps).
  * Catches sessions abandoned before their summary succeeded.
+ *
+ * Build-10: also runs the research-memory-graph sweep (embedding backfill +
+ * Gemini extraction over unprocessed notebook entries, budget-capped). Reuses
+ * this function on purpose — Vercel Hobby's 12-function cap stays respected.
+ * The graph sweep is fail-safe and NEVER affects the summary sweep result.
  */
 const { sweepStuckSessions } = require("../lib/memory");
 
@@ -16,7 +21,20 @@ module.exports = async function handler(req, res) {
   }
   try {
     const result = await sweepStuckSessions();
-    res.status(200).json({ ok: true, ...result });
+
+    // Build-10 graph sweep — lazy require + own catch: a graph bug can neither
+    // crash this function nor mask a successful summary sweep.
+    let graph = null;
+    if (process.env.GRAPH_DISABLED !== "1") {
+      try {
+        const { runGraphSweep } = require("../lib/memory-graph");
+        graph = await runGraphSweep();
+      } catch (gErr) {
+        graph = { error: gErr.message };
+      }
+    }
+
+    res.status(200).json({ ok: true, ...result, graph });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
