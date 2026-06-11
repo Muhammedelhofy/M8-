@@ -108,7 +108,12 @@ discovery and verified theorem writes into, (b) an automated adversarial battery
       Fable-authored/Gemini-executed extraction, nightly sweep, retrieval core); hooks live in
       `persistNote()` + `/api/cron-summarize`. Lean `lean_verified` → theorem node + formalizes
       edge. NOT yet deployed/live-tested (Session 2).
-- [ ] Session 2 — Build-10 ship
+- [x] Session 2 — Build-10 ship ✅ 2026-06-12 — **LIVE & DEPLOYED** (`cc83ded`). Graph retrieval
+      lane in both orchestrator paths (tool_decision `graph`); live tests A–F green incl. the
+      semantic "3n+1 → collatz" recall; ONE real bug found+fixed live (recall laundered a
+      fabricated 2M bound from conversation memory — packet contract hardened); history fully
+      backfilled (44 nodes / 53 edges / 0 unembedded; 4 theorem nodes = exactly the 4
+      lean_verified rows); full battery **4.7/5 — no regression** (baseline 4.68).
 - [ ] Session 3 — Odysseus battery  *(reordered ahead of Lean hardening 2026-06-12)*
 - [ ] Session 4 — Lean hardening (corpus, benchmark, MATHLIB_REV, lean_stated)
 - [ ] Session 5 — North-Star roadmap update
