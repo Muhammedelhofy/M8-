@@ -99,8 +99,9 @@ from here.
   task OUTSIDE any request; with request-based billing its CPU is throttled to
   ~zero and the import never finishes.
 - **8 GiB memory**: `import Mathlib` OOM'd the 4 GiB limit at 4137 MiB.
-- **`IMPORT_TIMEOUT_S=600`**: the import takes ~9 min; v1's 240 s default
-  timed out and (v1 bug) died silently → permanent 503. v2 logs + retries.
+- **`IMPORT_TIMEOUT_S=900`**: the import takes ~10–11 min (600 s only just
+  squeaked by — and a budget shorter than the import would make the v2 retry
+  loop spin forever); v1's 240 s default timed out and died silently → 503.
 - **`--update-env-vars` not `--set-env-vars`** on `gcloud run services update`
   — the latter REPLACES the entire env set (wiped the token once).
 - First deployed live 2026-06-11: toolchain `leanprover/lean4:v4.31.0-rc2`,

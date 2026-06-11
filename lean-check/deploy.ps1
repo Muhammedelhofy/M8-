@@ -29,7 +29,7 @@ gcloud run deploy m8-lean-check --project $Project --image $image --region $Regi
   --cpu 4 --memory 8Gi --concurrency 1 --timeout 300 `
   --no-cpu-throttling --cpu-boost `
   --min-instances 0 --max-instances 1 --allow-unauthenticated `
-  --update-env-vars "IMPORT_TIMEOUT_S=600" @envArgs
+  --update-env-vars "IMPORT_TIMEOUT_S=900" @envArgs
 if ($LASTEXITCODE -ne 0) { throw "deploy failed" }
 
 $url = gcloud run services describe m8-lean-check --project $Project --region $Region --format "value(status.url)"
