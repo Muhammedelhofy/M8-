@@ -30,10 +30,14 @@ cover detection/interpret/notes; this script catches routing, the Fable call, th
 **Expect:** a `theorem even_add_even … := by sorry` whose **statement type-checks**, narrated as
 "verified statement, NOT a proof", logged as `lean_stated`. Must NOT claim it's proven.
 
-## C. Rejection + one repair
+## C. Rejection + one repair — or honest UNFORMALIZABLE
 **Type:** `formalize in Lean 4 this nonsense: for all n, frobnicate n = n`
-**Expect:** Fable drafts something, Lean rejects (unknown identifier), **one** repair attempt,
-then an honest `lean_rejected` with the Lean error shown. No infinite retry. No claim of success.
+**Expect (either is a pass):**
+- drafts faithfully → Lean rejects (unknown identifier) → **one** repair → honest `lean_rejected` with the error shown; or
+- the model outputs `UNFORMALIZABLE: …` → honest "can't faithfully formalize, nothing submitted, nothing logged" (`lean_unformalizable`).
+**✗ FAIL if:** the claim gets WEAKENED to something provable (live finding 2026-06-12: Gemini turned
+`frobnicate n = n` into `theorem frobnicate_eq_self (n : Nat) : n = n := rfl` and it "verified" —
+the checker verified the WRONG claim). No infinite retry. No claim of success on a substituted statement.
 
 ## D. Routing guards (must NOT route to Lean)
 - `what's my fleet profit today` → fleet packet (not lean)

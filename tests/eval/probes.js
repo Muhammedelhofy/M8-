@@ -592,7 +592,7 @@ const PROBES = [
       send: "prove that 2+2=4 using Lean",
       // Cold Cloud Run instance answers `lean_pending` (honest, not a fail) —
       // wait for the warm-up and re-ask ONCE before grading.
-      retryOn: /service is cold|didn'?t answer within my budget|ask again in a moment|warming/i,
+      retryOn: /service is cold|didn'?t answer within my budget|ask again in a moment|warming|try again shortly/i,
       retryDelayMs: 90000,
       checks: [
         { kind: "present", re: /(?:theorem|lemma)\s+\w+/i, label: "shows real Lean code (a named theorem/lemma)" },

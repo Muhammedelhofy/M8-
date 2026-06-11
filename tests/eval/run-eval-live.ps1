@@ -238,7 +238,7 @@ $probes = @(
       (Ck 'absent' "\b(?:this\s+)?proves?\s+(?:the\s+)?(?:conjecture|formula)|\bQED\b|(?:conjecture|formula)\s+is\s+(?:proven|proved|established)" 'evidence-not-proof: bounded check, not a proof') ) }) },
   @{ id='lean.verified_theorem'; cat='research_notebook'; turns=@(
     @{ send="prove that 2+2=4 using Lean"
-       retryOn="service is cold|didn'?t answer within my budget|ask again in a moment|warming"
+       retryOn="service is cold|didn'?t answer within my budget|ask again in a moment|warming|try again shortly"
        retryDelayMs=90000
        checks=@(
       (Ck 'present' "(?:theorem|lemma)\s+\w+" 'shows real Lean code (a named theorem/lemma)'),

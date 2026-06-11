@@ -44,6 +44,15 @@ ok("sanitize strips import Mathlib (checker pre-imports it, rejects any import)"
 ok("sanitize strips import Mathlib inside a fence",
   sanitizeLeanCode("```lean\nimport Mathlib\n\ntheorem t : 2+2=4 := rfl\n```") === "theorem t : 2+2=4 := rfl");
 
+// ── UNFORMALIZABLE ESCAPE HATCH ──────────────────────────────────
+{
+  const { isUnformalizable } = require("../lib/lean");
+  ok("UNFORMALIZABLE: line detected",      isUnformalizable("UNFORMALIZABLE: 'frobnicate' is not defined in Mathlib") === true);
+  ok("unformalizable case-insensitive",    isUnformalizable("unformalizable: no such concept") === true);
+  ok("plain theorem is not unformalizable", isUnformalizable("theorem t : 2+2=4 := rfl") === false);
+  ok("mention mid-text does not trip it",  isUnformalizable("theorem t : 2+2=4 := rfl -- UNFORMALIZABLE") === false);
+}
+
 // ── BANNED-TOKEN SCREEN ──────────────────────────────────────────
 ok("allows import Mathlib",      hasBannedTokens("import Mathlib\ntheorem t : 2+2=4 := rfl") === false);
 ok("blocks #eval",               hasBannedTokens("#eval 2+2") === true);

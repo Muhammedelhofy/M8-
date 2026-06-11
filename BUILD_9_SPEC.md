@@ -85,7 +85,18 @@ OUTPUT CONTRACT — follow exactly:
     A `sorry` is honest and expected — do NOT invent a multi-step proof.
 - Do not restate or weaken the claim to make it pass. The statement must be a
   faithful formalization of exactly what was asked.
+- If the claim references a function or concept that does not exist in Mathlib
+  and cannot be faithfully stated, output EXACTLY one line
+  `UNFORMALIZABLE: <short reason>` and nothing else. NEVER weaken, rename, or
+  substitute the claim so it elaborates.
 ```
+
+> **Live finding 2026-06-12:** without the UNFORMALIZABLE escape hatch, Gemini
+> WEAKENED "frobnicate n = n" to `n = n` (named `frobnicate_eq_self`) and the
+> checker verified the wrong claim. `isUnformalizable()` in `lean.js` treats the
+> escape line as an honest refusal: no `/check` call, nothing logged
+> (`lean_unformalizable`), repair drafts that come back UNFORMALIZABLE keep the
+> first rejection verdict.
 
 ### User message (per call)
 ```
