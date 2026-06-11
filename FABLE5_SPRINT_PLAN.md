@@ -60,20 +60,21 @@ verified theorem compounds. This is the layer that makes an attack on prize-clas
 - "What do I already know about X?" and "what contradicts X?" queries live in chat.
 - `tests/BUILD10_LIVE_TEST.md` + full battery regression + live test A–E + deploy.
 
-### Session 3 — Lean lane hardening: golden corpus + benchmark + open items
+### Session 3 — Odysseus adversarial battery  *(moved ahead of Lean hardening — Muhammad's call 2026-06-12)*
+- Fable designs ~50–100 attack probes against: honesty contract (narration ≤ evidence),
+  hard-route bypass, compute/search routing confusion, **memory-graph poisoning/confabulation**
+  (Build-10 just added a new surface — probe it while fresh), and **Lean weakening attacks** —
+  the frobnicate `n = n` bug class Fable already caught live; proven, productive category.
+- Automated runner + assertion logic → permanent immune system, runnable on every future build.
+- Run it, triage, fix what breaks (fixes that are trivial → note for non-Fable follow-up).
+
+### Session 4 — Lean lane hardening: golden corpus + benchmark + open items
 - **Golden corpus** (Manus): 30–50 prose→Lean 4 pairs, each validated against the live
   `/check` endpoint, best ones embedded as few-shot into the Gemini formalization directive.
 - **Benchmark** (GPT): measure formalization pass-rate before/after corpus on a fixed
   theorem set — data, not opinions, on where the capability bottleneck is.
 - Pin `MATHLIB_REV` (open item). Take `lean_stated`/`sorry` path live (open item).
 - Error-message → repair-prompt parsing improvements from real /check failures.
-
-### Session 4 — Odysseus adversarial battery
-- Fable designs ~50–100 attack probes against: honesty contract (narration ≤ evidence),
-  hard-route bypass, compute/search routing confusion, and **Lean weakening attacks** —
-  the frobnicate `n = n` bug class Fable already caught live; proven, productive category.
-- Automated runner + assertion logic → permanent immune system, runnable on every future build.
-- Run it, triage, fix what breaks (fixes that are trivial → note for non-Fable follow-up).
 
 ### Session 5 — North-Star roadmap: the missing middle layers
 - Pure-reasoning session, deliberately late in the window (lowest staleness risk, no repo
@@ -95,9 +96,10 @@ small bugfixes · routine content.
 
 ## 3. Success criteria for the window
 By June 22, the repo permanently contains: (a) a live research memory graph that every
-discovery and verified theorem writes into, (b) a validated golden corpus + measurably
-hardened Gemini formalization directive, (c) an automated adversarial battery, and
-(d) an updated North-Star roadmap naming the middle layers. If only two land, (a) then (b).
+discovery and verified theorem writes into, (b) an automated adversarial battery,
+(c) a validated golden corpus + measurably hardened Gemini formalization directive, and
+(d) an updated North-Star roadmap naming the middle layers. If only two land, (a) then (b)
+(reordered 2026-06-12 — battery ahead of corpus, per Muhammad).
 
 ## 4. Progress log
 - [x] Session 1 — Build-10 design + foundation ✅ 2026-06-12 — adversarial review + ontology in
@@ -107,7 +109,7 @@ hardened Gemini formalization directive, (c) an automated adversarial battery, a
       `persistNote()` + `/api/cron-summarize`. Lean `lean_verified` → theorem node + formalizes
       edge. NOT yet deployed/live-tested (Session 2).
 - [ ] Session 2 — Build-10 ship
-- [ ] Session 3 — Lean hardening (corpus, benchmark, MATHLIB_REV, lean_stated)
-- [ ] Session 4 — Odysseus battery
+- [ ] Session 3 — Odysseus battery  *(reordered ahead of Lean hardening 2026-06-12)*
+- [ ] Session 4 — Lean hardening (corpus, benchmark, MATHLIB_REV, lean_stated)
 - [ ] Session 5 — North-Star roadmap update
 - [ ] Session 6 — SSE streaming (stretch)
