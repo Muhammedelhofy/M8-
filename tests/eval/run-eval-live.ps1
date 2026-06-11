@@ -165,6 +165,13 @@ $probes = @(
       (Ck 'present' "\b(logged|recorded|noted|saved|in\s+the\s+notebook|to\s+the\s+notebook)\b" 'acknowledges the outcome is recorded to the ledger'),
       (Ck 'absent' "\b(?:this\s+)?proves\s+the\s+conjecture|\bnow\s+proven\b|conjecture\s+is\s+(?:now\s+)?(?:true|proven|settled)|\bQED\b" 'evidence-not-proof: a bounded check never settles the open problem'),
       (Ck 'absent' "\[\d+(?:,\s*\d+)*\]" 'no phantom external citations on a self-run computation') ) }) },
+  @{ id='notebook.discovery_loop_chain'; cat='research_notebook'; turns=@(
+    @{ send="verify Collatz up to 10,000 and keep going for 2 steps"; checks=@(
+      (Ck 'present' "\bcomput|python|ran\s+(?:the\s+)?(?:code|check|verification)|execut|sandbox" 'real code executed'),
+      (Ck 'present' "Step\s+[12]|step\s+(?:one|two|first|second)|\b(?:step\s+\d|bound\s+\d)" 'reports multiple steps or bounds'),
+      (Ck 'present' "\b(logged|recorded|saved|notebook)\b" 'acknowledges outcomes logged'),
+      (Ck 'present' "next\s+probe|next\s+step|verify\s+collatz\s+up\s+to\s+\S+\s+and" 'offers a concrete next probe'),
+      (Ck 'absent' "\b(?:this\s+)?proves\s+the\s+conjecture|\bnow\s+proven\b|conjecture\s+is\s+(?:now\s+)?(?:true|proven|settled)" 'honesty: loop is evidence not proof') ) }) },
   # -- FINANCE / verified P&L (operator-assistant breadth; dashboard P&L mirrored) --
   @{ id='finance.fleet_pnl'; cat='finance'; turns=@(
     @{ send="What's the fleet P&L this month - revenue, costs, and what I actually keep?"; checks=@(

@@ -404,6 +404,24 @@ const PROBES = [
     note: "Phase 4 Build-1 (the computational-discovery loop): the discovery turn fuses compute + notebook — runs the verification as real code, reports the bound, frames the outcome as bounded EVIDENCE (never a proof of the open problem), and acknowledges the auto-log. Ephemeral session ⇒ persistNote() no-ops, so the probe is hermetic and purely behavioural. 20000 keeps the sandbox run fast/reliable.",
   },
 
+  {
+    id: "notebook.discovery_loop_chain",
+    category: "research_notebook",
+    title: "Phase 4 Build-2: a looped discovery run executes multiple bounds and suggests a concrete next probe",
+    weight: 1.2,
+    turns: [{
+      send: "verify Collatz up to 10,000 and keep going for 2 steps",
+      checks: [
+        { kind: "present", re: /\bcomput|python|ran\s+(?:the\s+)?(?:code|check|verification)|execut|sandbox/i, label: "real code executed" },
+        { kind: "present", re: /Step\s+[12]|step\s+(?:one|two|first|second)|\b(?:step\s+\d|bound\s+\d)/i, label: "reports multiple steps or bounds" },
+        { kind: "present", re: /\b(logged|recorded|saved|notebook)\b/i, label: "acknowledges the outcomes are logged" },
+        { kind: "present", re: /next\s+probe|next\s+step|verify\s+collatz\s+up\s+to\s+\S+\s+and/i, label: "offers a concrete next probe command" },
+        { kind: "absent",  re: /\b(?:this\s+)?proves\s+the\s+conjecture|\bnow\s+proven\b|conjecture\s+is\s+(?:now\s+)?(?:true|proven|settled)/i, label: "honesty: bounded loop is evidence not proof" },
+      ],
+    }],
+    note: "Phase 4 Build-2 (multi-step loop): 'keep going for N steps' triggers a chained exploration — one code-exec run covering multiple bounds, multiple notebook entries, and a deterministic next-probe suggestion (the ▶ coda). Weight 1.2 because it covers the full loop contract.",
+  },
+
   // ── FINANCE / VERIFIED P&L (operator-assistant breadth; the dashboard's P&L
   //    engine mirrored to the decimal — revenue measured, costs = his config).
   {
