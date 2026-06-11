@@ -5,11 +5,14 @@ cover detection/interpret/notes; this script catches routing, the Fable call, th
 `/check` round-trip, and honest narration — the things only live traffic exercises.
 
 ## Prerequisites (Vercel env)
+**Required — and that's it (no new model key; Lean drafting defaults to your free Gemini):**
 - `LEAN_CHECK_URL` — base URL of the `m8-lean-check` Cloud Run service
 - `LEAN_CHECK_TOKEN` — shared bearer secret (matches the service)
-- **Fable path (one of):**
-  - `ANTHROPIC_API_KEY` (+ default `LEAN_FORMALIZE_PROVIDER=anthropic`, `LEAN_FORMALIZE_MODEL=claude-fable-5`), or
-  - `OPENROUTER_API_KEY` + `LEAN_FORMALIZE_PROVIDER=openrouter` (model auto = `anthropic/claude-fable-5`)
+
+**Optional UPGRADE (only if/when you want stronger Lean drafting later):**
+- `LEAN_FORMALIZE_PROVIDER=anthropic` + `ANTHROPIC_API_KEY` (paid), or
+- `LEAN_FORMALIZE_PROVIDER=openrouter` + `OPENROUTER_API_KEY` (model auto = `anthropic/claude-fable-5`)
+- Default (unset) = `gemini`, reusing the app's existing free backbone.
 
 ## A. Happy path — verified (proven)
 **Type:** `prove that 2+2=4 using Lean`

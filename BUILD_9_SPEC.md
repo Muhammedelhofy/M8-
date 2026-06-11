@@ -153,7 +153,9 @@ if (leanProbe.lean) {
 - **A (recommended, smallest):** route via the existing OpenRouter provider with model `anthropic/claude-fable-5` for this one call — reuse `generateOpenAICompatible`, just pin the model + provider for the formalization request.
 - **B:** add a native `generateAnthropic` (Messages API, `ANTHROPIC_API_KEY`, model `claude-fable-5`).
 
-Either way the formalization call is a **dedicated, pinned invocation** (not the fallback chain). Env: `LEAN_FORMALIZE_MODEL=claude-fable-5` (or `anthropic/claude-fable-5` via OpenRouter).
+Either way the formalization call is a **dedicated, pinned invocation** (not the fallback chain).
+
+**DEFAULT = free Gemini.** `LEAN_FORMALIZE_PROVIDER` defaults to `gemini`, so Build-9 runs with **no new API key** — it reuses the app's existing backbone. Fable 5 is an opt-in upgrade for when Lean quality matters: set `LEAN_FORMALIZE_PROVIDER=anthropic` (+ `ANTHROPIC_API_KEY`) or `=openrouter` (+ `OPENROUTER_API_KEY`). The Anthropic provider is wired and dormant until then (like the other optional providers). Trade-off: free Gemini is weaker at Lean → more `lean_rejected`, but every verdict is honest and the check itself is always real.
 
 ---
 
