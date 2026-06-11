@@ -157,6 +157,35 @@ function ToolDecision($fleet,$state,$notebook,$compute,$routerCompute,$search,$o
   else                                     { return 'answer' }
 }
 
+# ---- (3b) Build-5 known-thread inference port: PROGRESS_STEM + matchKnownThread ----
+$PROGRESS_STEM = "\b(?:any\s+(?:progress|updates?|movement|luck|news)|made?\s+any\s+(?:progress|headway)|any\s+headway|how(?:['']s|\s+is)\s+[\s\S]{0,40}?(?:going|coming(?:\s+along)?|progressing|looking|shaping\s+up)|what['']?s\s+the\s+latest\s+(?:on|with)|did\s+we\s+get\s+anywhere|how\s+far\s+(?:did|have|are)\s+we)\b"
+$GENERIC_THREAD = '^(research|researches|our-research|my-research|the-research|notebook|the-notebook)$'
+function StemFires($msg) { return [regex]::IsMatch($msg, $PROGRESS_STEM, $IC) }
+function MatchThread($msg, $threads) {
+  $norm = ' ' + (($msg.ToLower()) -replace '[^a-z0-9]+', ' ') + ' '
+  foreach ($t in $threads) {
+    if ($t -eq 'general' -or [regex]::IsMatch($t, $GENERIC_THREAD, $IC)) { continue }
+    if ($norm.Contains(' ' + ($t -replace '-', ' ') + ' ')) { return $t }
+  }
+  return $null
+}
+$reg = @('collatz','twin-prime','general')
+
+Write-Host "== (3b) Build-5 known-thread inference (stem + registry match) ==" -ForegroundColor Cyan
+Check "stem: any progress on"        (StemFires "any progress on collatz?")                          $true
+Check "stem: what's the latest on"   (StemFires "what's the latest on goldbach?")                    $true
+Check "stem: did we get anywhere"    (StemFires "did we get anywhere with twin primes?")             $true
+Check "stem: how's ... going"        (StemFires "how's the collatz work going?")                     $true
+Check "stem: made any headway"       (StemFires "made any headway on the gaps problem?")             $true
+Check "stem silent: morning brief"   (StemFires "give me the morning brief")                         $false
+Check "stem silent: plain math"      (StemFires "what is 7 to the power of 13?")                     $false
+Check "stem silent: update config"   (StemFires "update my salary config for June")                  $false
+Check "match: collatz"               (MatchThread "any progress on collatz?" $reg)                   "collatz"
+Check "match: twin prime (slug)"     (MatchThread "any progress on twin prime gaps?" $reg)           "twin-prime"
+Check "match: unknown topic null"    (MatchThread "any progress on the visa paperwork?" $reg)        $null
+Check "match: general never matches" (MatchThread "any general progress update?" $reg)               $null
+Check "match: casual greeting null"  (MatchThread "how's it going?" $reg)                            $null
+
 Write-Host "== (4) router eligibility (notebook is a hard-route the LLM can't override) ==" -ForegroundColor Cyan
 Check "knowledge-Q eligible"  (RouterEligible $true  $false $false $false $false $false $false $false $false) $true
 Check "notebook not eligible" (RouterEligible $true  $false $false $false $false $false $true  $false $false) $false

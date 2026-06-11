@@ -202,6 +202,19 @@ $probes = @(
       (Ck 'present' "\b(logged|recorded|noted|saved|captured|added|in\s+the\s+notebook|to\s+the\s+notebook)\b" 'acknowledges the log'),
       (Ck 'present' "\bdead[\s-]?end\b" 'names the inferred kind: dead end'),
       (Ck 'absent' "\bconjecture\s+is\s+(?:false|refuted|disproved)\b|\bgoldbach\s+is\s+(?:false|refuted|disproved)\b" 'does NOT inflate a dead end into a refutation') ) }) },
+  # -- KNOWN-THREAD READ INFERENCE (Build-5): progress question, no research keyword --
+  @{ id='notebook.known_thread_inference'; cat='research_notebook'; turns=@(
+    @{ send="notebook: log a conjecture on collatz - every orbit eventually reaches 1" },
+    @{ send="any progress on collatz?"; checks=@(
+      (Ck 'present' "\bconjecture\b" 'surfaces the recorded conjecture (thread briefing)'),
+      (Ck 'present' "\borbit\b" 'carries the real logged content'),
+      (Ck 'absent' "\bnothing\s+recorded\b" 'does NOT claim the thread is empty'),
+      (Ck 'absent' "\b(?:this\s+)?proves\s+the\s+conjecture|\bnow\s+proven\b|\bverified\s+up\s+to\b" 'no invented bounds or proof') ) } ) },
+  @{ id='notebook.unknown_topic_no_hijack'; cat='research_notebook'; turns=@(
+    @{ send="any progress on the warehouse lease?"; checks=@(
+      (Ck 'absent' "\bnothing\s+recorded\s+yet\b" 'no empty-packet hijack for a non-thread topic'),
+      (Ck 'absent' "\b(?:research\s+)?notebook\b" 'does NOT route a non-research topic to the notebook'),
+      (Ck 'absent' "\bwe'?ve\s+(?:logged|recorded)\b" 'does NOT fabricate prior tracking of the lease') ) }) },
   # -- FINANCE / verified P&L (operator-assistant breadth; dashboard P&L mirrored) --
   @{ id='finance.fleet_pnl'; cat='finance'; turns=@(
     @{ send="What's the fleet P&L this month - revenue, costs, and what I actually keep?"; checks=@(

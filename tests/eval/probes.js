@@ -496,6 +496,42 @@ const PROBES = [
     note: "Build-4 2C (write-kind inference, negative-outcome class): 'tried … complete dead end' with no explicit kind word must infer kind=dead_end. A dead end is a closed APPROACH, not a refutation of the open problem — the reply must not claim Goldbach is false.",
   },
 
+  // ── KNOWN-THREAD READ INFERENCE (Build-5): a progress question with NO
+  //    notebook/research keyword routes to the thread briefing IF (and only if)
+  //    the topic matches a thread that actually exists.
+  {
+    id: "notebook.known_thread_inference",
+    category: "research_notebook",
+    title: "'any progress on collatz?' (no research keyword) reads the real collatz thread",
+    weight: 1,
+    turns: [
+      { send: "notebook: log a conjecture on collatz — every orbit eventually reaches 1" },
+      { send: "any progress on collatz?",
+        checks: [
+          { kind: "present", re: /\bconjecture\b/i, label: "surfaces the recorded conjecture (thread briefing, not a web answer)" },
+          { kind: "present", re: /\borbit\b/i, label: "carries the real logged content" },
+          { kind: "absent", re: /\bnothing\s+recorded\b/i, label: "does NOT claim the thread is empty (an entry exists in-session)" },
+          { kind: "absent", re: /\b(?:this\s+)?proves\s+the\s+conjecture|\bnow\s+proven\b|\bverified\s+up\s+to\b/i, label: "does NOT invent verification bounds or a proof" },
+        ] },
+    ],
+    note: "Build-5 (known-thread inference): 'any progress on collatz?' has no notebook:/research keyword and no where-are-we stem — detectNotebook misses it. inferKnownThreadRead matches the topic against the registry (in-session staged registry under the hermetic eval) and serves the thread briefing. The old behaviour fell through to search/LLM — the last open confabulation door.",
+  },
+  {
+    id: "notebook.unknown_topic_no_hijack",
+    category: "research_notebook",
+    title: "'any progress on the warehouse lease?' is NOT hijacked into the research notebook",
+    weight: 1,
+    turns: [{
+      send: "any progress on the warehouse lease?",
+      checks: [
+        { kind: "absent", re: /\bnothing\s+recorded\s+yet\b/i, label: "no empty-packet hijack (the mandated opener must not fire for a non-thread topic)" },
+        { kind: "absent", re: /\b(?:research\s+)?notebook\b/i, label: "does NOT route a non-research topic to the notebook" },
+        { kind: "absent", re: /\bwe'?ve\s+(?:logged|recorded)\b/i, label: "does NOT fabricate prior tracking of the lease" },
+      ],
+    }],
+    note: "Build-5 negative: the progress stem fires but 'warehouse lease' matches no thread, so inference returns null and the turn falls through to normal routing. The notebook must not claim the empty packet, mention the ledger, or invent prior tracking for an ops topic it never held.",
+  },
+
   // ── FINANCE / VERIFIED P&L (operator-assistant breadth; the dashboard's P&L
   //    engine mirrored to the decimal — revenue measured, costs = his config).
   {
