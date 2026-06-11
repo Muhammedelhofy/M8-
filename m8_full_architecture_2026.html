@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>M8 — Full Architecture (Canonical · Session-9)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; padding: 20px; }
+
+  .diagram { max-width: 1000px; margin: 0 auto; }
+
+  /* North Star banner */
+  .north-star {
+    background: linear-gradient(135deg, #1a1f35 0%, #0d1b3e 100%);
+    border: 1.5px solid #4f6af5;
+    border-radius: 12px;
+    padding: 18px 24px;
+    margin-bottom: 12px;
+    text-align: center;
+    position: relative;
+  }
+  .north-star .label { font-size: 10px; color: #7c8db5; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
+  .north-star .title { font-size: 16px; font-weight: 700; color: #a5b4fc; margin-bottom: 6px; }
+  .north-star .desc { font-size: 12px; color: #8899cc; line-height: 1.5; max-width: 800px; margin: 0 auto; }
+  .north-star .tracks { display: flex; gap: 8px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
+  .ntrack { font-size: 10px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+  .ntrack.a { background: #0d2b2b; color: #4ecdc4; border: 1px solid #1a5f5f; }
+  .ntrack.b { background: #1e0d30; color: #ce93d8; border: 1px solid #4a1a6e; }
+
+  /* Layer wrapper */
+  .layer { margin-bottom: 8px; }
+  .layer-label { font-size: 9px; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; color: #475569; margin-bottom: 5px; padding-left: 4px; }
+  .row { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  /* Cards */
+  .card {
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 80px;
+    border: 1px solid transparent;
+    position: relative;
+    cursor: default;
+    transition: transform 0.15s;
+  }
+  .card:hover { transform: translateY(-1px); }
+  .card .name { flex: 1; }
+  .card .badge { font-size: 9px; padding: 2px 5px; border-radius: 10px; font-weight: 700; white-space: nowrap; }
+  .card .sub { font-size: 9px; font-weight: 400; color: inherit; opacity: 0.75; display: block; margin-top: 1px; }
+
+  /* Status colors */
+  .live { background: #0d2b2b; border-color: #1a5f5f; color: #4ecdc4; }
+  .live .badge { background: #0f3d3d; color: #4ecdc4; }
+
+  .bug { background: #2b1010; border-color: #5f1a1a; color: #ff6b6b; }
+  .bug .badge { background: #3d0f0f; color: #ff6b6b; }
+
+  .blocked { background: #2b2000; border-color: #5f4400; color: #ffa726; }
+  .blocked .badge { background: #3d2f00; color: #ffa726; }
+
+  .next { background: #0d1f3d; border-color: #1a3a6e; color: #64b5f6; }
+  .next .badge { background: #0f2b4d; color: #64b5f6; }
+
+  /* Active build — current focus */
+  .active { background: #0a1f3d; border-color: #4f6af5; color: #8ab4ff; box-shadow: 0 0 0 1px #4f6af5 inset; }
+  .active .badge { background: #1a2f5d; color: #a5c4ff; }
+
+  .future { background: #1a1a24; border-color: #2e2e40; color: #90909a; }
+  .future .badge { background: #22222f; color: #666; }
+
+  .llm { background: #1e0d30; border-color: #4a1a6e; color: #ce93d8; }
+  .llm .badge { background: #2d0f40; color: #ce93d8; }
+
+  .infra { background: #141c2b; border-color: #263550; color: #78909c; }
+  .infra .badge { background: #1a2535; color: #78909c; }
+
+  .knowledge { background: #0d1f2b; border-color: #1a3a50; color: #4db6ac; }
+  .knowledge .badge { background: #0f2b3a; color: #4db6ac; }
+
+  .design { background: #1f1020; border-color: #4a2050; color: #f48fb1; }
+  .design .badge { background: #2a1530; color: #f48fb1; }
+
+  /* Arrows */
+  .arrow { text-align: center; color: #2d3748; font-size: 16px; margin: 2px 0; line-height: 1; }
+
+  /* Section divider */
+  .divider { border-top: 1px solid #1e2535; margin: 10px 0; }
+
+  /* Maturity ladder */
+  .ladder { display: flex; gap: 4px; align-items: center; }
+  .rung { flex: 1; border-radius: 6px; padding: 8px 10px; text-align: center; font-size: 10px; font-weight: 700; border: 1px solid transparent; }
+  .rung .level { font-size: 13px; font-weight: 800; margin-bottom: 2px; }
+  .rung .status { font-size: 9px; font-weight: 400; }
+  .rung .rname { font-size: 9px; font-weight: 600; }
+  .rung-done { background: #0d2b2b; border-color: #1a5f5f; color: #4ecdc4; }
+  .rung-partial { background: #2b2000; border-color: #5f4400; color: #ffa726; }
+  .rung-active { background: #0d1f3d; border-color: #4f6af5; color: #8ab4ff; }
+  .rung-future { background: #1a1a24; border-color: #2e2e40; color: #666; }
+  .ladder-arrow { color: #2d3748; font-size: 18px; }
+
+  /* Legend */
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; padding: 10px 14px; background: #0d1117; border: 1px solid #1e2535; border-radius: 8px; font-size: 10px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; color: #64748b; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* Sub-layers for knowledge */
+  .sublayers { display: flex; gap: 0; border: 1px solid #1a3a50; border-radius: 8px; overflow: hidden; width: 100%; }
+  .sublayer { flex: 1; padding: 8px 6px; text-align: center; font-size: 9px; border-right: 1px solid #1a3a50; background: #0a1820; }
+  .sublayer:last-child { border-right: none; }
+  .sublayer .snum { font-size: 14px; color: #2d5060; font-weight: 800; margin-bottom: 2px; }
+  .sublayer .sname { font-weight: 700; color: #4db6ac; margin-bottom: 2px; }
+  .sublayer .sdesc { color: #4a7080; font-size: 8px; line-height: 1.3; }
+  .sublayer.deferred { background: #111820; }
+  .sublayer.deferred .sname { color: #666; }
+  .sublayer.deferred .snum { color: #222; }
+  .sublayer.dactive { background: #0a1f2b; }
+  .sublayer.dactive .sname { color: #6fe3d6; }
+  .sublayer.dactive .snum { color: #3a7080; }
+
+  .section-tag { display: inline-block; font-size: 9px; padding: 2px 7px; border-radius: 10px; background: #1e2535; color: #4a5568; margin-bottom: 6px; font-weight: 600; letter-spacing: 0.5px; }
+  .section-tag.track-a { background: #0d2b2b; color: #4ecdc4; }
+  .section-tag.track-b { background: #1e0d30; color: #ce93d8; }
+  .section-tag.critical { background: #2b1010; color: #ff6b6b; }
+  .section-tag.build-next { background: #0d1f3d; color: #64b5f6; }
+  .section-tag.build-now { background: #0a1f3d; color: #8ab4ff; }
+
+  .wide { flex: 2; }
+  .w3 { flex: 3; }
+  .narrow { flex: 0.7; min-width: 70px; }
+  .stamp { text-align: center; font-size: 9px; color: #3a4458; margin-top: 12px; letter-spacing: 0.5px; }
+</style>
+</head>
+<body>
+<div class="diagram">
+
+  <!-- NORTH STAR -->
+  <div class="north-star">
+    <div class="label">★ North Star — The Destination</div>
+    <div class="title">M8: Personal Intelligence + Unsolved-Problem Engine</div>
+    <div class="desc">Two missions, one compounding system. <b>(A)</b> Run Muhammad's world — fleet, finance, ops, projects — as a personal AI OS. <b>(B)</b> Build toward cracking unsolved problems, acquiring whatever capability that takes: number theory, algebra, geometry, formal verification, research synthesis. Every session compounds — operational context, domain knowledge, conjectures, even failed attempts. The destination is a system so integrated that running the business or probing an open problem without it becomes unthinkable, and that gets measurably smarter each session. The claim we never make: that we're already there.</div>
+    <div class="tracks">
+      <span class="ntrack a">Track A · Personal AI OS</span>
+      <span class="ntrack b">Track B · Unsolved-Problem Engine</span>
+    </div>
+  </div>
+
+  <div class="arrow">↓</div>
+
+  <!-- DESIGN / INTERFACE -->
+  <div class="layer">
+    <div class="layer-label">Interface &amp; Design Layer <span class="section-tag">Identity</span></div>
+    <div class="row">
+      <div class="card live"><span>🌐</span><div class="name">Web App<span class="sub">Vercel · streaming chat</span></div><span class="badge">✅ LIVE</span></div>
+      <div class="card live"><span>🎤</span><div class="name">Voice Interface<span class="sub">push-to-talk · voice.js</span></div><span class="badge">✅ LIVE</span></div>
+      <div class="card future"><span>📱</span><div class="name">PWA / Mobile<span class="sub">iOS + Android — defer</span></div><span class="badge">FUTURE</span></div>
+      <div class="card future"><span>🪪</span><div class="name">M8 Identity<span class="sub">visual identity, brand</span></div><span class="badge">FUTURE</span></div>
+    </div>
+  </div>
+
+  <div class="arrow">↓</div>
+
+  <!-- ORCHESTRATION -->
+  <div class="layer">
+    <div class="layer-label">Orchestration Layer <span class="section-tag track-a">Deterministic-first spine</span></div>
+    <div class="row">
+      <div class="card live"><span>🧭</span><div class="name">Hard-Route Spine<span class="sub">regex-first · first match wins</span></div><span class="badge">✅ LIVE</span></div>
+      <div class="card live"><span>🔧</span><div class="name">Tool-Decision<span class="sub">router.js · answer/search/compute/clarify</span></div><span class="badge">✅ LIVE</span></div>
+      <div class="card llm"><span>⚡</span><div class="name">Gemini<span class="sub">LLM backbone (orchestration)</span></div><span class="badge">PRIMARY</span></div>
+      <div class="card llm narrow"><span>📜</span><div class="name">Fable 5<span class="sub">claude-fable-5 · hardest reasoning (Lean)</span></div><span class="badge">REASONING</span></div>
+    </div>
+  </div>
+
+  <div class="arrow">↓</div>
+
+  <!-- HARD ROUTES -->
+  <div class="layer">
+    <div class="layer-label">Deterministic Hard Routes — L3/L4 <span class="section-tag track-a">Track A Core</span></div>
+    <div class="row">
+      <div class="card live narrow"><span>🚗</span><div class="name">fleet.js<span class="sub">Bolt P&amp;L, drivers</span></div><span class="badge">✅</span></div>
+      <div class="card live narrow"><span>💰</span><div class="name">finance.js<span class="sub">verified P&amp;L engine</span></div><span class="badge">✅</span></div>
+      <div class="card live narrow"><span>📋</span><div class="name">eosb.js<span class="sub">KSA termination</span></div><span class="badge">✅</span></div>
+      <div class="card live narrow"><span>⚖️</span><div class="name">playbooks.js<span class="sub">Labour / ZATCA</span></div><span class="badge">✅</span></div>
+    </div>
+    <div class="row" style="margin-top:6px">
+      <div class="card live narrow"><span>🏢</span><div class="name">companies.js<span class="sub">multi-company registry</span></div><span class="badge">✅</span></div>
+      <div class="card live narrow"><span>📊</span><div class="name">deckgen.js<span class="sub">PPTX / HTML / MD</span></div><span class="badge">✅</span></div>
+      <div class="card live narrow"><span>🔬</span><div class="name">discovery.js<span class="sub">Discovery loop + OEIS</span></div><span class="badge">✅</span></div>
+      <div class="card live narrow"><span>📓</span><div class="name">notebook.js<span class="sub">research notes · conjectures</span></div><span class="badge">✅</span></div>
+    </div>
+  </div>
+
+  <div class="arrow">↓</div>
+
+  <!-- PERSONAL CAPABILITY — TRACK A BROAD -->
+  <div class="layer">
+    <div class="layer-label">Personal Capability — Track A Broad <span class="section-tag track-a">Operator breadth</span></div>
+    <div class="row">
+      <div class="card live"><span>🔍</span><div class="name">Live Web Search<span class="sub">search.js · recency routing</span></div><span class="badge">✅ LIVE</span></div>
+      <div class="card live"><span>💻</span><div class="name">Code Execution<span class="sub">Gemini code-exec · auto-route</span></div><span class="badge">✅ LIVE</span></div>
+      <div class="card next"><span>🧠</span><div class="name">Ops Memory<span class="sub">memory.js · KSA / client context</span></div><span class="badge">PARTIAL</span></div>
+    </div>
+    <div class="row" style="margin-top:6px">
+      <div class="card next"><span>📅</span><div class="name">Calendar<span class="sub">meeting context, briefings</span></div><span class="badge">NEXT</span></div>
+      <div class="card next"><span>📧</span><div class="name">Email<span class="sub">inbox triage, drafts</span></div><span class="badge">NEXT</span></div>
+      <div class="card future"><span>📋</span><div class="name">Settlement Engine<span class="sub">auto-validate DAs, reports</span></div><span class="badge">FUTURE</span></div>
+    </div>
+  </div>
+
+  <div class="arrow">↓</div>
+
+  <!-- DOMAIN MASTERY — teach M8 the math it needs -->
+  <div class="layer">
+    <div class="layer-label">Domain Mastery — Teach M8 the math it needs <span class="section-tag track-b">Track B feeder · build what it takes</span></div>
+    <div class="row">
+      <div class="card knowledge"><span>🔢</span><div class="name">Number Theory<span class="sub">primes, parity, OEIS, Collatz</span></div><span class="badge">ACTIVE</span></div>
+      <div class="card knowledge"><span>🧮</span><div class="name">Algebra<span class="sub">identities, recurrences</span></div><span class="badge">PLANNED</span></div>
+      <div class="card knowledge"><span>📐</span><div class="name">Geometry<span class="sub">combinatorial / discrete</span></div><span class="badge">PLANNED</span></div>
+      <div class="card knowledge"><span>🎲</span><div class="name">Combinatorics<span class="sub">counting, sequences</span></div><span class="badge">PLANNED</span></div>
+      <div class="card active narrow"><span>🔮</span><div class="name">Lean 4 + Mathlib<span class="sub">formal verification</span></div><span class="badge">⚡ BUILD-9</span></div>
+    </div>
+  </div>
+
+  <div class="arrow">↓</div>
+
+  <!-- KNOWLEDGE ACQUISITION PIPELINE -->
+  <div class="layer">
+    <div class="layer-label">Knowledge Acquisition Pipeline — 6 Stages <span class="section-tag build-next">Build: Months 2–6 · feeds both tracks</span></div>
+    <div class="sublayers">
+      <div class="sublayer"><div class="snum">1</div><div class="sname">Raw Ingestion</div><div class="sdesc">Papers, docs, URLs → clean text</div></div>
+      <div class="sublayer"><div class="snum">2</div><div class="sname">Concept Extraction</div><div class="sdesc">S-P-O triples → Supabase</div></div>
+      <div class="sublayer"><div class="snum">3</div><div class="sname">Knowledge Graph</div><div class="sdesc">Linked concepts, relationships</div></div>
+      <div class="sublayer"><div class="snum">4</div><div class="sname">Mastery State</div><div class="sdesc">Known / unknown / contradictory</div></div>
+      <div class="sublayer"><div class="snum">5</div><div class="sname">Clarification Gate</div><div class="sdesc">M8 asks when it hits gaps</div></div>
+      <div class="sublayer dactive"><div class="snum">6</div><div class="sname">Active Retrieval</div><div class="sdesc">Graph-augmented reasoning</div></div>
+    </div>
+    <div style="margin-top:5px; font-size:9px; color:#4a7080; padding-left:4px;">
+      ↑ Compounds over time across both math domains (number theory, algebra, geometry) <b>and</b> operational domains (KSA logistics, fleet patterns, client intel).
+    </div>
+  </div>
+
+  <div class="arrow">↓</div>
+
+  <!-- RESEARCH ENGINE — TRACK B -->
+  <div class="layer">
+    <div class="layer-label">Research Engine — Track B · The Autonomous-Exploration Ladder <span class="section-tag track-b">Long Horizon</span></div>
+    <div class="row">
+      <div class="card live narrow"><span>🌀</span><div class="name">Discovery Loop<span class="sub">verify KNOWN to bound + log</span></div><span class="badge">✅</span></div>
+      <div class="card live"><span>🔣</span><div class="name">OEIS Probing — Build-8<span class="sub">discover UNKNOWN formula · honesty-framed conjecture</span></div><span class="badge">✅ LIVE</span></div>
+      <div class="card active"><span>🔮</span><div class="name">Lean Verification — Build-9<span class="sub">prose conjecture → Lean statement → /check · executor LIVE</span></div><span class="badge">⚡ NOW</span></div>
+    </div>
+    <div class="row" style="margin-top:6px">
+      <div class="card future"><span>🔁</span><div class="name">Autonomous Loop<span class="sub">Observe→Hypothesize→Test→Record (L5)</span></div><span class="badge">NEXT RUNG</span></div>
+      <div class="card future"><span>🕸️</span><div class="name">Research Memory Graph<span class="sub">evidence± · related seqs · failed attempts</span></div><span class="badge">BUILD-10?</span></div>
+      <div class="card future narrow"><span>📐</span><div class="name">Millennium Tier<span class="sub">Riemann / Navier-Stokes / BSD</span></div><span class="badge">HORIZON</span></div>
+    </div>
+  </div>
+
+  <div class="arrow">↓</div>
+
+  <!-- COMPUTE / PERSISTENCE -->
+  <div class="layer">
+    <div class="layer-label">Compute &amp; Persistence</div>
+    <div class="row">
+      <div class="card infra"><span>☁️</span><div class="name">Vercel<span class="sub">serverless API + web</span></div><span class="badge">LIVE</span></div>
+      <div class="card infra"><span>🗄️</span><div class="name">Supabase<span class="sub">ltqpoupferwituusxwal</span></div><span class="badge">LIVE</span></div>
+      <div class="card live"><span>🧮</span><div class="name">Cloud Run · m8-lean-check<span class="sub">Lean 4 + Mathlib /check · smoke 4/4</span></div><span class="badge">✅ LIVE</span></div>
+      <div class="card live"><span>📓</span><div class="name">Research Notebook<span class="sub">research_notes · persistent</span></div><span class="badge">✅ LIVE</span></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- MATURITY LADDER -->
+  <div class="layer">
+    <div class="layer-label">Maturity Ladder — Current Position</div>
+    <div class="ladder">
+      <div class="rung rung-done"><div class="level">L1</div><div class="rname">Chatbot</div><div class="status">✅ Done</div></div>
+      <div class="ladder-arrow">→</div>
+      <div class="rung rung-done"><div class="level">L2</div><div class="rname">Grounded</div><div class="status">✅ Done</div></div>
+      <div class="ladder-arrow">→</div>
+      <div class="rung rung-partial"><div class="level">L3</div><div class="rname">Proactive Ops</div><div class="status">~85%</div></div>
+      <div class="ladder-arrow">→</div>
+      <div class="rung rung-active"><div class="level">L4</div><div class="rname">Verified Tools</div><div class="status">⚡ ~60% ← YOU</div></div>
+      <div class="ladder-arrow">→</div>
+      <div class="rung rung-future"><div class="level">L5</div><div class="rname">Autonomous Loop</div><div class="status">~15%</div></div>
+      <div class="ladder-arrow">→</div>
+      <div class="rung rung-future"><div class="level">L6</div><div class="rname">Compound</div><div class="status">Destination</div></div>
+    </div>
+  </div>
+
+  <!-- LEGEND -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#4ecdc4"></div>Live / Working</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#8ab4ff"></div>Active Build (now)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ffa726"></div>Partial</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#64b5f6"></div>Next</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#90909a"></div>Planned / Future</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ce93d8"></div>LLM Layer</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#78909c"></div>Infrastructure</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#4db6ac"></div>Knowledge / Domain</div>
+  </div>
+
+  <div class="stamp">CANONICAL · M8/m8_full_architecture_2026.html · aligned to NORTH_STAR.md · Session-9 (2026-06-11) · edit deliberately, do not regenerate</div>
+
+</div>
+</body>
+</html>
