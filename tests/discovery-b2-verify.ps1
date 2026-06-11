@@ -1,7 +1,7 @@
 #
-# M8 Discovery Build-2 -- .NET regex port verification
+# M8 Discovery Build-2 -- .NET regex port verification (Build-2 fixes included)
 # Tests: loop trigger detection, bound scaling, multi-step note parsing,
-#        next-probe suggestion.  No Node.js required.
+#        next-probe suggestion, follow-up loop detection.  No Node.js required.
 # Run:  powershell -ExecutionPolicy Bypass -File tests/discovery-b2-verify.ps1
 #
 
@@ -243,6 +243,66 @@ Check "slug to readable (twin-primes)" `
 
 $nullSugg = SuggestNextProbe $null $false "collatz"
 CheckTrue "null bound -> no suggestion" ($nullSugg -eq $null)
+
+# ----------------------------------------------------------------
+# SECTION 6: Follow-up loop detection (bare "keep going" follow-up)
+# ----------------------------------------------------------------
+Write-Host ""
+Write-Host "-- Follow-up loop detection --"
+
+# Port of NEXT_PROBE_RE and detectFollowUpLoop from discovery.js
+$NEXT_PROBE_RE   = [regex]'▶ Next probe:\s*`([^`]+)`'
+$DISC_BOUND_PORT = [regex]'(?i)\b(?:up\s+to|below|under|first|to)\s+(?:n\s*=\s*)?(\d[\d,_]*(?:\.\d+)?(?:\s*(?:million|billion|thousand|k|m))?|10\s*\^\s*\d+|1e\d+|2\s*\^\s*\d+)\b'
+$RUN_VERB_PORT   = [regex]'(?i)\b(verify|check|test|explore|search|scan|run|confirm|probe|compute)\b'
+$RTARGET_PORT    = [regex]'(?i)\b(conjecture|hypothesis|collatz|goldbach|twin\s+primes?|primes?|perfect\s+numbers?|fibonacci|oeis|sequence|riemann|mersenne|fermat)\b'
+
+function IsDiscovery($cmd) {
+    if (-not $RUN_VERB_PORT.IsMatch($cmd)) { return $false }
+    if (-not $RTARGET_PORT.IsMatch($cmd))  { return $false }
+    $bm = $DISC_BOUND_PORT.Match($cmd)
+    return $bm.Success
+}
+
+function ExtractFollowUpLoop($msg, $priorAssistant) {
+    if (-not $LOOP.IsMatch($msg)) { return $null }
+    $m = $NEXT_PROBE_RE.Match($priorAssistant)
+    if (-not $m.Success) { return $null }
+    $cmd = $m.Groups[1].Value.Trim()
+    if (-not (IsDiscovery $cmd)) { return $null }
+    $bm = $DISC_BOUND_PORT.Match($cmd)
+    return @{
+        looped   = $true
+        bound    = $bm.Groups[1].Value
+        maxSteps = ExtractMaxSteps $msg
+    }
+}
+
+$priorResp = "Ran code for Collatz. No counterexample found through 10,000.`n" +
+             "Logged to the notebook.`n" +
+             "``n▶ Next probe: ``verify collatz up to 100,000 and log it```n"
+
+# Hack: embed the coda directly since PS string interpolation of backticks is tricky
+$priorResp = "No counterexample found through 10,000. Logged.`n▶ Next probe: ``verify collatz up to 100,000 and log it``"
+
+$r1 = ExtractFollowUpLoop "keep going" $priorResp
+CheckTrue "followup: 'keep going' fires when prior coda present" ($r1 -ne $null)
+Check     "followup: extracts bound 100,000"                     $r1.bound    "100,000"
+Check     "followup: default maxSteps = 3"                       $r1.maxSteps 3
+
+$r2 = ExtractFollowUpLoop "keep going for 2 steps" $priorResp
+CheckTrue "followup: 'for 2 steps' fires"     ($r2 -ne $null)
+Check     "followup: maxSteps = 2 from msg"   $r2.maxSteps 2
+
+$r3 = ExtractFollowUpLoop "keep going" "No prior coda here. Just a regular response."
+CheckTrue "followup: no coda -> null" ($r3 -eq $null)
+
+$r4 = ExtractFollowUpLoop "how did the fleet do yesterday" $priorResp
+CheckTrue "followup: non-loop msg -> null" ($r4 -eq $null)
+
+$tpResp = "Ran twin prime check. No issues through 50,000.`n▶ Next probe: ``verify twin primes up to 500,000 and log it``"
+$r5 = ExtractFollowUpLoop "continue for 3 steps" $tpResp
+CheckTrue "followup: twin primes thread detected"          ($r5 -ne $null)
+Check     "followup: twin primes bound = 500,000"          $r5.bound "500,000"
 
 # ----------------------------------------------------------------
 # SUMMARY
