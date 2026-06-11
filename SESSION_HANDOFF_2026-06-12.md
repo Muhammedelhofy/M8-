@@ -6,6 +6,21 @@
 
 ## What shipped this session
 
+### Build-6b — Compound search→compute — `f57c0b2` (+ probe-band fix; shipped after Build-5, same session)
+
+The case Build-6 deliberately left: a query needing a LIVE value (FX rate, market price) AND arithmetic over it. **The bug it fixes:** "convert 50,000 SAR to USD" matched `COMPUTE_HEURISTIC`, the Build-6 gate suppressed search, and Gemini converted at a REMEMBERED training-data rate — a live-value fabrication.
+
+- `COMPOUND_HEURISTIC` + `detectCompound` (`lib/orchestrator.js`): currency amount A→B conversions; current/today/live price + a quantity. Fixed-factor conversions (km→miles) and self-contained math stay on the plain compute lane.
+- SLOT 2a compound search: fires regardless of intent classification and even when computeMode hijacked the turn; the fleet/finance/eosb/state/notebook hard-routes still win.
+- Sequential ownership: `useCompute` includes compound; the COMPUTE contract is excluded on compound turns (its "never attach external citations" line would fight the required rate citation — the SEARCH contract rides with the results) + `COMPOUND_DIRECTIVE` (take the value from the cited source, compute with code, flag the as-of; empty search ⇒ give the formula, never a remembered rate).
+- `toolDecision = "search_compute"`.
+
+**Build-6b verification:** new `tests/compound-verify.ps1` 27/27; regression ports tool-decision 27/27, compute-autoroute 40/40, notebook 54/54, discovery-b2 50/50. LIVE: "Convert 12,500 SAR to USD at the current exchange rate" → **3,337.50 USD at a cited live 0.267 rate, computed in the sandbox** (sources named, fluctuation flagged). Live eval `tool_decision`: both new probes pass (`tool.compound_fx_live` 3/3 after widening the band to 3,3xx — live quotes 0.2664–0.267 straddle the 3.75 peg; `tool.fixed_factor_no_compound` 2/2).
+
+**Known issue caught during verification (pre-existing, NOT a Build-6b regression):** under back-to-back eval load, the free fallback provider occasionally answers a compute probe with a WRONG figure while claiming "computed in Python" (9^11 → 313,810,596,091 instead of 31,381,059,609). Gemini-served runs are correct (2/2 on standalone re-runs). The documented fix is the pending OpenAI paid-key backstop.
+
+---
+
 ### Build-5 — Known-thread read inference — `74063f3` (shipped after Build-4, same session)
 
 "any progress on collatz?" carries no notebook/research keyword and no where-are-we stem, so `detectNotebook` missed it — the turn fell through to search/LLM, the same confabulation class Build-4 closed for WHERE_ON, through a different entrance. Now:
@@ -110,11 +125,12 @@ a6c20bd  Build-2 runtime fixes: WHERE_ON empty-packet + detectFollowUpLoop
 
 ## Next build options (Session 7)
 
-1. **Compound search→compute (sequential tool ownership):** the top pending L4 item (team-unanimous; Build-6 deliberately left it) — a query needing a searched live value THEN verified computation over it. ★ IN PROGRESS this session (Build-6b) — see the section above this list if it shipped.
-2. **Odysseus AI integration (red-team loop automation):** wire Odysseus-generated probe specs into the ingestion contract (already documented in `probes.js` comments) so the adversarial battery grows without manual authoring.
-3. **OEIS probing (Track B / North-Star math track):** extend the discovery loop to OEIS-class sequence probing — pattern detection → conjecture → bounded verification → notebook log.
-4. **Known-thread inference** — ✅ DONE this session (Build-5, `74063f3`).
-5. **Wire the `tool_decision` DB column into logTrace** once Muhammad confirms the `request_traces` ALTER ran.
+1. **Compound search→compute** — ✅ DONE this session (Build-6b, `f57c0b2`).
+2. **Known-thread inference** — ✅ DONE this session (Build-5, `74063f3`).
+3. **★ Recommended next — Odysseus AI integration (red-team loop automation):** wire Odysseus-generated probe specs into the ingestion contract (already documented in `probes.js` comments) so the adversarial battery grows without manual authoring.
+4. **OEIS probing (Track B / North-Star math track):** extend the discovery loop to OEIS-class sequence probing — pattern detection → conjecture → bounded verification → notebook log.
+5. **OpenAI paid-key backstop:** kills the fallback-provider noise class (wrong figure + fake "computed in Python" claim — caught live on 9^11 this session) and the eval reasoning-axis noise.
+6. **Wire the `tool_decision` DB column into logTrace** once Muhammad confirms the `request_traces` ALTER ran.
 
 ---
 

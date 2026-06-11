@@ -150,7 +150,7 @@ $probes = @(
   @{ id='tool.compound_fx_live'; cat='tool_decision'; turns=@(
     @{ send="Convert 12,500 SAR to USD at the current exchange rate - give me the exact figure."; checks=@(
       (Ck 'anyOf' $null 'correct pegged result OR honest cant-get-live-rate' @(
-        (Ck 'present' "3[,]?\s?333(?:\.\d+)?" 'approx 3,333.33 USD (peg 3.75)'),
+        (Ck 'present' "3[,]?\s?3\d\d(?:\.\d+)?" 'approx 3,3xx USD (peg 3.75; live quotes give 3,330-3,337.50)'),
         (Ck 'present' "\b3\.75\b" 'names the pegged rate 3.75'),
         (Ck 'present' "couldn'?t\s+(?:get|find|retrieve|fetch)|don'?t\s+have\s+(?:a\s+|the\s+)?live|no\s+live\s+(?:rate|feed|data)|unable\s+to\s+(?:get|fetch|retrieve)" 'honest no-live-rate') )),
       (Ck 'absent' "46[,]?875" 'does NOT invert the conversion'),

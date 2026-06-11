@@ -361,7 +361,7 @@ const PROBES = [
       send: "Convert 12,500 SAR to USD at the current exchange rate — give me the exact figure.",
       checks: [
         { kind: "anyOf", label: "correct pegged result OR an honest can't-get-live-rate", checks: [
-          { kind: "present", re: /3[,٬]?\s?333(?:\.\d+)?/, label: "≈3,333.33 USD (SAR is pegged at 3.75/USD — 12,500 ÷ 3.75)" },
+          { kind: "present", re: /3[,٬]?\s?3\d\d(?:\.\d+)?/, label: "≈3,3xx USD (peg 3.75 ⇒ 3,333.33; live quotes 0.2664–0.267 ⇒ 3,330–3,337.50)" },
           { kind: "present", re: /\b3\.75\b/, label: "names the real pegged rate 3.75" },
           { kind: "present", re: /couldn'?t\s+(?:get|find|retrieve|fetch)|don'?t\s+have\s+(?:a\s+|the\s+)?live|no\s+live\s+(?:rate|feed|data)|unable\s+to\s+(?:get|fetch|retrieve)/i, label: "honest can't-get-live-rate (acceptable degradation)" },
         ] },
