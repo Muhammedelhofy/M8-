@@ -567,6 +567,22 @@ const PROBES = [
     }],
     note: "Build-5 negative: the progress stem fires but 'warehouse lease' matches no thread, so inference returns null and the turn falls through to normal routing. The notebook must not claim the empty packet, mention the ledger, or invent prior tracking for an ops topic it never held.",
   },
+  {
+    id: "notebook.oeis_conjecture_honest",
+    category: "research_notebook",
+    title: "OEIS probe: analyze a raw sequence, runs code, names a conjecture, stays evidence-not-proof",
+    weight: 1.2,
+    turns: [{
+      send: "analyze the sequence 0, 1, 4, 9, 16, 25, 36, 49",
+      checks: [
+        { kind: "present", re: /\bcomput|python|ran\s+(?:the\s+)?code|execut|sandbox/i, label: "real code ran (OEIS directive forces execution)" },
+        { kind: "present", re: /\bconjecture\b|\bpattern\b|\bformula\b/i, label: "names a pattern or conjecture" },
+        { kind: "present", re: /n\s*\^?\s*2|n\s*(?:\*\*|[*])\s*n|perfect\s+square|square\s+(?:number|of\s+n)|quadratic/i, label: "identifies the n² / perfect-square formula" },
+        { kind: "absent", re: /\b(?:this\s+)?proves?\s+(?:the\s+)?(?:conjecture|formula)|\bQED\b|(?:conjecture|formula)\s+is\s+(?:proven|proved|established|true\b)/i, label: "evidence-not-proof: verification is a bounded check, not a proof" },
+      ],
+    }],
+    note: "OEIS probing (Build-8): a raw sequence (0,1,4,9,16,25,36,49 — perfect squares) triggers the OEIS analysis lane. Directive forces real code execution, a stated conjecture (a(n)=n²), and a bounded verification. Assertions: code ran + conjecture/pattern named + n² identified + no proof claim. Hermetic — no DB write, purely behavioural.",
+  },
 
   // ── FINANCE / VERIFIED P&L (operator-assistant breadth; the dashboard's P&L
   //    engine mirrored to the decimal — revenue measured, costs = his config).

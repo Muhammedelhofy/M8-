@@ -230,6 +230,12 @@ $probes = @(
       (Ck 'absent' "\bnothing\s+recorded\s+yet\b" 'no empty-packet hijack for a non-thread topic'),
       (Ck 'absent' "\b(?:research\s+)?notebook\b" 'does NOT route a non-research topic to the notebook'),
       (Ck 'absent' "\bwe'?ve\s+(?:logged|recorded)\b" 'does NOT fabricate prior tracking of the lease') ) }) },
+  @{ id='notebook.oeis_conjecture_honest'; cat='research_notebook'; turns=@(
+    @{ send="analyze the sequence 0, 1, 4, 9, 16, 25, 36, 49"; checks=@(
+      (Ck 'present' "\bcomput|python|ran\s+(?:the\s+)?code|execut|sandbox" 'real code ran (OEIS directive forces execution)'),
+      (Ck 'present' "\bconjecture\b|\bpattern\b|\bformula\b" 'names a pattern or conjecture'),
+      (Ck 'present' "n\s*\^?\s*2|n\s*\*\*\s*n|n\s*\*\s*n|perfect\s+square|square\s+of\s+n|quadratic" 'identifies the n^2 / perfect-square formula'),
+      (Ck 'absent' "\b(?:this\s+)?proves?\s+(?:the\s+)?(?:conjecture|formula)|\bQED\b|(?:conjecture|formula)\s+is\s+(?:proven|proved|established)" 'evidence-not-proof: bounded check, not a proof') ) }) },
   # -- FINANCE / verified P&L (operator-assistant breadth; dashboard P&L mirrored) --
   @{ id='finance.fleet_pnl'; cat='finance'; turns=@(
     @{ send="What's the fleet P&L this month - revenue, costs, and what I actually keep?"; checks=@(
