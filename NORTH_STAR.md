@@ -4,6 +4,11 @@
 > If the vision genuinely changes, edit this file and the diagram deliberately — never silently regenerate.
 > **Canonical diagram:** [`m8_full_architecture_2026.html`](./m8_full_architecture_2026.html)
 > (A Desktop copy is kept in sync; the repo copy is authoritative.)
+>
+> **Session-close ritual (standing):** when a session is finalized, update *this file*
+> and *the diagram* with what shipped — flip status cells, bump maturity %, move the
+> active-build marker. Update the cells, not the structure or the North Star wording.
+> This is what keeps the vision from diverting. Stay on it; don't get distracted.
 
 ---
 
