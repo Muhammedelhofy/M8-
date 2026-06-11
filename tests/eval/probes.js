@@ -352,6 +352,42 @@ const PROBES = [
     }],
     note: "L4 Build-6 (the deterministic compute/search gate — team-consensus GPT/Grok/Gemini/Manus/M8): a 'to the power of' query matches BOTH computeMode (regex) AND the RESEARCH/LOOKUP intent classifier — PRE-FIX it co-fired web search and tacked 'confirmed by MathCelebrity' onto the Python result (a self-computed number has no external source). The gate suppresses the search slot when computeMode fires (compute owns the number). The absent web-citation check proves no search result was laundered onto the computed answer. LIVE-VERIFIED 2026-06-10: '…31,381,059,609, computed in Python' with search_fired=false in the trace.",
   },
+  {
+    id: "tool.compound_fx_live",
+    category: "tool_decision",
+    title: "Build-6b: an FX conversion fetches the LIVE rate (search) then computes — never a remembered rate",
+    weight: 1.2,
+    turns: [{
+      send: "Convert 12,500 SAR to USD at the current exchange rate — give me the exact figure.",
+      checks: [
+        { kind: "anyOf", label: "correct pegged result OR an honest can't-get-live-rate", checks: [
+          { kind: "present", re: /3[,٬]?\s?333(?:\.\d+)?/, label: "≈3,333.33 USD (SAR is pegged at 3.75/USD — 12,500 ÷ 3.75)" },
+          { kind: "present", re: /\b3\.75\b/, label: "names the real pegged rate 3.75" },
+          { kind: "present", re: /couldn'?t\s+(?:get|find|retrieve|fetch)|don'?t\s+have\s+(?:a\s+|the\s+)?live|no\s+live\s+(?:rate|feed|data)|unable\s+to\s+(?:get|fetch|retrieve)/i, label: "honest can't-get-live-rate (acceptable degradation)" },
+        ] },
+        { kind: "absent", re: /46[,٬]?875/, label: "does NOT invert the conversion (12,500 × 3.75 — the wrong direction)" },
+        { kind: "anyOf", label: "carries verification from EITHER tool (computed marker or sourced/as-of rate)", checks: [
+          { kind: "present", re: /comput(?:ed|ation)?|ran\s+(?:the\s+)?code|python|executed?|sandbox/i, label: "computed marker" },
+          { kind: "present", re: /as\s+of|according\s+to|based\s+on|source|current(?:ly)?\s+(?:at|around|about)|today'?s\s+rate|pegged/i, label: "sourced / as-of / pegged rate marker" },
+        ] },
+      ],
+    }],
+    note: "L4 Build-6b (compound search→compute — sequential tool ownership): an FX conversion matches COMPUTE_HEURISTIC ('convert 12,500…'), and pre-fix the Build-6 gate suppressed search, so Gemini computed with a TRAINING-DATA rate — a live-value fabrication. Now compoundMode forces the live search first, then code-exec computes over the searched value. SAR/USD is pegged at 3.75, which makes the probe near-deterministic: 12,500 ÷ 3.75 ≈ 3,333.33. An honest 'couldn't get the live rate' also passes (graceful degradation beats a remembered rate).",
+  },
+  {
+    id: "tool.fixed_factor_no_compound",
+    category: "tool_decision",
+    title: "Build-6b negative: a fixed-factor conversion (km→miles) does NOT fire the compound lane",
+    weight: 1,
+    turns: [{
+      send: "convert 250 kilometers to miles",
+      checks: [
+        { kind: "present", re: /155(?:\.\d+)?/, label: "correct: 250 km ≈ 155.34 miles" },
+        { kind: "absent", re: /according\s+to\s+[A-Z]|\b[a-z0-9][a-z0-9-]{2,}\.(?:com|io|org|net)\b|as\s+of\s+today'?s\s+rate/i, label: "no web-source citation laundered onto a fixed-factor conversion (compound did not fire)" },
+      ],
+    }],
+    note: "Build-6b negative guard: km→miles is a FIXED factor (0.621371) — there is no live variable to search, so COMPOUND_HEURISTIC must stay silent (kilometers is not a currency) and the plain compute lane owns the turn. A web citation on the answer would prove compound over-fired.",
+  },
 
   // ── RESEARCH NOTEBOOK (persistent research memory — the flagship build). Both
   //    probes run in an eval (ephemeral) session, so the notebook never touches

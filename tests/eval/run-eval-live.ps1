@@ -146,6 +146,21 @@ $probes = @(
       (Ck 'present' "31[,]?381[,]?059[,]?609" 'exact 31,381,059,609 (computed)'),
       (Ck 'present' "comput(?:ed|ation)?|ran\s+(?:the\s+)?code|python|executed?|sandbox" 'computed, not searched'),
       (Ck 'absent' "confirmed\s+by\s+\w|according\s+to\s+(?:the\s+)?[A-Z]\w|\b[a-z0-9][a-z0-9-]{2,}\.(?:com|io|org|net)\b|mathcelebrity" 'no web citation laundered onto a self-computed number') ) }) },
+  # -- COMPOUND SEARCH->COMPUTE (Build-6b: sequential tool ownership) --
+  @{ id='tool.compound_fx_live'; cat='tool_decision'; turns=@(
+    @{ send="Convert 12,500 SAR to USD at the current exchange rate - give me the exact figure."; checks=@(
+      (Ck 'anyOf' $null 'correct pegged result OR honest cant-get-live-rate' @(
+        (Ck 'present' "3[,]?\s?333(?:\.\d+)?" 'approx 3,333.33 USD (peg 3.75)'),
+        (Ck 'present' "\b3\.75\b" 'names the pegged rate 3.75'),
+        (Ck 'present' "couldn'?t\s+(?:get|find|retrieve|fetch)|don'?t\s+have\s+(?:a\s+|the\s+)?live|no\s+live\s+(?:rate|feed|data)|unable\s+to\s+(?:get|fetch|retrieve)" 'honest no-live-rate') )),
+      (Ck 'absent' "46[,]?875" 'does NOT invert the conversion'),
+      (Ck 'anyOf' $null 'verification from either tool' @(
+        (Ck 'present' "comput(?:ed|ation)?|ran\s+(?:the\s+)?code|python|executed?|sandbox" 'computed marker'),
+        (Ck 'present' "as\s+of|according\s+to|based\s+on|source|current(?:ly)?\s+(?:at|around|about)|today'?s\s+rate|pegged" 'sourced/as-of marker') )) ) }) },
+  @{ id='tool.fixed_factor_no_compound'; cat='tool_decision'; turns=@(
+    @{ send="convert 250 kilometers to miles"; checks=@(
+      (Ck 'present' "155(?:\.\d+)?" 'correct: ~155.34 miles'),
+      (Ck 'absent' "according\s+to\s+[A-Z]|\b[a-z0-9][a-z0-9-]{2,}\.(?:com|io|org|net)\b|as\s+of\s+today'?s\s+rate" 'no web citation on a fixed-factor conversion') ) }) },
   # -- RESEARCH NOTEBOOK (persistent research memory — flagship build). Ephemeral
   #    eval session => no DB: WRITE renders the staged packet, READ of an unknown
   #    thread renders honest-empty. Both probes are behavioural + hermetic.

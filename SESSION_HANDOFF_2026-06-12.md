@@ -6,6 +6,20 @@
 
 ## What shipped this session
 
+### Build-5 — Known-thread read inference — `74063f3` (shipped after Build-4, same session)
+
+"any progress on collatz?" carries no notebook/research keyword and no where-are-we stem, so `detectNotebook` missed it — the turn fell through to search/LLM, the same confabulation class Build-4 closed for WHERE_ON, through a different entrance. Now:
+
+- `PROGRESS_STEM` + `matchKnownThread` + `inferKnownThreadRead` (`lib/notebook.js`): a progress-stem message whose topic matches a thread that ACTUALLY EXISTS routes to that thread's structured briefing. Unknown topics ("any progress on the visa?") fall through untouched — the registry is the gate, mirroring the known-driver registry pattern.
+- Ephemeral sessions match against the in-session staged registry (history-replay) — the hermetic invariant holds.
+- 30s registry cache on `getActiveThreads` (invalidated on write) so casual "how's it going?" turns don't pay a Supabase query each time. `NOTEBOOK_REGISTRY_TTL_MS` env override.
+- Generic/default threads (`general`, `research`) can never match a message.
+- `buildState.js` brought current per the update-on-ship discipline (it was stale at 2026-06-10 — Builds 2–5 added).
+
+**Build-5 verification:** notebook-verify 54/54 (13 new checks), discovery-b2 50/50, live deploy probe returned the structured briefing ("CONJECTURE: every orbit eventually reaches 1 … NEXT STEP: none recorded"), research_notebook live eval 10 probes with both new probes (`known_thread_inference` 4/4, `unknown_topic_no_hijack` 3/3) passing, odysseus_redteam re-run 10/10 (no regression). One flaky miss on `notebook.discovery_loop_chain` (3/5, 11s fallback-model run) — manually re-run immediately after and produced a full pass (Step 1/2 + bounds + logged + ▶ coda); known eval-noise class, not a regression (Build-5 doesn't touch discovery turns).
+
+---
+
 ### Build-4 — Notebook Intelligence Layer + WHERE_ON confabulation fixes — `5543f67`
 
 **Step 1 fixes (the two Build-3 misses):**
@@ -96,10 +110,10 @@ a6c20bd  Build-2 runtime fixes: WHERE_ON empty-packet + detectFollowUpLoop
 
 ## Next build options (Session 7)
 
-1. **★ Recommended — Odysseus AI integration (red-team loop automation):** wire Odysseus-generated probe specs into the ingestion contract (it already exists in `probes.js` comments) so the adversarial battery grows without manual authoring. Odysseus proposes, the harness judges deterministically; it never touches the live spine.
-2. **OEIS probing (Track B / North-Star math track):** extend the discovery loop to probe OEIS sequences — pattern detection → conjecture → bounded verification → notebook log, feeding the now-intelligent notebook.
-3. **Known-thread inference fast-follow:** a bare "where are we on collatz" already works, but a read with NO `notebook:` prefix and no research keyword (e.g. "any progress on collatz?") still misses. Mirror the driver-registry approach: match message topics against `getActiveThreads()` slugs.
-4. **Compound search→compute (sequential tool ownership):** the top pending L4 item — a query needing search THEN computation over the results.
+1. **Compound search→compute (sequential tool ownership):** the top pending L4 item (team-unanimous; Build-6 deliberately left it) — a query needing a searched live value THEN verified computation over it. ★ IN PROGRESS this session (Build-6b) — see the section above this list if it shipped.
+2. **Odysseus AI integration (red-team loop automation):** wire Odysseus-generated probe specs into the ingestion contract (already documented in `probes.js` comments) so the adversarial battery grows without manual authoring.
+3. **OEIS probing (Track B / North-Star math track):** extend the discovery loop to OEIS-class sequence probing — pattern detection → conjecture → bounded verification → notebook log.
+4. **Known-thread inference** — ✅ DONE this session (Build-5, `74063f3`).
 5. **Wire the `tool_decision` DB column into logTrace** once Muhammad confirms the `request_traces` ALTER ran.
 
 ---
