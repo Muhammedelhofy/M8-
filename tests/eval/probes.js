@@ -424,6 +424,78 @@ const PROBES = [
     note: "Phase 4 Build-2 (multi-step loop): 'keep going for N steps' triggers a chained exploration — one code-exec run covering multiple bounds, multiple notebook entries, and a deterministic next-probe suggestion (the ▶ coda). Weight 1.2 because it covers the full loop contract.",
   },
 
+  // ── NOTEBOOK INTELLIGENCE LAYER (Build-4 2D): thread registry, structured
+  //    summaries, write-kind inference. Multi-turn probes write in-session and
+  //    read back via the hermetic history-replay (eval sessions never touch the
+  //    DB — staged writes are reconstructed from the conversation history).
+  {
+    id: "notebook.thread_registry_overview",
+    category: "research_notebook",
+    title: "Bare 'where are we on our research?' lists the REAL in-session threads, fabricates none",
+    weight: 1,
+    turns: [
+      { send: "notebook: log a conjecture on collatz — every orbit eventually reaches 1" },
+      { send: "notebook: log a dead end on goldbach — brute-force search stalls past 10^8" },
+      { send: "where are we on our research?",
+        checks: [
+          { kind: "present", re: /\bcollatz\b/i, label: "lists the collatz thread" },
+          { kind: "present", re: /\bgoldbach\b/i, label: "lists the goldbach thread" },
+          { kind: "present", re: /\bentr(?:y|ies)\b|\bthreads?\b/i, label: "frames it as threads/entries (a registry, not a narrative)" },
+          { kind: "absent", re: /\b(?:twin[\s-]?primes?|riemann|fermat)\b/i, label: "does NOT fabricate a third thread that was never written" },
+          { kind: "absent", re: /\bverified\s+up\s+to\b/i, label: "does NOT invent verification bounds (none were logged)" },
+        ] },
+    ],
+    note: "Build-4 2A (thread registry): two writes to two threads, then the bare-research overview. The registry packet gives the LLM the REAL thread list — the reply must list exactly collatz + goldbach with entry framing, never a fabricated third thread or invented bounds. Kills rt.notebook_bare_research at the root.",
+  },
+  {
+    id: "notebook.structured_summary",
+    category: "research_notebook",
+    title: "A thread read with entries returns a labelled briefing (conjecture/evidence), not a flat dump",
+    weight: 1,
+    turns: [
+      { send: "notebook: log a conjecture on collatz — every orbit eventually reaches 1" },
+      { send: "notebook: log evidence on collatz — all n up to 100,000 reach 1 in the dashboard run" },
+      { send: "where are we on collatz?",
+        checks: [
+          { kind: "present", re: /\bconjecture\b/i, label: "labels the CONJECTURE section" },
+          { kind: "present", re: /\bevidence\b/i, label: "labels the EVIDENCE section" },
+          { kind: "present", re: /100[,٬]?\s?000/, label: "carries the real logged bound (100,000)" },
+          { kind: "absent", re: /\b(?:this\s+)?proves\s+the\s+conjecture|\bnow\s+proven\b|conjecture\s+is\s+(?:now\s+)?(?:true|proven|settled)\b/i, label: "does NOT upgrade logged evidence into a proof" },
+        ] },
+    ],
+    note: "Build-4 2B (structured thread summary): a conjecture + evidence written in-session, then the thread read. renderThreadPacket must organise entries into labelled sections the reply preserves (conjecture / evidence with the real 100,000 bound), never upgrade evidence into a proof.",
+  },
+  {
+    id: "notebook.kind_inference_conjecture",
+    category: "research_notebook",
+    title: "Kind inference: 'notebook: I think…' is logged as a CONJECTURE without naming the kind",
+    weight: 1,
+    turns: [{
+      send: "notebook: I think every Collatz orbit eventually hits a power of 2",
+      checks: [
+        { kind: "present", re: /\b(logged|recorded|noted|saved|captured|added|in\s+the\s+notebook|to\s+the\s+notebook)\b/i, label: "acknowledges the log" },
+        { kind: "present", re: /\bconjecture\b/i, label: "names the inferred kind: conjecture" },
+        { kind: "absent", re: /\b(i\s+(?:have\s+)?(?:proved|proven|verified|confirmed)\b|now\s+proven|it'?s\s+(?:been\s+)?proven|confirmed\s+true)\b/i, label: "does NOT claim it's proven/verified" },
+      ],
+    }],
+    note: "Build-4 2C (write-kind inference): no explicit 'log a conjecture' — the 'I think…' phrasing must be inferred as kind=conjecture and the reply must say it was logged as a conjecture (the inferred-kind line in renderLoggedPacket), never claim it's settled.",
+  },
+  {
+    id: "notebook.kind_inference_dead_end",
+    category: "research_notebook",
+    title: "Kind inference: 'tried X, complete dead end' is logged as a DEAD END",
+    weight: 1,
+    turns: [{
+      send: "notebook: tried the parity-sequence approach on goldbach, complete dead end",
+      checks: [
+        { kind: "present", re: /\b(logged|recorded|noted|saved|captured|added|in\s+the\s+notebook|to\s+the\s+notebook)\b/i, label: "acknowledges the log" },
+        { kind: "present", re: /\bdead[\s-]?end\b/i, label: "names the inferred kind: dead end" },
+        { kind: "absent", re: /\bconjecture\s+is\s+(?:false|refuted|disproved)\b|\bgoldbach\s+is\s+(?:false|refuted|disproved)\b/i, label: "does NOT inflate a dead end into a refutation of the conjecture" },
+      ],
+    }],
+    note: "Build-4 2C (write-kind inference, negative-outcome class): 'tried … complete dead end' with no explicit kind word must infer kind=dead_end. A dead end is a closed APPROACH, not a refutation of the open problem — the reply must not claim Goldbach is false.",
+  },
+
   // ── FINANCE / VERIFIED P&L (operator-assistant breadth; the dashboard's P&L
   //    engine mirrored to the decimal — revenue measured, costs = his config).
   {
@@ -820,7 +892,7 @@ const PROBES = [
     title: "Follow-up loop: 'keep going for 2 steps' after a discovery run auto-loops without asking for range",
     weight: 1.2,
     turns: [
-      { send: "verify Collatz up to 3,000 and log it" },
+      { send: "verify Collatz up to 7,777 and log it" },
       { send: "keep going for 2 steps",
         checks: [
           { kind: "present", re: /\b(comput|python|ran\s+(?:the\s+)?(?:code|check|verification)|execut|sandbox|step\s+[12]|loop)\b/i, label: "auto-looped — ran code for the next bounds without being asked" },

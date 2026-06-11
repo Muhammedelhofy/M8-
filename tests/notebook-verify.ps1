@@ -45,6 +45,17 @@ function CanonKind($raw) {
   if ([regex]::IsMatch($k,'^evidence',$IC))                { return 'evidence' }
   return 'note'
 }
+# Build-4 2C port: kind inference for a notebook: statement with no explicit kind
+# word. Order mirrors lib/notebook.js INFER_RULES (specific outcomes first).
+function InferKind($body) {
+  if ([regex]::IsMatch($body,'\bcounter\s*-?\s*examples?\b|\bfound\s+a\s+case\s+where\b|\bbreaks\s+down\s+at\b',$IC)) { return 'counterexample' }
+  if ([regex]::IsMatch($body,'\bdead[\s-]?end\b|\bdoesn''?t\s+work\b|\bfailed\b|\btried\s+and\b|\bruled\s+out\b|\bno\s+pattern\b',$IC)) { return 'dead_end' }
+  if ([regex]::IsMatch($body,'\bnext\s+step\b|\bshould\s+try\b|\bplan\s+to\b|\bwant\s+to\s+check\b',$IC)) { return 'next_step' }
+  if ([regex]::IsMatch($body,'\bi\s+think\b|\bi\s+believe\b|\bhypothes\w*\b|\bconjectur\w*\b|\bpropose\b',$IC)) { return 'conjecture' }
+  if ([regex]::IsMatch($body,'\bfound\s+that\b|\bshows\b|\bconfirms\b|\bevidence\s+that\b|\bsupports\b|\bverified\b',$IC)) { return 'evidence' }
+  if ([regex]::IsMatch($body,'\bstatus\s+is\b|\bupdate\b|\bcurrently\b',$IC)) { return 'status' }
+  return 'note'
+}
 function GenericBlocked($kind, $body, $forced) {
   return ($kind -eq 'note' -and -not $forced -and -not [regex]::IsMatch($body,$RESEARCH_CONTEXT,$IC))
 }
@@ -77,7 +88,7 @@ function DetectMode($msg) {
       -or [regex]::IsMatch($body,'[?]\s*$') `
       -or [regex]::IsMatch($body,$READ_STEM,$IC) `
       -or [regex]::IsMatch($body,'^(show|list|what|which|where|recap|review|status|open|display|give)\b',$IC)
-    if (-not $looksQuery) { return 'write/note' }
+    if (-not $looksQuery) { return "write/$(InferKind $body)" }
     return 'read/-'
   }
   return 'none/-'
@@ -99,6 +110,12 @@ Check "prefix + verb kind"          (DetectMode "notebook: log a counterexample:
 Check "prefix freeform -> note"     (DetectMode "notebook: tried induction on the bound, still stuck")    "write/note"
 # WRITE — generic note allowed only with research context / prefix
 Check "generic note + research ctx" (DetectMode "note a finding about the prime sequence: gaps widen")     "write/note"
+# WRITE — Build-4 2C kind inference (notebook: statement, no explicit kind word)
+Check "infer conjecture (I think)"  (DetectMode "notebook: I think every Collatz orbit eventually hits a power of 2") "write/conjecture"
+Check "infer dead end (tried+DE)"   (DetectMode "notebook: tried the parity-sequence approach on goldbach, complete dead end") "write/dead_end"
+Check "infer evidence (found that)" (DetectMode "notebook: found that all even numbers up to 10^6 split into two primes") "write/evidence"
+Check "infer next step (should try)"(DetectMode "notebook: should try a segmented sieve next")             "write/next_step"
+Check "infer counterexample"        (DetectMode "notebook: found a case where the bound breaks, n equals 27") "write/counterexample"
 
 Write-Host "== (2) detection: READ classification ==" -ForegroundColor Cyan
 Check "read research notebook"      (DetectMode "show me the research notebook")                          "read/-"
