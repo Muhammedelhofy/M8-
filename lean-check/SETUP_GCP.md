@@ -83,10 +83,25 @@ Steps 2–4 of Build-9 (buildLeanDirective, orchestrator call, eval probe) start
 from here.
 
 ## Failure modes to expect
-- **First request after idle**: 503 "still importing Mathlib" for ~1–3 min
-  (scale-to-zero trade-off, by design — M8 logs `lean_pending` and retries).
+- **First request after idle**: 503 "still importing Mathlib" for **~9–10 min**
+  (measured 2026-06-11 at 4 vCPU — the import is the whole of Mathlib). Warm
+  checks are then milliseconds-to-seconds. M8 logs `lean_pending` and retries.
 - **REPL/Mathlib toolchain mismatch at build**: the Dockerfile copies Mathlib's
   `lean-toolchain` into the repl checkout before `lake build`; if the repl repo
   has drifted, pin an older repl commit that supports Mathlib's toolchain.
 - **Build OOM/slow**: bump `--machine-type` (cache get is download-bound, build
   of repl is small — e2-highcpu-8 is usually plenty).
+
+## Hard-won deploy lessons (Session-9, 2026-06-11 — all baked into deploy.ps1/main.py)
+- **`/healthz` never reaches the container** on `*.run.app` — Google's front-end
+  intercepts that exact path and returns an empty 404. The route is `/health`.
+- **`--no-cpu-throttling` is mandatory**: the Mathlib import runs as a startup
+  task OUTSIDE any request; with request-based billing its CPU is throttled to
+  ~zero and the import never finishes.
+- **8 GiB memory**: `import Mathlib` OOM'd the 4 GiB limit at 4137 MiB.
+- **`IMPORT_TIMEOUT_S=600`**: the import takes ~9 min; v1's 240 s default
+  timed out and (v1 bug) died silently → permanent 503. v2 logs + retries.
+- **`--update-env-vars` not `--set-env-vars`** on `gcloud run services update`
+  — the latter REPLACES the entire env set (wiped the token once).
+- First deployed live 2026-06-11: toolchain `leanprover/lean4:v4.31.0-rc2`,
+  Mathlib `bd1b6969f7d4`, smoke 4/4 (true/false/sorry-screen/Mathlib lemma).

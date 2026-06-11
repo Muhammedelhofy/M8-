@@ -15,14 +15,21 @@ if ($LASTEXITCODE -ne 0) { throw "build failed" }
 
 $envArgs = @()
 if ($RotateToken) {
-  $token = -join ((48..57)+(97..122) | Get-Random -Count 40 | ForEach-Object {[char]$_})
-  $envArgs = @("--set-env-vars", "LEAN_CHECK_TOKEN=$token")
+  # NB --update-env-vars MERGES; --set-env-vars REPLACES the whole set (wipes
+  # IMPORT_TIMEOUT_S etc.) — bitten once, never again.
+  $token = -join (1..40 | ForEach-Object { [char](Get-Random -InputObject ([int[]](48..57)+(97..122))) })
+  $envArgs = @("--update-env-vars", "LEAN_CHECK_TOKEN=$token")
 }
 
 Write-Host "== Deploy m8-lean-check =="
+# Sizing learned the hard way (Session-9): import Mathlib peaks >4GiB (OOM at
+# 4Gi), needs ~9 min even at 4 vCPU, and runs OUTSIDE a request — so the
+# service MUST have --no-cpu-throttling or background CPU is ~zero forever.
 gcloud run deploy m8-lean-check --project $Project --image $image --region $Region `
-  --cpu 2 --memory 4Gi --concurrency 1 --timeout 300 `
-  --min-instances 0 --max-instances 1 --allow-unauthenticated @envArgs
+  --cpu 4 --memory 8Gi --concurrency 1 --timeout 300 `
+  --no-cpu-throttling --cpu-boost `
+  --min-instances 0 --max-instances 1 --allow-unauthenticated `
+  --update-env-vars "IMPORT_TIMEOUT_S=600" @envArgs
 if ($LASTEXITCODE -ne 0) { throw "deploy failed" }
 
 $url = gcloud run services describe m8-lean-check --project $Project --region $Region --format "value(status.url)"

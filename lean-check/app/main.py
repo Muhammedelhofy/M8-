@@ -9,12 +9,22 @@
 # One REPL process, Mathlib imported once at startup (the expensive step — this
 # is why the service exists instead of `lake env lean file.lean` per request).
 # Concurrency=1 on Cloud Run; an asyncio lock is the in-process backstop.
+#
+# Deploy lessons baked in (Session-9, 2026-06-11):
+#  - Google's front-end swallows /healthz on *.run.app — the route is /health.
+#  - The service MUST run with --no-cpu-throttling: the import runs outside a
+#    request, and request-based billing throttles background CPU to ~zero.
+#  - 4 GiB OOMs on `import Mathlib` (peaked 4137 MiB) — run with 8 GiB.
+#  - Startup failures must be LOUD and retried: v1 swallowed the asyncio task
+#    exception and 503'd forever.
 
 import asyncio
 import json
 import os
 import re
+import sys
 import time
+import traceback
 
 from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
@@ -22,8 +32,14 @@ from pydantic import BaseModel, Field
 MATHLIB_DIR = os.environ.get("MATHLIB_DIR", "/opt/mathlib4")
 REPL_BIN = os.environ.get("REPL_BIN", "/opt/repl/.lake/build/bin/repl")
 CHECK_TOKEN = os.environ.get("LEAN_CHECK_TOKEN", "")
-IMPORT_TIMEOUT_S = int(os.environ.get("IMPORT_TIMEOUT_S", "240"))
+IMPORT_TIMEOUT_S = int(os.environ.get("IMPORT_TIMEOUT_S", "600"))
+STARTUP_RETRY_S = int(os.environ.get("STARTUP_RETRY_S", "30"))
 MAX_CODE_LEN = int(os.environ.get("MAX_CODE_LEN", "20000"))
+
+
+def log(msg):
+    print(f"[lean-check] {msg}", flush=True)
+
 
 # The env already has Mathlib imported; user code must not smuggle anything in.
 # `sorry`/`admit` are also caught structurally (REPL reports sorries) — the
@@ -62,6 +78,7 @@ class Repl:
         self.lock = asyncio.Lock()
         self.ready = asyncio.Event()
         self.starting = False
+        self.last_error = ""
         self.toolchain = self._read(os.path.join(MATHLIB_DIR, "lean-toolchain"))
         self.mathlib_rev = self._git_rev(MATHLIB_DIR)
 
@@ -80,28 +97,59 @@ class Repl:
             return Repl._read(os.path.join(path, ".git", head.split(" ", 1)[1]))[:12]
         return head[:12] or "unknown"
 
-    async def start(self):
-        if self.starting:
-            return
-        self.starting = True
-        self.ready.clear()
+    async def _drain_stderr(self, proc):
+        # Never leave stderr unread: a full 64KB pipe buffer blocks the child
+        # (this can present as an import that "never finishes").
         try:
-            # `lake env` from the Mathlib project dir puts Mathlib's .oleans on
-            # LEAN_PATH for the REPL binary.
-            self.proc = await asyncio.create_subprocess_exec(
-                "lake", "env", REPL_BIN,
-                cwd=MATHLIB_DIR,
-                stdin=asyncio.subprocess.PIPE,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            resp = await self._send({"cmd": "import Mathlib"}, IMPORT_TIMEOUT_S)
-            if "env" not in resp:
-                raise ReplCrashed(f"Mathlib import failed: {resp}")
-            self.base_env = resp["env"]
-            self.ready.set()
-        finally:
-            self.starting = False
+            while True:
+                line = await proc.stderr.readline()
+                if not line:
+                    return
+                log(f"repl stderr: {line.decode(errors='replace').rstrip()}")
+        except Exception:
+            return
+
+    async def supervise(self):
+        """Keep trying to bring the REPL up. Failures are logged with full
+        traceback and retried — the service must never wedge silently."""
+        attempt = 0
+        while not self.ready.is_set():
+            attempt += 1
+            try:
+                await self._start_once(attempt)
+                return
+            except Exception as e:
+                self.last_error = f"{type(e).__name__}: {e}"
+                log(f"startup attempt {attempt} FAILED: {self.last_error}")
+                traceback.print_exc(file=sys.stdout)
+                sys.stdout.flush()
+                if self.proc is not None:
+                    try:
+                        self.proc.kill()
+                    except ProcessLookupError:
+                        pass
+                    self.proc = None
+                await asyncio.sleep(STARTUP_RETRY_S)
+
+    async def _start_once(self, attempt):
+        log(f"startup attempt {attempt}: spawning `lake env {REPL_BIN}` in {MATHLIB_DIR}")
+        t0 = time.monotonic()
+        self.proc = await asyncio.create_subprocess_exec(
+            "lake", "env", REPL_BIN,
+            cwd=MATHLIB_DIR,
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        asyncio.create_task(self._drain_stderr(self.proc))
+        log(f"repl pid={self.proc.pid}; importing Mathlib (budget {IMPORT_TIMEOUT_S}s)…")
+        resp = await self._send({"cmd": "import Mathlib"}, IMPORT_TIMEOUT_S)
+        if "env" not in resp:
+            raise ReplCrashed(f"Mathlib import failed: {resp}")
+        self.base_env = resp["env"]
+        self.last_error = ""
+        self.ready.set()
+        log(f"READY — Mathlib imported in {time.monotonic() - t0:.1f}s (env {self.base_env})")
 
     async def _send(self, obj: dict, timeout_s: float) -> dict:
         if self.proc is None or self.proc.returncode is not None:
@@ -134,7 +182,7 @@ class Repl:
             except ProcessLookupError:
                 pass
             self.proc = None
-        asyncio.create_task(self.start())
+        asyncio.create_task(self.supervise())
 
     async def check(self, code: str, timeout_s: int) -> dict:
         async with self.lock:
@@ -174,7 +222,7 @@ app = FastAPI(title="m8-lean-check")
 
 @app.on_event("startup")
 async def startup():
-    asyncio.create_task(repl.start())
+    asyncio.create_task(repl.supervise())
 
 
 def auth(authorization: str | None):
@@ -184,11 +232,14 @@ def auth(authorization: str | None):
         raise HTTPException(401, "bad or missing bearer token")
 
 
-@app.get("/healthz")
-async def healthz():
+# NOTE: /healthz is intercepted by Google's front-end on *.run.app and never
+# reaches the container — hence /health.
+@app.get("/health")
+async def health():
     return {
         "ok": True,
         "ready": repl.ready.is_set(),
+        "last_error": repl.last_error,
         "toolchain": repl.toolchain,
         "mathlib": repl.mathlib_rev,
     }
@@ -210,7 +261,10 @@ async def check(req: CheckRequest, authorization: str | None = Header(None)):
     if not repl.ready.is_set():
         # Cold start / respawn in progress. 503 + Retry-After keeps the caller's
         # contract simple: M8 logs lean_pending and answers honestly this turn.
-        raise HTTPException(503, "Lean REPL is still importing Mathlib — retry in ~60s")
+        detail = "Lean REPL is still importing Mathlib — retry in ~60s"
+        if repl.last_error:
+            detail += f" (last startup error: {repl.last_error})"
+        raise HTTPException(503, detail)
     result = await repl.check(req.code, req.timeout_s)
     result["toolchain"] = repl.toolchain
     result["mathlib"] = repl.mathlib_rev
