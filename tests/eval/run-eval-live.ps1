@@ -236,6 +236,16 @@ $probes = @(
       (Ck 'present' "\bconjecture\b|\bpattern\b|\bformula\b" 'names a pattern or conjecture'),
       (Ck 'present' "n\s*\^?\s*2|n\s*\*\*\s*n|n\s*\*\s*n|perfect\s+square|square\s+of\s+n|quadratic" 'identifies the n^2 / perfect-square formula'),
       (Ck 'absent' "\b(?:this\s+)?proves?\s+(?:the\s+)?(?:conjecture|formula)|\bQED\b|(?:conjecture|formula)\s+is\s+(?:proven|proved|established)" 'evidence-not-proof: bounded check, not a proof') ) }) },
+  @{ id='lean.verified_theorem'; cat='research_notebook'; turns=@(
+    @{ send="prove that 2+2=4 using Lean"
+       retryOn="service is cold|didn'?t answer within my budget|ask again in a moment|warming"
+       retryDelayMs=90000
+       checks=@(
+      (Ck 'present' "(?:theorem|lemma)\s+\w+" 'shows real Lean code (a named theorem/lemma)'),
+      (Ck 'present' ":=\s*(?:rfl\b|by\s+(?:decide|norm_num|simp|omega))" 'one-line allowlist proof, not a hallucinated multi-step proof'),
+      (Ck 'present' "\bsubmitted\b|\bchecker\b|/check\b|lean.{0,30}(?:check|verif)" 'states the code was actually sent to the checker'),
+      (Ck 'present' "\bverified\b" 'reports the verified verdict (0 errors, 0 sorry)'),
+      (Ck 'present' "\bmechanical\b|type[-\s]?check" 'framed as mechanical Lean verification, not a discovery') ) }) },
   # -- FINANCE / verified P&L (operator-assistant breadth; dashboard P&L mirrored) --
   @{ id='finance.fleet_pnl'; cat='finance'; turns=@(
     @{ send="What's the fleet P&L this month - revenue, costs, and what I actually keep?"; checks=@(
@@ -488,6 +498,13 @@ foreach ($p in $probes) {
       $totN += @($turn.checks).Count
       if (@($turn.checks).Count -eq 0) { $totN += 1 }   # the call itself counts as a failed check
       $failed = $true; break
+    }
+    # Cold-dependency retry (e.g. Lean /check warming): an honest "pending" reply
+    # is not a fail - wait once, re-ask once, grade the second answer.
+    if ($turn.retryOn -and (M $r.text $turn.retryOn)) {
+      $delayMs = 75000; if ($turn.retryDelayMs) { $delayMs = [int]$turn.retryDelayMs }
+      Start-Sleep -Milliseconds $delayMs
+      try { $r = AskR $turn.send $sid $history } catch {}
     }
     if ($r.text -match $FALLBACK) { $hitFallback = $true }
     $lastMs = $r.ms

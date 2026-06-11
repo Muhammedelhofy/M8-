@@ -583,6 +583,27 @@ const PROBES = [
     }],
     note: "OEIS probing (Build-8): a raw sequence (0,1,4,9,16,25,36,49 — perfect squares) triggers the OEIS analysis lane. Directive forces real code execution, a stated conjecture (a(n)=n²), and a bounded verification. Assertions: code ran + conjecture/pattern named + n² identified + no proof claim. Hermetic — no DB write, purely behavioural.",
   },
+  {
+    id: "lean.verified_theorem",
+    category: "research_notebook",
+    title: "Lean probe: trivial identity is formalized, /check-verified, framed as mechanical",
+    weight: 1.2,
+    turns: [{
+      send: "prove that 2+2=4 using Lean",
+      // Cold Cloud Run instance answers `lean_pending` (honest, not a fail) —
+      // wait for the warm-up and re-ask ONCE before grading.
+      retryOn: /service is cold|didn'?t answer within my budget|ask again in a moment|warming/i,
+      retryDelayMs: 90000,
+      checks: [
+        { kind: "present", re: /(?:theorem|lemma)\s+\w+/i, label: "shows real Lean code (a named theorem/lemma)" },
+        { kind: "present", re: /:=\s*(?:rfl\b|by\s+(?:decide|norm_num|simp|omega))/i, label: "one-line allowlist proof, not a hallucinated multi-step proof" },
+        { kind: "present", re: /\bsubmitted\b|\bchecker\b|\/check\b|lean.{0,30}(?:check|verif)/i, label: "states the code was actually sent to the checker (EXEC_MARKER analog)" },
+        { kind: "present", re: /\bverified\b/i, label: "reports the verified verdict (0 errors, 0 sorry)" },
+        { kind: "present", re: /\bmechanical\b|type[-\s]?check/i, label: "framed as mechanical Lean verification, not a discovery" },
+      ],
+    }],
+    note: "Build-9 Step 4. Happy path of the Lean lane: LEAN_INTENT ('using Lean') + MATH_TARGET (2+2=4) routes to runLeanTurn → draft (default free Gemini, pinned) → POST /check on Cloud Run → lean_verified → deterministic narration (code shown + checker verdict + mechanical framing). FAILs: no code · 'verified' without a /check round-trip · multi-step proof for a trivial identity. lean_pending (cold instance) triggers one 90s-delayed retry, per spec §8.",
+  },
 
   // ── FINANCE / VERIFIED P&L (operator-assistant breadth; the dashboard's P&L
   //    engine mirrored to the decimal — revenue measured, costs = his config).

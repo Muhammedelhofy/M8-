@@ -66,6 +66,12 @@ async function runProbe(probe) {
     let reply;
     try {
       reply = await ask(turn.send, sessionId, history.slice());
+      // Cold-dependency retry (e.g. Lean /check warming): an honest "pending"
+      // reply isn't a fail — wait once, re-ask once, grade the second answer.
+      if (turn.retryOn && turn.retryOn.test(reply.text || "")) {
+        await new Promise((r) => setTimeout(r, turn.retryDelayMs || 75000));
+        reply = await ask(turn.send, sessionId, history.slice());
+      }
     } catch (e) {
       // A failed call fails every check on this turn (and the probe) — honestly.
       for (const c of (turn.checks || [])) checks.push({ pass: false, score: 0, label: c.label, detail: `call failed: ${e.message}`, weight: c.weight });
