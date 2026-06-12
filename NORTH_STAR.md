@@ -59,11 +59,14 @@ quality; it cannot create it. Each layer ships as a thin slice behind a measurab
 falsifier doesn't need Terras 1976 to kill a bad conjecture; M2 gates "worthy of human
 attention," not "worthy of generation."*
 
-- **M1 — Structural probe pack** (Collatz-first): discovery-lane extension producing
-  STRUCTURED FEATURES (stopping times, parity vectors, 2-adic valuations, max excursions,
-  residue-class census, record-setters) into the graph — *not* bound-pushing, which is
-  theater (Collatz is known to ~2^71). Includes a HARD per-turn recall cap on
-  evidence/external nodes (context-dilution guard). Gate: ≥3 feature families queryable.
+- **M1 — Structural probe pack** ✅ **SHIPPED Build-13 (S6, 2026-06-12) — GATE PASSED**
+  (Collatz-first): `lib/collatz-probes.js`, deterministic in-process census of all 7
+  feature families (stopping times, parity vectors on the Terras map, 2-adic valuations,
+  max excursions, residue-class census, record-setters) → NEUTRAL evidence nodes (zero
+  supports edges — a census is not evidence *for* the conjecture) — *not* bound-pushing,
+  which is theater (Collatz is known to ~2^71). HARD per-turn recall cap live
+  (GRAPH_EVIDENCE_CAP=4, context-dilution guard). Gate passed live: parity / records /
+  2-adic queryable from chat.
 - **M3-lite — Conjecture generator v1** (the Hypothesize rung, pre-novelty): LLM proposes
   candidates in a constrained schema — **Type A**: computable predicate + explicit bound;
   **Type B**: trend/statistical claim over a bounded sample (seeded-deterministic
@@ -93,7 +96,9 @@ attention," not "worthy of generation."*
 
 **Odysseus-2** (gates M3-full and L5): faithfulness family (assumption-dropping /
 theorem-substitution on the Lean lane) + self-contamination family (own-conjecture vs
-literature provenance under adversarial retrieval).
+literature provenance under adversarial retrieval). *Designed + 11 probes shipped
+Build-13; first self-contamination run caught 2 real upgrade-pressure caves → research
+upgrade-pressure guard now deterministic in both paths. M3-armed probes specified for S7.*
 
 **Then** L5 = a budgeted cron over M1→M3 (+M4-manual where applicable), gated on 3
 consecutive unattended runs with zero battery regressions. *Explicitly de-scoped:
@@ -109,7 +114,7 @@ if M8 treats *verified-to-N* as *proof* — the North Star collapses.
 
 - **Deterministic routing** — hard-routes (regex-first) before LLM tool-decision; verified compute
 - **Honesty contract** — narration ≤ evidence · EXEC_MARKER required · no upgrade under user pressure
-  · **Odysseus battery** (Build-11): 38-probe adversarial immune system, run on every build
+  · **Odysseus battery** (Build-11, +Odysseus-2 Build-13): 49-probe adversarial immune system, run on every build
 - **Research Notebook + Memory Graph** (Build-10) — persistent substrate; nodes/edges +
   pgvector recall; failed attempts are data, not noise
 - **Model backbone** — Gemini for orchestration; Fable 5 (`claude-fable-5`) reserved for the hardest reasoning (Lean formalization)
@@ -125,9 +130,9 @@ if M8 treats *verified-to-N* as *proof* — the North Star collapses.
 | L2 Grounded assistant | ✅ complete |
 | L3 Proactive ops | 🟢 ~85% |
 | L4 Verified tools | 🟢 ~80% ← current |
-| L5 Autonomous loop | ⚪ ~20% |
+| L5 Autonomous loop | ⚪ ~30% (M1 shipped) |
 | L6 Compound | ⚪ the destination |
 
 ---
 
-*Canonical as of Session-13 / S5 (2026-06-12). Edit deliberately; do not regenerate from scratch.*
+*Canonical as of Session-14 / S6 Build-13 (2026-06-12). Edit deliberately; do not regenerate from scratch.*

@@ -1,6 +1,6 @@
 # CLAUDE_CONTEXT.md
 *M8 System — Master Context File*
-*Last updated: 2026-06-12 (Build-4 Notebook Intelligence Layer session) · Read this at the start of every session*
+*Last updated: 2026-06-12 (Build-13 / S6 — M1 structural probes + Odysseus-2 + coda-leak fix) · Read this at the start of every session*
 
 ---
 
@@ -97,6 +97,7 @@ Mathematical and scientific reasoning. Starts with Collatz. Builds toward Navier
 
 **✅ RESOLVED (verified live 2026-06-12):** `m8_research_notes` exists with real rows — notebook persistence is LIVE. (The old "migration blocked" note here was stale.)
 
+- `lib/collatz-probes.js` — **Build-13 (2026-06-12, Fable-5 sprint S6): M1 Structural Probe Pack — LIVE, gate passed.** "run the structural probe pack on collatz up to N" → deterministic in-process census of 7 feature families (stopping times σ(n), total stopping time σ∞(n), max excursion, parity vectors on the Terras shortcut map, ν₂(3n+1), mod-6 residue census, record-setters) → LLM narrates the ground-truth packet → 7 NEUTRAL evidence notes persist (metadata.neutral → no supports edge; thread anchor only). Recall evidence cap GRAPH_EVIDENCE_CAP=4/turn (context-dilution guard). Detection requires a run-verb — recall asks stay with the graph lane; sentence-scoped for long messages. Algorithm verified vs literature 26/26 (`tests/m1-probes-verify.ps1`). Also Build-13: discovery-coda leak fixed (sentence-scoped detection + coda gated on evidenced run), research upgrade-pressure guard (Odysseus-2 finding), Odysseus-2 probe families designed (`tests/odysseus/ODYSSEUS2_DESIGN.md`, battery 38→49 probes).
 - `lib/memory-graph.js` — **Build-10 (2026-06-12, Fable-5 sprint S1+S2): Research Memory Graph — LIVE.** Typed nodes (conjecture/theorem/evidence/counterexample/failed_attempt/technique/sequence/research_thread) + typed edges (supports/contradicts/generalizes/depends_on/formalizes/derived_from) + pgvector embeddings (gemini-embedding-001 @768). Deterministic code-owned ingest at `persistNote()`; Fable-authored, Gemini-executed extraction in the nightly cron sweep; CHAT RETRIEVAL live: "what do I/we know about X?" / "what contradicts X?" → cosine top-k + 1-hop walk → provenance-labelled packet (tool_decision `graph`; CONFIRMED-EMPTY packet on no match). History fully backfilled (44 nodes/53 edges); battery 4.7/5 no regression. `GRAPH_DISABLED=1` kill switch. Design + adversarial review: `BUILD_10_SPEC.md`; live script: `tests/BUILD10_LIVE_TEST.md`.
 
 ### What's missing

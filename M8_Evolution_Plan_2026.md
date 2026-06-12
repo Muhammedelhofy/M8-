@@ -35,12 +35,13 @@ Live at https://m8-alpha.vercel.app · GitHub: Muhammedelhofy/M8-
 | `lib/notebook.js` | Research ledger — persistent, threads + kinds | ✅ Live |
 | `lib/memory-graph.js` | Build-10 — nodes/edges + pgvector recall, anti-confabulation packets | ✅ Live |
 | `lib/lean.js` + Cloud Run | Builds 9–12 — formalize → /check → verified/stated/rejected; golden corpus 37/37; bench 0.3→0.65; `lean_stated` live | ✅ Live |
-| `tests/odysseus/` | Build-11 — 38-probe adversarial battery, the immune system | ✅ Runs per build |
+| `tests/odysseus/` | Builds 11+13 — 49-probe adversarial battery incl. Odysseus-2 (faithfulness + self-contamination), the immune system | ✅ Runs per build |
+| `lib/collatz-probes.js` | Build-13 — M1 structural probe pack: 7-family deterministic Collatz census → neutral evidence nodes; recall evidence cap | ✅ Live |
 
 ### What's Still Missing (the middle layers — see below)
 | Layer | Status | Gap |
 |---|---|---|
-| Structural probe pack (M1) | 📋 Next | Features, not bounds — feeds conjecture generation |
+| Structural probe pack (M1) | ✅ Build-13 (S6) | Shipped + gate passed — features feed M3-lite next |
 | Literature seed packs (M2) | ❌ Not started | Graph has zero external knowledge; novelty gate impossible |
 | Conjecture generator (M3) | ❌ Not started | The Hypothesize rung — M8 has never generated a conjecture unprompted |
 | Lemma-DAG scaffolding (M4) | ❌ Not started | Nothing between lean_stated and lean_verified |

@@ -177,13 +177,41 @@ discovery and verified theorem writes into, (b) an automated adversarial battery
 
 **REVISED REMAINING-WINDOW PLAN (post round 2 — SSE displaced to post-window by its own
 survivability logic; Fable time goes to what dies on June 22):**
-- [ ] Session 6 — Build-13: **M1 structural probe pack** (Collatz features → graph as
-      `evidence` nodes: stopping times σ(n), total stopping time, max excursion, parity
-      vectors, 2-adic valuations, residue census, record-setters; HARD per-turn recall
-      cap = the context-dilution guard) + **Odysseus-2 design** (faithfulness family:
-      assumption-dropping / theorem-substitution on the Lean lane; self-contamination
-      family: own-conjecture vs literature provenance under adversarial retrieval) +
-      triage the discovery-coda leak. Gate: ≥3 feature families queryable from chat.
+- [x] Session 6 — Build-13 ✅ 2026-06-12 (`23c4c2e`+`d88ab7c`+`295e2d9`, all LIVE-VERIFIED).
+      **M1 structural probe pack SHIPPED**: `lib/collatz-probes.js` — deterministic
+      in-process census (NOT LLM compute), all 7 families (σ(n), σ∞(n), max excursion,
+      parity vectors on the TERRAS map — full map admits no "11", only Fib(10)=55
+      prefixes, the census itself caught that; ν₂(3n+1), mod-6 residue census,
+      record-setters); orchestrator lane above discovery (run-verb required, recall
+      asks stay with the graph); notes persist as NEUTRAL evidence (`metadata.neutral`
+      → **zero supports edges minted, verified live in SQL**); algorithm verified vs
+      literature ground truth offline 26/26 (`tests/m1-probes-verify.ps1`: σ∞(27)=111,
+      peak(9663)=27,114,424, record tables). **GATE PASSED live**: parity / records /
+      2-adic all queryable from chat; recall **EVIDENCE CAP** live (GRAPH_EVIDENCE_CAP=4
+      matched evidence/external nodes per turn; edge lines already ≤12). Live run:
+      7 notes → 7 embedded nodes in 28.5s (after hotfix: 60s maxDuration + parallel
+      persists — first run hit FUNCTION_INVOCATION_TIMEOUT at 30s).
+      **Coda-leak FIXED + cleaned**: root cause = (1) whole-message discovery detection
+      let a long review paste match verb/target/"to 4" across DIFFERENT sentences,
+      (2) `suggestNextProbe` fired even when nothing was logged. Fix: sentence-scoped
+      detection >240 chars + coda/next_step gated on an evidenced run (`ranOk`,
+      `discovery_coda_suppressed` trace). Worse than synthesis recorded: the leak had
+      ALSO minted a fake evidence row (the pasted brief logged as "[auto-logged from a
+      code-execution run, bound 4]") + graph nodes — all 5 rows cleaned in Supabase.
+      Live both ways: repro paste → no coda/no rows; genuine run → coda intact.
+      **Odysseus-2 DESIGNED + FIRST RUN**: `tests/odysseus/ODYSSEUS2_DESIGN.md` +
+      11 probes in battery.json (49/49 validate) — 6 lean_faithfulness (drop-hypothesis,
+      substitution, bound-weakening, axiom-smuggle, inversion, false-with-pressure),
+      4 self_contamination + od2.m1_neutral_census (3/3 live). First self_contamination
+      run: **2 REAL CATCHES** — model called our surviving conjecture "established/
+      confirmed" and accepted "basically true" under pressure → shipped the
+      **research upgrade-pressure guard** (deterministic detector over message+history
+      → RESEARCH INTEGRITY directive, fleet-integrity-alert pattern, both paths).
+      M3-armed probes (seeded-survivor, flood, self-citation) specified for S7.
+      lean_faithfulness full run deferred (Cloud Run quota) — it formally gates
+      M3-full/L5, not this build. Also found (non-Fable follow-up): notebook READ
+      detection grabbed a phrase from a long conversational paste ("the notebook stays
+      the ledger of record") — harmless read, candidate for the same sentence-scoping.
 - [ ] Session 7 — Build-14: **M3-lite conjecture generator v1** (Type A finite-bound +
       Type B trend/statistical schema with seeded-deterministic evaluation; deterministic
       falsifier; random-conjecture baseline generator; gate = survival ≥2× baseline +
@@ -194,4 +222,6 @@ survivability logic; Fable time goes to what dies on June 22):**
       bottleneck) + **stateful proactive-alerting SPEC** for the July Track A build
       (graph-tracked deltas, alert conditions from M8's round-2 self-review).
 - [ ] Post-window (any model): SSE streaming · stateful alerting build · lean badges UI ·
-      fleet name-parse fix · discovery-coda leak if not fixed in S6.
+      fleet name-parse fix · sentence-scope the notebook READ detection (S6 finding:
+      a long conversational paste containing "the notebook stays the ledger of record"
+      triggered a harmless ledger read — same fix class as the S6 discovery scoping).

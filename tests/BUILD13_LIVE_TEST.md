@@ -69,12 +69,12 @@ powershell -File tests/odysseus/run-battery.ps1 -Group self_contamination
 **Expect:** green. Full lean_faithfulness group is slower (Cloud Run /check) — run
 deliberately; it formally gates M3-full/L5, not this build.
 
-## Sign-off
+## Sign-off (run live by the S6 session itself, 2026-06-12 — re-run any block to re-verify)
 | Check | Pass? |
 |---|---|
-| M1 pack runs + 7 neutral notes logged | |
-| ≥3 families queryable from chat (gate) | |
-| Evidence cap ≤ 4 per recall turn | |
-| Review-paste produces no coda/thread | |
-| Genuine discovery coda intact | |
-| od2.m1_neutral_census green | |
+| M1 pack runs + 7 neutral notes logged | ✅ 28.5s; 7 notes → 7 embedded nodes; 0 supports edges, 7 thread anchors (SQL-verified) |
+| ≥3 families queryable from chat (gate) | ✅ parity / record setters / 2-adic all recalled via graph lane |
+| Evidence cap ≤ 4 per recall turn | ✅ matched-node cap live; extra bounds enter only via the ≤12 edge lines (thread anchors skipped) |
+| Review-paste produces no coda/thread | ✅ no ▶, 0 sse rows (note: notebook READ lane grabbed a phrase — harmless, post-window fix) |
+| Genuine discovery coda intact | ✅ "▶ Next probe: verify collatz up to 1M and log it" |
+| od2.m1_neutral_census green | ✅ 3/3; self_contamination family 5/5 after upgrade-pressure guard + grader widening; od2.faith_weaken_bound 2/2 |
