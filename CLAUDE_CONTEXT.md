@@ -179,7 +179,8 @@ Mathematical and scientific reasoning. Starts with Collatz. Builds toward Navier
 | `CLAUDE_CONTEXT.md` | **This file** — read at session start |
 | `M8_Evolution_Plan_2026.md` | Full phase-by-phase roadmap with action items |
 | `Unsolved_Problems_Brief.md` | Complete research brief — all 7 Millennium problems + resolved landmark problems + Track B architecture |
-| `M8_Team_Brief_2026_06_10.md` | Full system assessment, anti-sycophancy rules, honest L1–L5 assessment, 7 hard questions |
+| `M8_Team_Round2_Synthesis_2026_06_12.md` | Latest team round — adopted ladder REV 2, gates, Odysseus-2 |
+| `archive/` | Closed team-round briefs (06-10, Build-8, S5) |
 | `../index.html` (Bolt/index.html) | **Primary Bolt fleet dashboard** — live, GitHub-connected, M8 answering live queries |
 | `bikes_dashboard_v2.html` | Archived — bikes fleet logic, reuse in Phase 1 |
 | `dashboard.jsx` | Archived — Keeta/HS settlement logic, reuse in Phase 2 |

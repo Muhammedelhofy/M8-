@@ -347,5 +347,5 @@ This is not a chatbot. It is a compound intelligence — getting more useful eve
 
 ---
 
-*Linked documents: Unsolved_Problems_Brief.md (Track B research targets) · M8_Team_Brief_2026_06_10.md (full system assessment)*
+*Linked documents: Unsolved_Problems_Brief.md (Track B research targets) · M8_Team_Round2_Synthesis_2026_06_12.md (latest team round) · closed team-round briefs in `archive/`*
 *Next review: End of Phase 0 (Month 1)*
