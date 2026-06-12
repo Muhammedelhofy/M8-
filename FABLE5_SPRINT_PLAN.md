@@ -155,8 +155,10 @@ discovery and verified theorem writes into, (b) an automated adversarial battery
       `to \d` matched "greater than or equal TO 4" as a discovery bound; fix =
       `isExplicitLeanAsk()` (LEAN_EXPLICIT minus meta-questions) preempts discovery+OEIS,
       logs `lean_over_discovery`; bare "verify Collatz up to 100,000" untouched.
-      ⚠ PUSH PENDING: permission classifier blocks direct push to main — user must push,
-      then run BUILD12_LIVE_TEST probes 7–8 to verify live.
+      PUSHED (user-approved) + LIVE-VERIFIED same day: probe 7 Goldbach "formalize and
+      verify" → Lean lane claims it, **lean_stated** (type-checks, honest sorry, logged);
+      probe 8 "verify Collatz up to 100,000" → still a discovery run. Fix confirmed in
+      both directions.
       **S5 deliverables:** middle-layer roadmap (M1 structural probes → M2 curated
       literature seed packs/novelty gate → M3 falsifier-gated conjecture generator →
       M4 lemma-DAG scaffolding → L5 cron LAST, metric-gated) written into NORTH_STAR.md
