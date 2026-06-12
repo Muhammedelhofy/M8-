@@ -1,6 +1,37 @@
-# M8 Team Brief — S5 North-Star Roadmap Round
+# M8 Team Brief — S5 North-Star Roadmap Round (REV 2)
 *2026-06-12 · for GPT / Grok / Gemini / Manus review · authored by Fable 5, approved by Muhammad*
 *Standalone document — assumes no prior context beyond this file.*
+
+---
+
+## ⛔ STATE SYNC — read this before advising (your last round was stale)
+
+Round 1 reviewed the architecture diagram without current build state. As a result, the
+four of you collectively recommended — as top priorities — four things that were already
+live and regression-tested when you wrote them:
+
+- **GPT:** "Build the Research Memory Graph, then an adversarial battery, then Lean
+  hardening, then a North Star update" → that is exactly sprint S1–S5, **all shipped
+  2026-06-10→12** (graph: Build-10, pgvector + provenance packets, battery 4.7/5 no
+  regression; battery: Build-11, 38 probes, 3 real bugs found+fixed live; Lean hardening:
+  Build-12, 37/37 corpus, benchmark 0.3→0.65; North Star: S5, this document's §4).
+- **Manus:** the Lean formalization prompt / error-repair loop / test corpus → Build-9/12
+  shipped all three (11 validated few-shots, one-repair loop, 37-pair golden corpus).
+- **Grok:** "memory is the #1 blocker, run the migration first" → ran days ago; notebook,
+  graph, and Lean are all live. Also: runtime Fable-via-OpenRouter is a **settled REJECTED
+  decision** (it bills; runtime stays free Gemini) — do not re-propose it.
+- **Gemini:** Lean bridge + pgvector memory → both live (bridge on Cloud Run, mathlib
+  pinned `b580ec53f9e3`). Your SSE recommendation stands and is the planned S6.
+
+**What survived round 1 as genuinely new** (already adopted, don't re-submit):
+GPT's Odysseus-2 faithfulness attack classes (assumption-dropping / theorem-substitution
+on the Lean lane) · the Grok+Manus Track A pressure (Ops Memory = the consensus gap) ·
+the second independent vote for SSE.
+
+**Round 2 rules:** §2 below is the shipped state — advice that re-proposes anything in it
+will be discarded unread. Your entire deliverable is answers to the five questions in §5,
+plus at most ONE additional risk we haven't named. Anti-sycophancy applies: attack the
+M1–M4 roadmap in §4; do not praise it.
 
 ---
 
