@@ -148,5 +148,23 @@ discovery and verified theorem writes into, (b) an automated adversarial battery
       ⚠ REMAINING (next session if quota ran out): AFTER benchmark run (-Label after, compare
       vs 0.3), lean_stated live test in a REAL session (Goldbach → logs to notebook), main
       battery lean-probe spot-check, close-out docs.
-- [ ] Session 5 — North-Star roadmap update
-- [ ] Session 6 — SSE streaming (stretch)
+- [x] Session 5 — North-Star roadmap ✅ 2026-06-12 (Session-13). S4 leftovers closed first:
+      **lean.verified_theorem spot-checked live** ((a+b)² → faithful statement → **verified**
+      via `by ring`, 11.4s warm, notebook-logged; /health = pinned b580ec53f9e3) and the
+      **discovery-vs-Lean precedence fix** shipped (`a823b37`): root cause = BOUND_RE's
+      `to \d` matched "greater than or equal TO 4" as a discovery bound; fix =
+      `isExplicitLeanAsk()` (LEAN_EXPLICIT minus meta-questions) preempts discovery+OEIS,
+      logs `lean_over_discovery`; bare "verify Collatz up to 100,000" untouched.
+      ⚠ PUSH PENDING: permission classifier blocks direct push to main — user must push,
+      then run BUILD12_LIVE_TEST probes 7–8 to verify live.
+      **S5 deliverables:** middle-layer roadmap (M1 structural probes → M2 curated
+      literature seed packs/novelty gate → M3 falsifier-gated conjecture generator →
+      M4 lemma-DAG scaffolding → L5 cron LAST, metric-gated) written into NORTH_STAR.md
+      (cells updated: rungs 1–3 ✅, L4 ~80%) + M8_Evolution_Plan_2026.md (S5 revision:
+      stale current-state replaced, Navier-Stokes/Millennium DE-SCOPED, build order
+      refreshed) + standalone team brief `M8_Team_Brief_S5_2026_06_12.md` (5 attack
+      questions for the round) + diagram cell flips. Self-critique on record: M2 curation
+      is a human bottleneck (candidate: Fable authors the Collatz seed pack if window
+      time remains); M3 schema may exclude density/asymptotic shapes (team Q2).
+- [ ] Session 6 — SSE streaming (stretch) · candidate add-on: author Collatz M2 seed pack
+      while Fable is still free
