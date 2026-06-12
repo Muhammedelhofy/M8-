@@ -65,11 +65,25 @@ Build once. Use everywhere.
 
 ---
 
-## The Middle Layers (S5, 2026-06-12) — between [Lean + graph] and [autonomous exploration]
+## The Middle Layers (S5, 2026-06-12 · REV 2 after team round) — between [Lean + graph] and [autonomous exploration]
 
 *This section is the S5 deliverable: the layers Track B must build, in order, before the
 L5 loop is anything but a spam automator. Each ships as a thin slice behind a measurable
 gate — the Build-12 discipline (benchmark 0.3→0.65, data not opinions).*
+
+> **REV 2 (team round 2, 2026-06-12 — see `M8_Team_Round2_Synthesis_2026_06_12.md`):**
+> order revised to **M1 → M3-lite → M2 → M3-full → M3.1 → M4-manual → L5** (generator
+> before literature, 3–1; survivors never promoted past tested-to-N until the novelty
+> gate exists). M3 schema gains **Type B trend/statistical conjectures** (seeded-
+> deterministic evaluation, "observed through N" narration). M3 gate hardened to
+> **≥2× random-baseline survival + non-triviality floor**; M3-full adds **zero false
+> positives on held-out literature seeds**. **M4 demoted to M4-manual** (human-architected
+> DAGs; M8 formalizes leaves; entry = 50 candidates → 5 survivors → 1 human-interesting;
+> gate = ≥1 leaf with ≥2 Mathlib imports + induction vs an invalid-shortcut probe).
+> Two adopted risks: **graph self-contamination** (Odysseus-2 self-contamination family
+> gates M3-full/L5) and **context dilution** (hard per-turn recall cap, built in M1).
+> NORTH_STAR.md carries the canonical REV 2 ladder; details below are the original S5
+> text where not superseded.
 
 ### Adversarial critique first (why not just build the loop?)
 1. **Autonomy is a multiplier, not a capability.** The L5 loop is a scheduler over lanes
@@ -272,13 +286,16 @@ These are the layers in build order. Each one unlocks the next (status as of 202
 2. COMPUTATION ENGINE (Track B)        ✅ DONE — discovery loop + OEIS probing (Build-8)
 3. LEAN 4 INTEGRATION (Track B)        ✅ DONE — Builds 9–12, corpus-hardened, pinned
 4. ADVERSARIAL IMMUNE SYSTEM           ✅ DONE — Odysseus battery (Build-11)
-5. STRUCTURAL PROBE PACK (M1)          ← NEXT: features, not bounds
-6. LITERATURE SEED PACKS (M2)          ← unlocks the novelty gate
-7. CONJECTURE ENGINE v1 (M3)           ← the Hypothesize rung, falsifier-gated
-8. LEMMA-DAG SCAFFOLDING (M4)          ← verified-lemma library
-9. AUTONOMOUS LOOP (L5)                ← a cron over 5–8; ships LAST, metric-gated
-10. OPS MEMORY + PROACTIVE ALERTS (Track A)  ← parallel track, any model, anytime
-11. SAAS PRODUCT (Track A spin-off)    ← Month 12+, unchanged
+5. STRUCTURAL PROBE PACK (M1)          ← NEXT (S6/Build-13): features, not bounds
+6. CONJECTURE ENGINE LITE (M3-lite)    ← S7/Build-14: Type A+B schema, falsifier,
+                                          ≥2× random-baseline gate (REV 2: before M2)
+7. LITERATURE SEED PACKS (M2)          ← novelty gate; gates "human attention"
+8. CONJECTURE ENGINE FULL (M3-full)    ← + M3.1 clustering/prioritization
+9. LEMMA-DAG SCAFFOLDING (M4-MANUAL)   ← human-architected DAGs only; entry 50→5→1
+10. AUTONOMOUS LOOP (L5)               ← a cron over 5–9; ships LAST, metric-gated
+11. STATEFUL PROACTIVE ALERTS (Track A) ← July, any model; graph-tracked deltas,
+                                          no amnesiac re-alerts (team round 2 pick)
+12. SAAS PRODUCT (Track A spin-off)    ← Month 12+, unchanged
 ```
 
 ---

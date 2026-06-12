@@ -52,34 +52,53 @@ The autonomous-exploration ladder, each rung strictly more capable than the last
 **Domain mastery (build what it takes):** teach M8 the math it needs as problems demand —
 number theory (active), algebra, geometry, combinatorics, and Lean 4 + Mathlib formal verification.
 
-### The middle layers (S5 roadmap, 2026-06-12 — the rungs between 3 and 4)
+### The middle layers (S5 roadmap, REV 2 after team round 2026-06-12 — rungs between 3 and 4)
 Rung 4 is a scheduler over capabilities that must exist first. Autonomy multiplies
-quality; it cannot create it. Each layer ships as a thin slice behind a measurable gate:
+quality; it cannot create it. Each layer ships as a thin slice behind a measurable gate.
+*Order revised by team round 2 (3–1): the generator runs before literature — the
+falsifier doesn't need Terras 1976 to kill a bad conjecture; M2 gates "worthy of human
+attention," not "worthy of generation."*
 
 - **M1 — Structural probe pack** (Collatz-first): discovery-lane extension producing
   STRUCTURED FEATURES (stopping times, parity vectors, 2-adic valuations, max excursions,
   residue-class census, record-setters) into the graph — *not* bound-pushing, which is
-  theater (Collatz is known to ~2^71). Gate: ≥3 feature families queryable from chat.
+  theater (Collatz is known to ~2^71). Includes a HARD per-turn recall cap on
+  evidence/external nodes (context-dilution guard). Gate: ≥3 feature families queryable.
+- **M3-lite — Conjecture generator v1** (the Hypothesize rung, pre-novelty): LLM proposes
+  candidates in a constrained schema — **Type A**: computable predicate + explicit bound;
+  **Type B**: trend/statistical claim over a bounded sample (seeded-deterministic
+  evaluation, optional computable threshold f(k)), narrated only as "observed through N",
+  never "true". Deterministic falsifier executes; survivors = machine-generated
+  `conjecture` nodes (tested-to-N); failures = `failed_attempt` data. Hard cap +
+  graph-dedup = spam guard. Survivors are NEVER promoted past tested-to-N before M3-full.
+  Gate: survival rate **≥2× a random-conjecture baseline** + non-triviality floor
+  (≥2 distinct M1 features) · zero honesty violations under Odysseus-2.
 - **M2 — Literature seed packs** (curated, never crawled): 20–50 hand-curated known
   results per problem as `external`-provenance graph nodes (Terras 1976, Tao 2019,
   Barina bound, cycle constraints…). Enables the novelty gate: "is this already known?"
-  answered from the graph before any conjecture is called interesting.
   Gate: 10/10 on planted known/unknown probes. Non-goal: PDF-parsing pipelines.
-- **M3 — Conjecture generator v1** (the Hypothesize rung): LLM proposes candidates in a
-  constrained schema (computable predicate + explicit bound), a deterministic falsifier
-  executes them, survivors land as machine-generated `conjecture` nodes (tested-to-N,
-  never "true"), failures land as `failed_attempt` data. Hard cap + graph-dedup = spam guard.
-  Gate: surviving non-known conjectures per batch · zero honesty violations under an
-  Odysseus probe extension.
-- **M4 — Lemma-DAG proof scaffolding**: between `lean_stated` and `lean_verified` —
-  decompose a target into a `depends_on` lemma DAG, discharge leaves with allowlisted
-  tactics, track % discharged in the graph. Honest ceiling: textbook lemmas, not open
-  problems. Gate: one scaffold with ≥3 machine-verified leaf lemmas.
+- **M3-full — Novelty-aware generation**: M3-lite + the M2 novelty gate; surprise /
+  compression scores tracked as metrics. Gate: **zero known-result false positives on
+  held-out literature seeds**. Requires the Odysseus-2 self-contamination family green
+  (M8 must distinguish literature truth from its own surviving conjectures under
+  adversarial retrieval pressure).
+- **M3.1 — Clustering + prioritization**: cluster survivors, rank by interestingness,
+  feed a human-review queue. The cheap layer before any proof scaffolding.
+- **M4-manual — Lemma-DAG scaffolding, HUMAN-architected**: Muhammad provides the DAG in
+  plain English; M8 formalizes the leaves and orchestrates /check. NO autonomous proof
+  search (AlphaProof-class compute cosplay on this stack — de-scoped). Entry condition:
+  M3 has produced 50 candidates → 5 survivors → ≥1 a human finds genuinely interesting.
+  Gate: ≥1 verified leaf requiring ≥2 distinct Mathlib imports + induction, against an
+  adversarial invalid-shortcut probe.
 
-**Then** L5 = a budgeted cron over M1→M3 (+M4 where applicable), gated on 3 consecutive
-unattended runs with zero battery regressions. *Explicitly de-scoped: Navier-Stokes /
-Millennium-tier targets — PDE numerics do not fit this stack; number theory and
-combinatorics adjacency only.*
+**Odysseus-2** (gates M3-full and L5): faithfulness family (assumption-dropping /
+theorem-substitution on the Lean lane) + self-contamination family (own-conjecture vs
+literature provenance under adversarial retrieval).
+
+**Then** L5 = a budgeted cron over M1→M3 (+M4-manual where applicable), gated on 3
+consecutive unattended runs with zero battery regressions. *Explicitly de-scoped:
+Navier-Stokes / Millennium-tier targets — PDE numerics do not fit this stack; number
+theory and combinatorics adjacency only. Autonomous proof-tree search — same verdict.*
 
 ---
 

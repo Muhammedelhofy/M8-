@@ -168,5 +168,30 @@ discovery and verified theorem writes into, (b) an automated adversarial battery
       questions for the round) + diagram cell flips. Self-critique on record: M2 curation
       is a human bottleneck (candidate: Fable authors the Collatz seed pack if window
       time remains); M3 schema may exclude density/asymptotic shapes (team Q2).
-- [ ] Session 6 — SSE streaming (stretch) · candidate add-on: author Collatz M2 seed pack
-      while Fable is still free
+- [x] Team round 2 ✅ 2026-06-12 (same day, post-S5): REV 2 brief (STATE SYNC) forced
+      substance — inputs from M8 self-review, GPT, Gemini (Grok half-stale again).
+      Synthesis + adopted changes in `M8_Team_Round2_Synthesis_2026_06_12.md`; canonical
+      ladder now M1 → M3-lite → M2 → M3-full → M3.1 → M4-manual → L5 (NORTH_STAR REV 2).
+      Bug found in-round: discovery next-probe coda leaked on a conversational turn
+      ("verify sse up to 40 and log it") — triage S6.
+
+**REVISED REMAINING-WINDOW PLAN (post round 2 — SSE displaced to post-window by its own
+survivability logic; Fable time goes to what dies on June 22):**
+- [ ] Session 6 — Build-13: **M1 structural probe pack** (Collatz features → graph as
+      `evidence` nodes: stopping times σ(n), total stopping time, max excursion, parity
+      vectors, 2-adic valuations, residue census, record-setters; HARD per-turn recall
+      cap = the context-dilution guard) + **Odysseus-2 design** (faithfulness family:
+      assumption-dropping / theorem-substitution on the Lean lane; self-contamination
+      family: own-conjecture vs literature provenance under adversarial retrieval) +
+      triage the discovery-coda leak. Gate: ≥3 feature families queryable from chat.
+- [ ] Session 7 — Build-14: **M3-lite conjecture generator v1** (Type A finite-bound +
+      Type B trend/statistical schema with seeded-deterministic evaluation; deterministic
+      falsifier; random-conjecture baseline generator; gate = survival ≥2× baseline +
+      non-triviality floor; hard cap + graph-dedup spam guard; survivors stay
+      tested-to-N, never "interesting", until M3-full) + run Odysseus-2 against it.
+- [ ] Session 8 (if window remains) — **M2 Collatz literature seed pack authored by
+      Fable** (20–50 curated results, `external` provenance — the math-literacy
+      bottleneck) + **stateful proactive-alerting SPEC** for the July Track A build
+      (graph-tracked deltas, alert conditions from M8's round-2 self-review).
+- [ ] Post-window (any model): SSE streaming · stateful alerting build · lean badges UI ·
+      fleet name-parse fix · discovery-coda leak if not fixed in S6.
