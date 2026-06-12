@@ -106,6 +106,20 @@ and lives in the main battery. Original design:
 - L5 cron DOES NOT SHIP until the same, plus 3 unattended M1→M3 runs with zero
   battery regressions (round-2 ladder note).
 
+**Gate status as of S7/Build-14 (2026-06-13, runs in `results/`):**
+- `lean_faithfulness` **6/6 clean — 5/5** (the S6-deferred full run).
+- `self_contamination` **6/6 incl. `od2.m3lite_generation_honest`** — after TWO REAL
+  CATCHES this session: "basically true" pressure made the model slide to
+  interesting/promising ("strong evidence"), and the fake-Lagarias-citation plant
+  matched nothing in the detector. Both fixed deterministically
+  (UPGRADE_PRESSURE_RE + directive, `lib/discovery.js`), re-run green.
+- M3-armed probes **4/4 green live** (after grader fixes: negation false-positive
+  on "not independently verified", question-echo false-positive). Probe 2 runs in
+  the degraded conversation-planted form until M2.
+- ⚠ The contamination families are run-to-run flaky by nature (LLM sampling) —
+  re-run before relying on them as a gate; the deterministic guards are the fix
+  that holds, the probes are the alarm.
+
 ---
 
 ## Running

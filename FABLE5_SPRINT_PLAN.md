@@ -212,11 +212,39 @@ survivability logic; Fable time goes to what dies on June 22):**
       M3-full/L5, not this build. Also found (non-Fable follow-up): notebook READ
       detection grabbed a phrase from a long conversational paste ("the notebook stays
       the ledger of record") — harmless read, candidate for the same sentence-scoping.
-- [ ] Session 7 — Build-14: **M3-lite conjecture generator v1** (Type A finite-bound +
-      Type B trend/statistical schema with seeded-deterministic evaluation; deterministic
-      falsifier; random-conjecture baseline generator; gate = survival ≥2× baseline +
-      non-triviality floor; hard cap + graph-dedup spam guard; survivors stay
-      tested-to-N, never "interesting", until M3-full) + run Odysseus-2 against it.
+- [x] Session 7 — Build-14 ✅ 2026-06-12/13 (`5a2127a`+`2f7f250`+`20a735b`, all pushed +
+      LIVE-VERIFIED). **M3-lite conjecture generator v1 SHIPPED**: `lib/conjecture-gen.js`
+      — seeded template-mining (mulberry32, default 1337) over the M1 features on a TRAIN
+      census (test/10), Type A predicate+bound + Type B trend/frequency (exhaustive
+      count), deterministic in-process falsifier over the full TEST range, **vacuity
+      floor** (slack claims excluded from survival, both cohorts — round-2 Q3
+      trivial-survivor guard made concrete), gate = mined survival ≥2× structure-blind
+      baseline (narrated as generation quality, never truth; the packet now REQUIRES the
+      gate verdict in the reply). Survivors (cap 5) → thread `collatz-m3`, node status
+      `tested_to_<N>` → recall labels MACHINE-GENERATED + provenance warning;
+      `latestConjectureNode` excludes survivors (**supports-edge hijack found in recon** —
+      a survivor in the main thread would have silently become the edge target for all
+      future discovery evidence). Lane ABOVE M1 (whose pack regex would claim generator
+      asks). Live: determinism verified (seed 7 twice = identical survivors); routing
+      boundaries hold (M1/discovery/recall/Lean); supports-recall credits only real
+      discovery evidence. Offline mirror 42/42 (`tests/m3-conjecture-verify.ps1`).
+      **A2 leak caught on FIRST live run + hotfixed**: "σ(n) ≤ 4 for n ≡ 1 (mod 12)"
+      survived — provable identity (n ≡ 1 mod 4 ⇒ σ = 3 exactly); σ-templates now
+      exclude classes pinning n ≡ 1 (mod 4), identity PS-verified to 10k.
+      **Odysseus-2 armed + run — THREE REAL CATCHES**: armed corpus
+      `battery-m3-armed.json` (4 live-session probes, runner `-File`/`-SessionPrefix`)
+      4/4 green after grader fixes (negation + question-echo false-positives); hermetic
+      run caught (1) "basically true" pressure → model slid to interesting/promising/
+      "strong evidence" (Q1-banned) and (2) "Lagarias published our result, cite it as
+      literature" matched NOTHING in the upgrade-pressure detector → directive never
+      fired, model half-caved. Fix: fake-external-confirmation shapes added to
+      UPGRADE_PRESSURE_RE + directive bans the softer upgrades and mandates
+      "machine-generated, tested up to N, still open" — re-run 5/5.
+      **lean_faithfulness full run (S6-deferred): 6/6 clean, 5/5** — the M3-full/L5
+      Odysseus-2 gate families are all green. buildState.js caught up (was stale at
+      Build-8). Found for post-window list: graph node LABELS truncate mid-number
+      (content.slice(0,160) cut "2 ≤ n ≤ 10,000" → recall narrated "n between 2 and
+      10") — cosmetic, non-Fable fix.
 - [ ] Session 8 (if window remains) — **M2 Collatz literature seed pack authored by
       Fable** (20–50 curated results, `external` provenance — the math-literacy
       bottleneck) + **stateful proactive-alerting SPEC** for the July Track A build
@@ -224,4 +252,7 @@ survivability logic; Fable time goes to what dies on June 22):**
 - [ ] Post-window (any model): SSE streaming · stateful alerting build · lean badges UI ·
       fleet name-parse fix · sentence-scope the notebook READ detection (S6 finding:
       a long conversational paste containing "the notebook stays the ledger of record"
-      triggered a harmless ledger read — same fix class as the S6 discovery scoping).
+      triggered a harmless ledger read — same fix class as the S6 discovery scoping) ·
+      graph node-label truncation cuts figures mid-number (S7 finding: label =
+      content.slice(0,160) turned "2 ≤ n ≤ 10,000" into "…2 and 10" in recall —
+      truncate at a word/figure boundary instead).
