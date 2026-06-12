@@ -127,6 +127,18 @@ discovery and verified theorem writes into, (b) an automated adversarial battery
       canned UNFORMALIZABLE dodge → LEAN_META_QUESTION guard (genuine formalize asks
       unaffected, port-verified 7/7). All re-run green. Known-flaky left on books:
       fleet name-parse ("the fleet" as driver) = non-Fable follow-up.
-- [ ] Session 4 — Lean hardening (corpus, benchmark, MATHLIB_REV, lean_stated)
+- [~] Session 4 — Lean hardening — ~90% DONE 2026-06-12 (Build-12, `27bfefc` + Cloud Run rev 00008):
+      golden corpus 37 pairs ALL validated vs live /check (tests/lean-corpus/golden.json +
+      validate-corpus.ps1); 11 validated few-shots embedded in LEAN_SYSTEM; benchmark
+      BEFORE = 0.3/1.0 (10 held-out claims, run-lean-bench.ps1) — root causes found+fixed:
+      MATH_TARGET too narrow (explicit "verify in Lean: X" never entered the lane → unguarded
+      LLM wrote Lean-3 axiom "proofs"; fix LEAN_EXPLICIT fast path) + ring missing from proof
+      allowlist (fix: added, g37 validated); checker: sorry UNBANNED from injection screen
+      (lean_stated now reachable; sorried code reported, never verified) + MATHLIB_REV PINNED
+      b580ec53f9e3 (full-40-char-sha fetch lesson); deploy verified live (irrationality ask →
+      faithful ¬∃q:ℚ,q²=2 + honest sorry — was an axiom-tutorial before).
+      ⚠ REMAINING (next session if quota ran out): AFTER benchmark run (-Label after, compare
+      vs 0.3), lean_stated live test in a REAL session (Goldbach → logs to notebook), main
+      battery lean-probe spot-check, close-out docs.
 - [ ] Session 5 — North-Star roadmap update
 - [ ] Session 6 — SSE streaming (stretch)
