@@ -106,3 +106,22 @@ from here.
   — the latter REPLACES the entire env set (wiped the token once).
 - First deployed live 2026-06-11: toolchain `leanprover/lean4:v4.31.0-rc2`,
   Mathlib `bd1b6969f7d4`, smoke 4/4 (true/false/sorry-screen/Mathlib lemma).
+
+## S4 hardening (2026-06-12)
+- **MATHLIB_REV PINNED** to `b580ec53f9e3279ad940dec8b2144b0afa85d5fc` (the rev
+  /health reported when the first real theorems were verified — reproducible
+  verdicts beat freshness). Pinning lesson: `git fetch origin <sha>` needs the
+  FULL 40-char sha (short sha → "couldn't find remote ref"), and a sha can't be
+  `git clone --branch`'d at all — the Dockerfile does init/fetch/checkout
+  FETCH_HEAD instead. Resolve short→full via
+  `api.github.com/repos/leanprover-community/mathlib4/commits/<short>`.
+- **`sorry` unbanned from the injection screen** (three-state contract): the
+  textual sorry/admit ban made the caller's `lean_stated` state unreachable —
+  the REPL reports sorries[] structurally and `verified` stays false. Sorried
+  code is REPORTED, never verified. Found by the S4 golden-corpus validation
+  (tests/lean-corpus/).
+- **deploy.ps1 must stay pure ASCII** (project-wide .ps1 rule): an em-dash
+  inside a double-quoted string mojibakes under PS 5.1's ANSI fallback into a
+  smart quote that TERMINATES the string → parse error pages away from the
+  actual cause. Also: the real `-Project` is `gen-lang-client-0609389271`
+  (the old `m8-lean` default never matched the deployed service).

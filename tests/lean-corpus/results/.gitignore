@@ -1,0 +1,4 @@
+# Benchmark runs embed raw chat replies — generated artifacts, keep out of git.
+# The durable before/after comparison lives in ODYSSEUS/S4 docs + the sprint plan.
+*
+!.gitignore

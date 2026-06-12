@@ -14,12 +14,19 @@ ENV PATH=/opt/elan/bin:$PATH
 RUN curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
       | sh -s -- -y --no-modify-path --default-toolchain none
 
-# Pin MATHLIB_REV to a release tag for reproducible verdicts (master = latest;
-# fine for v1, pin before relying on it for real conjectures).
-ARG MATHLIB_REV=master
+# PINNED (S4 2026-06-12) to the exact commit the service first verified real
+# theorems on — reproducible verdicts beat freshness. A raw SHA can't be used
+# with `git clone --branch`, hence init + fetch-by-sha + checkout FETCH_HEAD
+# (detached HEAD holds the sha, which /health reports via _git_rev).
+# MUST be the FULL 40-char sha — `git fetch origin <short-sha>` is refused
+# ("couldn't find remote ref"), learned on the first pinned build.
+ARG MATHLIB_REV=b580ec53f9e3279ad940dec8b2144b0afa85d5fc
 WORKDIR /opt
-RUN git clone --depth 1 --branch ${MATHLIB_REV} \
-      https://github.com/leanprover-community/mathlib4 mathlib4
+RUN git init mathlib4 \
+ && cd mathlib4 \
+ && git remote add origin https://github.com/leanprover-community/mathlib4 \
+ && git fetch --depth 1 origin ${MATHLIB_REV} \
+ && git checkout FETCH_HEAD
 WORKDIR /opt/mathlib4
 # elan reads lean-toolchain and auto-installs the matching Lean; cache get
 # downloads prebuilt .olean files instead of compiling Mathlib (hours -> minutes).

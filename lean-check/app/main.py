@@ -2,9 +2,13 @@
 #
 # Truth-tool contract (see ../../LEAN_INFRA_DESIGN.md):
 #   POST /check  {code, timeout_s?}  ->  {verified, errors, sorries, elapsed_ms, ...}
-#   verified=true ONLY if the code elaborates with zero errors AND zero sorries
-#   AND passes the injection screen. A proof with `sorry` type-checks but proves
-#   nothing — that is REJECTED, never verified.
+#   THREE-STATE (S4 2026-06-12): verified=true ONLY with zero errors AND zero
+#   sorries. Code containing `sorry` is allowed THROUGH the screen so the REPL
+#   can elaborate the STATEMENT and report sorries[] — the caller maps that to
+#   lean_stated ("statement type-checks, proof open"). A sorried proof is still
+#   NEVER verified=true; it is reported, not rejected. (The old textual sorry
+#   ban made the caller's lean_stated state unreachable — found by the S4
+#   golden-corpus validation.)
 #
 # One REPL process, Mathlib imported once at startup (the expensive step — this
 # is why the service exists instead of `lake env lean file.lean` per request).
@@ -42,13 +46,12 @@ def log(msg):
 
 
 # The env already has Mathlib imported; user code must not smuggle anything in.
-# `sorry`/`admit` are also caught structurally (REPL reports sorries) — the
-# textual screen is belt-and-braces and gives a cleaner error message.
+# `sorry`/`admit` are deliberately NOT screened: the REPL reports them in
+# sorries[] and `verified` stays false — that structural path is what makes the
+# caller's lean_stated ("statement verified, proof open") state possible.
 FORBIDDEN = [
     (re.compile(r"^\s*import\b", re.M), "import (Mathlib is pre-imported; no other imports allowed)"),
     (re.compile(r"\baxiom\b"), "axiom (would let any statement be 'proved')"),
-    (re.compile(r"\bsorry\b"), "sorry (a sorried proof proves nothing)"),
-    (re.compile(r"\badmit\b"), "admit (alias of sorry)"),
     (re.compile(r"\bunsafe\b"), "unsafe"),
     (re.compile(r"#eval\b|#exit\b|#print\s+axioms"), "side-effecting command"),
     (re.compile(r"\bset_option\b"), "set_option (heartbeat/recursion limits stay at defaults)"),

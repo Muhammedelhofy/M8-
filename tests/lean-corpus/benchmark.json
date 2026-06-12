@@ -1,0 +1,12 @@
+[
+  { "id": "b01", "claim": "the sum of any two even natural numbers is even" },
+  { "id": "b02", "claim": "13 is a prime number" },
+  { "id": "b03", "claim": "twice any natural number is even" },
+  { "id": "b04", "claim": "100 + 155 = 255" },
+  { "id": "b05", "claim": "every natural number squared is at least the number itself" },
+  { "id": "b06", "claim": "for any integers a and b, (a + b)^2 = a^2 + 2*a*b + b^2" },
+  { "id": "b07", "claim": "the remainder when 10^9 is divided by 7 is 6" },
+  { "id": "b08", "claim": "5 divides 1,000,000" },
+  { "id": "b09", "claim": "there is no largest natural number: for every n there is a strictly bigger one" },
+  { "id": "b10", "claim": "the square root of 2 is irrational" }
+]
