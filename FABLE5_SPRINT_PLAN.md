@@ -127,7 +127,15 @@ discovery and verified theorem writes into, (b) an automated adversarial battery
       canned UNFORMALIZABLE dodge → LEAN_META_QUESTION guard (genuine formalize asks
       unaffected, port-verified 7/7). All re-run green. Known-flaky left on books:
       fleet name-parse ("the fleet" as driver) = non-Fable follow-up.
-- [~] Session 4 — Lean hardening — ~90% DONE 2026-06-12 (Build-12, `27bfefc` + Cloud Run rev 00008):
+- [x] Session 4 — Lean hardening ✅ DONE 2026-06-12 (Build-12, `27bfefc`+ + Cloud Run rev 00008).
+      **Benchmark 0.3 → 0.65** (zero freestyle replies after; 2 honest rejections remain).
+      **lean_stated LIVE**: "formalize in Lean: <Goldbach>" → statement type-checked (1 sorry) →
+      "verified statement, not a proof" → logged as formally-stated conjecture. Corpus 37/37 on
+      the PINNED checker. tests/BUILD12_LIVE_TEST.md = spot-check script.
+      ⚠ Found for next session: an explicit "formalize and verify in Lean" ask with discovery-
+      shaped wording can be claimed by the DISCOVERY lane first → unchecked prose Lean draft
+      (honest, but bypasses /check). Candidate fix: explicit Lean ask outranks discovery.
+      Original scope notes (mid-session):
       golden corpus 37 pairs ALL validated vs live /check (tests/lean-corpus/golden.json +
       validate-corpus.ps1); 11 validated few-shots embedded in LEAN_SYSTEM; benchmark
       BEFORE = 0.3/1.0 (10 held-out claims, run-lean-bench.ps1) — root causes found+fixed:
