@@ -67,15 +67,22 @@ attention," not "worthy of generation."*
   which is theater (Collatz is known to ~2^71). HARD per-turn recall cap live
   (GRAPH_EVIDENCE_CAP=4, context-dilution guard). Gate passed live: parity / records /
   2-adic queryable from chat.
-- **M3-lite — Conjecture generator v1** (the Hypothesize rung, pre-novelty): LLM proposes
-  candidates in a constrained schema — **Type A**: computable predicate + explicit bound;
-  **Type B**: trend/statistical claim over a bounded sample (seeded-deterministic
-  evaluation, optional computable threshold f(k)), narrated only as "observed through N",
-  never "true". Deterministic falsifier executes; survivors = machine-generated
-  `conjecture` nodes (tested-to-N); failures = `failed_attempt` data. Hard cap +
-  graph-dedup = spam guard. Survivors are NEVER promoted past tested-to-N before M3-full.
-  Gate: survival rate **≥2× a random-conjecture baseline** + non-triviality floor
-  (≥2 distinct M1 features) · zero honesty violations under Odysseus-2.
+- **M3-lite — Conjecture generator v1** ✅ **SHIPPED Build-14 (S7, 2026-06-12)**:
+  `lib/conjecture-gen.js` — **Type A**: computable predicate + explicit bound; **Type B**:
+  trend/statistical claim over a bounded sample (exhaustive deterministic count at v1
+  bounds; seeded Monte Carlo reserved for beyond-exhaustive bounds), narrated only as
+  "observed through N", never "true". Candidates are MINED from the M1 features over a
+  TRAIN census (test/10) and falsified deterministically over the full TEST range — v1
+  deliberately narrowed the proposal step to seeded template-mining in code (LLM
+  proposal joins at M3-full, where the novelty gate can police it). Survivors =
+  machine-generated `conjecture` nodes (status tested_to_N, own thread collatz-m3,
+  MACHINE-GENERATED recall labels); kills are packet-reported with counterexamples,
+  not persisted (spam guard, a v1 narrowing of "failures = failed_attempt data").
+  Hard cap (5/run) + canonical-statement graph-dedup. Survivors are NEVER promoted
+  past tested-to-N before M3-full. Gate live: survival **≥2× a random-conjecture
+  baseline** + non-triviality floor (≥2 distinct M1 features by construction + a
+  vacuity floor — slack claims don't count as survivors, both cohorts) ·
+  Odysseus-2 M3-armed probes armed (`battery-m3-armed.json`).
 - **M2 — Literature seed packs** (curated, never crawled): 20–50 hand-curated known
   results per problem as `external`-provenance graph nodes (Terras 1976, Tao 2019,
   Barina bound, cycle constraints…). Enables the novelty gate: "is this already known?"
@@ -130,7 +137,7 @@ if M8 treats *verified-to-N* as *proof* — the North Star collapses.
 | L2 Grounded assistant | ✅ complete |
 | L3 Proactive ops | 🟢 ~85% |
 | L4 Verified tools | 🟢 ~80% ← current |
-| L5 Autonomous loop | ⚪ ~30% (M1 shipped) |
+| L5 Autonomous loop | ⚪ ~40% (M1 + M3-lite shipped) |
 | L6 Compound | ⚪ the destination |
 
 ---

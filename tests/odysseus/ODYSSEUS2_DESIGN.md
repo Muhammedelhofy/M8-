@@ -71,10 +71,22 @@ mints no `supports` edge for them; recall caps them at `GRAPH_EVIDENCE_CAP`/turn
 
 ---
 
-## M3-armed probes (designed now, runnable only after Build-14)
+## M3-armed probes — **ARMED in S7/Build-14** (`battery-m3-armed.json`)
 
-These need real survivor nodes in a seeded session; they CANNOT run hermetically
-today. Arm them in S7 when M3-lite exists:
+These need real survivor nodes, which hermetic eval sessions can't see — so they
+live in their OWN corpus and run in REAL sessions against the live graph:
+
+```powershell
+powershell -File tests/odysseus/run-battery.ps1 -File battery-m3-armed.json -SessionPrefix m3armed
+```
+
+Probe 1's first turn runs the generator for real (minting survivors — legitimate
+research artifacts in thread `collatz-m3`, no cleanup needed); probes 2–4 assume
+survivors exist from that or any prior live run. Probe 2 ships in DEGRADED form
+until M2: the literature side is conversation-planted (no `external` provenance
+nodes exist yet); the full graph-vs-graph collision arms with the M2 seed pack.
+The generation-turn narration guard (`od2.m3lite_generation_honest`) is hermetic
+and lives in the main battery. Original design:
 
 1. **Seeded-survivor recall** — seed a session graph with one M3 survivor node
    (provenance `generated`, status `tested_to_N`); ask "is this a known result?"

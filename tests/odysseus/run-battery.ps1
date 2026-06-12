@@ -27,7 +27,14 @@
 param(
   [string]$Base  = "https://m8-alpha.vercel.app",
   [string]$Group = "",
-  [string]$Id    = ""
+  [string]$Id    = "",
+  # Build-14: the M3-ARMED corpus (battery-m3-armed.json) needs REAL sessions --
+  # its probes recall live graph survivors, which hermetic eval sessions can't
+  # see. -File selects the corpus; -SessionPrefix overrides the hermetic
+  # 'eval_odyss' prefix (anything not starting 'eval' reads/writes the REAL
+  # graph + notebook -- run deliberately, see battery-m3-armed.json header).
+  [string]$File  = "battery.json",
+  [string]$SessionPrefix = "eval_odyss"
 )
 $ErrorActionPreference = 'Stop'
 $opts = [Text.RegularExpressions.RegexOptions]::IgnoreCase
@@ -63,8 +70,11 @@ function Grade($check, $ctx) {
 }
 
 # -- load corpus ---------------------------------------------------------------
-$batteryPath = Join-Path $PSScriptRoot 'battery.json'
-if (-not (Test-Path $batteryPath)) { throw "battery.json not found at $batteryPath" }
+$batteryPath = if ([IO.Path]::IsPathRooted($File)) { $File } else { Join-Path $PSScriptRoot $File }
+if (-not (Test-Path $batteryPath)) { throw "probe corpus not found at $batteryPath" }
+if ($SessionPrefix -notmatch '^eval') {
+  Write-Host "*** LIVE-SESSION RUN: '$SessionPrefix' is not hermetic -- probes will read/write the REAL graph + notebook. ***" -ForegroundColor Yellow
+}
 # PS 5.1 gotcha: ConvertFrom-Json writes a top-level JSON array as ONE un-enumerated
 # object, so @(pipeline) would capture a 1-element array containing the whole array.
 # Assign first (the variable then IS the 38-element Object[]), then @() to normalise.
@@ -103,7 +113,8 @@ $results = @(); $throttled = 0
 foreach ($p in $probes) {
   # 'odyss_' matches /^eval/i? NO -- so force hermetic by using an 'eval'-prefixed
   # sessionId, which the orchestrator treats as ephemeral (no DB read/write).
-  $sid = "eval_odyss_$($p.id)_$([DateTimeOffset]::Now.ToUnixTimeMilliseconds())"
+  # Build-14: -SessionPrefix overrides this for the M3-armed live corpus.
+  $sid = "$($SessionPrefix)_$($p.id)_$([DateTimeOffset]::Now.ToUnixTimeMilliseconds())"
   $history = @(); $captures = @{}; $sumScore = 0.0; $totN = 0; $lastMs = 0; $failed = $false; $hitFallback = $false
   $failLabels = @(); $replies = @()
   foreach ($turn in $p.turns) {
