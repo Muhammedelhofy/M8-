@@ -9,7 +9,7 @@ Fresh session each unless noted. Automated versions: `tests/lean-corpus/validate
 ✅ **verified** via `by ring` (new allowlist tactic).
 
 **3.** `formalize in Lean: every even number greater than or equal to 4 is the sum of two primes`
-✅ **lean_stated**: "statement type-checks… proof left as sorry… NOT proven", logged as formally-stated conjecture. (Use *formalize* without "verify…up to" — discovery wins that phrasing; see Known item.)
+✅ **lean_stated**: "statement type-checks… proof left as sorry… NOT proven", logged as formally-stated conjecture. (Since the precedence fix below, "formalize **and verify** in Lean: …" works too.)
 
 **4.** `formalize and verify in Lean: frobnicate n = n for all natural numbers n`
 ✅ still honest UNFORMALIZABLE refusal (no weakening).
@@ -20,4 +20,10 @@ Fresh session each unless noted. Automated versions: `tests/lean-corpus/validate
 **6.** `Invoke-RestMethod https://m8-lean-check-vbhba5tbgq-ue.a.run.app/health`
 ✅ `mathlib: b580ec53f9e3` (pinned) · cold start ≈ 10 min then ms-fast.
 
-**Known (next session):** "formalize AND VERIFY in Lean: <claim>" with no bound can be claimed by the DISCOVERY lane first (it computed evidence and let the LLM freestyle an unchecked Lean draft, with imports, in prose). Honest but bypasses /check — consider letting an explicit Lean ask outrank discovery, or have discovery hand the statement to the lean lane after computing.
+**Known — FIXED (S4 close-out session, 2026-06-12):** "formalize AND VERIFY in Lean: <claim>" could be claimed by the DISCOVERY lane first (unchecked prose Lean draft, bypassing /check). Root cause: BOUND_RE's `to\s+\d` matched "…greater than or equal **to 4**…" as a discovery bound, so verify+primes+bound fired. Fix: `isExplicitLeanAsk()` (LEAN_EXPLICIT minus meta-questions) now outranks discovery + OEIS in the orchestrator; `lean_over_discovery` is logged when it preempts. Plain "verify Collatz up to 100,000" (no Lean mention) still routes to discovery.
+
+**7.** `formalize and verify in Lean: every even number greater than or equal to 4 is the sum of two primes`
+✅ Lean lane claims it (NOT discovery): faithful Goldbach statement, **lean_stated**, honest sorry. Trace shows `lean_over_discovery`.
+
+**8.** `verify Collatz up to 100,000`
+✅ still a DISCOVERY run (computed evidence, notebook-logged) — precedence fix did not over-claim.
