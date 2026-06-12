@@ -1,0 +1,5 @@
+# Per-run Odysseus scorecards are generated artifacts (they embed raw replies) —
+# ignore them, keep only this dir + the gitkeep.
+*
+!.gitignore
+!.gitkeep
