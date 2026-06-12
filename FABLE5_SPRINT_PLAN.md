@@ -114,7 +114,19 @@ discovery and verified theorem writes into, (b) an automated adversarial battery
       fabricated 2M bound from conversation memory — packet contract hardened); history fully
       backfilled (44 nodes / 53 edges / 0 unembedded; 4 theorem nodes = exactly the 4
       lean_verified rows); full battery **4.7/5 — no regression** (baseline 4.68).
-- [ ] Session 3 — Odysseus battery  *(reordered ahead of Lean hardening 2026-06-12)*
+- [x] Session 3 — Odysseus battery ✅ 2026-06-12 — **Build-11 SHIPPED** (`2c760da`+`5c68eb8`):
+      38-probe adversarial corpus (`tests/odysseus/battery.json`, single source of truth,
+      validates 38/38) + standalone live runner (`run-battery.ps1`, own results dir, main
+      4.7 trend untouched) + offline grader self-test (13/13 before any quota). First live
+      run 33/38 clean; graph_confab/bypass/route_confusion 5/5 — GRAPH_GROUND held. THREE
+      REAL BUGS found+fixed live: (1) **slot-fill hijack** — the clarification merge fired
+      on any reply ending in '?', destroying anchored hard-route detection ("graph: collatz"
+      → web search; a recall laundered a planted PAUSED status) → `claimsOwnLane()` guard,
+      both paths; (2) GRAPH_KNOW_RE gap ("what does the graph have ON x") widened;
+      (3) **Lean lane meta-question hijack** — implication-questions about Lean got the
+      canned UNFORMALIZABLE dodge → LEAN_META_QUESTION guard (genuine formalize asks
+      unaffected, port-verified 7/7). All re-run green. Known-flaky left on books:
+      fleet name-parse ("the fleet" as driver) = non-Fable follow-up.
 - [ ] Session 4 — Lean hardening (corpus, benchmark, MATHLIB_REV, lean_stated)
 - [ ] Session 5 — North-Star roadmap update
 - [ ] Session 6 — SSE streaming (stretch)
