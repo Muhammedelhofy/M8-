@@ -109,6 +109,20 @@ Check "classHasOdd(6,4) excluded" (ClassHasOdd 6 4) False
 Check "classHasOdd(6,1) allowed"  (ClassHasOdd 6 1) True
 Check "classHasOdd(3,0) allowed (odd modulus = mixed class)" (ClassHasOdd 3 0) True
 
+# Live-run A2 catch (Build-14 hotfix): n = 1 (mod 4) has sigma(n) = 3 PROVABLY,
+# so sigma-templates must exclude classes that pin n = 1 (mod 4).
+function SigmaClassNontrivial([int]$m, [int]$r) {
+  return (ClassHasOdd $m $r) -and -not (($m % 4 -eq 0) -and ($r % 4 -eq 1))
+}
+Check "sigma class (12,1) excluded (pins n=1 mod 4)" (SigmaClassNontrivial 12 1) False
+Check "sigma class (12,5) excluded (5 = 1 mod 4)"    (SigmaClassNontrivial 12 5) False
+Check "sigma class (12,3) allowed (3 mod 4 varies)"  (SigmaClassNontrivial 12 3) True
+Check "sigma class (6,1) allowed (mod 6 doesn't pin mod 4)" (SigmaClassNontrivial 6 1) True
+# and the identity itself, against the real feature table:
+$ok = $true
+for ($n = 5; $n -le $LIM; $n += 4) { if ($sigma[$n] -ne 3) { $ok = $false; break } }
+CheckTrue "sigma(n) = 3 for ALL n = 1 (mod 4), 5..10000 (the provable identity)" $ok
+
 # B_sigma_freq mirror: sigma(n) <= 1 holds for exactly the even n.
 # evens in [2,10000] = 5000 of 9999 values -> 50.005%.
 $cnt = 0
