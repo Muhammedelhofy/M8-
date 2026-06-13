@@ -17,8 +17,8 @@ function Check($name, $got, $expected) {
 
 # ---- regexes copied VERBATIM from lib/discovery.js (keep in sync) ----
 $RESEARCH_SHAPE = '\b(?:conjectur\w*|theorem|hypothes\w*|falsifier|surviv\w*|tested|baseline|literature|terras|lagarias|collatz|goldbach|riemann|prime|parity|research|generator)\b'
-$NOVELTY_QUESTION = '\b(?:novel|novelty|genuine(?:ly)?\s+(?:new\s+)?discover\w*|(?:new|real)\s+discover\w*|original\s+(?:result|finding|discover\w*)|known\s+results?|already\s+known|in\s+the\s+(?:math(?:ematical)?\s+)?literature|published\s+(?:before|already)|discovered\s+(?:before|already|elsewhere)|(?:seen|studied)\s+before|prior\s+work)\b'
-$NOVELTY_NAMED = '\b(?:novelty\s+(?:gate|check|comparator|pass)|seed\s+pack|literature\s+(?:check|search|comparison|seed)|check(?:ed|ing)?\s+(?:\w+\s+){0,3}against\s+(?:the\s+)?(?:known|literature|established|prior|existing)|compar\w+\s+(?:\w+\s+){0,3}(?:to|against|with)\s+(?:the\s+)?(?:known|literature|established))\b'
+$NOVELTY_QUESTION = '\b(?:novel|novelty|genuine(?:ly)?\s+(?:new\s+)?discover\w*|(?:new|real)\s+discover\w*|original\s+(?:result|finding|discover\w*)|known\s+(?:\w+\s+){0,2}(?:results?|theorems?|conjectures?|facts?)|already\s+known|new\s+to\s+math(?:ematics)?|in\s+the\s+(?:math(?:ematical)?\s+)?literature|published\s+(?:before|already)|discovered\s+(?:before|already|elsewhere)|(?:seen|studied)\s+before|prior\s+work|under\s+development|still\s+(?:being\s+built|in\s+development)|not\s+(?:yet\s+)?built)\b'
+$NOVELTY_NAMED = '\b(?:novelty\s+(?:gate|check|comparator|pass)|seed\s+pack|literature\s+(?:check|search|comparison|seed)|check(?:ed|ing)?\s+(?:\w+\s+){0,6}against\s+(?:the\s+)?(?:known|literature|established|prior|existing)|compar\w+\s+(?:\w+\s+){0,6}(?:to|against|with)\s+(?:the\s+)?(?:known|literature|established))\b'
 
 # ---- detector ported from lib/discovery.js detectResearchNovelty ----
 # $hist is an array of recent message strings (newest last), mirroring the JS
@@ -47,6 +47,11 @@ Check "direct: check against known"       (DetectResearchNovelty "can you check 
 Check "direct: compare to literature"     (DetectResearchNovelty "compare them to the literature please" @()) $true
 Check "direct: novelty gate"              (DetectResearchNovelty "does the novelty gate flag any of these?" @()) $true
 Check "direct: seed pack"                 (DetectResearchNovelty "is it in the seed pack?" @()) $true
+# Live-caught misses (2026-06-13): 4-word gap "check ... against known" + "known
+# mathematical results" (adjective between known and results) + echoed "under development"
+Check "live miss: 4-word check-against"   (DetectResearchNovelty "can you check our generated collatz conjectures against known mathematical results, or is that still under development?" @()) $true
+Check "known mathematical results"        (DetectResearchNovelty "are these surviving conjectures known mathematical results?" @()) $true
+Check "echoed 'under development'"        (DetectResearchNovelty "is the collatz novelty check still under development?" @()) $true
 # Bare pronoun question right AFTER a generator run (the documented repro:
 # generator run -> unrelated turn -> 'are those novel?'). Fires via history.
 Check "bare 'are they novel' + history"   (DetectResearchNovelty "are they novel?" @("run the conjecture generator on collatz up to 100000","ok thanks - what's the weather in riyadh?")) $true
@@ -67,6 +72,8 @@ Check "M2 money supply (no false fire)"   (DetectResearchNovelty "what's the M2 
 Check "fleet question"                    (DetectResearchNovelty "who slipped a tier this week?" @()) $false
 # Bare 'are they novel' with NO research history -> must NOT fire
 Check "bare 'are they novel' no history"  (DetectResearchNovelty "are they novel?" @("what's the capital of egypt?")) $false
+# 'under development' WITHOUT research context (the AND must still hold) -> no fire
+Check "under development, no research"     (DetectResearchNovelty "is the new dashboard feature still under development?" @("how's the fleet today?")) $false
 
 Write-Host "== DIRECTIVE CONTENT: the injected text carries the load-bearing honesty contract ==" -ForegroundColor Cyan
 $disc = Get-Content -Raw -Path (Join-Path $PSScriptRoot '..\lib\discovery.js')
