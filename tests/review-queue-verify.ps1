@@ -39,9 +39,9 @@ function DetectReviewQueue([string]$message) {
   $ids = @([regex]::Matches($s, '#(\d+)') | ForEach-Object { $_.Groups[1].Value })
   if ($ids.Count -gt 0) {
     $action = $null
-    if ($s -imatch '\b(?:dismiss|reject|drop|discard|remove)\b') { $action = 'dismissed' }
-    elseif ($s -imatch '\bkeep\b') { $action = 'kept' }
-    elseif ($s -imatch '\b(?:reviewed|mark(?:ed)?)\b') { $action = 'reviewed' }
+    if (($s -imatch '\b(?:dismiss|reject|drop|discard|delete|remove|scrap|trash|kill|ignore|skip|exclude|hide)\b') -or ($s -imatch '\bthrow\s+(?:it\s+|them\s+)?(?:out|away)\b') -or ($s -imatch '\bget\s+rid\s+of\b')) { $action = 'dismissed' }
+    elseif (($s -imatch '\b(?:keep|retain|save|star|flag|shortlist)\b') -or ($s -imatch '\bhold\s+(?:on\s+)?to\b')) { $action = 'kept' }
+    elseif ($s -imatch '\b(?:reviewed|mark(?:ed)?|seen)\b') { $action = 'reviewed' }
     if ($action) { return @{ mode = 'triage'; ids = $ids; action = $action } }
   }
   if (($s -imatch '\b(?:m3\s+)?(?:conjecture\s+|survivor\s+)?(?:review|triage)\s+queue\b') -or ($s -imatch '\bqueued?\s+for\s+review\b')) {
@@ -94,6 +94,15 @@ $t3 = DetectReviewQueue "mark #5 reviewed"
 CheckTrue "triage: 'mark #5 reviewed' -> reviewed [5]" ($t3.mode -eq 'triage' -and $t3.action -eq 'reviewed' -and $t3.ids[0] -eq '5')
 $t4 = DetectReviewQueue "reject #9 please"
 CheckTrue "triage: 'reject #9' -> dismissed [9]" ($t4.mode -eq 'triage' -and $t4.action -eq 'dismissed')
+# natural removal verbs (LIVE finding: 'delete #9' didn't route -> model fabricated a confirmation)
+$t5 = DetectReviewQueue "delete #9"
+CheckTrue "triage: 'delete #9' -> dismissed (live-found gap)" ($t5.mode -eq 'triage' -and $t5.action -eq 'dismissed')
+$t6 = DetectReviewQueue "throw out #3"
+CheckTrue "triage: 'throw out #3' -> dismissed" ($t6.mode -eq 'triage' -and $t6.action -eq 'dismissed')
+$t7 = DetectReviewQueue "get rid of #4"
+CheckTrue "triage: 'get rid of #4' -> dismissed" ($t7.mode -eq 'triage' -and $t7.action -eq 'dismissed')
+$t8 = DetectReviewQueue "save #5 for later"
+CheckTrue "triage: 'save #5' -> kept" ($t8.mode -eq 'triage' -and $t8.action -eq 'kept')
 
 # negatives: no false positives
 $n1 = DetectReviewQueue "keep going on the collatz run"
