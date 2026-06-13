@@ -99,11 +99,20 @@ attention," not "worthy of generation."*
   cross-feature conditional template v1.1.* Live after one manual migration paste
   (`migrations/m2_external_source.sql`) + POST /api/seed-pack. Non-goal held: no
   PDF-parsing pipelines.
-- **M3-full — Novelty-aware generation**: M3-lite + the M2 novelty gate; surprise /
-  compression scores tracked as metrics. Gate: **zero known-result false positives on
-  held-out literature seeds**. Requires the Odysseus-2 self-contamination family green
-  (M8 must distinguish literature truth from its own surviving conjectures under
-  adversarial retrieval pressure).
+- **M3-full — Novelty-aware PERSISTENCE** ✅ **SHIPPED Build-16 (2026-06-13)**: the M2 novelty
+  gate wired into PERSISTENCE — known-form survivors (deterministic `seedKnownMatch`) are
+  down-ranked below unmatched ones so the capped notebook favors candidates with no pack match;
+  gate v2 / matched baseline / survival counts are untouched (`.known` is tagged AFTER the gate).
+  Per-survivor surprise/compression scores were **CUT** — the mandatory critique (`BUILD_16_SPEC.md`
+  §0/A2) found surprise's "distance from the nearest known form" has no operand for 8/10 templates
+  and is the highest truth-laundering risk. Ship gate **REFRAMED** from "zero false positives on
+  held-out literature seeds" (vacuous: 16/19 seeds aren't generator-expressible) to a **confusion
+  matrix over every generator-expressible (template, slot): FN=0 (no known form narrated novel) ∧
+  FP=0 (no fabricated citation), held-out batch clean** (`tests/m2-novelty-verify.ps1` §E, 34/34).
+  Honest finding: the live known/generated overlap is ONE template (`B_sigma_freq` at t>8;
+  `B_nu_geo` is micro-proved away before survival). Requires the Odysseus-2 self-contamination
+  family green + Armed 6 `od2arm.rank_not_novelty` (ranking is a spam-cap heuristic, never a
+  novelty/truth verdict). M3.1 is the better next "big" rung — the honest overlap is small.
 - **M3.1 — Clustering + prioritization**: cluster survivors, rank by interestingness,
   feed a human-review queue. The cheap layer before any proof scaffolding.
 - **M4-manual — Lemma-DAG scaffolding, HUMAN-architected**: Muhammad provides the DAG in
@@ -149,7 +158,7 @@ if M8 treats *verified-to-N* as *proof* — the North Star collapses.
 | L2 Grounded assistant | ✅ complete |
 | L3 Proactive ops | 🟢 ~85% |
 | L4 Verified tools | 🟢 ~80% ← current |
-| L5 Autonomous loop | ⚪ ~50% (M1 + M3-lite + M2/novelty shipped) |
+| L5 Autonomous loop | ⚪ ~55% (M1 + M3-lite + M2/novelty + M3-full shipped) |
 | L6 Compound | ⚪ the destination |
 
 ---

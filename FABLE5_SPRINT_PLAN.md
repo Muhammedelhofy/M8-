@@ -274,6 +274,33 @@ survivability logic; Fable time goes to what dies on June 22):**
       **Stretch BOTH landed**: A_cond_nu_peak/B_cond_peak_nu conditional template +
       edge-count summarization. Offline: m3 mirror 53/53. ⚠ Live: needs the ONE
       manual migration paste, then seed + run `tests/BUILD15_LIVE_TEST.md`.
+- [x] **M3-full — Build-16 ✅ 2026-06-13 (post-S8 rung; Opus, Fable removed from the plan).**
+      Scope SHRANK after the mandatory critique (`BUILD_16_SPEC.md` §0): the kickoff's three
+      additions silently assumed a rich generator/literature overlap that **does not exist** —
+      the deterministic novelty gate keys on `matches_templates`, only 3/19 seeds carry it
+      (`B_sigma_freq`, `B_nu_geo`), and `B_nu_geo` is pre-killed by the micro-prover, so the
+      LIVE overlap on survivors is ONE template (`B_sigma_freq` at t>8 = the Terras label).
+      Muhammad's two calls: **no per-survivor scalar** (surprise's "distance from nearest known
+      form" has no operand for 8/10 templates + highest laundering risk → cut; compression
+      deferred) and **honest-narrow ship gate**. **Shipped (minimal):** (1) novelty-aware
+      PERSISTENCE — `rankSurvivors` down-ranks known-form survivors below unmatched ones
+      (`[...rankWithinGroup(unmatched), ...rankWithinGroup(known)]`) so the capped-5 notebook
+      slots favor candidates with no pack match (~20+ survive live); **gate v2, the matched
+      baseline, and survival counts are byte-identical to Build-15** — `.known` is tagged AFTER
+      the gate is computed and only adds a property (load-bearing invariant). (2) `NOVELTY_VERSION=1`
+      stamp (`m3_full`/`m3_novelty_version`, packet header `…(M3-FULL novelty-aware persistence
+      v1)`) — `GEN_VERSION` stays 2 because generation/gate didn't move; only persisted ORDER can,
+      so it's stamped (A9). (3) packet NOVELTY line + honesty-contract rank-is-NOT-novelty guard.
+      **Honest ship gate** = confusion matrix over the generator's ACTUAL slot domains
+      (`tests/m2-novelty-verify.ps1` §E: 79 candidates, **FN=0 ∧ FP=0** overall + held-out;
+      replaces the vacuous held-out-seeds idea — 16/19 seeds aren't generator-expressible) + §F
+      down-rank partition mirror; **34/34 offline** (was 26), m3 mirror **53/53** unchanged.
+      **Odysseus-2 Armed 6** `od2arm.rank_not_novelty` (battery 6/6 validates; regexes compile;
+      grader logic walked offline) — pressures "persisted survivors = your novel discoveries".
+      Live test `tests/BUILD16_LIVE_TEST.md`. Brutal-honesty note on record: the rung is small
+      because the honest overlap is small; M3.1 (clustering/review queue) is the better next "big"
+      target. NOT done: surprise/compression scores, seed-pack widening (no honest finite-bounded
+      results to add).
 - [ ] Post-window (any model): SSE streaming · stateful alerting build · lean badges UI ·
       fleet name-parse fix · sentence-scope the notebook READ detection (S6 finding:
       a long conversational paste containing "the notebook stays the ledger of record"
