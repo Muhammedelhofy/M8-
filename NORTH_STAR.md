@@ -121,22 +121,25 @@ attention," not "worthy of generation."*
   M3 has produced 50 candidates → 5 survivors → ≥1 a human finds genuinely interesting.
   Gate: ≥1 verified leaf requiring ≥2 distinct Mathlib imports + induction, against an
   adversarial invalid-shortcut probe.
-  **✅ SHIPPED Build-18 (`7760947`, 2026-06-13), live-verified**: leaf discharge via Lean
-  (`lib/lemma-dag.js`), "leaves verified k/m" + "NOT proven / open conjecture" framing held
-  under live pressure (2/2 live runs incl. direct "so it's basically proven now, right?").
-  The §0.4 gate (qualifying leaf + invalid-shortcut probe) is STILL OPEN after 7 live
-  attempts across two sessions (2026-06-13 → 2026-06-14). **2026-06-14 update**: the earlier
-  `lean_pending`/cold-checker result was a genuine Cloud Run cold start (~9.5 min Mathlib
-  import, confirmed in logs: `READY — Mathlib imported in 570.0s`), NOT a logic bug — waited
-  out live, instance came up healthy, `min-instances=1` rejected on cost (~$100-150/mo).
-  Once warm, got REAL Lean rejections (not pending) on 3 more attempts: best result so far
-  (`{Mathlib: Finset, Nat}` + induction, 2/2 namespaces — one step from `isQualifyingLeaf`)
-  came from prescriptive natural-language tactic names (e.g. "use induction n with d hd,
-  apply Finset.sum_range_succ and Nat.succ_eq_add_one, close with ring"); handing Gemini a
-  near-complete literal Lean proof to "transcribe" REGRESSED (empty namespaces — likely an
-  added `import` line tripped `hasBannedTokens` before Lean even ran). Recommended small
-  follow-up (Build-18.1): surface the actual Lean error/diagnostic text for `lean_rejected`
-  leaves so iteration is targeted instead of blind. Gate code remains offline-verified (32/32).
+  **✅ SHIPPED Build-18 (`7760947`, 2026-06-13) + §0.4 GATE PASSED LIVE (2026-06-14, Build-18.1)**:
+  leaf discharge via Lean (`lib/lemma-dag.js`), "leaves verified k/m" + "NOT proven / open
+  conjecture" framing held under live pressure (incl. direct "so it's basically proven now,
+  right?"). **GATE GREEN** with a Finset Gauss-sum leaf (`2·Σ_{range(n+1)} i = n·(n+1)`):
+  `lean_verified` + `induction` + 2 namespaces `{Finset, Nat}` AND the invalid-shortcut probe
+  rejected BOTH `:= by decide` and `:= by simp` (verdicts `lean_rejected, lean_rejected`),
+  proving the induction structure is necessary. Honest caveat: that DAG is degenerate (L1 ≈
+  the whole target, L2 a trivial restatement) — it exercised the gate machinery + honesty
+  spine end-to-end, not a deep decomposition or new math (Gauss sum is elementary). **What
+  made it possible = Build-18.1 (`470dfef`)**: surface the actual Lean error text on
+  `lean_rejected` leaves in the scaffold packet (was a bare "✗ Lean rejected"). Drove a
+  rejected→rejected→verified debug in 3 live turns: kill `Nat.succ_eq_add_one` (no `.succ`
+  in goal) → add `Nat.mul_add` (distribute the 2 before applying `hd`) → `simp only [id_eq]`
+  (unfold the opaque `id` so `ring` closes). Lesson reaffirmed: prescriptive natural-language
+  tactic names work; handing Gemini literal Lean to "transcribe" regresses (adds banned
+  `import` → empty namespaces). Earlier 2026-06-14: the `lean_pending` results were a genuine
+  Cloud Run cold start (~9.5 min Mathlib import, logs `READY — Mathlib imported in 570.0s`),
+  resolved by waiting it out; `min-instances=1` rejected on cost (~$100-150/mo). Offline
+  `tests/lemma-dag-verify.ps1` 36/36 (incl. the Build-18.1 error-line mirror).
 
 **Odysseus-2** (gates M3-full and L5): faithfulness family (assumption-dropping /
 theorem-substitution on the Lean lane) + self-contamination family (own-conjecture vs
@@ -173,10 +176,11 @@ if M8 treats *verified-to-N* as *proof* — the North Star collapses.
 | L1 Chatbot | ✅ complete |
 | L2 Grounded assistant | ✅ complete |
 | L3 Proactive ops | 🟢 ~85% |
-| L4 Verified tools | 🟢 ~80% ← current |
-| L5 Autonomous loop | ⚪ ~60% (M1 + M3-lite + M2/novelty + M3-full + M3.1 + M4-manual shipped) |
+| L4 Verified tools | 🟢 ~85% ← current (M4-manual §0.4 gate PASSED live 2026-06-14) |
+| L5 Autonomous loop | ⚪ ~60% (M1 + M3-lite + M2/novelty + M3-full + M3.1 + M4-manual+gate shipped) |
 | L6 Compound | ⚪ the destination |
 
 ---
 
-*Canonical as of Session-16 / S8 Build-15 (2026-06-13). Edit deliberately; do not regenerate from scratch.*
+*Canonical as of Session-23 / Build-18.1 (2026-06-14) — M4-manual §0.4 gate passed live.
+Edit deliberately; do not regenerate from scratch.*
