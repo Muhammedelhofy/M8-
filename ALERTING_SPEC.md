@@ -1,11 +1,11 @@
 # M8 Stateful Proactive Alerting — SPEC (Build: JULY · spec'd S8/Build-15, 2026-06-13)
 
-*Merged design per team round 3 Q5 (`M8_Team_Round3_Synthesis_2026_06_13.md`):
+*Merged design per team round 3 Q5 (`archive/M8_Team_Round3_Synthesis_2026_06_13.md`):
 state machine (union of replies) · data-verified resolution (Gemini) × 2 consecutive
 clear checks (Grok) · asymmetric hysteresis (Gemini) · worsening-delta re-raise
 (Manus) · fleet-level fatigue controls (Manus/Gemini) · **cash-gap first (Grok's
 ruling — Muhammad can overrule here in spec review)**. Track A — Personal AI OS.
-SPEC ONLY: zero alerting code ships in S8 (scope discipline, BUILD_15_SPEC.md A10).*
+SPEC ONLY: zero alerting code ships in S8 (scope discipline, archive/BUILD_15_SPEC.md A10).*
 
 ## 0. Why stateful (the round-2 finding this answers)
 

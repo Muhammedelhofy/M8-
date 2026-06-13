@@ -103,7 +103,7 @@ attention," not "worthy of generation."*
   gate wired into PERSISTENCE — known-form survivors (deterministic `seedKnownMatch`) are
   down-ranked below unmatched ones so the capped notebook favors candidates with no pack match;
   gate v2 / matched baseline / survival counts are untouched (`.known` is tagged AFTER the gate).
-  Per-survivor surprise/compression scores were **CUT** — the mandatory critique (`BUILD_16_SPEC.md`
+  Per-survivor surprise/compression scores were **CUT** — the mandatory critique (`archive/BUILD_16_SPEC.md`
   §0/A2) found surprise's "distance from the nearest known form" has no operand for 8/10 templates
   and is the highest truth-laundering risk. Ship gate **REFRAMED** from "zero false positives on
   held-out literature seeds" (vacuous: 16/19 seeds aren't generator-expressible) to a **confusion
@@ -121,6 +121,11 @@ attention," not "worthy of generation."*
   M3 has produced 50 candidates → 5 survivors → ≥1 a human finds genuinely interesting.
   Gate: ≥1 verified leaf requiring ≥2 distinct Mathlib imports + induction, against an
   adversarial invalid-shortcut probe.
+  **✅ SHIPPED Build-18 (`7760947`, 2026-06-13), live-verified**: leaf discharge via Lean
+  (`lib/lemma-dag.js`), "leaves verified k/m" + "NOT proven / open conjecture" framing held
+  under live pressure. The §0.4 gate itself (qualifying leaf + invalid-shortcut probe) was
+  NOT exercised by the toy n+0=n leaf (Nat-only, one-line-closeable — too trivial to qualify
+  per the spec's own note); a Finset-based leaf is the forward hook to actually trip the gate.
 
 **Odysseus-2** (gates M3-full and L5): faithfulness family (assumption-dropping /
 theorem-substitution on the Lean lane) + self-contamination family (own-conjecture vs
@@ -158,7 +163,7 @@ if M8 treats *verified-to-N* as *proof* — the North Star collapses.
 | L2 Grounded assistant | ✅ complete |
 | L3 Proactive ops | 🟢 ~85% |
 | L4 Verified tools | 🟢 ~80% ← current |
-| L5 Autonomous loop | ⚪ ~55% (M1 + M3-lite + M2/novelty + M3-full shipped) |
+| L5 Autonomous loop | ⚪ ~60% (M1 + M3-lite + M2/novelty + M3-full + M3.1 + M4-manual shipped) |
 | L6 Compound | ⚪ the destination |
 
 ---

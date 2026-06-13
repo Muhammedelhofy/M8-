@@ -2,6 +2,7 @@
 *Muhammad El-Hofy — Senior Strategy & Operations Manager, Riyadh*
 *Version: 2026-06-12 (S5 revision, Fable 5 window) · Living document — update each phase*
 *2026-06-13 — Epistemic Classification Axis added as a PARKED Phase-5 ticket (5-model team round complete); current-state note added below the priority stack. Active track: **M4-manual + Lean**.*
+*2026-06-13 — Build-18 (M4-manual) SHIPPED + live-verified (`7760947`): lemma-DAG scaffolding, leaf discharge via Lean, "leaves verified k/m, NOT proven" honesty held live. Active track now **L5 (gated)**; Phase-5 Epistemic Classification Axis remains PARKED.*
 
 ---
 
@@ -73,7 +74,7 @@ Build once. Use everywhere.
 L5 loop is anything but a spam automator. Each ships as a thin slice behind a measurable
 gate — the Build-12 discipline (benchmark 0.3→0.65, data not opinions).*
 
-> **REV 2 (team round 2, 2026-06-12 — see `M8_Team_Round2_Synthesis_2026_06_12.md`):**
+> **REV 2 (team round 2, 2026-06-12 — see `archive/M8_Team_Round2_Synthesis_2026_06_12.md`):**
 > order revised to **M1 → M3-lite → M2 → M3-full → M3.1 → M4-manual → L5** (generator
 > before literature, 3–1; survivors never promoted past tested-to-N until the novelty
 > gate exists). M3 schema gains **Type B trend/statistical conjectures** (seeded-
@@ -163,7 +164,7 @@ infrastructure *is* the expected value. The claim we never make: that we're alre
 
 ## Parked — Epistemic Classification Axis ("Unforbidden Knowledge") · Phase-5, demand-triggered
 
-> **Status: PARKED — spec frozen 2026-06-13 after a 5-model team round (Grok · M8 · GPT · Gemini · Manus + Claude).** This is a *demand-triggered* ticket, **not a fixed rung**. The active track stays **M4-manual → L5**. Brief: `M8_Team_Brief_Epistemic_Classification_2026_06_13.md`.
+> **Status: PARKED — spec frozen 2026-06-13 after a 5-model team round (Grok · M8 · GPT · Gemini · Manus + Claude).** This is a *demand-triggered* ticket, **not a fixed rung**. The active track stays **M4-manual → L5**. Brief: `archive/M8_Team_Brief_Epistemic_Classification_2026_06_13.md`.
 
 **What & why.** A new graph axis for the *epistemic standing of an idea* — distinct from the existing `source` (provenance) and `status` axes — so M8 can engage speculative/fringe topics (Vortex Math, Wolfram Physics, Simulation Theory, Cymatics, Electric Universe, prime-mysticism…), surface the *real math inside them*, and **never present the speculative leap as established**. It extends M8's honesty-label discipline; it is the credibility moat, **not** a pivot to pseudoscience.
 
@@ -320,14 +321,15 @@ These are the layers in build order. Each one unlocks the next (status as of 202
                                           ≥2× random-baseline gate (REV 2: before M2)
 7. LITERATURE SEED PACKS (M2)          ← novelty gate; gates "human attention"
 8. CONJECTURE ENGINE FULL (M3-full)    ← + M3.1 clustering/prioritization
-9. LEMMA-DAG SCAFFOLDING (M4-MANUAL)   ← human-architected DAGs only; entry 50→5→1
-10. AUTONOMOUS LOOP (L5)               ← a cron over 5–9; ships LAST, metric-gated
+9. LEMMA-DAG SCAFFOLDING (M4-MANUAL)   ✅ DONE — Build-18, human-architected DAGs only;
+                                          leaf discharge via Lean, "k/m leaves, NOT proven"
+10. AUTONOMOUS LOOP (L5)               ← NEXT — a cron over 5–9; ships LAST, metric-gated
 11. STATEFUL PROACTIVE ALERTS (Track A) ← July, any model; graph-tracked deltas,
                                           no amnesiac re-alerts (team round 2 pick)
 12. SAAS PRODUCT (Track A spin-off)    ← Month 12+, unchanged
 ```
 
-> **Stack status (2026-06-13, post Build-17):** rungs 1–8 above **plus the M3.1 survivor review queue** are ✅ DONE (Builds 8–17, all live). **Rung 9 — M4-MANUAL (Lemma-DAG scaffolding) is NEXT and is the active track**; L5 (rung 10) stays gated behind it. The **Epistemic Classification Axis is PARKED** — see the parked-ticket section above; demand-triggered, not a fixed rung. *(The "What's Still Missing" table near the top of this doc predates Builds 13–17 and is stale — this note is the current state.)*
+> **Stack status (2026-06-13, post Build-18):** rungs 1–9 above are ✅ DONE (Builds 8–18, all live). **Build-18 (M4-manual, `7760947`) SHIPPED + live-verified** — human-architected lemma-DAG scaffolding, leaf discharge via Lean, "leaves verified k/m, NOT proven" honesty held under live pressure. The §0.4 ship gate (qualifying leaf: induction + ≥2 distinct Mathlib namespaces + invalid-shortcut rejected) was NOT exercised by the n+0=n toy test (too trivial to qualify, by the spec's own note) — a Finset-based leaf is the forward hook if/when that gate matters. **Rung 10 — L5 (autonomous loop) is NEXT**, gated on 3 consecutive unattended runs with zero battery regressions. The **Epistemic Classification Axis is PARKED** — see the parked-ticket section above; demand-triggered, not a fixed rung. *(The "What's Still Missing" table near the top of this doc predates Builds 13–18 and is stale — this note is the current state.)*
 
 ---
 
@@ -378,5 +380,5 @@ This is not a chatbot. It is a compound intelligence — getting more useful eve
 
 ---
 
-*Linked documents: Unsolved_Problems_Brief.md (Track B research targets) · M8_Team_Round2_Synthesis_2026_06_12.md (latest team round) · closed team-round briefs in `archive/`*
+*Linked documents: Unsolved_Problems_Brief.md (Track B research targets) · closed team-round briefs, synthesis docs, and finished build specs (06-10 through Build-18) in `archive/`*
 *Next review: End of Phase 0 (Month 1)*
