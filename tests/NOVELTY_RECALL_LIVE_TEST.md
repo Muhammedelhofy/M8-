@@ -71,3 +71,19 @@ NOTE: the FIRST live call fired against the old build mid-deploy (push→serve l
 showed the bug — always confirm the Vercel deployment is `state:"READY"` with `githubCommitSha`
 == your commit before trusting a live result. The widening commit (bbb7120) was driven by a
 natural phrasing that the offline mirror's hand-picked phrasings didn't cover.
+
+### Option (b) — grounded recall (commit 7687a68, production READY)
+
+Grounding check (read-only SQL on the live `collatz-m3` thread): the model's "3 match a known
+form" was REAL (`metadata.m3_known_form` on every recent run summary), but "24 surviving
+conjectures" conflated *mined survival* (24) with *persisted survivors* (capped at 5; known-form
+matches are down-ranked out). `buildM3NoveltyRecall` now injects the latest run-summary note as a
+GROUND-TRUTH RECALL packet.
+
+- ✅ **Reported phrasing, fresh session** → *"based on the latest M3 generator run (seed 7)… 23
+  survived… 3 match a known result form… 20 did not… persisted 5, prioritizing non-matches."*
+  Real figures, correct survived-vs-persisted labeling, no fabricated counts.
+- ⚠️ **Bare pronoun** ("are those survivors novel?") → still an honest clarify (detector fires +
+  packet injected, but the model clarifies the terse question). Not the bug; route-dependent;
+  left as-is. Optional further polish: nudge the directive to answer-not-clarify when a recall
+  packet is present.
