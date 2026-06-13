@@ -6,7 +6,8 @@
     "api/chat.js": { "maxDuration": 60 },
     "api/chat-stream.js": { "maxDuration": 60 },
     "api/deck.js": { "maxDuration": 30 },
-    "api/cron-summarize.js": { "maxDuration": 60 }
+    "api/cron-summarize.js": { "maxDuration": 60 },
+    "api/seed-pack.js": { "maxDuration": 60 }
   },
   "crons": [
     { "path": "/api/cron-summarize", "schedule": "0 2 * * *" }

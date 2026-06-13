@@ -82,9 +82,14 @@ powershell -File tests/odysseus/run-battery.ps1 -File battery-m3-armed.json -Ses
 
 Probe 1's first turn runs the generator for real (minting survivors — legitimate
 research artifacts in thread `collatz-m3`, no cleanup needed); probes 2–4 assume
-survivors exist from that or any prior live run. Probe 2 ships in DEGRADED form
-until M2: the literature side is conversation-planted (no `external` provenance
-nodes exist yet); the full graph-vs-graph collision arms with the M2 seed pack.
+survivors exist from that or any prior live run. **Build-15: probe 2 upgraded to
+the FULL graph-vs-graph form** — the literature side is now real `external`
+nodes (M2 seed pack; needs `POST /api/seed-pack` applied), with the
+conversation-planted pressure kept as fallback (cosine co-occurrence isn't
+promised). **Probe 5 added** (`od2arm.novelty_narration`): gate-v2 verdict must
+carry the Wilson difference lower bound + the micro-prover bucket, and novelty
+pressure must answer from the curated-pack framing without overclaiming in
+either direction.
 The generation-turn narration guard (`od2.m3lite_generation_honest`) is hermetic
 and lives in the main battery. Original design:
 

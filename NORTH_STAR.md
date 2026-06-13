@@ -83,10 +83,22 @@ attention," not "worthy of generation."*
   baseline** + non-triviality floor (≥2 distinct M1 features by construction + a
   vacuity floor — slack claims don't count as survivors, both cohorts) ·
   Odysseus-2 M3-armed probes armed (`battery-m3-armed.json`).
-- **M2 — Literature seed packs** (curated, never crawled): 20–50 hand-curated known
-  results per problem as `external`-provenance graph nodes (Terras 1976, Tao 2019,
-  Barina bound, cycle constraints…). Enables the novelty gate: "is this already known?"
-  Gate: 10/10 on planted known/unknown probes. Non-goal: PDF-parsing pipelines.
+- **M2 — Literature seed packs** ✅ **SHIPPED Build-15 (S8, 2026-06-13) — GATE PASSED
+  10/10** (curated, never crawled): 19 hand-curated, source-verified Collatz results
+  as `external`-provenance graph nodes (`data/seed-packs/collatz-v1.json`: Terras
+  1976, Everett, Lagarias surveys, Tao 2019, Korec, Krasikov–Lagarias x^0.84,
+  Barina 2^71, Eliahou/Hercher/Steiner/Garner cycle constraints, elementary residue
+  identities, OEIS refs — every load-bearing figure verified at curation time, the
+  KG-integrity acceptance step). **Novelty gate v1**: deterministic canonical-form/
+  template comparator (10/10 planted known/unknown probes, `tests/m2-novelty-verify.ps1`)
+  + embedding adjacency second pass; survivors narrate "matches known result form".
+  Recall labels literature LITERATURE; theorem nodes = lean_verified OR cited external,
+  nothing else. *Build-15 also re-tooled the generator: gate v2 (Wilson-difference,
+  cohort 120, ratio demoted to metric) + micro-prover pre-falsifier (zero-variance +
+  covering-set — provable identities retire automatically; B_nu_geo gone wholesale) +
+  cross-feature conditional template v1.1.* Live after one manual migration paste
+  (`migrations/m2_external_source.sql`) + POST /api/seed-pack. Non-goal held: no
+  PDF-parsing pipelines.
 - **M3-full — Novelty-aware generation**: M3-lite + the M2 novelty gate; surprise /
   compression scores tracked as metrics. Gate: **zero known-result false positives on
   held-out literature seeds**. Requires the Odysseus-2 self-contamination family green
@@ -137,9 +149,9 @@ if M8 treats *verified-to-N* as *proof* — the North Star collapses.
 | L2 Grounded assistant | ✅ complete |
 | L3 Proactive ops | 🟢 ~85% |
 | L4 Verified tools | 🟢 ~80% ← current |
-| L5 Autonomous loop | ⚪ ~40% (M1 + M3-lite shipped) |
+| L5 Autonomous loop | ⚪ ~50% (M1 + M3-lite + M2/novelty shipped) |
 | L6 Compound | ⚪ the destination |
 
 ---
 
-*Canonical as of Session-14 / S6 Build-13 (2026-06-12). Edit deliberately; do not regenerate from scratch.*
+*Canonical as of Session-16 / S8 Build-15 (2026-06-13). Edit deliberately; do not regenerate from scratch.*

@@ -245,10 +245,35 @@ survivability logic; Fable time goes to what dies on June 22):**
       Build-8). Found for post-window list: graph node LABELS truncate mid-number
       (content.slice(0,160) cut "2 ≤ n ≤ 10,000" → recall narrated "n between 2 and
       10") — cosmetic, non-Fable fix.
-- [ ] Session 8 (if window remains) — **M2 Collatz literature seed pack authored by
-      Fable** (20–50 curated results, `external` provenance — the math-literacy
-      bottleneck) + **stateful proactive-alerting SPEC** for the July Track A build
-      (graph-tracked deltas, alert conditions from M8's round-2 self-review).
+- [x] Session 8 — Build-15 ✅ 2026-06-13 (scope locked by team round 3,
+      `M8_Team_Round3_Synthesis_2026_06_13.md`; adversarial critique first in
+      `BUILD_15_SPEC.md` — key catch: the locked "cohort 120" was arithmetically
+      impossible at Build-14 domains (mined statements are deterministic per slot
+      tuple, capacity ≈80) AND nobody flagged that the baseline must be template-
+      composition-MATCHED or Wilson compares different mixes).
+      **(1) Gate v2 SHIPPED**: cohort 120/side (domains expanded, exhaustion-safe
+      allocation, matched baseline), gate = Wilson/Newcombe 95% lower bound of the
+      survival difference > 0; ratio demoted to tracked metric; lone-survivor-vs-
+      zero-baseline no longer auto-passes (v1 did). **(2) Micro-prover SHIPPED**:
+      zero-variance + covering-set residue decidability (J≤8, under-kill bias:
+      ≥3/bucket, residue-defined domains only — B_cond_peak_nu's dynamics-defined
+      domain exempted), both cohorts, pre-falsification; offline mirror proves it
+      retires B_nu_geo wholesale (geometric law = provable) + σ≤3 frequency claims
+      + the Build-14 σ-class leak, while sparing σ∞/peak dynamics. **(3) M2 seed
+      pack v1 SHIPPED**: 19 verified seeds (each with curation verification record;
+      figures web-verified: Terras '76, Tao '19 log-density, Korec ln3/ln4,
+      K–L x^0.84, Barina 2^71, Eliahou 17,087,915, Hercher m≤91; dropped the
+      6.952·log n constant — couldn't pin the normalization = don't ship it),
+      `migrations/m2_external_source.sql` + POST /api/seed-pack (bundled-JSON-only,
+      CRON_SECRET posture, migration_required detection), novelty gate v1
+      (deterministic template/slot comparator 10/10 = NORTH_STAR M2 gate,
+      `tests/m2-novelty-verify.ps1` 26/26 + embedding adjacency pass), recall
+      LITERATURE labels + GRAPH_GROUND two-origin theorem rule. **(4) Odysseus-2
+      armed**: probe 2 FULL graph-vs-graph form + od2arm.novelty_narration (5/5
+      validate). **(5) ALERTING_SPEC.md** (cash-gap first, merged round-3 design).
+      **Stretch BOTH landed**: A_cond_nu_peak/B_cond_peak_nu conditional template +
+      edge-count summarization. Offline: m3 mirror 53/53. ⚠ Live: needs the ONE
+      manual migration paste, then seed + run `tests/BUILD15_LIVE_TEST.md`.
 - [ ] Post-window (any model): SSE streaming · stateful alerting build · lean badges UI ·
       fleet name-parse fix · sentence-scope the notebook READ detection (S6 finding:
       a long conversational paste containing "the notebook stays the ledger of record"

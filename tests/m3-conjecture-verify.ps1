@@ -146,19 +146,46 @@ for ($n = 3; $n -le $LIM; $n += 2) { if ($nu[$n] -ge 4) { $found++; if ($total[$
 CheckTrue "nu>=4 class non-empty ($found members)" ($found -gt 100)
 CheckTrue "nu>=4 max sigma_inf varies (max=$mx > 20)" ($mx -gt 20)
 
-# ================= C) gate + vacuity arithmetic =================
-Write-Host "`n== C) gate + vacuity mirrors ==" -ForegroundColor Cyan
-function GatePass([int]$ms, [int]$mt, [int]$bs, [int]$bt) {
-  $mr = $ms / $mt; $br = $bs / $bt
-  if ($ms -lt 1) { return $false }
-  if ($br -eq 0) { return $true }
-  return $mr -ge (2 * $br)
+# ================= C) GATE v2 (Wilson/Newcombe) + vacuity arithmetic =================
+Write-Host "`n== C) gate v2 (Wilson difference) + vacuity mirrors ==" -ForegroundColor Cyan
+# Build-15 (round-3 Q2): gate = 95% lower bound of (p_mined - p_baseline) > 0.
+# Mirrors wilsonCI + newcombeDiffLower in lib/conjecture-gen.js exactly.
+$WZ = 1.96
+function WilsonLo([int]$k, [int]$n) {
+  if ($n -eq 0) { return 0.0 }
+  $p = $k / $n; $z2 = $WZ * $WZ
+  $den = 1 + $z2 / $n
+  $center = ($p + $z2 / (2 * $n)) / $den
+  $half = ($WZ * [math]::Sqrt(($p * (1 - $p)) / $n + $z2 / (4 * $n * $n))) / $den
+  return [math]::Max(0.0, $center - $half)
 }
-Check "gate: 5/30 vs 1/30 -> PASS" (GatePass 5 30 1 30) True
-Check "gate: 2/30 vs 2/30 -> FAIL" (GatePass 2 30 2 30) False
-Check "gate: 1/30 vs 0/30 -> PASS (baseline zero)" (GatePass 1 30 0 30) True
-Check "gate: 0/30 vs 0/30 -> FAIL (no survivors)" (GatePass 0 30 0 30) False
-Check "gate: 4/30 vs 2/30 -> PASS (exactly 2x)" (GatePass 4 30 2 30) True
+function WilsonHi([int]$k, [int]$n) {
+  if ($n -eq 0) { return 0.0 }
+  $p = $k / $n; $z2 = $WZ * $WZ
+  $den = 1 + $z2 / $n
+  $center = ($p + $z2 / (2 * $n)) / $den
+  $half = ($WZ * [math]::Sqrt(($p * (1 - $p)) / $n + $z2 / (4 * $n * $n))) / $den
+  return [math]::Min(1.0, $center + $half)
+}
+function NewcombeLower([int]$k1, [int]$n1, [int]$k2, [int]$n2) {
+  $p1 = 0.0; if ($n1 -gt 0) { $p1 = $k1 / $n1 }
+  $p2 = 0.0; if ($n2 -gt 0) { $p2 = $k2 / $n2 }
+  $lo1 = WilsonLo $k1 $n1; $hi2 = WilsonHi $k2 $n2
+  return ($p1 - $p2) - [math]::Sqrt([math]::Pow($p1 - $lo1, 2) + [math]::Pow($hi2 - $p2, 2))
+}
+function GateV2([int]$ms, [int]$mt, [int]$bs, [int]$bt) {
+  if ($ms -lt 1) { return $false }
+  return ((NewcombeLower $ms $mt $bs $bt) -gt 0)
+}
+# Wilson sanity: 0/120 has hi = z^2/(n+z^2) (textbook value)
+$hi0 = WilsonHi 0 120
+CheckTrue "Wilson hi(0/120) = z^2/(n+z^2) (got $([math]::Round($hi0,4)))" ([math]::Abs($hi0 - (3.8416 / 123.8416)) -lt 0.0005)
+Check "gate v2: 12/120 vs 2/120 -> PASS (clear separation)" (GateV2 12 120 2 120) True
+Check "gate v2: 40/120 vs 10/120 -> PASS" (GateV2 40 120 10 120) True
+Check "gate v2: 5/120 vs 2/120 -> FAIL (2.5x ratio, CI too wide -- v1 would have passed)" (GateV2 5 120 2 120) False
+Check "gate v2: 1/120 vs 0/120 -> FAIL (lone survivor no longer auto-passes -- v1 passed this)" (GateV2 1 120 0 120) False
+Check "gate v2: 0/120 vs 0/120 -> FAIL (no survivors)" (GateV2 0 120 0 120) False
+Check "gate v2: equal rates 10/120 vs 10/120 -> FAIL" (GateV2 10 120 10 120) False
 
 # vacuity (Type A ratio rule, VACUITY_RATIO=1.5): claimed c vs needed c
 function VacA([double]$c, [double]$need) { return $c -gt ([math]::Max($need, 1) * 1.5) }
@@ -174,6 +201,87 @@ function StmtResSigma([int]$mm, [int]$rr, [int]$cc, [string]$NN) {
   return "for all n <= $NN with n = $rr (mod $mm): stopping time sigma(n) <= $cc"
 }
 Check "statement canonical + deterministic" (StmtResSigma 6 1 96 "100,000") (StmtResSigma 6 1 96 "100,000")
+
+# ================= E) MICRO-PROVER mirror (Build-15, round-3 Q4) =================
+Write-Host "`n== E) micro-prover mirror vs ground truth ==" -ForegroundColor Cyan
+# Mirrors residueDecided in lib/conjecture-gen.js: zero-variance, then constant-
+# within-every-(n mod 2^J)-bucket for J=1..8, every bucket >= 3 members,
+# slice >= 16. Reuses the LIM=10,000 feature tables from Part B.
+function ResidueDecided([int[]]$ns, $vals, [bool]$residueDomain) {
+  if ($ns.Count -lt 16) { return "" }
+  $const = $true
+  for ($i = 1; $i -lt $vals.Count; $i++) { if ($vals[$i] -ne $vals[0]) { $const = $false; break } }
+  if ($const) { return "zero_variance" }
+  if (-not $residueDomain) { return "" }
+  for ($J = 1; $J -le 8; $J++) {
+    $mod = [math]::Pow(2, $J)
+    $bv = @{}; $bc = @{}
+    $ok = $true
+    for ($i = 0; $i -lt $ns.Count; $i++) {
+      $b = $ns[$i] % $mod
+      if (-not $bv.ContainsKey($b)) { $bv[$b] = $vals[$i]; $bc[$b] = 1 }
+      elseif ($bv[$b] -ne $vals[$i]) { $ok = $false; break }
+      else { $bc[$b] = $bc[$b] + 1 }
+    }
+    if (-not $ok) { continue }
+    $occupied = $true
+    foreach ($cnt in $bc.Values) { if ($cnt -lt 3) { $occupied = $false; break } }
+    if (-not $occupied) { break }
+    if ($bv.Count -ge 2) { return "covering_set_mod_2^$J" }
+  }
+  return ""
+}
+# slice cap mirror (4096) keeps these fast
+$CAP = 4096
+
+# 1) ZERO-VARIANCE catch: sigma on the class n = 1 (mod 4) is constant 3 -- the
+#    Build-14 A2 leak class now dies automatically, no hand exclusion needed.
+$ns1 = New-Object System.Collections.Generic.List[int]
+$vs1 = New-Object System.Collections.Generic.List[object]
+for ($n = 5; $n -le $LIM -and $ns1.Count -lt $CAP; $n += 4) { $ns1.Add($n); $vs1.Add($sigma[$n]) }
+Check "zero-variance: sigma on n=1 (mod 4) -> trivial" (ResidueDecided $ns1.ToArray() $vs1 $true) "zero_variance"
+
+# 2) COVERING-SET catch: the B_nu_geo k=2 indicator over odd n is decided by
+#    n mod 8 -- the geometric law is PROVABLE, the whole template retires.
+$ns2 = New-Object System.Collections.Generic.List[int]
+$vs2 = New-Object System.Collections.Generic.List[object]
+for ($n = 3; $n -le $LIM -and $ns2.Count -lt $CAP; $n += 2) { $ns2.Add($n); $vs2.Add($(if ($nu[$n] -eq 2) { 1 } else { 0 })) }
+Check "covering-set: nu2=2 indicator over odd n -> trivial at J=3" (ResidueDecided $ns2.ToArray() $vs2 $true) "covering_set_mod_2^3"
+
+# 3) COVERING-SET catch: the B_sigma_freq t=3 indicator is decided by n mod 4
+#    (even -> sigma=1; 1 mod 4 -> sigma=3; 3 mod 4 -> sigma>3).
+$ns3 = New-Object System.Collections.Generic.List[int]
+$vs3 = New-Object System.Collections.Generic.List[object]
+for ($n = 2; $n -le $LIM -and $ns3.Count -lt $CAP; $n++) { $ns3.Add($n); $vs3.Add($(if ($sigma[$n] -le 3) { 1 } else { 0 })) }
+Check "covering-set: sigma<=3 indicator over all n -> trivial at J=2" (ResidueDecided $ns3.ToArray() $vs3 $true) "covering_set_mod_2^2"
+
+# 4) UNDER-KILL: sigma_inf over all n is dynamics-dependent -- NOT decided.
+$ns4 = New-Object System.Collections.Generic.List[int]
+$vs4 = New-Object System.Collections.Generic.List[object]
+for ($n = 2; $n -le $LIM -and $ns4.Count -lt $CAP; $n++) { $ns4.Add($n); $vs4.Add($total[$n]) }
+Check "not trivial: sigma_inf over all n (dynamics, not residue)" (ResidueDecided $ns4.ToArray() $vs4 $true) ""
+
+# 5) UNDER-KILL: sigma over a MIXED class (n = 3 mod 4 contains varying sigma).
+$ns5 = New-Object System.Collections.Generic.List[int]
+$vs5 = New-Object System.Collections.Generic.List[object]
+for ($n = 3; $n -le $LIM -and $ns5.Count -lt $CAP; $n += 4) { $ns5.Add($n); $vs5.Add($sigma[$n]) }
+Check "not trivial: sigma on n=3 (mod 4) varies beyond J=8" (ResidueDecided $ns5.ToArray() $vs5 $true) ""
+
+# 6) DOMAIN FLAG: a dynamics-defined domain (B_cond_peak_nu, peak/n >= t) must
+#    NOT get the covering-set inference even when the VALUE is residue-pinned
+#    (nu2=1 iff n=3 mod 4 -- value decidable, claim about domain composition).
+$ns6 = New-Object System.Collections.Generic.List[int]
+$vs6 = New-Object System.Collections.Generic.List[object]
+for ($n = 3; $n -le $LIM -and $ns6.Count -lt $CAP; $n += 2) { if (($peak[$n] / $n) -ge 5) { $ns6.Add($n); $vs6.Add($(if ($nu[$n] -eq 1) { 1 } else { 0 })) } }
+CheckTrue "B_cond_peak_nu domain non-trivial size ($($ns6.Count) members)" ($ns6.Count -ge 100)
+Check "covering-set NOT applied on dynamics-defined domain (flag false)" (ResidueDecided $ns6.ToArray() $vs6 $false) ""
+
+# 7) v1.1 conditional template falsifier sanity: domain odd n with nu2>=3 is
+#    non-empty and peak/n on it VARIES (a real cross-feature claim surface).
+$cnt7 = 0; $mn7 = 1e9; $mx7 = 0
+for ($n = 3; $n -le $LIM; $n += 2) { if ($nu[$n] -ge 3) { $cnt7++; $r = $peak[$n] / $n; if ($r -lt $mn7) { $mn7 = $r }; if ($r -gt $mx7) { $mx7 = $r } } }
+CheckTrue "A_cond_nu_peak domain non-empty ($cnt7 members)" ($cnt7 -gt 200)
+CheckTrue "peak/n varies on nu2>=3 domain (min $([math]::Round($mn7,2)) max $([math]::Round($mx7,2)))" ($mx7 -gt (2 * $mn7))
 
 # ================= summary =================
 Write-Host "`n=================================================="
