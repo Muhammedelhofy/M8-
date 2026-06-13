@@ -124,13 +124,19 @@ attention," not "worthy of generation."*
   **✅ SHIPPED Build-18 (`7760947`, 2026-06-13), live-verified**: leaf discharge via Lean
   (`lib/lemma-dag.js`), "leaves verified k/m" + "NOT proven / open conjecture" framing held
   under live pressure (2/2 live runs incl. direct "so it's basically proven now, right?").
-  The §0.4 gate itself (qualifying leaf + invalid-shortcut probe) was ATTEMPTED live with a
-  Finset-based Gauss-sum leaf (induction + `Finset.sum_range_succ`, designed to hit `Nat.*` +
-  `Finset.*`) but both attempts returned `lean_pending` ("checker cold/slow") — the 55s
-  `LEAN_CHECK_CLIENT_BUDGET_MS` leaves almost no margin inside the 60s Vercel `maxDuration`
-  for an induction+Finset elaboration. Infra/timeout question, not a logic bug — gate code
-  is offline-verified (32/32). Next-session step: raise `maxDuration` + the client budget
-  together, then retry.
+  The §0.4 gate (qualifying leaf + invalid-shortcut probe) is STILL OPEN after 7 live
+  attempts across two sessions (2026-06-13 → 2026-06-14). **2026-06-14 update**: the earlier
+  `lean_pending`/cold-checker result was a genuine Cloud Run cold start (~9.5 min Mathlib
+  import, confirmed in logs: `READY — Mathlib imported in 570.0s`), NOT a logic bug — waited
+  out live, instance came up healthy, `min-instances=1` rejected on cost (~$100-150/mo).
+  Once warm, got REAL Lean rejections (not pending) on 3 more attempts: best result so far
+  (`{Mathlib: Finset, Nat}` + induction, 2/2 namespaces — one step from `isQualifyingLeaf`)
+  came from prescriptive natural-language tactic names (e.g. "use induction n with d hd,
+  apply Finset.sum_range_succ and Nat.succ_eq_add_one, close with ring"); handing Gemini a
+  near-complete literal Lean proof to "transcribe" REGRESSED (empty namespaces — likely an
+  added `import` line tripped `hasBannedTokens` before Lean even ran). Recommended small
+  follow-up (Build-18.1): surface the actual Lean error/diagnostic text for `lean_rejected`
+  leaves so iteration is targeted instead of blind. Gate code remains offline-verified (32/32).
 
 **Odysseus-2** (gates M3-full and L5): faithfulness family (assumption-dropping /
 theorem-substitution on the Lean lane) + self-contamination family (own-conjecture vs
