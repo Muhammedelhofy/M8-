@@ -88,12 +88,22 @@ Check "directive: non-match != novel"      ($dirText -imatch 'NOT a full literat
 Check "directive: curated pack caveat"     ($dirText -imatch 'curated set of known Collatz results, not all of mathematics') $true
 Check "directive: stays machine-generated" ($dirText -imatch 'machine-generated, tested to N') $true
 Check "directive: rank is spam-cap only"   ($dirText -imatch 'spam-cap heuristic, NOT a novelty or truth ranking') $true
+# option (b): bind the answer to the recalled run's real figures
+Check "directive: cite recall packet"      ($dirText -imatch 'GROUND-TRUTH RECALL packet') $true
+Check "directive: no count outside packet" ($dirText -imatch 'NEVER state a survivor or match count that is not in') $true
 
 Write-Host "== WIRING: the guard is injected on BOTH orchestrator paths ==" -ForegroundColor Cyan
 $orch = Get-Content -Raw -Path (Join-Path $PSScriptRoot '..\lib\orchestrator.js')
 $injections = ([regex]::Matches($orch, 'detectResearchNovelty\(message, history\)')).Count
 Check "injected on buffered + streaming"   ($injections -ge 2) $true
 Check "directive imported"                 ($orch -imatch 'detectResearchNovelty, NOVELTY_CAPABILITY_DIRECTIVE') $true
+# option (b): the GROUND-TRUTH recall is fetched + injected on both paths
+$recallCalls = ([regex]::Matches($orch, 'buildM3NoveltyRecall\(sessionId\)')).Count
+Check "recall injected on both paths"      ($recallCalls -ge 2) $true
+Check "recall imported in orchestrator"    ($orch -imatch 'buildM3NoveltyRecall') $true
+$nb = Get-Content -Raw -Path (Join-Path $PSScriptRoot '..\lib\notebook.js')
+Check "recall fn defined + exported"       (($nb -imatch 'async function buildM3NoveltyRecall') -and ($nb -imatch '(?m)^\s*buildM3NoveltyRecall,')) $true
+Check "recall reads the collatz-m3 thread" ($nb -imatch "M3_RECALL_THREAD = ""collatz-m3""") $true
 
 Write-Host ""
 if ($fail -eq 0) { Write-Host "ALL PASS ($pass checks)" -ForegroundColor Green; exit 0 }
