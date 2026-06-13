@@ -1,6 +1,7 @@
 # M8 Evolution Plan
 *Muhammad El-Hofy — Senior Strategy & Operations Manager, Riyadh*
 *Version: 2026-06-12 (S5 revision, Fable 5 window) · Living document — update each phase*
+*2026-06-13 — Epistemic Classification Axis added as a PARKED Phase-5 ticket (5-model team round complete); current-state note added below the priority stack. Active track: **M4-manual + Lean**.*
 
 ---
 
@@ -160,6 +161,33 @@ infrastructure *is* the expected value. The claim we never make: that we're alre
 
 ---
 
+## Parked — Epistemic Classification Axis ("Unforbidden Knowledge") · Phase-5, demand-triggered
+
+> **Status: PARKED — spec frozen 2026-06-13 after a 5-model team round (Grok · M8 · GPT · Gemini · Manus + Claude).** This is a *demand-triggered* ticket, **not a fixed rung**. The active track stays **M4-manual → L5**. Brief: `M8_Team_Brief_Epistemic_Classification_2026_06_13.md`.
+
+**What & why.** A new graph axis for the *epistemic standing of an idea* — distinct from the existing `source` (provenance) and `status` axes — so M8 can engage speculative/fringe topics (Vortex Math, Wolfram Physics, Simulation Theory, Cymatics, Electric Universe, prime-mysticism…), surface the *real math inside them*, and **never present the speculative leap as established**. It extends M8's honesty-label discipline; it is the credibility moat, **not** a pivot to pseudoscience.
+
+**Un-park when ANY trigger fires** (until then, building it is premature — single-user, and Muhammad already knows what's fringe):
+1. M8 ingests **external material at volume** (well beyond the ~19 curated M2 seeds).
+2. M8 serves a **second / untrusted user** who can't self-assess a fringe claim.
+3. **M4 starts ingesting fringe-adjacent human input** → the surgical exception below becomes load-bearing.
+
+**The design — 4 rules (the gems that survived synthesis):**
+
+1. **Decomposition = TWO linked nodes.** Split each idea into its TRUE KERNEL (`the 1-2-4-8-7-5 mod-9 digit cycle is real arithmetic` → `established`) —`spawns`→ its SPECULATIVE LEAP (`…therefore it is the energy-geometry of reality` → `speculative`). **Two nodes, never one combined node** — kernels are *shared* across many leaps (mod-9 → Vortex, Tesla 3-6-9, numerology), and a combined node *pollutes the embedding* so a math search drags the fringe half into context. Recall invariant: never surface a leap without its kernel + both labels.
+
+2. **ONE neutral bucket: `speculative`** → full axis = `established | conjecture | empirical | speculative | refuted` (5 buckets). **CUT from the original pitch:** the 6-bucket `speculative_framework` vs `fringe_pattern` split. Sorting "serious science" from "crackpot" is a sociological vibe-judgment — exactly what M8's deterministic-first rule forbids. (Proof it isn't deterministic: the round could not agree where *Electric Universe* or *Simulation Theory* land.) The Wolfram-vs-Vortex difference shows up in **how solid the kernel node is**, not in a label M8 has to pronounce. "fringe" rejected as pejorative.
+
+3. **Honesty warning is DETERMINISTIC and outside the LLM's reach.** The orchestrator hard-wraps a fixed `[SPECULATIVE / UNVERIFIED LEAP]` block onto the recall packet **before the LLM sees it**, and the LLM is forbidden to reword it — the same machinery as the existing `SOLVE_VERB` / `tested_to_N` guards (a label the model *narrates* is too weak; it smooths it into "a live academic debate"). **Schema rule:** a `speculative` node may NEVER occupy an `evidence_for` / `proof_of` / `verification_of` edge — only `proposes` / `claims` / `interprets`. Add a dedicated **Odysseus probe family** ("did M8 present X as established / as physics?").
+
+4. **M8 READS fringe, never GENERATES it.** The conjecture generator, novelty gate, and falsifier may emit ONLY `conjecture` / `refuted` — structurally barred from `speculative`. The `speculative` label attaches only to `source: external-literature` or explicit user input. **No rootless conjectures:** every machine conjecture must trace upstream to ≥1 `established`/`empirical` node.
+
+**Surgical exception — do this WITH M4-manual (one rule, not the whole axis):** the M4 Lean lane must **refuse to formalize a leap / `speculative` node**, so M8 can never hand a fringe claim Lean-grade credibility. This is the single piece worth wiring before the full axis un-parks — it directly protects the iron rule during M4.
+
+**Why parked, not killed:** the decomposition primitive and the deterministic out-of-LLM warning are genuine differentiators — they let M8 engage messy ideas honestly, which most assistants either swallow whole or dismiss outright. Frozen here so it ships the day a trigger fires.
+
+---
+
 ## Phase 0 — Foundation (Now — Month 1)
 
 > **⚠ 2026-06-12 note:** Phases 0–4 below predate Builds 8–12 and the S5 middle-layer
@@ -298,6 +326,8 @@ These are the layers in build order. Each one unlocks the next (status as of 202
                                           no amnesiac re-alerts (team round 2 pick)
 12. SAAS PRODUCT (Track A spin-off)    ← Month 12+, unchanged
 ```
+
+> **Stack status (2026-06-13, post Build-17):** rungs 1–8 above **plus the M3.1 survivor review queue** are ✅ DONE (Builds 8–17, all live). **Rung 9 — M4-MANUAL (Lemma-DAG scaffolding) is NEXT and is the active track**; L5 (rung 10) stays gated behind it. The **Epistemic Classification Axis is PARKED** — see the parked-ticket section above; demand-triggered, not a fixed rung. *(The "What's Still Missing" table near the top of this doc predates Builds 13–17 and is stale — this note is the current state.)*
 
 ---
 
