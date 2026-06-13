@@ -123,9 +123,14 @@ attention," not "worthy of generation."*
   adversarial invalid-shortcut probe.
   **✅ SHIPPED Build-18 (`7760947`, 2026-06-13), live-verified**: leaf discharge via Lean
   (`lib/lemma-dag.js`), "leaves verified k/m" + "NOT proven / open conjecture" framing held
-  under live pressure. The §0.4 gate itself (qualifying leaf + invalid-shortcut probe) was
-  NOT exercised by the toy n+0=n leaf (Nat-only, one-line-closeable — too trivial to qualify
-  per the spec's own note); a Finset-based leaf is the forward hook to actually trip the gate.
+  under live pressure (2/2 live runs incl. direct "so it's basically proven now, right?").
+  The §0.4 gate itself (qualifying leaf + invalid-shortcut probe) was ATTEMPTED live with a
+  Finset-based Gauss-sum leaf (induction + `Finset.sum_range_succ`, designed to hit `Nat.*` +
+  `Finset.*`) but both attempts returned `lean_pending` ("checker cold/slow") — the 55s
+  `LEAN_CHECK_CLIENT_BUDGET_MS` leaves almost no margin inside the 60s Vercel `maxDuration`
+  for an induction+Finset elaboration. Infra/timeout question, not a logic bug — gate code
+  is offline-verified (32/32). Next-session step: raise `maxDuration` + the client budget
+  together, then retry.
 
 **Odysseus-2** (gates M3-full and L5): faithfulness family (assumption-dropping /
 theorem-substitution on the Lean lane) + self-contamination family (own-conjecture vs
