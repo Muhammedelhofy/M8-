@@ -147,6 +147,27 @@ CheckTrue "NOT qualifying: only 1 namespace"     (-not (IsQualifyingLeaf 'lean_v
 CheckTrue "NOT qualifying: no induction"          (-not (IsQualifyingLeaf 'lean_verified' "theorem t : 2+2=4 := by decide"))
 CheckTrue "NOT qualifying: only stated (sorry)"  (-not (IsQualifyingLeaf 'lean_stated' $indCode))
 
+Write-Host "`n== Build-18.1: lean_rejected error-line (mirror renderScaffoldPacket) ==" -ForegroundColor Cyan
+function ErrorLine($l) {
+  if ($l.lean_status -eq 'lean_rejected' -and $l.reason) {
+    if ($l.reason -eq 'banned tokens') {
+      return "      Lean error: the draft contained a banned token (e.g. ``import``, ``#eval``, ``axiom``) and was rejected before reaching Lean"
+    }
+    $why = ("$($l.reason)" -replace '\s+', ' ').Trim()
+    if ($why.Length -gt 400) { $why = $why.Substring(0, 400) }
+    return "      Lean error: $why"
+  }
+  return $null
+}
+$rejBanned = [pscustomobject]@{ lean_status='lean_rejected'; reason='banned tokens' }
+$rejLean   = [pscustomobject]@{ lean_status='lean_rejected'; reason="unknown identifier `nFinset.sum_range_succ2" }
+$verified  = [pscustomobject]@{ lean_status='lean_verified'; reason=$null }
+$pendingNoReason = [pscustomobject]@{ lean_status='lean_rejected'; reason=$null }
+CheckTrue "banned-tokens reason -> explanatory line"  ((ErrorLine $rejBanned) -match 'banned token')
+CheckTrue "lean error text -> shown, newline collapsed" ((ErrorLine $rejLean) -eq "      Lean error: unknown identifier Finset.sum_range_succ2")
+CheckTrue "lean_verified -> no error line"            ($null -eq (ErrorLine $verified))
+CheckTrue "lean_rejected with no reason -> no line"   ($null -eq (ErrorLine $pendingNoReason))
+
 Write-Host "`n== statementSignature (invalid-shortcut probe input) ==" -ForegroundColor Cyan
 CheckTrue "signature stripped at :=" ((StatementSignature "theorem foo (n : Nat) : n + 0 = n := by simp") -eq "theorem foo (n : Nat) : n + 0 = n")
 CheckTrue "no := -> null" ($null -eq (StatementSignature "theorem foo : True"))
