@@ -25,10 +25,20 @@ const ATTACHMENT_TEXT_RE = /^(text\/|application\/json)/;
 const ATTACHMENT_EXT_RE = /\.(txt|csv|tsv|json|md|markdown|log|yaml|yml)$/i;
 const MAX_ATTACHMENTS = 3;
 const MAX_ATTACHMENT_CHARS = 20000;
-let pendingAttachments = []; // [{name, content, size}]
+// Build-34: image attachments. Vision-capable types only.
+const ATTACHMENT_IMAGE_RE = /^image\/(png|jpe?g|webp|gif)$/i;
+const MAX_IMAGE_DIM = 1600;          // long-edge px — high enough to keep document/receipt text legible
+const MAX_IMAGE_BYTES = 4 * 1024 * 1024; // ~4MB post-downscale ceiling (base64 payload stays well under Vercel limits)
+// pendingAttachments holds EITHER a text file {name, content, size}
+// OR an image {name, kind:'image', mimeType, data(base64), thumb(dataURL), size}.
+let pendingAttachments = [];
 
 function isTextAttachment(file) {
   return ATTACHMENT_TEXT_RE.test(file.type || "") || ATTACHMENT_EXT_RE.test(file.name || "");
+}
+
+function isImageAttachment(file) {
+  return ATTACHMENT_IMAGE_RE.test(file.type || "");
 }
 
 function readFileAsText(file) {
@@ -40,6 +50,67 @@ function readFileAsText(file) {
   });
 }
 
+function readFileAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+// Downscale an image client-side so the payload stays small and fast WITHOUT
+// destroying text legibility (receipts/documents/screenshots). Keeps PNG crisp
+// for screenshots; uses JPEG for photos. Returns {mimeType, data(base64, no
+// prefix), thumb(dataURL)}. On any failure, falls back to the original file.
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("image decode failed"));
+    img.src = src;
+  });
+}
+
+async function processImage(file) {
+  const original = await readFileAsDataURL(file); // "data:<mime>;base64,<...>"
+  let mimeType = file.type || "image/png";
+  let dataUrl = original;
+  try {
+    const img = await loadImage(original);
+    const longEdge = Math.max(img.naturalWidth, img.naturalHeight) || 1;
+    const scale = longEdge > MAX_IMAGE_DIM ? MAX_IMAGE_DIM / longEdge : 1;
+    const needsReencode = scale < 1 || _dataUrlBytes(original) > MAX_IMAGE_BYTES;
+    if (needsReencode) {
+      const w = Math.max(1, Math.round(img.naturalWidth * scale));
+      const h = Math.max(1, Math.round(img.naturalHeight * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+      // PNG keeps screenshot text crisp; everything else → JPEG (smaller for photos).
+      const outMime = /png/i.test(mimeType) ? "image/png" : "image/jpeg";
+      let out = canvas.toDataURL(outMime, 0.9);
+      // Still too big (large PNG)? re-encode as JPEG at a tighter size.
+      if (_dataUrlBytes(out) > MAX_IMAGE_BYTES) {
+        out = canvas.toDataURL("image/jpeg", 0.82);
+      }
+      dataUrl = out;
+      mimeType = out.slice(5, out.indexOf(";"));
+    }
+  } catch (e) {
+    console.warn("image downscale failed, sending original:", e);
+  }
+  const comma = dataUrl.indexOf(",");
+  return { mimeType, data: dataUrl.slice(comma + 1), thumb: dataUrl };
+}
+
+// Approx byte size of a base64 data URL (without decoding).
+function _dataUrlBytes(dataUrl) {
+  const comma = dataUrl.indexOf(",");
+  const b64 = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
+  return Math.floor(b64.length * 0.75);
+}
+
 // Shared ingest for every entry point (paste, attach-button picker, drag-drop).
 // Validates type + count, reads each file as text, and queues it as a chip.
 async function ingestFiles(fileList) {
@@ -47,8 +118,10 @@ async function ingestFiles(fileList) {
   if (!files.length) return;
 
   for (const file of files) {
-    if (!isTextAttachment(file)) {
-      flashStatus(currentLang === "ar" ? "نوع الملف غير مدعوم — نص/CSV فقط حالياً" : "Only text/CSV files are supported for now");
+    const isText = isTextAttachment(file);
+    const isImage = isImageAttachment(file);
+    if (!isText && !isImage) {
+      flashStatus(currentLang === "ar" ? "نوع الملف غير مدعوم — نص أو صورة فقط" : "Only text and image files are supported");
       continue;
     }
     if (pendingAttachments.length >= MAX_ATTACHMENTS) {
@@ -56,8 +129,13 @@ async function ingestFiles(fileList) {
       break;
     }
     try {
-      const text = await readFileAsText(file);
-      pendingAttachments.push({ name: file.name || "file.txt", content: text, size: file.size || text.length });
+      if (isImage) {
+        const img = await processImage(file);
+        pendingAttachments.push({ name: file.name || "image.png", kind: "image", mimeType: img.mimeType, data: img.data, thumb: img.thumb, size: file.size || 0 });
+      } else {
+        const text = await readFileAsText(file);
+        pendingAttachments.push({ name: file.name || "file.txt", content: text, size: file.size || text.length });
+      }
       renderAttachmentChips();
     } catch (err) {
       console.error("attachment read error:", err);
@@ -80,9 +158,17 @@ function renderAttachmentChips() {
     const chip = document.createElement("div");
     chip.className = "attachment-chip";
 
+    if (att.kind === "image" && att.thumb) {
+      const thumb = document.createElement("img");
+      thumb.className = "attachment-thumb";
+      thumb.src = att.thumb;
+      thumb.alt = att.name;
+      chip.appendChild(thumb);
+    }
+
     const name = document.createElement("span");
     name.className = "attachment-name";
-    name.textContent = `📎 ${att.name}`;
+    name.textContent = att.kind === "image" ? `🖼️ ${att.name}` : `📎 ${att.name}`;
     chip.appendChild(name);
 
     const remove = document.createElement("button");
@@ -112,10 +198,15 @@ function flashStatus(text) {
 // Cap + format a pending attachment for the wire — server re-caps too, this
 // just avoids shipping huge payloads from the browser.
 function packAttachments() {
-  return pendingAttachments.map((a) => ({
-    name: a.name,
-    content: a.content.length > MAX_ATTACHMENT_CHARS ? a.content.slice(0, MAX_ATTACHMENT_CHARS) : a.content,
-  }));
+  return pendingAttachments.map((a) => {
+    if (a.kind === "image") {
+      return { name: a.name, kind: "image", mimeType: a.mimeType, data: a.data };
+    }
+    return {
+      name: a.name,
+      content: a.content.length > MAX_ATTACHMENT_CHARS ? a.content.slice(0, MAX_ATTACHMENT_CHARS) : a.content,
+    };
+  });
 }
 
 const LABELS = {
@@ -259,7 +350,12 @@ async function sendMessage(text) {
   }
 
   // Display user message + attachment chips, then clear pending attachments.
-  chat.addMessage("user", text, attachments.map((a) => ({ name: a.name })));
+  // Images carry a thumb dataURL so the sent message shows a preview too.
+  chat.addMessage("user", text, attachments.map((a) => (
+    a.kind === "image"
+      ? { name: a.name, kind: "image", thumb: `data:${a.mimeType};base64,${a.data}` }
+      : { name: a.name }
+  )));
   pendingAttachments = [];
   renderAttachmentChips();
 

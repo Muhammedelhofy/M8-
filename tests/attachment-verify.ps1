@@ -18,7 +18,11 @@ $MAX_ATTACHMENTS = 3
 # --- PS mirror of buildAttachmentBlock (lib/orchestrator.js) ---
 function BuildAttachmentBlock($attachments) {
   if (-not $attachments -or $attachments.Count -eq 0) { return "" }
-  $take = $attachments | Select-Object -First $MAX_ATTACHMENTS
+  # Build-34: text files only -- image attachments (no .content) become inlineData
+  # parts, not fenced text.
+  $textAtt = @($attachments | Where-Object { $null -ne $_.content -and "$($_.content)".Length -gt 0 })
+  if ($textAtt.Count -eq 0) { return "" }
+  $take = $textAtt | Select-Object -First $MAX_ATTACHMENTS
   $parts = @()
   foreach ($a in $take) {
     $name = "$($a.name)"
@@ -85,6 +89,17 @@ CheckTrue "result ends with the original turn text"   ($withBlock.EndsWith($turn
 CheckEq "no attachments -> text unchanged"            (WithAttachments $turnText $null) $turnText
 CheckEq "empty attachments -> text unchanged"         (WithAttachments $turnText @()) $turnText
 
+Write-Host "`n== buildAttachmentBlock: images excluded (Build-34) ==" -ForegroundColor Cyan
+$imgOnly = @([pscustomobject]@{ name = "receipt.png"; kind = "image"; mimeType = "image/png"; data = "AAAA" })
+CheckEq "image-only attachments -> empty text block" (BuildAttachmentBlock $imgOnly) ""
+$mixed = @(
+  [pscustomobject]@{ name = "receipt.png"; kind = "image"; mimeType = "image/png"; data = "AAAA" }
+  [pscustomobject]@{ name = "notes.txt"; content = "hello" }
+)
+$blockMix = BuildAttachmentBlock $mixed
+CheckTrue "mixed: text file is fenced"      ($blockMix -match 'ATTACHED FILE: notes\.txt')
+CheckTrue "mixed: image is NOT fenced"      ($blockMix -notmatch 'receipt\.png')
+
 Write-Host "`n=================================================="
-Write-Host "  text/CSV attachments (Build-33): $pass passed, $fail failed"
+Write-Host "  text/CSV attachments (Build-33/34): $pass passed, $fail failed"
 if ($fail -gt 0) { exit 1 }

@@ -193,7 +193,19 @@ class ChatManager {
       msg.attachments.forEach((att) => {
         const chip = document.createElement("div");
         chip.className = "attachment-chip";
-        chip.textContent = `📎 ${att.name}`;
+        if (att.kind === "image" && att.thumb) {
+          const thumb = document.createElement("img");
+          thumb.className = "attachment-thumb";
+          thumb.src = att.thumb;
+          thumb.alt = att.name;
+          chip.appendChild(thumb);
+          const name = document.createElement("span");
+          name.className = "attachment-name";
+          name.textContent = `🖼️ ${att.name}`;
+          chip.appendChild(name);
+        } else {
+          chip.textContent = `📎 ${att.name}`;
+        }
         list.appendChild(chip);
       });
       wrapper.appendChild(list);
