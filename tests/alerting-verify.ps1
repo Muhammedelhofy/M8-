@@ -1,12 +1,13 @@
-# alerting-verify.ps1 — Build-20 + Build-21 PS mirror tests for lib/alerting.js pure core
+# alerting-verify.ps1 — Build-20 + Build-21 + Build-22 PS mirror tests for lib/alerting.js pure core
 # Tests computeTransition / computeTierSlipTransition / computeTierWatchTransition /
-# buildAlertText / detectAlertAck
+# computeChurnTransition / buildAlertText / detectAlertAck
 # Run from M8 root: .\tests\alerting-verify.ps1
 
 $pass = 0; $fail = 0
 $RAISE_SAR = 500; $RESOLVE_SAR = 100; $SEV1_SAR = 1500
 $WORSEN_DELTA = 500; $DEDUP_H = 6; $RECUR_WIN_DAYS = 14; $BRIEF_CAP = 2
 $TIER_WORSEN_LEVEL = 1; $WATCH_WORSEN_PTS = 10; $COACH_ACCEPT = 70; $COACH_FINISH = 80
+$CHURN_FLAG_SCORE = 2; $CHURN_WORSEN_DELTA = 1
 $TIER_NAMES = @("Bronze","Silver","Gold","Platinum","Diamond")
 $OPEN_STATES = @("raised","acknowledged","in_progress","re_raised","snoozed")
 $nowMs = [long](Get-Date -UFormat %s) * 1000
@@ -241,6 +242,80 @@ function computeTierWatchTransition($row, $weakNow, $weakPrev, $snapshot, $nowMs
     return @{ action="none"; isOpen=$false }
 }
 
+# ── Churn-risk (wraps fleet.js driverChurn composite) ───────────────────────────
+function computeChurnTransition($row, $flagged, $nowMs) {
+    $isFlagged = $null -ne $flagged
+    $scoreNow = if ($isFlagged) { $flagged.score } else { 0 }
+    $sevFor = { param($s) if ($s -ge 3) {1} else {2} }
+
+    if (-not $row) {
+        if ($isFlagged) {
+            return @{ action="raise"; isOpen=$true; fields=@{
+                state="raised"; severity=(& $sevFor $scoreNow)
+                metric_value=$scoreNow; raise_value=$scoreNow; threshold=$CHURN_FLAG_SCORE
+                consecutive_clear=0; times_raised=1
+            }}
+        }
+        return @{ action="none"; isOpen=$false }
+    }
+
+    $state = $row.state
+    $isOpen = $OPEN_STATES -contains $state
+
+    if ($row.last_checked_at) {
+        $lastMs = ToMs $row.last_checked_at
+        if (($nowMs - $lastMs) -lt ($DEDUP_H * 3600000)) {
+            return @{ action="skip"; isOpen=$isOpen; fields=@{ metric_value=$scoreNow } }
+        }
+    }
+
+    if ($state -eq "resolved") {
+        if (-not $isFlagged) { return @{ action="none"; isOpen=$false } }
+        $resolvedAtMs = if($row.resolved_at){ ToMs $row.resolved_at } else { 0 }
+        $daysSince = ($nowMs - $resolvedAtMs) / 86400000
+        if ($daysSince -le $RECUR_WIN_DAYS) {
+            return @{ action="re_raise"; isOpen=$true; fields=@{
+                state="re_raised"; metric_value=$scoreNow; raise_value=$scoreNow
+                severity=(& $sevFor $scoreNow); times_raised=($row.times_raised+1); consecutive_clear=0
+            }}
+        }
+        return @{ action="raise"; isOpen=$true; fields=@{
+            state="raised"; severity=(& $sevFor $scoreNow)
+            metric_value=$scoreNow; raise_value=$scoreNow; threshold=$CHURN_FLAG_SCORE
+            consecutive_clear=0; times_raised=($row.times_raised+1)
+        }}
+    }
+
+    if ($isOpen -and $isFlagged -and (($scoreNow - $row.raise_value) -ge $CHURN_WORSEN_DELTA)) {
+        return @{ action="re_raise"; isOpen=$true; fields=@{
+            state="re_raised"; metric_value=$scoreNow; raise_value=$scoreNow
+            severity=(& $sevFor $scoreNow); times_raised=($row.times_raised+1); consecutive_clear=0
+        }}
+    }
+
+    if ($state -eq "snoozed" -and $row.suppression_until) {
+        $untilMs = ToMs $row.suppression_until
+        if ($nowMs -lt $untilMs) {
+            return @{ action="skip"; isOpen=$false; fields=@{ metric_value=$scoreNow } }
+        }
+    }
+
+    if ($isOpen -and -not $isFlagged) {
+        $newClear = ($row.consecutive_clear + 1)
+        if ($newClear -ge 2) {
+            return @{ action="resolve"; isOpen=$false; fields=@{
+                state="resolved"; consecutive_clear=$newClear; metric_value=0
+            }}
+        }
+        return @{ action="update_clear"; isOpen=$true; fields=@{ consecutive_clear=$newClear; metric_value=0 } }
+    }
+
+    if ($isOpen) {
+        return @{ action="update"; isOpen=$true; fields=@{ consecutive_clear=0; metric_value=$scoreNow; severity=(& $sevFor $scoreNow) } }
+    }
+    return @{ action="none"; isOpen=$false }
+}
+
 # ── Brief text + ack detection ──────────────────────────────────────────────────
 function buildCashGapText($alerts) {
     if ($alerts.Count -gt $BRIEF_CAP) {
@@ -263,15 +338,28 @@ function buildTierWatchText($alerts) {
     return "FLEET WATCH - TIER RISK: " + ($lines -join " | ")
 }
 
+function buildChurnText($alerts) {
+    if ($alerts.Count -gt $BRIEF_CAP) {
+        return "FLEET WATCH - CHURN RISK: $($alerts.Count) drivers show early-warning signs"
+    }
+    $lines = $alerts | ForEach-Object {
+        $reasons = if($_.metadata -and $_.metadata.reasons){ $_.metadata.reasons -join "; " } else { "at risk" }
+        "$($_.driver_name): $reasons"
+    }
+    return "FLEET WATCH - CHURN RISK: " + ($lines -join " | ")
+}
+
 function buildAlertText($openAlerts) {
     if (-not $openAlerts -or $openAlerts.Count -eq 0) { return "" }
     $cash  = @($openAlerts | Where-Object { (-not $_.condition) -or ($_.condition -eq "cash_gap") })
     $slip  = @($openAlerts | Where-Object { $_.condition -eq "tier_slip" })
     $watch = @($openAlerts | Where-Object { $_.condition -eq "tier_watch" })
+    $churn = @($openAlerts | Where-Object { $_.condition -eq "churn_risk" })
     $blocks = @()
     if ($cash.Count -gt 0)  { $blocks += (buildCashGapText $cash) }
     if ($slip.Count -gt 0)  { $blocks += (buildTierSlipText $slip) }
     if ($watch.Count -gt 0) { $blocks += (buildTierWatchText $watch) }
+    if ($churn.Count -gt 0) { $blocks += (buildChurnText $churn) }
     if ($blocks.Count -eq 0) { return "" }
     return "`n`n" + ($blocks -join "`n`n")
 }
@@ -280,6 +368,7 @@ $TOPIC_PATTERNS = @{
     cash_gap   = [regex]'\b(cash|deposit|gap|collect|owe|owes|paid|payment|balance)\b'
     tier_slip  = [regex]'\b(tier|level|bronze|silver|gold|platinum|diamond|slip|slipp\w*|dropped|demot\w*|downgrad\w*)\b'
     tier_watch = [regex]'\b(tier|level|accept\w*|finish\w*|coach\w*|risk|watch)\b'
+    churn_risk = [regex]'\b(churn\w*|attrition|retention|risk|watch|going\s*dark|dropping\s*off|disengag\w*|inactiv\w*|leav\w*|quit\w*)\b'
 }
 
 function detectAlertAck($message, $openAlerts) {
@@ -311,7 +400,7 @@ function ok($label, $cond) {
     else        { Write-Host "  FAIL $label"; $script:fail++ }
 }
 
-Write-Host "`n=== alerting-verify.ps1 (Build-20 + Build-21) ===`n"
+Write-Host "`n=== alerting-verify.ps1 (Build-20 + Build-21 + Build-22) ===`n"
 
 # T1: No row, single entry (no prev) — no raise yet
 $t = computeTransition $null 800 $null $nowMs
@@ -481,6 +570,73 @@ ok "T29: tier topic + driver name => acks tier_slip alert" (($keys.Count -gt 0) 
 
 $keysNone = detectAlertAck "how's Tariq's mood today?" $alerts29
 ok "T29b: no tier topic => no ack" ($keysNone.Count -eq 0)
+
+# ══ Build-22: churn_risk (wraps fleet.js driverChurn composite) ═══════════════════
+
+# T30: No row, flagged with score=2 (meets flag floor) — raise, severity=2
+$flagged30 = @{ score=2; reasons=@("2 straight active day(s) under 200 SAR net", "acceptance falling - 80% -> 60%"); activeDays=10; lastActive="6 Jun 2026" }
+$t = computeChurnTransition $null $flagged30 $nowMs
+ok "T30: flagged score=2 => raise" ($t.action -eq "raise")
+ok "T30b: severity=2 at score=2" ($t.fields.severity -eq 2)
+ok "T30c: raise_value=score(2)" ($t.fields.raise_value -eq 2)
+
+# T31: No row, flagged with score=3 (multiple compounding signals) — severity=1
+$flagged31 = @{ score=3; reasons=@("went dark", "3 straight active day(s) under 200 SAR net"); activeDays=8; lastActive="3 Jun 2026" }
+$t = computeChurnTransition $null $flagged31 $nowMs
+ok "T31: flagged score=3 => severity=1" ($t.fields.severity -eq 1)
+
+# T32: No row, not flagged — none
+$t = computeChurnTransition $null $null $nowMs
+ok "T32: not flagged => none" ($t.action -eq "none")
+
+# T33: Open alert (score=2), no longer flagged — 1st clear
+$row33 = @{ state="raised"; metric_value=2; raise_value=2; consecutive_clear=0; times_raised=1; first_raised_at=(Get-Date).AddDays(-3).ToString("o"); last_checked_at=(Get-Date).AddHours(-10).ToString("o"); resolved_at=$null; suppression_until=$null }
+$t = computeChurnTransition $row33 $null $nowMs
+ok "T33: no longer flagged (1st clear) => update_clear" ($t.action -eq "update_clear")
+ok "T33b: consecutive_clear=1" ($t.fields.consecutive_clear -eq 1)
+
+# T34: Same, 2nd consecutive not-flagged — resolve
+$row34 = @{ state="raised"; metric_value=2; raise_value=2; consecutive_clear=1; times_raised=1; first_raised_at=(Get-Date).AddDays(-3).ToString("o"); last_checked_at=(Get-Date).AddHours(-10).ToString("o"); resolved_at=$null; suppression_until=$null }
+$t = computeChurnTransition $row34 $null $nowMs
+ok "T34: 2nd consecutive not-flagged => resolve" ($t.action -eq "resolve")
+ok "T34b: isOpen=false after resolve" (-not $t.isOpen)
+
+# T35: Resolved, within recur window, flagged again — re_raise
+$row35 = @{ state="resolved"; metric_value=0; raise_value=2; consecutive_clear=2; times_raised=1; first_raised_at=(Get-Date).AddDays(-10).ToString("o"); last_checked_at=(Get-Date).AddHours(-10).ToString("o"); resolved_at=(Get-Date).AddDays(-3).ToString("o"); suppression_until=$null }
+$flagged35 = @{ score=2; reasons=@("went dark"); activeDays=5; lastActive="1 Jun 2026" }
+$t = computeChurnTransition $row35 $flagged35 $nowMs
+ok "T35: resolved + recur + flagged again => re_raise" ($t.action -eq "re_raise")
+ok "T35b: times_raised incremented" ($t.fields.times_raised -eq 2)
+
+# T36: Open alert (raise_value=2), composite score rises to 3 — worsening re_raise
+$row36 = @{ state="raised"; metric_value=2; raise_value=2; consecutive_clear=0; times_raised=1; first_raised_at=(Get-Date).AddDays(-1).ToString("o"); last_checked_at=(Get-Date).AddHours(-10).ToString("o"); resolved_at=$null; suppression_until=$null }
+$flagged36 = @{ score=3; reasons=@("went dark", "acceptance falling - 75% -> 55%"); activeDays=6; lastActive="6 Jun 2026" }
+$t = computeChurnTransition $row36 $flagged36 $nowMs
+ok "T36: score rises >= CHURN_WORSEN_DELTA => re_raise" ($t.action -eq "re_raise")
+ok "T36b: severity escalated to 1" ($t.fields.severity -eq 1)
+
+# T37: DEDUP — checked within 6h — skip
+$row37 = @{ state="raised"; metric_value=2; raise_value=2; consecutive_clear=0; times_raised=1; first_raised_at=(Get-Date).AddDays(-1).ToString("o"); last_checked_at=(Get-Date).AddHours(-1).ToString("o"); resolved_at=$null; suppression_until=$null }
+$flagged37 = @{ score=2; reasons=@("went dark"); activeDays=6; lastActive="6 Jun 2026" }
+$t = computeChurnTransition $row37 $flagged37 $nowMs
+ok "T37: checked within 6h => skip (dedup)" ($t.action -eq "skip")
+
+# T38: buildAlertText — churn_risk block present alongside cash_gap
+$alerts38 = @(
+    @{ id=1; condition="cash_gap"; driver_name="Ahmad"; state="raised"; severity=2; metric_value=750; raise_value=750; times_raised=1; first_raised_at=(Get-Date).AddDays(-1).ToString("o") }
+    @{ id=2; condition="churn_risk"; driver_name="Hassan"; state="raised"; severity=2; metric_value=2; raise_value=2; times_raised=1; first_raised_at=(Get-Date).AddDays(-1).ToString("o"); metadata=@{ reasons=@("went dark") } }
+)
+$text = buildAlertText $alerts38
+ok "T38: mixed alerts => CASH GAP block present" ($text -match "CASH GAP")
+ok "T38b: mixed alerts => CHURN RISK block present" ($text -match "CHURN RISK")
+
+# T39: detectAlertAck — churn topic acks a churn_risk alert, not an unrelated message
+$alerts39 = @(@{ id=30; condition="churn_risk"; driver_key="d30"; driver_name="Yousef Al" })
+$keys = detectAlertAck "is Yousef at risk of churning?" $alerts39
+ok "T39: churn topic + driver name => acks churn_risk alert" (($keys.Count -gt 0) -and ($keys[0].driver_key -eq "d30") -and ($keys[0].condition -eq "churn_risk"))
+
+$keysNone = detectAlertAck "what's Yousef's net today?" $alerts39
+ok "T39b: no churn topic => no ack" ($keysNone.Count -eq 0)
 
 $total = $pass + $fail
 Write-Host "`n=== $pass/$total PASS ===" -ForegroundColor $(if($fail -eq 0){"Green"}else{"Red"})

@@ -151,7 +151,43 @@ Implementation: `lib/alerting.js` `computeTierSlipTransition` /
 `buildAlertText` renders per-condition blocks in §3 priority order
 (cash_gap > tier_slip > tier_watch). Offline `tests/alerting-verify.ps1` 44/44.
 
-## 7. Explicit non-goals (July build keeps these out)
+## 7. Condition #3 — CHURN RISK (SHIPPED Build-22, 2026-06-14)
+
+Reuses `lib/fleet.js` `driverChurn()` — the existing DETERMINISTIC composite
+(going-dark / declining acceptance-utilisation / below-target streak over the
+last 14 complete days, flag floor `CHURN_FLAG_SCORE=2`) that already powers the
+chat-facing "who's at risk of churning" packet. The alerting condition just
+state-machines that composite's output per driver — it never invents a reason;
+`metadata.reasons[]` carries the exact strings the composite computed, and
+`buildChurnText` quotes them verbatim (same "code computes, LLM narrates"
+doctrine as `renderChurnPacket`).
+
+- **`churn_risk`** (severity 1-2, lowest priority): raises when a driver appears
+  in `driverChurn(...).flagged` (composite score ≥ `CHURN_FLAG_SCORE`). Severity
+  1 if score ≥ 3 (multiple compounding signals — e.g. went-dark + below-target
+  streak), else 2. `metric_value`/`raise_value` = the composite score;
+  `threshold` = `CHURN_FLAG_SCORE`.
+- **Resolve**: driver drops out of `flagged[]` (score < floor) for 2 consecutive
+  evaluations.
+- **Worsening re-raise**: composite score rises by ≥ `CHURN_WORSEN_DELTA` (1)
+  above `raise_value` while open — bypasses cooldown, same as the other
+  conditions.
+- **Recur window**: 14 days (re_raised, not a fresh row), same as cash-gap/tier.
+- **Ack**: chat turn naming the driver + churn/retention/risk topic, or the
+  alert chip.
+
+Implementation: `lib/alerting.js` `computeChurnTransition` + `buildChurnText`;
+`evaluateAlerts` computes the composite once per evaluation (same "last 14
+complete days" window as the chat path, via `ymdKey`/`periodYMD`/
+`riyadhTodayYMD`, all newly exported from `fleet.js`) and maps `flagged[]` by
+driver key (driverChurn's `byKey` map now also returns `key` per flagged entry).
+`buildAlertText` renders 4 blocks in §3 priority order: cash_gap > tier_slip >
+tier_watch > churn_risk. Offline `tests/alerting-verify.ps1` 62/62.
+
+This completes the §3 priority order ("cash > tier/utilization > acceptance/
+churn") — all three alerting conditions from the spec are now shipped.
+
+## 8. Explicit non-goals (July build keeps these out)
 
 - No LLM judgment in raise/resolve decisions — conditions are pure code over the
   deterministic packet (the honesty spine extends to ops alerts).
@@ -159,7 +195,7 @@ Implementation: `lib/alerting.js` `computeTierSlipTransition` /
 - No per-message push spam: pushes only via the escalation ladder above.
 - No alert entities in the research graph as first-class nodes (ops notes only).
 
-## 8. Acceptance tests (write with the build)
+## 9. Acceptance tests (write with the build)
 
 1. Synthetic gap > threshold × 2 syncs → row `raised`, brief line appears once.
 2. Same gap next brief → NO duplicate line (state held, fatigue control).
