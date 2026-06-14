@@ -267,6 +267,46 @@ html, body {
   padding: 0 4px;
 }
 
+/* Lean / M4 lemma-DAG status badges (Build-23) */
+.lean-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  border-radius: 6px;
+  padding: 1px 7px;
+  margin: 1px 2px;
+  line-height: 1.5;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.lean-badge--verified {
+  color: var(--green);
+  background: rgba(76, 175, 80, 0.14);
+  border: 1px solid rgba(76, 175, 80, 0.35);
+}
+.lean-badge--rejected {
+  color: var(--red);
+  background: rgba(244, 67, 54, 0.14);
+  border: 1px solid rgba(244, 67, 54, 0.35);
+}
+.lean-badge--stated {
+  color: var(--accent);
+  background: var(--accent-dim);
+  border: 1px solid rgba(79, 142, 247, 0.35);
+}
+.lean-badge--pending {
+  color: #e0a83c;
+  background: rgba(224, 168, 60, 0.14);
+  border: 1px solid rgba(224, 168, 60, 0.35);
+}
+.lean-badge--unformalizable,
+.lean-badge--scaffolded {
+  color: var(--text-muted);
+  background: rgba(123, 136, 168, 0.14);
+  border: 1px solid rgba(123, 136, 168, 0.3);
+}
+
 /* Deck artifact — outline + download buttons */
 .deck-outline {
   white-space: pre-wrap;

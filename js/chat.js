@@ -1,3 +1,71 @@
+// ── Lean status badges (Build-23) ───────────────────────────────────────
+// M8's M4 lemma-DAG scaffold (lib/lemma-dag.js renderScaffoldPacket) and the
+// single-statement Lean lane (lib/lean.js narrate) emit fixed, literal status
+// substrings into otherwise-plain chat text. We scan rendered assistant text
+// for those EXACT strings and wrap them in small colored badge spans — the
+// underlying text is untouched (still searchable/honest), just visually
+// scannable. Everything else stays a plain text node (no markdown rendering,
+// no innerHTML of model output).
+const LEAN_BADGE_RE = new RegExp(
+  [
+    "(LEAF — ✓ Lean-verified \\(this leaf only\\))",
+    "(LEAF — statement type-checks, proof admitted \\(sorry\\) — NOT proven)",
+    "(LEAF — ✗ Lean rejected)",
+    "(LEAF — could not be faithfully formalized \\(nothing submitted\\))",
+    "(LEAF — checker cold/slow, not confirmed this turn)",
+    "(PARENT — scaffolded \\(sorry, NOT proven\\))",
+    "(\\*\\*verified\\*\\*)",
+    "(\\*\\*rejected\\*\\*)",
+    "(\\*\\*statement type-checks\\*\\*)",
+    "(`lean_rejected`)",
+  ].join("|"),
+  "g"
+);
+// Per-group (1-indexed in the match array) CSS class + display label.
+// Groups 7-10 (the markdown-bold/backtick verdict words from the single-Lean
+// lane) are deduped to at most one badge per message — they restate the same
+// overall verdict the LEAF/PARENT lines already badge per-leaf in M4 output.
+const LEAN_BADGE_META = [
+  { cls: "verified",       label: null,                        dedupe: false },
+  { cls: "stated",         label: null,                        dedupe: false },
+  { cls: "rejected",       label: null,                        dedupe: false },
+  { cls: "unformalizable", label: null,                        dedupe: false },
+  { cls: "pending",        label: null,                        dedupe: false },
+  { cls: "scaffolded",     label: null,                        dedupe: false },
+  { cls: "verified",       label: "✓ lean_verified",           dedupe: true },
+  { cls: "rejected",       label: "✗ lean_rejected",           dedupe: true },
+  { cls: "stated",         label: "◑ lean_stated",             dedupe: true },
+  { cls: "rejected",       label: "✗ lean_rejected",           dedupe: true },
+];
+
+// Appends `text` to `bubble` as a mix of plain text nodes and `.lean-badge`
+// spans for any recognized Lean/M4 status markers. Safe: only ever creates
+// text nodes plus spans whose class/text we set ourselves — never innerHTML.
+function appendWithLeanBadges(bubble, text) {
+  const re = LEAN_BADGE_RE;
+  re.lastIndex = 0;
+  let lastIndex = 0;
+  let m;
+  const dedupeSeen = new Set();
+  while ((m = re.exec(text)) !== null) {
+    let gi = -1;
+    for (let i = 0; i < LEAN_BADGE_META.length; i++) {
+      if (m[i + 1] !== undefined) { gi = i; break; }
+    }
+    if (gi === -1) continue;
+    const meta = LEAN_BADGE_META[gi];
+    if (meta.dedupe && dedupeSeen.has(meta.label)) continue;
+    if (m.index > lastIndex) bubble.appendChild(document.createTextNode(text.slice(lastIndex, m.index)));
+    const span = document.createElement("span");
+    span.className = "lean-badge lean-badge--" + meta.cls;
+    span.textContent = meta.label || m[0];
+    bubble.appendChild(span);
+    if (meta.dedupe) dedupeSeen.add(meta.label);
+    lastIndex = re.lastIndex;
+  }
+  if (lastIndex < text.length) bubble.appendChild(document.createTextNode(text.slice(lastIndex)));
+}
+
 class ChatManager {
   constructor(container) {
     this.container = container;
@@ -19,7 +87,7 @@ class ChatManager {
 
     const bubble = document.createElement("div");
     bubble.className = "message-bubble";
-    bubble.textContent = msg.content;
+    appendWithLeanBadges(bubble, msg.content);
 
     const timeEl = document.createElement("div");
     timeEl.className = "message-time";
@@ -92,7 +160,10 @@ class ChatManager {
   // (the double-emit splice) even if that garbled accumulation was longer.
   finalizeStreaming(msg, fullText) {
     if (typeof fullText === "string" && fullText.trim()) msg.content = fullText;
-    if (msg._bubble) msg._bubble.textContent = msg.content;
+    if (msg._bubble) {
+      msg._bubble.innerHTML = "";
+      appendWithLeanBadges(msg._bubble, msg.content);
+    }
     this._scrollToBottom();
   }
 
