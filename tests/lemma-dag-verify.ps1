@@ -195,6 +195,33 @@ CheckTrue "negative: single-statement Lean ask -> null"   ($null -eq (DetectLemm
 CheckTrue "negative: review-queue ask -> null"            ($null -eq (DetectLemmaDAG "show me the review queue").mode)
 CheckTrue "negative: short -> null"                       ($null -eq (DetectLemmaDAG "hi").mode)
 
+# -- PS mirror of renderSpeculativeRefusalPacket (Build-29 epistemic guard) --
+function RenderSpeculativeRefusalPacket([string]$target, $hit) {
+  return @(
+    "I'm not formalizing this scaffold in Lean."
+    ""
+    "Target: ""$target"""
+    "This is semantically close (cosine $($hit.similarity)) to ""$($hit.label)"" -- a claim from an ingested document Muhammad classified as [$($hit.sourceClass.ToUpper())], not an established result."
+    ""
+    "Submitting a leaf for this target to the Lean checker would lend a $($hit.sourceClass) claim false Lean-grade credibility, even if the leaf itself only checks a narrow base case. Nothing was drafted or sent to the checker, and nothing was written to the graph."
+    ""
+    "If you want to work on this, the honest framing is to formalize the established KERNEL of the idea (if any) as its own target, separate from the $($hit.sourceClass) claim."
+  ) -join "`n"
+}
+
+Write-Host "`n== Build-29: speculative-target M4 refusal packet ==" -ForegroundColor Cyan
+$specHit = [pscustomobject]@{ sourceClass = 'speculative'; label = 'The Hidden Attractor Conjecture'; similarity = '0.88' }
+$refusal = RenderSpeculativeRefusalPacket "The Collatz map has a hidden periodic attractor" $specHit
+CheckTrue "refusal: states M8 is NOT formalizing"     ($refusal -match "not formalizing")
+CheckTrue "refusal: tags the source as [SPECULATIVE]" ($refusal -match '\[SPECULATIVE\]')
+CheckTrue "refusal: states nothing sent to checker"   ($refusal -match "[Nn]othing was drafted or sent to the checker")
+CheckTrue "refusal: states nothing written to graph"  ($refusal -match "nothing was written to the graph")
+CheckTrue "refusal: does NOT contain a LEAF/PARENT verdict (no discharge happened)" ($refusal -cnotmatch 'LEAF |PARENT ')
+
+$fringeHit = [pscustomobject]@{ sourceClass = 'fringe'; label = 'Numerology of the 3x+1 digit sums'; similarity = '0.91' }
+$refusal2 = RenderSpeculativeRefusalPacket "3x+1 digit sums encode a hidden numeric key" $fringeHit
+CheckTrue "refusal (fringe): tags the source as [FRINGE]" ($refusal2 -match '\[FRINGE\]')
+
 Write-Host "`n=================================================="
 Write-Host ("  lemma-dag M4-manual: {0} passed, {1} failed" -f $pass, $fail) -ForegroundColor $(if ($fail -eq 0) { 'Green' } else { 'Red' })
 if ($fail -gt 0) { exit 1 } else { exit 0 }
