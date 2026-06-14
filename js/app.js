@@ -12,6 +12,9 @@ const UI = {
   statusText: null,
   orb: null,
   attachmentChips: null,
+  attachBtn: null,
+  fileInput: null,
+  inputBar: null,
 };
 
 // ── Pasted file attachments (Build-33) ───────────────────────────────────
@@ -37,11 +40,13 @@ function readFileAsText(file) {
   });
 }
 
-async function handlePaste(e) {
-  const files = (e.clipboardData && e.clipboardData.files) || [];
+// Shared ingest for every entry point (paste, attach-button picker, drag-drop).
+// Validates type + count, reads each file as text, and queues it as a chip.
+async function ingestFiles(fileList) {
+  const files = Array.from(fileList || []);
   if (!files.length) return;
 
-  for (const file of Array.from(files)) {
+  for (const file of files) {
     if (!isTextAttachment(file)) {
       flashStatus(currentLang === "ar" ? "نوع الملف غير مدعوم — نص/CSV فقط حالياً" : "Only text/CSV files are supported for now");
       continue;
@@ -51,14 +56,22 @@ async function handlePaste(e) {
       break;
     }
     try {
-      e.preventDefault();
       const text = await readFileAsText(file);
       pendingAttachments.push({ name: file.name || "file.txt", content: text, size: file.size || text.length });
       renderAttachmentChips();
     } catch (err) {
-      console.error("paste attachment read error:", err);
+      console.error("attachment read error:", err);
     }
   }
+}
+
+async function handlePaste(e) {
+  const files = (e.clipboardData && e.clipboardData.files) || [];
+  if (!files.length) return;
+  // Only swallow the paste when there's actually a file on the clipboard, so
+  // ordinary text paste keeps working.
+  e.preventDefault();
+  await ingestFiles(files);
 }
 
 function renderAttachmentChips() {
@@ -137,6 +150,9 @@ function init() {
   UI.statusText = document.getElementById("status-text");
   UI.orb = document.getElementById("m8-orb");
   UI.attachmentChips = document.getElementById("attachment-chips");
+  UI.attachBtn = document.getElementById("attach-btn");
+  UI.fileInput = document.getElementById("file-input");
+  UI.inputBar = document.querySelector(".input-bar");
 
   // Initialize managers
   chat = new ChatManager(UI.messages);
@@ -161,6 +177,33 @@ function init() {
     }
   });
   UI.textInput.addEventListener("paste", handlePaste);
+
+  // Attach button → open the native file picker; picker change → ingest.
+  UI.attachBtn.addEventListener("click", () => UI.fileInput.click());
+  UI.fileInput.addEventListener("change", async (e) => {
+    await ingestFiles(e.target.files);
+    UI.fileInput.value = ""; // reset so the same file can be picked again
+  });
+
+  // Drag-and-drop a file anywhere onto the input bar.
+  ["dragenter", "dragover"].forEach((evt) =>
+    UI.inputBar.addEventListener(evt, (e) => {
+      e.preventDefault();
+      UI.inputBar.classList.add("drag-over");
+    })
+  );
+  ["dragleave", "drop"].forEach((evt) =>
+    UI.inputBar.addEventListener(evt, (e) => {
+      e.preventDefault();
+      if (evt === "dragleave" && UI.inputBar.contains(e.relatedTarget)) return;
+      UI.inputBar.classList.remove("drag-over");
+    })
+  );
+  UI.inputBar.addEventListener("drop", async (e) => {
+    const files = (e.dataTransfer && e.dataTransfer.files) || [];
+    if (files.length) await ingestFiles(files);
+  });
+
   UI.micBtn.addEventListener("click", toggleMic);
   UI.stopBtn.addEventListener("click", () => {
     voice.stopSpeaking();
