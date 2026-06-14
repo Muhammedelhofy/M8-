@@ -120,12 +120,36 @@ genuinely predictive) is condition #2; acceptance-rate folds into churn later.
 - **Ack detection**: any chat turn naming the driver + cash/deposit/gap topic, or
   a click on the alert chip (UI sends `ack:<alert_id>`).
 
-## 6. Condition #2 (next) — TIER-SLIP TRAJECTORY (sketch, build after cash-gap)
+## 6. Condition #2 — TIER-SLIP / TIER-WATCH (SHIPPED Build-21, 2026-06-14)
 
-Watch the 7-day acceptance/activity trend vs the tier threshold; raise when the
-TRAJECTORY crosses ("on pace to drop to Silver in 4 days"), resolve when pace
-clears the band (raise <60% pace, resolve >65% × 2 days — Gemini's constants,
-final values fixed at build time against real distributions).
+**Design deviation from the original sketch (Muhammad-approved):** the sketch's
+"trajectory crosses 60%/65% → on pace to drop to Silver in 4 days" framing was
+rejected at build time — it requires a Bolt tier-promotion/demotion threshold
+that M8 explicitly does NOT know (see `lib/fleet.js` `renderTierWatchPacket`,
+which already refuses to invent one). Predicting a drop date would have been a
+fabricated-threshold violation of the honesty spine.
+
+Shipped as TWO conditions instead, both GROUND TRUTH or reusing pre-existing
+proxy constants — never a predicted date:
+
+- **`tier_slip`** (primary, severity 1-2): raises when a driver's actual
+  `tier.level` (Bolt's own field) is LOWER than it was 7 days ago — a fact, not
+  a forecast. Resolves when the level recovers to the pre-drop level for 2
+  consecutive evaluations. A further 1-level drop while open re-raises
+  (bypasses cooldown), severity escalates to 1. Recurrence within 14 days of a
+  resolved alert = `re_raised` on the same row.
+- **`tier_watch`** (secondary, severity 3/info): a Silver+ driver whose
+  acceptance OR finish rate has been below the existing `COACH_ACCEPT`/
+  `COACH_FINISH` coaching floors (70%/80% — pre-existing "weak lever" constants,
+  NOT claimed as Bolt's real cutoffs) for 2 consecutive synced days. Framed as
+  "weak on acceptance/finish for N days", never "will drop in N days". Resolves
+  on 2 consecutive non-weak days; a further 10pt acceptance drop re-raises.
+
+Implementation: `lib/alerting.js` `computeTierSlipTransition` /
+`computeTierWatchTransition`, same `fleet_alerts` table
+(`condition='tier_slip'`/`'tier_watch'`), same state machine shape as cash-gap.
+`buildAlertText` renders per-condition blocks in §3 priority order
+(cash_gap > tier_slip > tier_watch). Offline `tests/alerting-verify.ps1` 44/44.
 
 ## 7. Explicit non-goals (July build keeps these out)
 
