@@ -76,8 +76,12 @@ function ParseIngestMessage([string]$message) {
     $raw_text = ($INGEST_RE.Replace($message, '') -replace '^[\s:\-]+', '').Trim()
   }
   $firstSentence = ($raw_text -split '[.!?\r\n]')[0].Trim()
-  $title = if ($firstSentence.Length -gt 8) {
-    $firstSentence.Substring(0, [Math]::Min(100, $firstSentence.Length))
+  $spaceIdx = $firstSentence.LastIndexOf(' ', [Math]::Min(100, $firstSentence.Length - 1))
+  $cutAt = if ($firstSentence.Length -gt 100) {
+    if ($spaceIdx -gt 0) { $spaceIdx } else { 100 }
+  } else { $firstSentence.Length }
+  $title = if ($cutAt -gt 8) {
+    $firstSentence.Substring(0, $cutAt)
   } else { 'Untitled document' }
   return [pscustomobject]@{ source_class = $source_class; raw_text = $raw_text.Trim(); title = $title }
 }
@@ -209,6 +213,16 @@ CheckTrue 'T30 summary total count (4)'            ($sum -match '4 candidate')
 CheckTrue 'T31 summary 2 high-confidence'          ($sum -match '2 high')
 CheckTrue 'T32 summary 1 medium'                   ($sum -match '1 medium')
 CheckTrue 'T33 summary 1 low'                      ($sum -match '1 low')
+
+# T39: title truncation cuts at a word boundary, not mid-word
+$longBody = ('whether a given polynomial time algorithm exists for the general case remains an open question in the field of complexity theory and has been studied extensively for decades')
+$p4 = ParseIngestMessage "ingest this as established: $longBody more padding text to satisfy the word-count guard padding padding padding"
+CheckTrue 'T39 title <= 100 chars'                 ($p4.title.Length -le 100)
+CheckTrue 'T39b title does not end mid-word'       (-not ($longBody.Substring(0,101) -match "$([regex]::Escape($p4.title))\S"))
+
+# T40-T41: buildClarificationSummary no longer prompts (Fix B)
+CheckFalse 'T40 summary has no "Add the...now?" prompt' ($sum -match 'Add the')
+CheckFalse 'T41 summary has no "Reply: yes" prompt'      ($sum -match 'Reply: yes')
 
 # T34-T38: invariants
 CheckTrue  'T34 VALID_CLASS has 3 values'          ($VALID_CLASS.Count -eq 3)
