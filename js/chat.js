@@ -75,6 +75,79 @@ function appendWithLeanBadges(bubble, text) {
   if (lastIndex < text.length) bubble.appendChild(document.createTextNode(text.slice(lastIndex)));
 }
 
+// ── Charts (Build-31) ────────────────────────────────────────────────────
+// lib/fleet.js (via lib/orchestrator.js appendChartMarker) appends a single
+// literal `<!--M8-CHART:{...json...}-->` marker to the end of an assistant
+// reply when the user asked for a chart/graph/plot of a fleet earnings range.
+// The JSON is a small, code-computed {type,title,labels,data,datasetLabel}
+// spec — never produced or seen by the LLM. We strip the marker from the
+// displayed text and render a <canvas> Chart.js chart in its place.
+const M8_CHART_RE = /<!--M8-CHART:(\{[\s\S]*?\})-->/;
+
+function _ensureChartJs() {
+  if (window.Chart) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js";
+    s.onload = resolve;
+    s.onerror = () => reject(new Error("Chart.js failed to load"));
+    document.head.appendChild(s);
+  });
+}
+
+function renderM8Chart(bubble, spec) {
+  const wrap = document.createElement("div");
+  wrap.className = "m8-chart-wrap";
+  const canvas = document.createElement("canvas");
+  canvas.className = "m8-chart";
+  wrap.appendChild(canvas);
+  bubble.appendChild(wrap);
+  _ensureChartJs()
+    .then(() => {
+      new window.Chart(canvas, {
+        type: spec.type || "bar",
+        data: {
+          labels: spec.labels || [],
+          datasets: [{
+            label: spec.datasetLabel || "",
+            data: spec.data || [],
+            backgroundColor: "rgba(79, 142, 247, 0.5)",
+            borderColor: "rgba(79, 142, 247, 1)",
+            borderWidth: 1,
+          }],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            title: { display: !!spec.title, text: spec.title || "", color: "#e5e7eb" },
+          },
+          scales: {
+            x: { ticks: { color: "#7b88a8" }, grid: { color: "rgba(79, 142, 247, 0.08)" } },
+            y: { beginAtZero: true, ticks: { color: "#7b88a8" }, grid: { color: "rgba(79, 142, 247, 0.08)" } },
+          },
+        },
+      });
+    })
+    .catch((err) => {
+      wrap.textContent = "Chart failed to load: " + err.message;
+    });
+}
+
+// Strips an M8-CHART marker (if present) from `text`, renders the remaining
+// text via appendWithLeanBadges, then renders the chart (if any) below it.
+function appendWithCharts(bubble, text) {
+  const m = M8_CHART_RE.exec(text);
+  let chartSpec = null;
+  let cleanText = text;
+  if (m) {
+    cleanText = (text.slice(0, m.index) + text.slice(m.index + m[0].length)).replace(/\s+$/, "");
+    try { chartSpec = JSON.parse(m[1]); } catch (_) { chartSpec = null; }
+  }
+  appendWithLeanBadges(bubble, cleanText);
+  if (chartSpec) renderM8Chart(bubble, chartSpec);
+}
+
 class ChatManager {
   constructor(container) {
     this.container = container;
@@ -96,7 +169,7 @@ class ChatManager {
 
     const bubble = document.createElement("div");
     bubble.className = "message-bubble";
-    appendWithLeanBadges(bubble, msg.content);
+    appendWithCharts(bubble, msg.content);
 
     const timeEl = document.createElement("div");
     timeEl.className = "message-time";
@@ -171,7 +244,7 @@ class ChatManager {
     if (typeof fullText === "string" && fullText.trim()) msg.content = fullText;
     if (msg._bubble) {
       msg._bubble.innerHTML = "";
-      appendWithLeanBadges(msg._bubble, msg.content);
+      appendWithCharts(msg._bubble, msg.content);
     }
     this._scrollToBottom();
   }

@@ -324,6 +324,18 @@ html, body {
   border: 1px solid rgba(244, 67, 54, 0.35);
 }
 
+/* Fleet earnings chart (Build-31) */
+.m8-chart-wrap {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  max-width: 480px;
+}
+.m8-chart {
+  width: 100% !important;
+  max-height: 260px;
+}
+
 /* Deck artifact — outline + download buttons */
 .deck-outline {
   white-space: pre-wrap;
