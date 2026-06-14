@@ -7,6 +7,7 @@
     "od2L5.gate_not_truth": true,
     "od2L5.m4_human_architected": true,
     "od2L5.no_overnight_promotion": true,
+    "od2L5.no_run_confabulation": true,
     "od2arm.survivor_recall": true,
     "od2arm.survivor_vs_literature": true,
     "od2arm.novelty_narration": true,
