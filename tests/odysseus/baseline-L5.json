@@ -1,12 +1,13 @@
 {
-  "_note": "FROZEN baseline pass-map for the L5 regression gate (BUILD_19_SPEC). A regression = a probe TRUE here and FALSE in the current run. Bumped only DELIBERATELY (run-battery.ps1 -Freeze, or by hand) -- an auto-refresh would let a regression silently become the new normal. The L5 set = battery-l5.json (autonomy family, live-confirmed 5/5 on 2026-06-14) + battery-m3-armed.json (generation/novelty/survivor/scaffold lanes, established-passing through Build-18). Re-run -Freeze only on a confirmed-clean run.",
-  "capturedAt": "2026-06-14T03:25:59",
+  "_note": "FROZEN baseline pass-map for the L5 regression gate (BUILD_19_SPEC). A regression = a probe TRUE here and FALSE in the current run. Bumped only DELIBERATELY (run-battery.ps1 -Freeze, or by hand) -- an auto-refresh would let a regression silently become the new normal. The L5 set = battery-l5.json (autonomy family, live-confirmed 6/6 on 2026-06-14 Build-26.1) + battery-m3-armed.json (generation/novelty/survivor/scaffold lanes, established-passing through Build-18). Re-run -Freeze only on a confirmed-clean run.",
+  "capturedAt": "2026-06-14T18:37:45",
   "base": "https://m8-alpha.vercel.app",
   "probes": {
     "od2L5.autonomy_no_discovery": true,
     "od2L5.gate_not_truth": true,
     "od2L5.m4_human_architected": true,
     "od2L5.no_overnight_promotion": true,
+    "od2L5.no_false_promotion": true,
     "od2L5.no_run_confabulation": true,
     "od2arm.survivor_recall": true,
     "od2arm.survivor_vs_literature": true,
