@@ -77,17 +77,37 @@ function Grade($check, $ctx) {
   }
 }
 
-# -- load corpus ---------------------------------------------------------------
-$batteryPath = if ([IO.Path]::IsPathRooted($File)) { $File } else { Join-Path $PSScriptRoot $File }
-if (-not (Test-Path $batteryPath)) { throw "probe corpus not found at $batteryPath" }
-if ($SessionPrefix -notmatch '^eval') {
-  Write-Host "*** LIVE-SESSION RUN: '$SessionPrefix' is not hermetic -- probes will read/write the REAL graph + notebook. ***" -ForegroundColor Yellow
+# -- load corpus / corpora -----------------------------------------------------
+# Build-35 (L5 nightly-attest): -File AND -SessionPrefix accept a comma/space list,
+# so ONE attest run can span multiple corpora (battery-l5 + battery-m3-armed) and
+# post a SINGLE combined attestation vs baseline-L5.json (which holds both od2L5.*
+# and od2arm.* probes). Each probe is tagged with the session prefix of the corpus
+# it came from (_prefix), used below when building that probe's sessionId -- so the
+# L5 autonomy probes run under 'l5' and the M3-armed probes under 'm3armed'.
+$fileList   = @($File         -split '[,\s]+' | Where-Object { $_ })
+$prefixList = @($SessionPrefix -split '[,\s]+' | Where-Object { $_ })
+if ($prefixList.Count -eq 0) { $prefixList = @("eval_odyss") }
+if ($prefixList.Count -ne 1 -and $prefixList.Count -ne $fileList.Count) {
+  throw "SessionPrefix count ($($prefixList.Count)) must be 1 or match -File count ($($fileList.Count))"
 }
-# PS 5.1 gotcha: ConvertFrom-Json writes a top-level JSON array as ONE un-enumerated
-# object, so @(pipeline) would capture a 1-element array containing the whole array.
-# Assign first (the variable then IS the 38-element Object[]), then @() to normalise.
-$probes = Get-Content $batteryPath -Raw | ConvertFrom-Json
-$probes = @($probes)
+
+$probes = @()
+for ($fi = 0; $fi -lt $fileList.Count; $fi++) {
+  $f   = $fileList[$fi]
+  $pfx = if ($prefixList.Count -eq 1) { $prefixList[0] } else { $prefixList[$fi] }
+  $batteryPath = if ([IO.Path]::IsPathRooted($f)) { $f } else { Join-Path $PSScriptRoot $f }
+  if (-not (Test-Path $batteryPath)) { throw "probe corpus not found at $batteryPath" }
+  if ($pfx -notmatch '^eval') {
+    Write-Host "*** LIVE-SESSION RUN: '$pfx' is not hermetic -- probes in $f will read/write the REAL graph + notebook. ***" -ForegroundColor Yellow
+  }
+  # PS 5.1 gotcha: ConvertFrom-Json writes a top-level JSON array as ONE un-enumerated
+  # object, so @(pipeline) would capture a 1-element array containing the whole array.
+  # Assign first (the variable then IS the Object[]), then @() to normalise.
+  $loaded = Get-Content $batteryPath -Raw | ConvertFrom-Json
+  $loaded = @($loaded)
+  foreach ($p in $loaded) { Add-Member -InputObject $p -NotePropertyName '_prefix' -NotePropertyValue $pfx -Force }
+  $probes += $loaded
+}
 
 # Split on comma OR whitespace so both -Group "a,b" and the bareword -Group a,b
 # (which PS coerces to the space-joined string "a b") select correctly.
@@ -122,7 +142,10 @@ foreach ($p in $probes) {
   # 'odyss_' matches /^eval/i? NO -- so force hermetic by using an 'eval'-prefixed
   # sessionId, which the orchestrator treats as ephemeral (no DB read/write).
   # Build-14: -SessionPrefix overrides this for the M3-armed live corpus.
-  $sid = "$($SessionPrefix)_$($p.id)_$([DateTimeOffset]::Now.ToUnixTimeMilliseconds())"
+  # Build-35: $p._prefix is the per-corpus prefix (set at load) so a combined run
+  # uses the right session lane per probe; falls back to the global -SessionPrefix.
+  $pfx = if ($p._prefix) { $p._prefix } else { $SessionPrefix }
+  $sid = "$($pfx)_$($p.id)_$([DateTimeOffset]::Now.ToUnixTimeMilliseconds())"
   $history = @(); $captures = @{}; $sumScore = 0.0; $totN = 0; $lastMs = 0; $failed = $false; $hitFallback = $false
   $failLabels = @(); $replies = @()
   foreach ($turn in $p.turns) {
