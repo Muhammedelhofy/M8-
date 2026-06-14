@@ -167,8 +167,11 @@ class ChatManager {
     this.sessionId = "session_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
   }
 
-  addMessage(role, content) {
+  // `attachments` (Build-33): optional [{name}] list of files attached to a
+  // user message — display-only chips, not part of msg.content/history.
+  addMessage(role, content, attachments) {
     const msg = { role, content, timestamp: new Date() };
+    if (attachments && attachments.length) msg.attachments = attachments;
     this.messages.push(msg);
     this._renderMessage(msg);
     this._scrollToBottom();
@@ -184,6 +187,17 @@ class ChatManager {
     appendWithCharts(bubble, msg.content);
 
     wrapper.appendChild(bubble);
+    if (msg.attachments && msg.attachments.length) {
+      const list = document.createElement("div");
+      list.className = "message-attachments";
+      msg.attachments.forEach((att) => {
+        const chip = document.createElement("div");
+        chip.className = "attachment-chip";
+        chip.textContent = `📎 ${att.name}`;
+        list.appendChild(chip);
+      });
+      wrapper.appendChild(list);
+    }
     this._addFooter(wrapper, msg);
     this.container.appendChild(wrapper);
   }

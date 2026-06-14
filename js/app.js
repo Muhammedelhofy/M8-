@@ -11,7 +11,99 @@ const UI = {
   langToggle: null,
   statusText: null,
   orb: null,
+  attachmentChips: null,
 };
+
+// ── Pasted file attachments (Build-33) ───────────────────────────────────
+// Text-like files pasted into the textarea are read client-side and sent as
+// {name, content} alongside the message; the orchestrator injects their text
+// into THIS turn's LLM context only (never into memory/classification).
+const ATTACHMENT_TEXT_RE = /^(text\/|application\/json)/;
+const ATTACHMENT_EXT_RE = /\.(txt|csv|tsv|json|md|markdown|log|yaml|yml)$/i;
+const MAX_ATTACHMENTS = 3;
+const MAX_ATTACHMENT_CHARS = 20000;
+let pendingAttachments = []; // [{name, content, size}]
+
+function isTextAttachment(file) {
+  return ATTACHMENT_TEXT_RE.test(file.type || "") || ATTACHMENT_EXT_RE.test(file.name || "");
+}
+
+function readFileAsText(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsText(file);
+  });
+}
+
+async function handlePaste(e) {
+  const files = (e.clipboardData && e.clipboardData.files) || [];
+  if (!files.length) return;
+
+  for (const file of Array.from(files)) {
+    if (!isTextAttachment(file)) {
+      flashStatus(currentLang === "ar" ? "نوع الملف غير مدعوم — نص/CSV فقط حالياً" : "Only text/CSV files are supported for now");
+      continue;
+    }
+    if (pendingAttachments.length >= MAX_ATTACHMENTS) {
+      flashStatus(currentLang === "ar" ? `حد أقصى ${MAX_ATTACHMENTS} ملفات` : `Max ${MAX_ATTACHMENTS} attached files`);
+      break;
+    }
+    try {
+      e.preventDefault();
+      const text = await readFileAsText(file);
+      pendingAttachments.push({ name: file.name || "file.txt", content: text, size: file.size || text.length });
+      renderAttachmentChips();
+    } catch (err) {
+      console.error("paste attachment read error:", err);
+    }
+  }
+}
+
+function renderAttachmentChips() {
+  UI.attachmentChips.innerHTML = "";
+  pendingAttachments.forEach((att, i) => {
+    const chip = document.createElement("div");
+    chip.className = "attachment-chip";
+
+    const name = document.createElement("span");
+    name.className = "attachment-name";
+    name.textContent = `📎 ${att.name}`;
+    chip.appendChild(name);
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "attachment-remove";
+    remove.title = "Remove";
+    remove.textContent = "×";
+    remove.addEventListener("click", () => {
+      pendingAttachments.splice(i, 1);
+      renderAttachmentChips();
+    });
+    chip.appendChild(remove);
+
+    UI.attachmentChips.appendChild(chip);
+  });
+  UI.attachmentChips.classList.toggle("visible", pendingAttachments.length > 0);
+}
+
+// Briefly show a message in the status line, then restore the normal status.
+let _flashTimer = null;
+function flashStatus(text) {
+  if (_flashTimer) clearTimeout(_flashTimer);
+  UI.statusText.textContent = text;
+  _flashTimer = setTimeout(() => setStatus("idle"), 2200);
+}
+
+// Cap + format a pending attachment for the wire — server re-caps too, this
+// just avoids shipping huge payloads from the browser.
+function packAttachments() {
+  return pendingAttachments.map((a) => ({
+    name: a.name,
+    content: a.content.length > MAX_ATTACHMENT_CHARS ? a.content.slice(0, MAX_ATTACHMENT_CHARS) : a.content,
+  }));
+}
 
 const LABELS = {
   ar: {
@@ -44,6 +136,7 @@ function init() {
   UI.langToggle = document.getElementById("lang-toggle");
   UI.statusText = document.getElementById("status-text");
   UI.orb = document.getElementById("m8-orb");
+  UI.attachmentChips = document.getElementById("attachment-chips");
 
   // Initialize managers
   chat = new ChatManager(UI.messages);
@@ -67,6 +160,7 @@ function init() {
       handleSend();
     }
   });
+  UI.textInput.addEventListener("paste", handlePaste);
   UI.micBtn.addEventListener("click", toggleMic);
   UI.stopBtn.addEventListener("click", () => {
     voice.stopSpeaking();
@@ -93,7 +187,7 @@ function showWelcome() {
 
 function handleSend() {
   const text = UI.textInput.value.trim();
-  if (text) sendMessage(text);
+  if (text || pendingAttachments.length) sendMessage(text);
 }
 
 // Flip to false to force the proven buffered path (no streaming) without a redeploy.
@@ -105,7 +199,8 @@ const STREAMING_ENABLED = true;
 const DECK_RE = /\b(decks?|slides?|slide\s*deck|presentations?|pitch(?:\s*deck)?|power\s?point|ppt|pptx|keynote)\b/i;
 
 async function sendMessage(text) {
-  if (!text || isProcessing) return;
+  const attachments = packAttachments();
+  if ((!text && !attachments.length) || isProcessing) return;
   isProcessing = true;
 
   // Stop any ongoing speech
@@ -115,8 +210,15 @@ async function sendMessage(text) {
   UI.textInput.value = "";
   UI.textInput.style.height = "auto";
 
-  // Display user message
-  chat.addMessage("user", text);
+  // A file pasted with no typed question still needs message text for the LLM.
+  if (!text) {
+    text = currentLang === "ar" ? "من فضلك راجع الملف المرفق." : "Please take a look at the attached file.";
+  }
+
+  // Display user message + attachment chips, then clear pending attachments.
+  chat.addMessage("user", text, attachments.map((a) => ({ name: a.name })));
+  pendingAttachments = [];
+  renderAttachmentChips();
 
   // Show thinking state
   chat.showTyping();
@@ -134,10 +236,10 @@ async function sendMessage(text) {
     }
     let streamed = false;
     if (STREAMING_ENABLED) {
-      try { streamed = await streamMessage(text, pastHistory); }
+      try { streamed = await streamMessage(text, pastHistory, attachments); }
       catch (streamErr) { console.warn("Stream failed, falling back to buffered:", streamErr); streamed = false; }
     }
-    if (!streamed) await bufferedMessage(text, pastHistory);
+    if (!streamed) await bufferedMessage(text, pastHistory, attachments);
   } catch (err) {
     console.error("Send error:", err);
     chat.hideTyping();
@@ -150,11 +252,11 @@ async function sendMessage(text) {
 
 // Streaming path (SSE). Returns true if it delivered a reply; false → caller
 // falls back to the buffered path. Throwing also triggers the fallback.
-async function streamMessage(text, pastHistory) {
+async function streamMessage(text, pastHistory, attachments) {
   const res = await fetch("/api/chat-stream", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: text, sessionId: chat.sessionId, history: pastHistory }),
+    body: JSON.stringify({ message: text, sessionId: chat.sessionId, history: pastHistory, attachments }),
   });
   if (!res.ok || !res.body) return false;
   if (!(res.headers.get("content-type") || "").includes("text/event-stream")) return false;
@@ -228,11 +330,11 @@ async function deckMessage(text, pastHistory) {
 }
 
 // Buffered path (the original /api/chat flow) — also the streaming fallback.
-async function bufferedMessage(text, pastHistory) {
+async function bufferedMessage(text, pastHistory, attachments) {
   const res = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: text, sessionId: chat.sessionId, history: pastHistory }),
+    body: JSON.stringify({ message: text, sessionId: chat.sessionId, history: pastHistory, attachments }),
   });
   if (!res.ok) {
     const errData = await res.json().catch(() => ({}));

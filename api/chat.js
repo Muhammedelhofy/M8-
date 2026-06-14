@@ -17,10 +17,10 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { message, sessionId, history } = req.body;
+    const { message, sessionId, history, attachments } = req.body;
     if (!message) return res.status(400).json({ error: "Message required" });
 
-    const response = await orchestrate({ message, sessionId, history });
+    const response = await orchestrate({ message, sessionId, history, attachments });
     return res.status(200).json({ response });
 
   } catch (error) {

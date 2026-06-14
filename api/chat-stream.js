@@ -25,7 +25,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== "POST")    return res.status(405).json({ error: "Method not allowed" });
   if (!process.env.GEMINI_API_KEY) return res.status(500).json({ error: "GEMINI_API_KEY not configured" });
 
-  const { message, sessionId, history } = req.body || {};
+  const { message, sessionId, history, attachments } = req.body || {};
   if (!message) return res.status(400).json({ error: "Message required" });
 
   res.setHeader("Content-Type",  "text/event-stream; charset=utf-8");
@@ -38,7 +38,7 @@ module.exports = async function handler(req, res) {
 
   try {
     const full = await orchestrateStream({
-      message, sessionId, history,
+      message, sessionId, history, attachments,
       onChunk: (delta) => send({ delta }),
       onReset: () => send({ reset: true }),   // discard a partial that's being superseded by a fallback
     });
