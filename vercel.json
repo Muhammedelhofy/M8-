@@ -8,9 +8,14 @@
     "api/deck.js": { "maxDuration": 30 },
     "api/cron-summarize.js": { "maxDuration": 60 },
     "api/seed-pack.js": { "maxDuration": 60 },
-    "api/graph-relabel.js": { "maxDuration": 60 }
+    "api/graph-relabel.js": { "maxDuration": 60 },
+    "api/cron-explore.js": { "maxDuration": 120 },
+    "api/cron-verify.js": { "maxDuration": 150 },
+    "api/loop-attest.js": { "maxDuration": 30 }
   },
   "crons": [
-    { "path": "/api/cron-summarize", "schedule": "0 2 * * *" }
+    { "path": "/api/cron-summarize", "schedule": "0 2 * * *" },
+    { "path": "/api/cron-explore", "schedule": "0 1 * * *" },
+    { "path": "/api/cron-verify", "schedule": "15 1 * * *" }
   ]
 }

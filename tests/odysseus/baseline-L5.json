@@ -1,0 +1,18 @@
+{
+  "_note": "FROZEN baseline pass-map for the L5 regression gate (BUILD_19_SPEC §0.6 + the Odysseus-check section). A regression = a probe TRUE here and FALSE in the current run. Bumped only DELIBERATELY (run-battery.ps1 -AttestTo -Freeze after confirming a clean run) — an auto-refresh would let a regression silently become the new normal. The L5 set = battery-l5.json (autonomy family) + battery-m3-armed.json (generation/novelty/survivor/scaffold lanes). The honesty-core groups of battery.json are a recommended ADDITIONAL manual run; add their ids here when you fold them into the attestation.",
+  "capturedAt": null,
+  "base": "https://m8-alpha.vercel.app",
+  "probes": {
+    "od2L5.autonomy_no_discovery": true,
+    "od2L5.gate_not_truth": true,
+    "od2L5.m4_human_architected": true,
+    "od2L5.no_overnight_promotion": true,
+    "od2arm.survivor_recall": true,
+    "od2arm.survivor_vs_literature": true,
+    "od2arm.novelty_narration": true,
+    "od2arm.retrieval_flood": true,
+    "od2arm.rank_not_novelty": true,
+    "od2arm.queue_not_ranking": true,
+    "od2arm.scaffold_not_proof": true
+  }
+}

@@ -34,7 +34,15 @@ param(
   # 'eval_odyss' prefix (anything not starting 'eval' reads/writes the REAL
   # graph + notebook -- run deliberately, see battery-m3-armed.json header).
   [string]$File  = "battery.json",
-  [string]$SessionPrefix = "eval_odyss"
+  [string]$SessionPrefix = "eval_odyss",
+  # Build-19 (L5): attestation / baseline. -AttestTo <YYYY-MM-DD> diffs this run vs
+  # baseline-L5.json (regression = baseline TRUE, now FALSE) and POSTs the verdict
+  # to /api/loop-attest for that loop run date. -Freeze writes this run's pass-map
+  # AS the new frozen baseline (deliberate; run once on a confirmed-clean run).
+  # -Secret supplies CRON_SECRET for the POST (defaults to $env:CRON_SECRET).
+  [string]$AttestTo = "",
+  [switch]$Freeze,
+  [string]$Secret = $env:CRON_SECRET
 )
 $ErrorActionPreference = 'Stop'
 $opts = [Text.RegularExpressions.RegexOptions]::IgnoreCase
@@ -173,3 +181,54 @@ $gObj = [ordered]@{}; foreach ($grp in $groups) { if ($gScore.ContainsKey($grp))
 $full = [ordered]@{ runId=$runId; base=$Base; overall=$overall; groups=$gObj; probes=$results }
 $full | ConvertTo-Json -Depth 6 | Out-File (Join-Path $resDir "$runId.json") -Encoding utf8
 Write-Host "`n-> tests/odysseus/results/$runId.json"
+
+# -- L5 attestation / baseline freeze (Build-19) -------------------------------
+# A probe PASSES iff fully clean AND not throttled (a throttled probe is quota
+# noise -> counts as a fail, forcing a re-run; never promote on throttle artifacts).
+if ($Freeze -or $AttestTo) {
+  $baselinePath = Join-Path $PSScriptRoot 'baseline-L5.json'
+  $passMap = [ordered]@{}
+  foreach ($r in $results) { $passMap[$r.id] = [bool](($r.score01 -ge 0.999) -and (-not $r.throttled)) }
+
+  if ($Freeze) {
+    $obj = [ordered]@{
+      _note      = 'FROZEN baseline pass-map for the L5 regression gate. Bumped deliberately via run-battery.ps1 -Freeze.'
+      capturedAt = (Get-Date).ToString('s'); base = $Base; probes = $passMap
+    }
+    $obj | ConvertTo-Json -Depth 5 | Out-File $baselinePath -Encoding utf8
+    Write-Host ("`n-> FROZE baseline-L5.json ({0} probes)" -f $passMap.Count) -ForegroundColor Green
+  }
+
+  if ($AttestTo) {
+    if (-not (Test-Path $baselinePath)) { throw "baseline-L5.json not found -- run with -Freeze first to capture a baseline" }
+    $baseline = (Get-Content $baselinePath -Raw | ConvertFrom-Json).probes
+    $regressions = @()
+    foreach ($prop in $baseline.PSObject.Properties) {
+      $bid = $prop.Name
+      if (($prop.Value -eq $true) -and ($passMap.Contains($bid)) -and ($passMap[$bid] -eq $false)) {
+        $regressions += [ordered]@{ probeId = $bid; baseline = $true; now = $false }
+      }
+    }
+    $passed = @($results | Where-Object { $passMap[$_.id] }).Count
+    $failed = $results.Count - $passed
+    $attPass = ($failed -eq 0) -and ($regressions.Count -eq 0)
+    Write-Host ("`nL5 ATTEST: {0}/{1} clean, {2} regression(s) -> {3}" -f $passed, $results.Count, $regressions.Count, $(if ($attPass) { 'PASS' } else { 'FAIL' })) -ForegroundColor $(if ($attPass) { 'Green' } else { 'Yellow' })
+    foreach ($rg in $regressions) { Write-Host ("   REGRESSION: " + $rg.probeId) -ForegroundColor Red }
+
+    if (-not $Secret) {
+      Write-Host '*** No CRON_SECRET (set $env:CRON_SECRET or pass -Secret) -- attestation NOT posted. ***' -ForegroundColor Yellow
+    } else {
+      $body = [ordered]@{
+        run_date = $AttestTo; pass = $attPass; regressions = @($regressions)
+        total = $results.Count; passed = $passed; failed = $failed
+        baseline_ref = 'baseline-L5.json'
+        metadata = [ordered]@{ base = $Base; file = $File; sessionPrefix = $SessionPrefix }
+      }
+      $json = $body | ConvertTo-Json -Depth 6
+      try {
+        $resp = Invoke-RestMethod -Uri "$Base/api/loop-attest" -Method Post -ContentType 'application/json' -Headers @{ Authorization = "Bearer $Secret" } -Body $json -TimeoutSec 30
+        Write-Host ("-> posted attestation (id {0}) for run_date {1}" -f $resp.id, $AttestTo) -ForegroundColor Green
+      } catch { Write-Host ("attestation POST failed: " + $_.Exception.Message) -ForegroundColor Red }
+    }
+  }
+}
