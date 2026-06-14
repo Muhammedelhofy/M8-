@@ -148,6 +148,18 @@ function appendWithCharts(bubble, text) {
   if (chartSpec) renderM8Chart(bubble, chartSpec);
 }
 
+// For the copy-to-clipboard button: drop the M8-CHART marker so the chart's
+// raw JSON spec never lands on the clipboard, just the spoken/displayed text.
+function stripM8ChartMarker(text) {
+  const m = M8_CHART_RE.exec(text);
+  if (!m) return text;
+  return (text.slice(0, m.index) + text.slice(m.index + m[0].length)).replace(/\s+$/, "");
+}
+
+// ── Copy-to-clipboard (small button under every message) ───────────────────
+const COPY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>';
+const COPY_ICON_DONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
 class ChatManager {
   constructor(container) {
     this.container = container;
@@ -171,16 +183,66 @@ class ChatManager {
     bubble.className = "message-bubble";
     appendWithCharts(bubble, msg.content);
 
+    wrapper.appendChild(bubble);
+    this._addFooter(wrapper, msg);
+    this.container.appendChild(wrapper);
+  }
+
+  // Timestamp + copy-to-clipboard button, shared by every message type.
+  _addFooter(wrapper, msg) {
+    const footer = document.createElement("div");
+    footer.className = "message-footer";
+
     const timeEl = document.createElement("div");
     timeEl.className = "message-time";
-    timeEl.textContent = msg.timestamp.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    timeEl.textContent = msg.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-    wrapper.appendChild(bubble);
-    wrapper.appendChild(timeEl);
-    this.container.appendChild(wrapper);
+    const copyBtn = document.createElement("button");
+    copyBtn.type = "button";
+    copyBtn.className = "copy-btn";
+    copyBtn.title = "Copy";
+    copyBtn.innerHTML = COPY_ICON;
+    copyBtn.addEventListener("click", () => this._copyMessage(msg, copyBtn));
+
+    footer.appendChild(timeEl);
+    footer.appendChild(copyBtn);
+    wrapper.appendChild(footer);
+    return footer;
+  }
+
+  _copyMessage(msg, btn) {
+    const text = stripM8ChartMarker(msg.content || "");
+    const done = () => {
+      btn.innerHTML = COPY_ICON_DONE;
+      btn.classList.add("copied");
+      setTimeout(() => {
+        btn.innerHTML = COPY_ICON;
+        btn.classList.remove("copied");
+      }, 1200);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => this._fallbackCopy(text, done));
+    } else {
+      this._fallbackCopy(text, done);
+    }
+  }
+
+  // execCommand fallback for browsers/contexts where navigator.clipboard is
+  // unavailable or denied (e.g. non-secure origins).
+  _fallbackCopy(text, done) {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand("copy");
+      done();
+    } catch (e) {
+      console.error("copy failed", e);
+    }
+    ta.remove();
   }
 
   showTyping() {
@@ -219,11 +281,8 @@ class ChatManager {
     wrapper.className = "message assistant";
     const bubble = document.createElement("div");
     bubble.className = "message-bubble";
-    const timeEl = document.createElement("div");
-    timeEl.className = "message-time";
-    timeEl.textContent = msg.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     wrapper.appendChild(bubble);
-    wrapper.appendChild(timeEl);
+    this._addFooter(wrapper, msg);
     this.container.appendChild(wrapper);
 
     msg._bubble = bubble;
@@ -275,12 +334,8 @@ class ChatManager {
     actions.appendChild(this._deckBtn("⬇ Markdown (.md)", () => this._downloadBlob(deck.marp, deck.base + ".md", "text/markdown")));
     bubble.appendChild(actions);
 
-    const timeEl = document.createElement("div");
-    timeEl.className = "message-time";
-    timeEl.textContent = msg.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
     wrapper.appendChild(bubble);
-    wrapper.appendChild(timeEl);
+    this._addFooter(wrapper, msg);
     this.container.appendChild(wrapper);
     this._scrollToBottom();
     return msg;
