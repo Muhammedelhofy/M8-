@@ -39,6 +39,10 @@ $patterns = @(
   @{ re = '\*\*rejected\*\*';                                                              cls = 'rejected';       label = "$XMARK lean_rejected"; dedupe = $true }
   @{ re = '\*\*statement type-checks\*\*';                                                 cls = 'stated';         label = "$CIRC lean_stated";    dedupe = $true }
   @{ re = '`lean_rejected`';                                                               cls = 'rejected';       label = "$XMARK lean_rejected"; dedupe = $true }
+  # Build-28: epistemic classification tags from lib/memory-graph.js renderGraphPacket
+  @{ re = '\[ESTABLISHED\]';                                                               cls = 'established';    label = $null; dedupe = $false }
+  @{ re = '\[SPECULATIVE\]';                                                               cls = 'speculative';    label = $null; dedupe = $false }
+  @{ re = '\[FRINGE\]';                                                                    cls = 'fringe';         label = $null; dedupe = $false }
 )
 
 # Build one combined regex with a capture group per pattern, like the JS source.
@@ -154,7 +158,27 @@ $narrPending = "I drafted the Lean statement, but the verification service is co
 $t12 = @(Get-LeanBadgeSegments $narrPending)
 Test-True "T12 cold/slow single-turn narration has no badge (not a LEAF line)" (@($t12 | Where-Object {$_.type -eq 'badge'}).Count -eq 0)
 
+# -- T13-T16: Build-28 epistemic classification badges -----------------------
+$t13 = @(Get-LeanBadgeSegments '1. [claim] The Hidden Attractor Conjecture (thread research-1; similarity 0.91; [SPECULATIVE] claim from an ingested document - Muhammad classified this as speculative, NOT an established result, NOT literature consensus)')
+$b13 = @($t13 | Where-Object { $_.type -eq 'badge' })
+Test-True "T13 one badge for [SPECULATIVE]" ($b13.Count -eq 1 -and $b13[0].cls -eq 'speculative')
+Test-True "T13 badge label preserves bracket text" ($b13[0].value -eq '[SPECULATIVE]')
+
+$t14 = @(Get-LeanBadgeSegments '1. [claim] Some fringe claim (thread research-1; similarity 0.88; [FRINGE] claim from an ingested document - Muhammad classified this as fringe, NOT an established result, NOT literature consensus)')
+$b14 = @($t14 | Where-Object { $_.type -eq 'badge' })
+Test-True "T14 one badge for [FRINGE]" ($b14.Count -eq 1 -and $b14[0].cls -eq 'fringe')
+
+$t15 = @(Get-LeanBadgeSegments '1. [claim] Terras density result (thread research-1; similarity 0.95; [ESTABLISHED] cited result from an ingested document - established, but attribute it to its source, not our research)')
+$b15 = @($t15 | Where-Object { $_.type -eq 'badge' })
+Test-True "T15 one badge for [ESTABLISHED]" ($b15.Count -eq 1 -and $b15[0].cls -eq 'established')
+
+# T16: novelty-adjacency line also gets the same badge
+$novAdj = '- survivor 1 is semantically CLOSE to a claim from an ingested document marked [SPECULATIVE]: "The Hidden Attractor Conjecture" (cosine 0.86) - this is NOT an established result; do not narrate it as known mathematics.'
+$t16 = @(Get-LeanBadgeSegments $novAdj)
+$b16 = @($t16 | Where-Object { $_.type -eq 'badge' })
+Test-True "T16 novelty-adjacency [SPECULATIVE] badged" ($b16.Count -eq 1 -and $b16[0].cls -eq 'speculative')
+
 Write-Host ""
-Write-Host "=== lean-badges-verify.ps1 (Build-23) ==="
+Write-Host "=== lean-badges-verify.ps1 (Build-23 + Build-28) ==="
 Write-Host "PASS: $pass  FAIL: $fail"
 if ($fail -gt 0) { exit 1 }

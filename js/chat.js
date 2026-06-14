@@ -18,6 +18,12 @@ const LEAN_BADGE_RE = new RegExp(
     "(\\*\\*rejected\\*\\*)",
     "(\\*\\*statement type-checks\\*\\*)",
     "(`lean_rejected`)",
+    // Build-28: epistemic classification tags emitted by the research-memory
+    // graph packet (lib/memory-graph.js renderGraphPacket / noveltySemanticPass)
+    // for ingested-document claims, per Build-27 source_class.
+    "(\\[ESTABLISHED\\])",
+    "(\\[SPECULATIVE\\])",
+    "(\\[FRINGE\\])",
   ].join("|"),
   "g"
 );
@@ -36,6 +42,9 @@ const LEAN_BADGE_META = [
   { cls: "rejected",       label: "✗ lean_rejected",           dedupe: true },
   { cls: "stated",         label: "◑ lean_stated",             dedupe: true },
   { cls: "rejected",       label: "✗ lean_rejected",           dedupe: true },
+  { cls: "established",    label: null,                        dedupe: false },
+  { cls: "speculative",    label: null,                        dedupe: false },
+  { cls: "fringe",         label: null,                        dedupe: false },
 ];
 
 // Appends `text` to `bubble` as a mix of plain text nodes and `.lean-badge`

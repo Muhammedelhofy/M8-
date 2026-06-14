@@ -307,6 +307,23 @@ html, body {
   border: 1px solid rgba(123, 136, 168, 0.3);
 }
 
+/* Epistemic classification badges for ingested-document claims (Build-28) */
+.lean-badge--established {
+  color: var(--green);
+  background: rgba(76, 175, 80, 0.14);
+  border: 1px solid rgba(76, 175, 80, 0.35);
+}
+.lean-badge--speculative {
+  color: #e0a83c;
+  background: rgba(224, 168, 60, 0.14);
+  border: 1px solid rgba(224, 168, 60, 0.35);
+}
+.lean-badge--fringe {
+  color: var(--red);
+  background: rgba(244, 67, 54, 0.14);
+  border: 1px solid rgba(244, 67, 54, 0.35);
+}
+
 /* Deck artifact — outline + download buttons */
 .deck-outline {
   white-space: pre-wrap;
