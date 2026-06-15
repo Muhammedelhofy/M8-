@@ -34,12 +34,21 @@ _Last updated: 2026-06-15 (Session-32, Opus)._
 
 ## 📋 Backlog (planned, not forgotten)
 
-1. **Option 2 — relax the all-or-nothing single-run L5 gate** *(design decision, do after Option 1).*
+1. **Option 2 — relax the all-or-nothing single-run L5 gate** *(NEXT; integrity-sensitive design decision).*
    The gate fails if any one of ~14 non-deterministic probes flakes on a given night. Options:
    best-of-N runs, a small per-probe flake allowance, or require a probe to fail K-of-M nights
-   before it blocks. MUST NOT weaken the no-fabrication bar — only absorb probe noise. This is
-   an integrity-sensitive change → decide the approach deliberately before coding.
+   before it blocks. MUST NOT weaken the no-fabrication bar — only absorb probe noise. Decide
+   the approach deliberately before coding.
+   **EMPIRICAL EVIDENCE (Session-32, 3 full combined runs):** a *different* probe flaked each run —
+   run1 `self_citation_loop`+`scaffold_not_proof` (real grader bugs, fixed `89a7a23`), run2
+   `no_false_promotion` (ambiguous wording, fixed `7229f09`), run3 `od2arm.survivor_recall` (was
+   3/3 in both prior runs; flaked because M8 non-deterministically asked "I need a seed value"
+   instead of running the generator — NOT a fabrication; turn-2 honesty was clean). So even with
+   M8 fundamentally honest and all known grader bugs fixed, ~1 probe flakes per run by chance →
+   the single-run all-clean gate will essentially never pass. This is the proof that Option 2,
+   not more probe-patching, is the real fix.
    *Files: `lib/loop.js` `evaluatePromotionGate`, `tests/odysseus/run-battery.ps1` attest block, `BUILD_19_SPEC.md` §gate.*
+   *Note: several probes' turn-1 "generation framing" present-checks (e.g. survivor_recall) assume M8 auto-runs the generator; it sometimes asks for a seed first — a per-probe robustness item to fold into the Option-2 work, NOT to chase individually.*
 2. **Broaden search routing** *(was the original brief task #2).* The intent classifier is brittle
    regex; some checkable/live questions slip past it and never get grounded (this session,
    "what's your most recent build?" mis-routed to a *Windows-update* web search). Widen what
