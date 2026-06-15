@@ -72,11 +72,15 @@ across-nights streak gate, so the relaxation lives in the runner and the streak 
 
 1. ✅ **Build-37 = Guard the silent vision miss** *(crew #1)* — **SHIPPED + LIVE-VERIFIED** (Session-33 ship, Session-34 live test). `vision-blind-verify.ps1` 20/20; live S1/S2/S4 PASS.
    ✅ **Build-34 live vision bug — FIXED Session-34** (`c5023d0`): the clarify/doc early-returns swallowed image turns before `imgTurn` was computed — see Done + takeaway #8.
-2. ✅ **Build-38 = Provenance + trust_state at ingestion — CODE COMPLETE (Session-34, `4a0e575`); ⚠ migration pending Muhammad.** Spec: [`BUILD_38_SPEC.md`](BUILD_38_SPEC.md). Once the migration lands, the follow-on hardening is the read-path *thresholds* (lanes filtering by `verification_state`/`confidence`) — deferred to a later build, v1 just makes provenance legible. Original scope text below for reference. Extend
-   Build-30 provenance beyond `m8_conversations` to **graph nodes + the Build-27 intake path**:
-   every node carries `source · timestamp · evidence_kind (hypothesis/experiment/result/failed_path)
-   · confidence · verification_state` *before* graph expansion scales. "Trust before taxonomy" — this
-   is the enabler for both the epistemic axis and L6. *Files: intake / `lib/memory-graph.js`.*
+2. ✅ **Build-38 = Provenance + trust_state at ingestion — SHIPPED + MIGRATION APPLIED + LIVE-VERIFIED** (Session-34, `4a0e575`/`de0b9e0`, migration `8567e70`). Spec: [`BUILD_38_SPEC.md`](BUILD_38_SPEC.md).
+   ✅ **Build-39 = Read-path trust tiers — OFFLINE-VERIFIED (Session-35, 2026-06-15).** The
+   follow-on read-path hardening: `renderGraphPacket` now groups the recall packet's nodes into
+   trust tiers (VERIFIED/EMPIRICAL/HEURISTIC/UNVERIFIED/REFUTED, most-trusted first, cosine order
+   preserved within each tier) plus a `low confidence` flag for `confidence < 0.5` non-proven
+   nodes and a closing TRUST TIERS instruction. No migration — pure rendering change in
+   `lib/memory-graph.js`. Spec: [`BUILD_39_SPEC.md`](BUILD_39_SPEC.md); `tests/trust-tier-verify.ps1`
+   **12/12**. ⚠ Live verify pending (needs a mixed-trust recall query + Gemini quota, explicit
+   authorization per standing notes).
 3. **Broaden search routing** *(crew #3).* Brittle intent classifier regex lets checkable/live
    questions slip past grounding ("what's your most recent build?" → Windows-update web search).
    Widen what routes to search. *File: `lib/intentClassifier.js`.*
@@ -104,6 +108,12 @@ across-nights streak gate, so the relaxation lives in the runner and the streak 
 **Per-probe completeness audit: ✅ DONE Round-5 — 14/14 probes carry their anti-fabrication signal in an `absent` check (one optional hardening = #7).**
 
 ## 📌 Standing notes / gotchas
+
+- ✅ **CRON_SECRET in Vercel — CONFIRMED live-enforced (Session-35, 2026-06-15).** Unauthenticated
+  `GET https://m8-alpha.vercel.app/api/graph-relabel` returns **401**, proving `CRON_SECRET` is set
+  in the Vercel project env and the bearer check is active for graph-relabel/seed-pack/cron-summarize
+  (all gated by the same `process.env.CRON_SECRET` check). No action needed — this backlog item is
+  CLOSED.
 
 - `nightly-attest.ps1` task `M8-L5-Nightly-Attest` (re-registered Session-33): daily 05:00,
   action `-File "...nightly-attest.ps1"` (path correctly quoted), now **StartWhenAvailable**
