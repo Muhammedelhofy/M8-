@@ -82,13 +82,16 @@ UPDATE public.m8_graph_nodes SET evidence_kind = CASE kind
 WHERE evidence_kind IS NULL;
 
 -- confidence from source / extraction_confidence
+-- extraction_confidence BEFORE the source='external' blanket: Build-27 ingested
+-- claims carry source='external' too and must keep their per-claim confidence.
+-- M2 seeds have NULL extraction_confidence → fall through to external → 0.9.
 UPDATE public.m8_graph_nodes SET confidence = CASE
   WHEN status = 'lean_verified' OR mastery_state = 'lean_verified' THEN 1.0
   WHEN source = 'code' THEN 1.0
-  WHEN source = 'external' THEN 0.9
   WHEN extraction_confidence = 'high' THEN 0.8
   WHEN extraction_confidence = 'medium' THEN 0.6
   WHEN extraction_confidence = 'low' THEN 0.4
+  WHEN source = 'external' THEN 0.9
   WHEN source = 'extraction' THEN 0.6
   ELSE confidence END
 WHERE confidence IS NULL;

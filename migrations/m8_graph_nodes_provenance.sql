@@ -53,14 +53,19 @@ update public.m8_graph_nodes set evidence_kind = case kind
     else evidence_kind end
 where evidence_kind is null;
 
--- 4) Backfill: confidence from source / lean status / extraction_confidence ----
+-- 4) Backfill: confidence from lean status / extraction_confidence / source ----
+-- NOTE: extraction_confidence is checked BEFORE the source='external' blanket,
+-- because Build-27 ingested claims carry source='external' too — they must keep
+-- their per-claim extraction confidence, not the 0.9 curated-literature default.
+-- M2 seed nodes have a NULL extraction_confidence, so they fall through to the
+-- source='external' → 0.9 case. (Mirrors deriveConfidence in lib/memory-graph.js.)
 update public.m8_graph_nodes set confidence = case
     when status = 'lean_verified' or mastery_state = 'lean_verified' then 1.0
     when source = 'code'                  then 1.0
-    when source = 'external'              then 0.9
     when extraction_confidence = 'high'   then 0.8
     when extraction_confidence = 'medium' then 0.6
     when extraction_confidence = 'low'    then 0.4
+    when source = 'external'              then 0.9
     when source = 'extraction'            then 0.6
     else 0.6 end
 where confidence is null;
@@ -74,3 +79,32 @@ update public.m8_graph_nodes set verification_state = case
     when source = 'external'                                         then 'empirical'
     else 'unverified' end
 where verification_state is null;
+
+-- 6) Extend the cosine-match RPC to RETURN the new provenance fields, so recall
+-- (lib/memory-graph.js renderGraphPacket) can narrate trust per node. Additive
+-- for callers (they ignore extra columns), but the RETURN signature changes, so
+-- the old function must be dropped first (CREATE OR REPLACE can't alter columns).
+drop function if exists public.m8_graph_match(extensions.vector, int, float);
+create or replace function public.m8_graph_match(
+  query_embedding extensions.vector(768),
+  match_count     int   default 8,
+  min_similarity  float default 0.25
+)
+returns table (
+  id bigint, kind text, label text, content text, thread text,
+  status text, source text, note_id bigint, similarity float,
+  source_class text, evidence_kind text, confidence real, verification_state text
+)
+language sql stable
+set search_path = public, extensions
+as $$
+  select n.id, n.kind, n.label, n.content, n.thread,
+         n.status, n.source, n.note_id,
+         (1 - (n.embedding <=> query_embedding))::float as similarity,
+         n.source_class, n.evidence_kind, n.confidence, n.verification_state
+  from public.m8_graph_nodes n
+  where n.embedding is not null
+    and (1 - (n.embedding <=> query_embedding)) >= min_similarity
+  order by n.embedding <=> query_embedding
+  limit greatest(match_count, 1)
+$$;
