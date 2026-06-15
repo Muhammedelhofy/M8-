@@ -39,9 +39,19 @@ _Last updated: 2026-06-15 (Session-36, Opus) — **Build-42 (D3 kernel/leap deco
 
 ## 🛠️ Active
 
-- _(none — Build-42 shipped + live-verified `a5b6788`. The FULL EPISTEMIC AXIS is now complete
-  (Builds 41+42). Next candidates = backlog #12 search under-routing, #11 open-conjecture seed
-  reads empirical, or the Round-5 honesty-harness follow-ups (#5–#10).)_
+- **Build-43 (problem-solving engine) — AWAITING DIRECTION.** Spec `BUILD_43_SPEC.md` proposes 4
+  options; LEAD recommendation (after Muhammad's Session-37 steer toward vortex math / patterns /
+  geometria / "unforbidden knowledge") = **(D) speculative-kernel → conjecture bridge**: take a
+  Build-42-approved KERNEL, propose a computable Type-A conjecture from it, run the EXISTING
+  deterministic falsifier, narrate "observed through N" (never proven). Makes the epistemic axis
+  *do work* on the targets he named. Alternatives: (A) human-gated decomposition proposer, (B) richer
+  LLM conjecture generation, (C) 2nd problem domain. **Muhammad to pick before any engine code.**
+- _Diagram `m8_full_architecture_2026.html` now shows the Epistemic Axis (Builds 41–42) as its own
+  visible layer (vortex/geometria/unforbidden-knowledge) — he asked; done._
+
+- _(done — Build-42 `a5b6788`; full epistemic axis complete (Builds 41+42); search under-routing
+  shipped + live-verified `56229da` (backlog #12). Remaining candidates = #11 open-conjecture seed
+  reads empirical, Round-5 honesty-harness follow-ups (#5–#10).)_
 
 ### ✅ Build-42 (D3 kernel/leap decomposition + co-retrieval invariant) — SHIPPED + LIVE-VERIFIED `a5b6788`
 Spec: [`BUILD_42_SPEC.md`](BUILD_42_SPEC.md). What shipped:
@@ -186,10 +196,24 @@ across-nights streak gate, so the relaxation lives in the runner and the streak 
    correctly?" ("*probably* conjecture #7 survived" is a calibration miss) (Manus). *File: battery.*
 10. **Add the source-trust over-read probe to `battery-realworld.json`** — prediction/preview-only
     sources; assert M8 hedges (closes the Build-35 loop).
-12. **(Build-40 follow-up) Search UNDER-routing.** The other half of "broaden search routing":
-    checkable external facts that fall to NONE and are answered from training, not grounded search.
-    Build the example corpus first, then widen carefully (each widening adds low-quality-web-answer
-    risk).
+12. ✅ **(Build-40 follow-up) Search UNDER-routing — SHIPPED + LIVE-VERIFIED (Session-37, 2026-06-15,
+    `56229da`).** Corpus-first (`tests/odysseus/under-routing-corpus.md`: 10 must-search misses + 12
+    must-not-search true negatives). Fix = one narrow high-precision tier `CHECKABLE_FACT_RE` in
+    `lib/intentClassifier.js`, evaluated LAST before the NONE fall-through so it only catches genuine
+    fall-throughs and never steals an existing route: "who founded/owns/acquired X", "who is the
+    [current] CEO of X", "when was X founded", "what year …" — the past/perfect + who/role siblings of
+    cases LIVE_DATA already routes. Temporal sub-pattern has a negative lookahead so "when did
+    i/you/we/my/our …" stays conversational; personal + self-status guards still pre-empt. Routes to
+    LOOKUP (no clarify trip — checkSpecificity only gates flights/hotels/etc). **Offline:**
+    `tests/under-routing-verify.ps1` (full-classifier PS mirror, BEFORE/AFTER) **39/39, 10/10 misses
+    fixed, 0 over-routing regressions.** **LIVE (deploy `56229da` via `/api/health`): 12/12** — all 5
+    misses now ground with citations (keeta founder→TechCrunch + flagged discrepancy; careem CEO→
+    Crunchbase + "may not be up-to-date"; riyadh metro→CNN Dec-2024; aramco IPO→2019; noon→Alabbar/PIF),
+    all 5 true negatives stayed local (incl. "when did i last log in" → honest "no access to your login
+    history", NO search — lookahead held), regression both pass (latest-keeta-news still NEWS; most-
+    recent-build still build-state). **Lesson: the over-routing trap is real — the classifier already
+    over-searches via RESEARCH (`what is/explain`); the only SAFE widen is the genuine NONE fall-through,
+    by high-precision question SHAPE, placed last so it can't steal an existing route.**
 13. ✅ **(Session-35) Build-state freshness + memory-override — FIXED + LIVE-VERIFIED (`d2264c4`).**
     Live (Build-40 Q1) M8 answered "most recent build = Build-37" though we're at Build-40. THREE
     causes, each necessary: (a) `lib/buildState.js` `live[]`+`commitFamily` were stale, ending at
