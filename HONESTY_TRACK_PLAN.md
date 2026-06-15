@@ -6,7 +6,7 @@ lost and we don't rabbit-hole — a new mid-task issue becomes a *scoped item he
 immediate detour. Update on every change. (Mirrors the auto-memory `[[m8-agent-v2]]`, but
 this is the visible in-repo artifact.)
 
-_Last updated: 2026-06-15 (Session-33, Opus)._
+_Last updated: 2026-06-15 (Session-33, Opus) — Build-36 + Team Round 5 + Build-37._
 
 ---
 
@@ -14,7 +14,8 @@ _Last updated: 2026-06-15 (Session-33, Opus)._
 
 | Commit | What | Proof |
 |---|---|---|
-| _(pending commit)_ | **Build-36 — Option 2: best-of-N L5 gate relaxation.** A probe whose only misses are **framing-class** (present/flagsAssumption/citesNumber) is re-run up to `-BestOfN` (default 3); clean on any attempt ⇒ pass. **A fabrication-class miss (absent/refusal/anyOf) is an instant hard block — NEVER re-run.** Pure predicates (`Test-FabricationMiss`/`Test-ProbeClean`/`Test-ShouldRerun`) factored into `tests/odysseus/probe-class.ps1`, shared by the runner + the offline mirror (no drift). | `loop-verify.ps1` **52/52** (incl. 21 new best-of-N/guardrail cases); both runner files parse clean; **combined live dry-run 14/14 fully clean → ATTEST PASS, 0 regressions** (POST suppressed). First all-clean combined run; every probe passed on try 1 so the re-run path wasn't exercised live — it's covered by the offline suite. |
+| _(pending commit)_ | **Build-37 — Silent Vision-Miss Guard** (Team Round 5 consensus). Closes the success-path gap in the Build-34 vision guard: a vision-capable model that **succeeds** but whose reply **denies seeing the image** ("I can't see images" on a near-blank/degenerate image) now returns an honest `IMAGE_BLIND_RESPONSE` instead of a blind reply a later turn could confabulate from. `VISION_BLIND_RE` (modality-denial/provide-request/absence/text-only) + `SAW_IMAGE_RE` veto, success-path only. Precision-guarded so the legit "too blurry to read" hedge survives. | `tests/vision-blind-verify.ps1` **20/20** (denials caught, quality hedges + real engagement + "cannot clearly see" pass through, success-path-only asserted); Build-34 mirrors green. Live: `tests/BUILD37_LIVE_TEST.md` (deployed-app, pending). |
+| `12fbd57` | **Build-36 — best-of-N L5 gate relaxation.** Framing-only flakes re-run up to `-BestOfN` (default 3); **a fabrication-class miss (absent/refusal/anyOf) is an instant hard block — NEVER re-run.** Shared predicates in `tests/odysseus/probe-class.ps1` (runner + mirror, no drift). | `loop-verify.ps1` **52/52** (21 new); **combined live dry-run 14/14 clean → ATTEST PASS, 0 regressions**. Per-probe audit (Round 5): 14/14 carry their anti-fab signal in an `absent` check. |
 | `847f0b9` | **Build-35 source-trust hardening** — rank/tag web results by credibility+recency, hedge on single-weak / prediction / stale sources | `source-trust-verify.ps1` 30/30; live `battery-realworld` held **10/10** |
 | `1dd5fb3` | **L5 attest wrapper fixed** — `run-battery.ps1` `-File`/`-SessionPrefix` take a comma-list; `nightly-attest.ps1` runs both L5 corpora → one combined attestation, `run_date=UtcNow` | offline-validated (14 probes, all 13 baseline IDs covered); live dry-run end-to-end |
 | `89a7a23` | **Two L5 graders hardened** — `scaffold_not_proof` absent now negation-aware; `self_citation_loop` present broadened; baseline gained `self_citation_loop` | validated vs captured replies + pos/neg controls; live re-run m3_armed lane **5/5** |
@@ -64,12 +65,8 @@ across-nights streak gate, so the relaxation lives in the runner and the streak 
 
 **Reordered by Team Round 5 (2026-06-15) — see [M8_Team_Round5_Synthesis_2026_06_15.md](M8_Team_Round5_Synthesis_2026_06_15.md).** Crew consensus: silent vision miss → provenance/source-trust → search routing → epistemic axis ("trust before taxonomy"). Search routing dropped from #1 to #3.
 
-1. **Build-37 = Guard the silent vision miss** *(crew #1).* When an image turn gets a model-authored
-   "I cannot see images / please provide the image" despite an image being attached, detect it and
-   return the honest `IMAGE_FALLBACK` instead of letting a later turn confabulate. A silent failure
-   in a core modality = invisible false confidence (GPT-4o: "a failed search is visible; a missed
-   image is invisible"). *File: `lib/orchestrator.js` image path.*
-2. **Build-38 candidate = Provenance + trust_state at ingestion** *(crew unanimous Q2).* Extend
+1. ✅ **Build-37 = Guard the silent vision miss** *(crew #1)* — **SHIPPED this session** (see Done). `lib/orchestrator.js` success-path `VISION_BLIND_RE`/`SAW_IMAGE_RE` guard; `vision-blind-verify.ps1` 20/20; live test doc pending deploy.
+2. **Build-38 candidate = Provenance + trust_state at ingestion** *(crew unanimous Q2; NOW NEXT).* Extend
    Build-30 provenance beyond `m8_conversations` to **graph nodes + the Build-27 intake path**:
    every node carries `source · timestamp · evidence_kind (hypothesis/experiment/result/failed_path)
    · confidence · verification_state` *before* graph expansion scales. "Trust before taxonomy" — this
