@@ -6,7 +6,7 @@ lost and we don't rabbit-hole — a new mid-task issue becomes a *scoped item he
 immediate detour. Update on every change. (Mirrors the auto-memory `[[m8-agent-v2]]`, but
 this is the visible in-repo artifact.)
 
-_Last updated: 2026-06-15 (Session-34, Opus) — **Build-34 vision LIVE-FIXED** + Build-37 live-verified._
+_Last updated: 2026-06-15 (Session-34, Opus) — **Build-34 vision LIVE-FIXED** + Build-37 live-verified + **Build-38 code complete (migration pending Muhammad)**._
 
 ---
 
@@ -14,6 +14,7 @@ _Last updated: 2026-06-15 (Session-34, Opus) — **Build-34 vision LIVE-FIXED** 
 
 | Commit | What | Proof |
 |---|---|---|
+| `4a0e575` (+ migration `8567e70`) | **Build-38 — universal node provenance (CODE COMPLETE; ⚠ migration pending Muhammad).** Option A (Muhammad's call): one universal epistemic axis — `evidence_kind` (hypothesis/experiment/result/failed_path/reference) · numeric `confidence` (0–1) · `verification_state` (unverified/heuristic/empirical/proven/refuted) — on EVERY graph node (research/code via `upsertNode`, ingested via `populateGraph`), alongside the existing `source`+`created_at`; `mastery_state` stays the intake pipeline-stage detail. JS derivations mirror the SQL backfill; recall narrates a per-node `trust:` bit; the `m8_graph_match` RPC returns the new fields; defensive `isMissingProvenanceColumn` fallback makes the code safe to deploy before the migration. **HONESTY INVARIANTS: lean_verified = ONLY path to 'proven'; counterexample = only 'refuted'; extraction/ingestion can reach neither.** | `provenance-graph-verify.ps1` **32/32** (incl. the 3 honesty invariants). **⚠ NEXT STEP: Muhammad runs `migrations/m8_graph_nodes_provenance.sql` in Supabase**, then live-verify (ingest a doc + sweep → query nodes → confirm the triple + recall narration). |
 | `c5023d0` + `032ce9e` | **🚨 Build-34 LIVE VISION BUG — FIXED + LIVE-VERIFIED (Session-34).** ROOT CAUSE (not the SDK/model/field-shape the brief suspected): `imgTurn` was computed at line ~1228, right before `buildUserParts`, but the **clarification/doc early-returns run ~200 lines earlier** (tool-decision `decideAction`→"what image do you want me to read?", specificity `checkSpecificity`→`spec.question`, and the `INTENT.DOC` artifact path). Those gates see only the message TEXT ("read this image"), never the attached `inlineData` part, so on most phrasings one early-RETURNED a "please attach the image" clarification **before** the image was ever added to `contents`. That also explains the missing `request_traces` (early return precedes the trace insert) and the intermittency (the one phrasing that slipped past the gates went full-pipeline and read the image). **Fix:** hoist `const imgTurn = hasImageAttachments(attachments)` to the top of `orchestrate()` and gate every pre-vision early-return on `!imgTurn` (DOC gate, INTENT.NONE tool-clarify, both specificity gates incl. the web-search slot — an image turn must never web-search "read this image" nor trip the empty-search "don't guess" guard). Streaming path already delegates image turns to this buffered `orchestrate` (`streamable=!hasImage…`), so `/api/chat` + `/api/chat-stream` both covered. | **LIVE on `m8-alpha.vercel.app`:** PNG read 4/4 ("Invoice #QZ-7741…"), JPEG read clean ("Gate B12 - Flight LH9043…"), quota path returns honest `IMAGE_FALLBACK` (not "what image?"). `request_traces` now record image turns (`intent=NONE, search=False, prov=gemini, ok=True`) — proof they reach the vision model, not an early-return. Offline: image-attachment 25/25, vision-blind 20/20, attachment 21/21, fleet-routing 19/19. |
 | `aa18326` (live-verified Session-34) | **Build-37 — Silent Vision-Miss Guard — now LIVE-VERIFIED** (was LIVE BLOCKED — base vision was broken). Live scenarios: S1 degenerate (all-white 64×64 + 1×1) → honest "completely blank and white, no discernible content" (engaged, `SAW_IMAGE_RE` vetoes the guard — correct); S2 normal → reads content (4/4); S4 downstream "what did that image say again?" → "What image are you referring to?" (invents NOTHING — anti-confab PASS). S3 blurry not live-constructed; offline-proven 20/20. | live S1/S2/S4 PASS; `vision-blind-verify.ps1` 20/20. |
 | _(pending commit)_ | **Build-37 — Silent Vision-Miss Guard** (Team Round 5 consensus). Closes the success-path gap in the Build-34 vision guard: a vision-capable model that **succeeds** but whose reply **denies seeing the image** ("I can't see images" on a near-blank/degenerate image) now returns an honest `IMAGE_BLIND_RESPONSE` instead of a blind reply a later turn could confabulate from. `VISION_BLIND_RE` (modality-denial/provide-request/absence/text-only) + `SAW_IMAGE_RE` veto, success-path only. Precision-guarded so the legit "too blurry to read" hedge survives. | `tests/vision-blind-verify.ps1` **20/20** (denials caught, quality hedges + real engagement + "cannot clearly see" pass through, success-path-only asserted); Build-34 mirrors green. **⚠ LIVE BLOCKED:** live test (`tests/BUILD37_LIVE_TEST.md`) could not run — base image vision is broken on the deployed API (takeaway #8), so the `imgTurn` guard never engages. Offline-proven only. |
@@ -37,7 +38,11 @@ _Last updated: 2026-06-15 (Session-34, Opus) — **Build-34 vision LIVE-FIXED** 
 
 ## 🛠️ Active
 
-- _(none — vision resolved; next = Build-38 provenance-at-ingestion, see Backlog #2.)_
+- **⚠ Muhammad: run `migrations/m8_graph_nodes_provenance.sql` in Supabase** (auto-mode correctly
+  blocked the agent from applying prod DDL). It's additive + idempotent (ADD COLUMN IF NOT EXISTS
+  + NULL-only backfills + a drop/recreate of the `m8_graph_match` RPC). Build-38 code is already
+  live and safe without it (defensive fallback); once the migration lands, new + backfilled nodes
+  carry the provenance triple and recall narrates it. Then live-verify per BUILD_38_SPEC §7.
 
 ## ✅ Resolved: Option 2 — best-of-N L5 gate relaxation (Build-36)
 
@@ -70,7 +75,7 @@ across-nights streak gate, so the relaxation lives in the runner and the streak 
 
 1. ✅ **Build-37 = Guard the silent vision miss** *(crew #1)* — **SHIPPED + LIVE-VERIFIED** (Session-33 ship, Session-34 live test). `vision-blind-verify.ps1` 20/20; live S1/S2/S4 PASS.
    ✅ **Build-34 live vision bug — FIXED Session-34** (`c5023d0`): the clarify/doc early-returns swallowed image turns before `imgTurn` was computed — see Done + takeaway #8.
-2. **Build-38 = Provenance + trust_state at ingestion** *(crew unanimous Q2; NOW NEXT — vision cleared).* Extend
+2. ✅ **Build-38 = Provenance + trust_state at ingestion — CODE COMPLETE (Session-34, `4a0e575`); ⚠ migration pending Muhammad.** Spec: [`BUILD_38_SPEC.md`](BUILD_38_SPEC.md). Once the migration lands, the follow-on hardening is the read-path *thresholds* (lanes filtering by `verification_state`/`confidence`) — deferred to a later build, v1 just makes provenance legible. Original scope text below for reference. Extend
    Build-30 provenance beyond `m8_conversations` to **graph nodes + the Build-27 intake path**:
    every node carries `source · timestamp · evidence_kind (hypothesis/experiment/result/failed_path)
    · confidence · verification_state` *before* graph expansion scales. "Trust before taxonomy" — this
