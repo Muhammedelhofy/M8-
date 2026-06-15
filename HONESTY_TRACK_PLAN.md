@@ -39,8 +39,20 @@ _Last updated: 2026-06-15 (Session-36, Opus) — **Build-42 (D3 kernel/leap deco
 
 ## 🛠️ Active
 
+- **Build-43 Option D — BUILT + OFFLINE-VERIFIED (Session-37), AWAITING LIVE SIGN-OFF.** `lib/
+  kernel-conjecture.js` (new) + hard-route in `lib/orchestrator.js` (`detectKernelTest`/`runKernelTest`,
+  non-streamable). Flow: "test the kernel of [vortex/number-pattern idea]" → decompose to kernel/leap
+  (Build-42 `proposeDecomposition`) → `kernelToConjecture` proposes a CLOSED-vocabulary computable
+  claim (dr_periodic / dr_constant / mod_cycle over a generator whitelist; LLM can only pick within the
+  code-checkable set — the anti-smuggling gate) → deterministic exhaustive checker → honest narration
+  ("OBSERVED through N", never "proven"; leap stays speculative; held state capped at 'empirical').
+  Offline `tests/kernel-conjecture-verify.ps1` **20/20** (dr(2^n) cycle 2,4,8,7,5,1 holds period 6;
+  planted-false killed with counterexample; off-schema rejected; narration never says proven). Live
+  test `tests/BUILD43D_LIVE_TEST.md` (pending Muhammad OK + quota). NEXT after live: B → A → C.
+  _(PS gotcha logged: typed-hashtable params through nested helpers in PS5.1 hot loops are
+  pathologically slow — mirror tests must use FLAT inline loops.)_
 - **Build-43 (problem-solving engine) — DIRECTION LOCKED (Muhammad, Session-37): build ALL FOUR, one
-  rung at a time, order `D → B → A → C`. Building D NOW.** Spec `BUILD_43_SPEC.md`; roadmap shown on
+  rung at a time, order `D → B → A → C`. D built (above).** Spec `BUILD_43_SPEC.md`; roadmap shown on
   the diagram. **D = speculative-kernel → conjecture bridge**: take a Build-42-approved KERNEL, propose
   a computable Type-A conjecture from it, run the EXISTING `conjecture-gen.js` deterministic falsifier,
   narrate "observed through N" (never proven) — makes the epistemic axis *do work* on the vortex/

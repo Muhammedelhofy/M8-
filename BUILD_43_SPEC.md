@@ -5,8 +5,10 @@
 Shown on the diagram as the "Problem-Solving Engine Roadmap". Written Session-37 (Opus), 2026-06-15.
 
 ## Locked roadmap (one rung at a time)
-1. **D — Fringe idea → testable claim** *(BUILDING NOW)* — smallest, matches Muhammad's vortex/
-   patterns/geometria steer, makes the epistemic axis productive.
+1. **D — Fringe idea → testable claim** ✅ *BUILT + OFFLINE-VERIFIED (20/20), awaiting live sign-off* —
+   `lib/kernel-conjecture.js` + orchestrator hard-route. Closed-vocabulary checker (dr_periodic /
+   dr_constant / mod_cycle over a generator whitelist); LLM proposes within the code-checkable set only;
+   deterministic exhaustive check → "observed through N", never proven; leap stays speculative.
 2. **B — Better guesses** — richer LLM conjecture proposal, deterministically falsified; raises the
    quality every later rung depends on.
 3. **A — M8 plans the attack** — drafts the lemma-DAG decomposition (human-gated) → existing M4 leaves.
