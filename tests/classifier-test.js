@@ -5,7 +5,7 @@
  * Tests all 6 intent categories with 33 realistic queries.
  */
 
-const { classifyIntent, INTENT } = require("../api/intentClassifier");
+const { classifyIntent, INTENT } = require("../lib/intentClassifier");
 
 const testCases = [
   // ── LIVE_DATA ──────────────────────────────────────────────────
@@ -30,6 +30,15 @@ const testCases = [
   { query: "latest keeta news",                                            expected: "NEWS" },
   { query: "what happened in the saudi logistics sector this week",        expected: "NEWS" },
   { query: "recent updates from bolt ksa",                                 expected: "NEWS" },
+
+  // ── SELF-STATUS → NONE (Build-40: must NOT web-search M8's own state) ──
+  { query: "what's your most recent build",                                expected: "NONE" },
+  { query: "what is the latest build",                                     expected: "NONE" },
+  { query: "which build are you on",                                       expected: "NONE" },
+  { query: "what version are you running",                                 expected: "NONE" },
+  { query: "what can you do",                                              expected: "NONE" },
+  { query: "did we ship the search routing fix",                           expected: "NONE" },
+  { query: "what was the last build we did",                               expected: "NONE" },
 
   // ── FACT_CHECK ─────────────────────────────────────────────────
   { query: "did keeta launch in bahrain",                                  expected: "FACT_CHECK" },
