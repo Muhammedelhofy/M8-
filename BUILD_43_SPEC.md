@@ -36,7 +36,47 @@ Two candidate bottlenecks follow from that, plus a breadth option:
 
 ---
 
-## ⭐ RECOMMENDED: (A) Human-gated Decomposition Proposer
+## ⭐⭐ NEW LEAD (after Muhammad's steer, Session-37): (D) Speculative-Kernel → Conjecture bridge
+
+**Muhammad's steer (verbatim intent):** he wants M8 to *eventually work on* vortex math,
+number patterns, geometria/sacred geometry, "unforbidden knowledge" — and to see the
+epistemic axis as a real, visible part of the system (diagram updated this session).
+
+That reframes the smallest-useful step. The Build-41/42 epistemic axis already **classifies**
+a fringe idea and **extracts its checkable kernel** (kernel/leap, human-gated). What it does
+NOT yet do is **make the kernel productive** — turn that established core into a concrete,
+machine-testable conjecture the M3 engine can actually falsify or support-to-N. That bridge
+is exactly "making progress on a hard/fringe idea without laundering it," which is the whole
+point of the engine for the targets he cares about.
+
+**Smallest useful slice (v1):**
+1. Start from an **already-approved kernel** (Build-42 output — e.g. the "digital root =
+   value mod 9" kernel extracted from a vortex-math doc). No new fringe-handling — reuse it.
+2. `kernelToConjecture(kernelNode)` — one Gemini pass proposes a **computable Type-A
+   predicate + explicit bound** derived from the kernel (e.g. "the digital-root sequence of
+   2^n is periodic with period 6 for n ≤ N"), in the **exact M3 generator format**, or
+   `null` if the kernel yields no checkable claim.
+3. **Run the EXISTING deterministic falsifier** (`conjecture-gen.js`) over the full TEST
+   range. Survivor → narrated **"observed through N"** (never "true"); kill →
+   counterexample reported. The speculative LEAP stays speculative and untouched — only the
+   *kernel-derived* claim earns a tested-to-N status.
+
+**Honesty invariants:** the leap is never promoted; the derived conjecture inherits M3's
+"tested to N ≠ proven" contract; a kernel that yields no computable predicate returns `null`
+(no fake claim). Co-retrieval (Build-42) still shows kernel + leap + both classifications.
+
+**Offline proof:** `tests/kernel-conjecture-verify.ps1` — mirror the format check + assert a
+known-true kernel claim survives the falsifier and a planted-false one is killed with a
+counterexample; Odysseus probe: "did M8 prove the vortex-math idea?" → must answer no.
+
+**Why it's the lead now:** it is the *same machinery* as Option A/B (propose → deterministic
+gate → honest narration) but pointed straight at the targets Muhammad named, and it makes the
+already-built epistemic axis *do work* instead of just classifying. Still small: one proposer
+function + reuse of the existing falsifier; no new infra, no autonomy.
+
+---
+
+## (A) Human-gated Decomposition Proposer
 
 **Why this one.** It attacks the exact logged caveat (human-only decomposition), and it
 reuses a pattern we already shipped, live-verified, and trust: **Build-42's propose →
@@ -101,9 +141,11 @@ new engine power. Least aligned with "making progress on hard problems."
 
 ## Recommendation in one line
 
-Build **(A)** — the human-gated decomposition proposer — as the smallest step that makes
-M8 contribute the *insight*, reuses the trusted Build-42 gate + M4-manual pipeline, and
-can't cross the honesty/autonomy line. If you'd rather raise candidate quality first,
-**(B)**; if you want to prove generality, **(C)**.
+Given your steer, build **(D)** — the speculative-kernel → conjecture bridge — so M8 starts
+turning vortex-math / pattern / geometria ideas into concrete, machine-tested claims
+(honestly: "observed through N", never proven), making the epistemic axis *do work*. If you'd
+rather M8 help **architect proof attacks** on a target, **(A)**; raise raw candidate quality,
+**(B)**; prove generality on a 2nd problem, **(C)**.
 
-**→ Your call on direction before I write any engine code.**
+**→ Your call on direction before I write any engine code.** (D) is the smallest step toward
+exactly what you described.
