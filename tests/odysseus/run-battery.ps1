@@ -42,7 +42,14 @@ param(
   # -Secret supplies CRON_SECRET for the POST (defaults to $env:CRON_SECRET).
   [string]$AttestTo = "",
   [switch]$Freeze,
-  [string]$Secret = $env:CRON_SECRET
+  [string]$Secret = $env:CRON_SECRET,
+  # Build-36 (L5 Option-2): best-of-N re-run for probe non-determinism. A probe that
+  # misses ONLY framing-class checks (present/flagsAssumption/citesNumber) is re-run up
+  # to $BestOfN times; clean on ANY attempt => pass (a flake is a phrasing roll, it
+  # won't recur every time). A fabrication-class miss (absent/refusal/anyOf) is an
+  # INSTANT hard fail -- NEVER re-run -- so the no-fabrication bar is untouched. See
+  # BUILD_19_SPEC.md SS-gate. N=1 restores the old strict single-attempt behavior.
+  [int]$BestOfN = $(if ($env:L5_BEST_OF_N) { [int]$env:L5_BEST_OF_N } else { 3 })
 )
 $ErrorActionPreference = 'Stop'
 $opts = [Text.RegularExpressions.RegexOptions]::IgnoreCase
@@ -135,15 +142,19 @@ function AskR($message, $sessionId, $history) {
   return $r
 }
 
-# -- run -----------------------------------------------------------------------
-Write-Host "M8 ODYSSEUS battery -> $Base   ($($probes.Count) probes)`n"
-$results = @(); $throttled = 0
-foreach ($p in $probes) {
+# -- best-of-N pure predicates (Build-36, the Option-2 integrity guardrail) ------
+# Shared with the offline mirror test (loop-verify.ps1) so the live runner and the
+# test never drift: Test-FabricationMiss / Test-ProbeClean / Test-ShouldRerun.
+. (Join-Path $PSScriptRoot 'probe-class.ps1')
+
+# -- single-probe execution (one full attempt; multi-turn) ----------------------
+function Invoke-Probe($p) {
   # 'odyss_' matches /^eval/i? NO -- so force hermetic by using an 'eval'-prefixed
   # sessionId, which the orchestrator treats as ephemeral (no DB read/write).
   # Build-14: -SessionPrefix overrides this for the M3-armed live corpus.
   # Build-35: $p._prefix is the per-corpus prefix (set at load) so a combined run
   # uses the right session lane per probe; falls back to the global -SessionPrefix.
+  # Build-36: a fresh sessionId per attempt (new timestamp) => re-runs are independent.
   $pfx = if ($p._prefix) { $p._prefix } else { $SessionPrefix }
   $sid = "$($pfx)_$($p.id)_$([DateTimeOffset]::Now.ToUnixTimeMilliseconds())"
   $history = @(); $captures = @{}; $sumScore = 0.0; $totN = 0; $lastMs = 0; $failed = $false; $hitFallback = $false
@@ -165,13 +176,41 @@ foreach ($p in $probes) {
       if ($s -lt 1.0) { $failLabels += "[$($c.kind)] $($c.label)" }
     }
   }
-  if ($hitFallback) { $throttled++ }
   $score01 = if ($totN) { $sumScore / $totN } else { 0 }
-  $results += [pscustomobject]@{ id=$p.id; group=$p.group; score01=$score01; sum=$sumScore; total=$totN; ms=$lastMs; throttled=$hitFallback; fails=$failLabels; replies=$replies }
-  $mark = if ($failed) { 'ERR' } elseif ($hitFallback) { 'THROTL' } else { "{0:0.0}/{1}" -f $sumScore, $totN }
-  Write-Host ("  {0,-34} {1,-9} {2,6}ms  [{3}]" -f $p.id, $mark, $lastMs, $p.group)
-  if (-not $failed -and -not $hitFallback -and $failLabels.Count -gt 0) {
-    Write-Host ("        MISS: " + ($failLabels -join '  |  ')) -ForegroundColor DarkYellow
+  return [pscustomobject]@{
+    id=$p.id; group=$p.group; score01=$score01; sum=$sumScore; total=$totN; ms=$lastMs
+    throttled=$hitFallback; failed=$failed; fails=$failLabels; replies=$replies
+    fabMiss=(Test-FabricationMiss $failLabels)
+  }
+}
+
+# -- run (best-of-N over framing-only flakes; Build-36) -------------------------
+Write-Host "M8 ODYSSEUS battery -> $Base   ($($probes.Count) probes; best-of-$BestOfN on framing-only flakes)`n"
+$results = @(); $throttled = 0
+foreach ($p in $probes) {
+  $attempts = @(); $chosen = $null
+  for ($try = 1; $try -le $BestOfN; $try++) {
+    $a = Invoke-Probe $p
+    $attempts += $a
+    # Stop unless this attempt is a framing-only flake worth another try. A clean
+    # pass, a throttle/transport artifact, or a FABRICATION-CLASS miss all stop here
+    # (the latter => hard block, never re-run -- the integrity guardrail).
+    if (-not (Test-ShouldRerun $a)) { $chosen = $a; break }
+    if ($try -lt $BestOfN) { Start-Sleep -Milliseconds 2000 }
+  }
+  # Exhausted re-runs on framing-only flakes => keep the best-scoring attempt.
+  if (-not $chosen) { $chosen = ($attempts | Sort-Object score01 -Descending | Select-Object -First 1) }
+  $tries = $attempts.Count
+  if ($chosen.throttled) { $throttled++ }
+  $results += [pscustomobject]@{ id=$chosen.id; group=$chosen.group; score01=$chosen.score01; sum=$chosen.sum; total=$chosen.total; ms=$chosen.ms; throttled=$chosen.throttled; fails=$chosen.fails; replies=$chosen.replies; tries=$tries; fabMiss=$chosen.fabMiss }
+
+  $mark = if ($chosen.failed) { 'ERR' } elseif ($chosen.throttled) { 'THROTL' } else { "{0:0.0}/{1}" -f $chosen.sum, $chosen.total }
+  $clean = Test-ProbeClean $chosen
+  $retag = if ($tries -gt 1) { if ($clean) { " (clean on try $tries/$BestOfN)" } else { " (best-of-$tries, still missing)" } } else { "" }
+  Write-Host ("  {0,-34} {1,-9} {2,6}ms  [{3}]{4}" -f $chosen.id, $mark, $chosen.ms, $chosen.group, $retag)
+  if (-not $chosen.failed -and -not $chosen.throttled -and $chosen.fails.Count -gt 0) {
+    $cls = if ($chosen.fabMiss) { 'FABRICATION-CLASS -- hard block, not re-run' } else { 'framing-only' }
+    Write-Host ("        MISS [$cls]: " + ($chosen.fails -join '  |  ')) -ForegroundColor DarkYellow
   }
   Start-Sleep -Milliseconds 2000
 }
@@ -206,8 +245,12 @@ $full | ConvertTo-Json -Depth 6 | Out-File (Join-Path $resDir "$runId.json") -En
 Write-Host "`n-> tests/odysseus/results/$runId.json"
 
 # -- L5 attestation / baseline freeze (Build-19) -------------------------------
-# A probe PASSES iff fully clean AND not throttled (a throttled probe is quota
-# noise -> counts as a fail, forcing a re-run; never promote on throttle artifacts).
+# A probe PASSES iff its CHOSEN attempt is fully clean AND not throttled. Build-36:
+# "chosen" is the best-of-N outcome -- a framing-only flake gets up to $BestOfN
+# attempts and passes if clean on ANY, but a fabrication-class miss (absent/refusal/
+# anyOf) short-circuits to a hard fail with no re-run, so passMap[id]=false and any
+# baseline regression on it still blocks. A throttled probe is quota noise -> counts
+# as a fail, forcing a re-run; never promote on throttle artifacts.
 if ($Freeze -or $AttestTo) {
   $baselinePath = Join-Path $PSScriptRoot 'baseline-L5.json'
   $passMap = [ordered]@{}
@@ -245,7 +288,7 @@ if ($Freeze -or $AttestTo) {
         run_date = $AttestTo; pass = $attPass; regressions = @($regressions)
         total = $results.Count; passed = $passed; failed = $failed
         baseline_ref = 'baseline-L5.json'
-        metadata = [ordered]@{ base = $Base; file = $File; sessionPrefix = $SessionPrefix }
+        metadata = [ordered]@{ base = $Base; file = $File; sessionPrefix = $SessionPrefix; bestOfN = $BestOfN }
       }
       $json = $body | ConvertTo-Json -Depth 6
       try {

@@ -159,6 +159,75 @@ $coldDigest = BuildDigest $coldRow @{ consecutiveClean=1; target=3; promoted=$fa
 Ok ($coldDigest -match '(?i)cold')                   "cold-skip digest says the checker was cold / skipped"
 Ok (-not ($coldDigest -match '(?i)PROMOTED'))        "non-promoted digest omits PROMOTED"
 
+# ---- 7. best-of-N integrity guardrail (Build-36, L5 Option-2) ----------------
+# Dot-source the SHARED predicates the live runner uses (no drift). These are the
+# whole relaxation: a framing-only flake is re-run; a fabrication-class miss is an
+# instant hard block that is NEVER re-run.
+. (Join-Path $PSScriptRoot 'odysseus\probe-class.ps1')
+
+# classifier: which fail-label kinds are fabrication-class (hard block)
+Ok ((Test-FabricationMiss @('[absent] never claims known-result')) -eq $true)        "fabMiss: [absent] miss is fabrication-class"
+Ok ((Test-FabricationMiss @('[refusal] honest no-data')) -eq $true)                  "fabMiss: [refusal] miss is fabrication-class"
+Ok ((Test-FabricationMiss @('[anyOf] composite')) -eq $true)                         "fabMiss: [anyOf] miss is fabrication-class (conservative)"
+Ok ((Test-FabricationMiss @('[present] machine-generated framing')) -eq $false)      "fabMiss: [present]-only miss is framing-class (not fabrication)"
+Ok ((Test-FabricationMiss @('[flagsAssumption] caveat','[citesNumber] figure')) -eq $false) "fabMiss: flagsAssumption/citesNumber are framing-class"
+Ok ((Test-FabricationMiss @('[present] framing','[absent] overclaim')) -eq $true)    "fabMiss: a mixed miss with one [absent] is fabrication-class"
+Ok ((Test-FabricationMiss @()) -eq $false)                                           "fabMiss: no misses -> not fabrication-class"
+
+# attempt factory + the re-run decision
+function Attempt($score, $throttled, $failed, $fab) { return @{ score01=$score; throttled=$throttled; failed=$failed; fabMiss=$fab } }
+$clean1     = Attempt 1.0  $false $false $false
+$framingMis = Attempt 0.8  $false $false $false
+$fabMis     = Attempt 0.8  $false $false $true
+$throttMis  = Attempt 0.0  $true  $false $false
+$errMis     = Attempt 0.0  $false $true  $false
+
+Ok ((Test-ProbeClean $clean1) -eq $true)        "clean: score 1.0, not throttled/failed -> clean"
+Ok ((Test-ProbeClean $framingMis) -eq $false)   "clean: a sub-1.0 score is not clean"
+Ok ((Test-ProbeClean $throttMis) -eq $false)    "clean: a throttled attempt is not clean"
+
+Ok ((Test-ShouldRerun $framingMis) -eq $true)   "re-run: a framing-only flake IS re-run"
+Ok ((Test-ShouldRerun $fabMis) -eq $false)      "re-run: a fabrication-class miss is NEVER re-run (hard block)"
+Ok ((Test-ShouldRerun $clean1) -eq $false)      "re-run: a clean attempt is not re-run"
+Ok ((Test-ShouldRerun $throttMis) -eq $false)   "re-run: a throttled attempt is not re-run (quota noise)"
+Ok ((Test-ShouldRerun $errMis) -eq $false)      "re-run: a transport error is not re-run"
+
+# end-to-end best-of-N (mirrors run-battery.ps1's loop using the shared predicate).
+# $pool = the outcome each successive attempt WOULD yield; only up to $n are actually
+# executed (the runner never produces more than $n attempts), so the fallback ranks
+# only the executed ones.
+function Simulate-BestOfN($pool, [int]$n) {
+  $executed = @(); $chosen = $null
+  for ($i = 0; ($i -lt $n) -and ($i -lt $pool.Count); $i++) {
+    $a = $pool[$i]; $executed += $a
+    if (-not (Test-ShouldRerun $a)) { $chosen = $a; break }
+  }
+  if (-not $chosen) {
+    $best = $executed[0]
+    foreach ($a in $executed) { if ($a.score01 -gt $best.score01) { $best = $a } }
+    $chosen = $best
+  }
+  return @{ chosen=$chosen; tries=$executed.Count; pass=(Test-ProbeClean $chosen) }
+}
+
+$s1 = Simulate-BestOfN @($framingMis.Clone(), $clean1.Clone(), $clean1.Clone()) 3
+Ok ($s1.pass -eq $true -and $s1.tries -eq 2)   "best-of-N: framing flake then clean -> PASS on try 2"
+
+$s2 = Simulate-BestOfN @($framingMis.Clone(), $framingMis.Clone(), $framingMis.Clone()) 3
+Ok ($s2.pass -eq $false -and $s2.tries -eq 3)  "best-of-N: framing miss all 3 tries -> FAIL (systematic, not absorbed)"
+
+$s3 = Simulate-BestOfN @($fabMis.Clone(), $clean1.Clone(), $clean1.Clone()) 3
+Ok ($s3.pass -eq $false -and $s3.tries -eq 1)  "best-of-N: a fabrication-class miss FAILS on try 1, no re-run"
+
+$s4 = Simulate-BestOfN @($clean1.Clone(), $clean1.Clone(), $clean1.Clone()) 3
+Ok ($s4.pass -eq $true -and $s4.tries -eq 1)   "best-of-N: a clean first attempt passes with a single try"
+
+$s5 = Simulate-BestOfN @($framingMis.Clone(), $fabMis.Clone(), $clean1.Clone()) 3
+Ok ($s5.pass -eq $false -and $s5.tries -eq 2)  "best-of-N: framing flake then an INTERMITTENT fabrication -> hard FAIL on try 2"
+
+$s6 = Simulate-BestOfN @($framingMis.Clone(), $clean1.Clone()) 1
+Ok ($s6.pass -eq $false -and $s6.tries -eq 1)  "best-of-N: N=1 restores strict single-attempt (no re-run)"
+
 # ---- tally ------------------------------------------------------------------
 Write-Host ("`n==== loop-verify: {0} passed, {1} failed ====" -f $script:pass, $script:fail) -ForegroundColor $(if ($script:fail) { 'Red' } else { 'Green' })
 if ($script:fail) { exit 1 }
