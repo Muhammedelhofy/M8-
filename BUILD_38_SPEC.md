@@ -97,12 +97,15 @@ UPDATE public.m8_graph_nodes SET confidence = CASE
 WHERE confidence IS NULL;
 
 -- verification_state from status / mastery_state / kind
+-- An INGESTED node (source='external' AND source_doc_id NOT NULL) is NEVER
+-- pre-verified — 'unverified' regardless of source_class (that's a separate axis).
+-- Only curated M2 seeds (external, NO source_doc_id) are 'empirical'.
 UPDATE public.m8_graph_nodes SET verification_state = CASE
   WHEN status = 'lean_verified' OR mastery_state = 'lean_verified' THEN 'proven'
   WHEN kind = 'counterexample' THEN 'refuted'
+  WHEN source = 'external' AND source_doc_id IS NOT NULL THEN 'unverified'  -- ingested claim
   WHEN kind = 'evidence' OR mastery_state = 'tested' THEN 'empirical'
-  WHEN source = 'external' THEN 'empirical'      -- curated literature seeds
-  WHEN kind = 'conjecture' OR mastery_state IN ('ingested','compared') THEN 'unverified'
+  WHEN source = 'external' THEN 'empirical'      -- curated literature seed
   ELSE 'unverified' END
 WHERE verification_state IS NULL;
 ```

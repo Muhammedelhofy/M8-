@@ -72,13 +72,29 @@ where confidence is null;
 
 -- 5) Backfill: verification_state from lean status / mastery_state / kind -------
 -- proven only via lean; refuted only via a counterexample.
+-- IMPORTANT: a Build-27 INGESTED node (source='external' AND source_doc_id IS NOT
+-- NULL) is NEVER pre-verified by us — it stays 'unverified' regardless of its
+-- source_class (established/speculative/fringe is a SEPARATE axis). Only the
+-- curated M2 literature seeds (source='external', NO source_doc_id) are 'empirical'.
+-- This MUST come before the blanket source='external' → empirical, and it mirrors
+-- the write-path (populateGraph hardcodes verification_state='unverified').
 update public.m8_graph_nodes set verification_state = case
     when status = 'lean_verified' or mastery_state = 'lean_verified' then 'proven'
     when kind = 'counterexample'                                     then 'refuted'
+    when source = 'external' and source_doc_id is not null          then 'unverified'  -- ingested claim
     when kind = 'evidence' or mastery_state = 'tested'              then 'empirical'
-    when source = 'external'                                         then 'empirical'
+    when source = 'external'                                         then 'empirical'   -- curated literature seed
     else 'unverified' end
 where verification_state is null;
+
+-- 5b) CORRECTIVE re-backfill for an already-applied earlier version of this file:
+-- if ingested claims were set 'empirical' by the prior §5, demote them to
+-- 'unverified' (idempotent — a no-op once correct). Does NOT touch curated seeds.
+update public.m8_graph_nodes
+set verification_state = 'unverified'
+where source = 'external'
+  and source_doc_id is not null
+  and verification_state = 'empirical';
 
 -- 6) Extend the cosine-match RPC to RETURN the new provenance fields, so recall
 -- (lib/memory-graph.js renderGraphPacket) can narrate trust per node. Additive
