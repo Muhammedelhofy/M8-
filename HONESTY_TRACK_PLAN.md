@@ -39,8 +39,28 @@ _Last updated: 2026-06-15 (Session-36, Opus) — **Build-41 (full epistemic axis
 
 ## 🛠️ Active
 
-- _(none — Build-41 D1+D2+D4 shipped + live-verified `af8974f`. NEXT = Build-42 = D3 kernel/leap
-  decomposition + co-retrieval invariant, human-gated design locked in `BUILD_41_SPEC.md` §4.)_
+- **Build-42 (D3 kernel/leap decomposition + co-retrieval invariant) — CODE COMPLETE + OFFLINE-VERIFIED;
+  awaiting LIVE steps (need explicit OK).** Spec: [`BUILD_42_SPEC.md`](BUILD_42_SPEC.md). What's built:
+  - **Decomposition (human-gated):** `proposeDecomposition` (Gemini pass, strict JSON `{kernel,leap}` or
+    `null`) runs at ingest of a *speculative* doc; the proposal is STAGED on `m8_knowledge_sources.
+    pending_decomposition` (NOT written) and surfaced in the ingest reply. `approveDecomposition(source_id,
+    {kernelEstablished})` writes the leap (always speculative) + resolves the kernel via the pure
+    `resolveKernelStanding` rule — link to an already-established node at cosine ≥0.82, else mint
+    (speculative by default, established only on explicit flag) — and adds `leap —derived_from→ kernel`
+    (`metadata.decomposition='leap_of_kernel'`). `source_class` writes stay confined to the intake path
+    (`insertClassNode`), preserving the Build-41 D4 generator-purity invariant. New endpoint
+    `api/knowledge-decompose.js`.
+  - **Co-retrieval invariant (deterministic recall):** `fetchKernelLinks` + `buildGraphContext`
+    force-pull any matched leap's kernel into the render set (cap 4); `renderGraphPacket` annotates the
+    leap inline (`decomposed-from kernel "…" [CLASS]`) + a CO-RETRIEVAL NOTE — a speculative leap is
+    never surfaced without its kernel + both classifications.
+  - **Migration** `m8_kernel_leap.sql` (one `ADD COLUMN pending_decomposition jsonb`) — **NOT yet applied**
+    (auto-mode classifier blocked it as not specifically authorized; correct — it's a prod DB write).
+  - **Offline:** `tests/kernel-leap-verify.ps1` **19/19** (standing rule + parse + co-retrieval cap +
+    D2 edge-model consistency); epistemic-axis 23/23, knowledge-verify 43/43, trust-tier 12/12 all green.
+  - **PENDING (need OK):** (1) apply `m8_kernel_leap.sql`, (2) commit+push/deploy, (3) live-verify —
+    ingest a small speculative doc, approve the split, recall the topic and confirm the leap renders
+    only beside its kernel with both classifications (Gemini quota + WRITES test nodes to the real graph).
 
 ## ✅ Resolved: Option 2 — best-of-N L5 gate relaxation (Build-36)
 
