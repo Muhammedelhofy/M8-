@@ -11,7 +11,7 @@
 
 "use strict";
 
-const { ingestDocument } = require("../lib/knowledge-intake");
+const { ingestDocument, normalizeSourceClass } = require("../lib/knowledge-intake");
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
@@ -23,14 +23,17 @@ module.exports = async (req, res) => {
   if (!title || !text) {
     return res.status(400).json({ error: "title and text are required" });
   }
-  if (!["established", "speculative", "fringe"].includes(source_class)) {
+  // Build-41 (D1): ONE neutral bucket. 'fringe' is accepted as a deprecated alias
+  // and folded to 'speculative'; anything else is rejected.
+  const cls = normalizeSourceClass(source_class);
+  if (!cls) {
     return res.status(400).json({
-      error: "source_class must be 'established', 'speculative', or 'fringe'",
+      error: "source_class must be 'established' or 'speculative'",
     });
   }
 
   try {
-    const result = await ingestDocument({ title, text, source_url, source_class, notes });
+    const result = await ingestDocument({ title, text, source_url, source_class: cls, notes });
     return res.status(200).json(result);
   } catch (e) {
     console.error("[knowledge-ingest]", e.message);

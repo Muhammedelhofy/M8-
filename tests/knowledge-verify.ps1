@@ -13,7 +13,14 @@ function CheckFalse([string]$label, $cond) { CheckTrue $label (-not $cond) }
 
 $CHUNK_WORDS = 2000
 $MAX_CHUNKS  = 8
-$VALID_CLASS = @('established','speculative','fringe')
+# Build-41 (D1): ONE neutral bucket; 'fringe' folds to 'speculative'.
+$VALID_CLASS = @('established','speculative')
+function Normalize-SourceClass($c) {
+  $v = ([string]$c).Trim().ToLower()
+  if ($v -eq 'fringe') { return 'speculative' }
+  if ($VALID_CLASS -contains $v) { return $v }
+  return $null
+}
 $VALID_CONF  = @('high','medium','low')
 $VALID_KIND  = @('claim','entity')
 $INGEST_RE   = [regex]'(?i)\b(?:ingest|add\s+(?:this\s+)?(?:paper|document|text|article|result|source)|import\s+(?:this\s+)?(?:paper|document|text|article))\b'
@@ -224,11 +231,12 @@ CheckTrue 'T39b title does not end mid-word'       (-not ($longBody.Substring(0,
 CheckFalse 'T40 summary has no "Add the...now?" prompt' ($sum -match 'Add the')
 CheckFalse 'T41 summary has no "Reply: yes" prompt'      ($sum -match 'Reply: yes')
 
-# T34-T38: invariants
-CheckTrue  'T34 VALID_CLASS has 3 values'          ($VALID_CLASS.Count -eq 3)
+# T34-T38: invariants (Build-41 D1: 2 neutral buckets; fringe folds to speculative)
+CheckTrue  'T34 VALID_CLASS has 2 values'          ($VALID_CLASS.Count -eq 2)
 CheckTrue  'T35 established in VALID_CLASS'        ('established' -in $VALID_CLASS)
 CheckTrue  'T36 speculative in VALID_CLASS'        ('speculative' -in $VALID_CLASS)
-CheckTrue  'T37 fringe in VALID_CLASS'             ('fringe' -in $VALID_CLASS)
+CheckFalse 'T37 fringe NOT a canonical bucket'    ('fringe' -in $VALID_CLASS)
+CheckTrue  'T37b fringe normalizes to speculative' ((Normalize-SourceClass 'fringe') -eq 'speculative')
 CheckFalse 'T38 theorem NOT in VALID_KIND'         ('theorem' -in $VALID_KIND)
 
 # ==== Result =================================================================

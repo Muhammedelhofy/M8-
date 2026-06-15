@@ -6,7 +6,7 @@ lost and we don't rabbit-hole — a new mid-task issue becomes a *scoped item he
 immediate detour. Update on every change. (Mirrors the auto-memory `[[m8-agent-v2]]`, but
 this is the visible in-repo artifact.)
 
-_Last updated: 2026-06-15 (Session-35, Opus) — **Build-39 trust tiers + Build-40 self-status search-routing guard BOTH SHIPPED + PUSHED + LIVE-VERIFIED** (`85f7752`, `073150a`); CRON_SECRET prod-enforcement confirmed (item closed); `/api/health` now reports deploy SHA. Prior: Build-34 vision LIVE-FIXED, Build-37 live-verified, Build-38 LIVE-VERIFIED (0 honesty violations / 130 nodes)._
+_Last updated: 2026-06-15 (Session-36, Opus) — **Build-41 (full epistemic axis, D1+D2+D4) BUILT + OFFLINE-VERIFIED + MIGRATION APPLIED LIVE** (awaiting push + live-verify OK). D3 (kernel/leap decomposition) deferred to Build-42, human-gated. Spec: [`BUILD_41_SPEC.md`](BUILD_41_SPEC.md). Prior: Build-39 trust tiers + Build-40 self-status guard SHIPPED + LIVE-VERIFIED (`85f7752`, `073150a`); `/api/health` reports deploy SHA; Build-38 LIVE-VERIFIED (0 honesty violations / 130 nodes)._
 
 ---
 
@@ -39,7 +39,9 @@ _Last updated: 2026-06-15 (Session-35, Opus) — **Build-39 trust tiers + Build-
 
 ## 🛠️ Active
 
-- _(none — Build-38 migration applied + live-verified 2026-06-15; vision resolved earlier this session.)_
+- **Build-41 (D1+D2+D4) — code complete, offline-verified, D1 migration applied live.** Awaiting:
+  (1) commit + push/deploy, (2) `/api/health` deploy-confirm, (3) live-verify (Gemini quota — needs
+  Muhammad's OK). Then D3 → Build-42. See backlog #4.
 
 ## ✅ Resolved: Option 2 — best-of-N L5 gate relaxation (Build-36)
 
@@ -103,9 +105,36 @@ across-nights streak gate, so the relaxation lives in the runner and the streak 
    facts that fall to NONE and get answered from training instead of grounded search. Deferred: needs
    a concrete corpus of mis-handled examples to tune against without raising the low-quality-web-answer
    rate. Logged as backlog #12.
-4. **Full epistemic axis** — **DEFER** behind #2 (trust before taxonomy). DEFER condition (M4+Lean)
-   is met and the surgical Build-29 guard is live, but the multi-bucket axis needs trustworthy
-   intake underneath it. Reopen after provenance lands.
+4. ⏳ **Full epistemic axis (Build-41)** — **UNBLOCKED + IN FLIGHT (Session-36).** "Trust before
+   taxonomy" satisfied by Build-38/39, so the axis is being built ON TOP of the trust layer.
+   **Key finding while grounding the spec: 3 of the 4 team-round rules were ALREADY shipped** under
+   Build-27/28 (deterministic out-of-LLM `[SPECULATIVE]` recall wrapper · `source_class` set by
+   Muhammad-only · generator structurally barred from speculative). So Build-41's genuine deltas are
+   narrower — FOUR pieces, scope-split (Muhammad's call, Session-36):
+   - ✅ **D1 — collapse to ONE neutral bucket** (`fringe`→`speculative`; "fringe" rejected 4/5 as
+     pejorative). Code: `normalizeSourceClass` in `lib/knowledge-intake.js` (accepts `fringe` as a
+     deprecated input alias, folds it); `api/knowledge-ingest.js` + copy neutralized; recall path stays
+     defensively dual-aware. **Migration `m8_epistemic_axis.sql` APPLIED LIVE** — both `source_class`
+     check constraints now `(established, speculative)`; 0 `fringe` rows existed (UPDATE was a no-op),
+     so it only tightens forward. (Live distribution: nodes 25 established / 14 speculative.)
+   - ✅ **D2 — schema edge-ban** (team rule 2b). `addEdge` now refuses an evidence/proof-bearing rel
+     (`supports`/`formalizes`) touching a `speculative` node — the structural guarantee a narrated
+     label can't give. `contradicts`/`generalizes`/`depends_on`/`derived_from` stay allowed (refutation
+     + structure/lineage, not evidence-FOR). Pure `edgeAllowed()` predicate, fail-SAFE (lookup error →
+     allow; recall wrapper is the backstop). No migration.
+   - ✅ **D4 — Odysseus probe + generator-purity test.** New `od.rw_speculative_not_established` probe
+     in `battery-realworld.json` (a speculative/ingested claim must never be narrated proven/established;
+     `absent` check is fabrication-class). Static generator-purity check freezes rule (3).
+   - ⏭ **D3 — kernel/leap decomposition + co-retrieval invariant = DEFERRED to Build-42** (the gem +
+     the only real design risk). Human-gated proposal design locked (Gemini proposes; pending-gate
+     approval or a deterministic ≥0.82 match to an established node confers kernel `established`; leap
+     always `speculative`). Full design preserved in `BUILD_41_SPEC.md` §4.
+
+   **Offline-verified:** `tests/epistemic-axis-verify.ps1` **23/23** (D1 normalize + D2 edge-ban truth
+   table + D4 static purity); `tests/knowledge-verify.ps1` **43/43** (updated to 2-bucket). **Pending:**
+   push/deploy → `/api/health` deploy-confirm → live-verify the new probe + a real speculative-topic
+   recall (needs Muhammad's OK — Gemini quota). Do NOT add the probe to `baseline-L5.json` until it
+   passes clean live.
 
 ### Round-5 honesty-harness follow-ups (best-of-N hardening)
 5. **Per-attempt verdict telemetry** — persist *every* best-of-N attempt's verdict (clean /
