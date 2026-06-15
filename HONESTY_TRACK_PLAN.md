@@ -6,7 +6,7 @@ lost and we don't rabbit-hole — a new mid-task issue becomes a *scoped item he
 immediate detour. Update on every change. (Mirrors the auto-memory `[[m8-agent-v2]]`, but
 this is the visible in-repo artifact.)
 
-_Last updated: 2026-06-15 (Session-36, Opus) — **Build-41 (full epistemic axis, D1+D2+D4) SHIPPED + PUSHED + LIVE-VERIFIED** (`af8974f`, deploy confirmed via `/api/health`). D3 (kernel/leap decomposition) deferred to Build-42, human-gated. Spec: [`BUILD_41_SPEC.md`](BUILD_41_SPEC.md). Prior: Build-39 trust tiers + Build-40 self-status guard SHIPPED + LIVE-VERIFIED (`85f7752`, `073150a`); `/api/health` reports deploy SHA; Build-38 LIVE-VERIFIED (0 honesty violations / 130 nodes)._
+_Last updated: 2026-06-15 (Session-36, Opus) — **Build-42 (D3 kernel/leap decomposition + co-retrieval invariant) SHIPPED + PUSHED + LIVE-VERIFIED** (`a5b6788`, migration applied, end-to-end ingest→approve→recall confirmed, test nodes cleaned up). This COMPLETES the full epistemic axis (Builds 41+42). Prior: Build-41 (D1+D2+D4) LIVE-VERIFIED `af8974f`; Build-39/40 LIVE-VERIFIED; Build-38 LIVE-VERIFIED (0 honesty violations)._
 
 ---
 
@@ -39,8 +39,12 @@ _Last updated: 2026-06-15 (Session-36, Opus) — **Build-41 (full epistemic axis
 
 ## 🛠️ Active
 
-- **Build-42 (D3 kernel/leap decomposition + co-retrieval invariant) — CODE COMPLETE + OFFLINE-VERIFIED;
-  awaiting LIVE steps (need explicit OK).** Spec: [`BUILD_42_SPEC.md`](BUILD_42_SPEC.md). What's built:
+- _(none — Build-42 shipped + live-verified `a5b6788`. The FULL EPISTEMIC AXIS is now complete
+  (Builds 41+42). Next candidates = backlog #12 search under-routing, #11 open-conjecture seed
+  reads empirical, or the Round-5 honesty-harness follow-ups (#5–#10).)_
+
+### ✅ Build-42 (D3 kernel/leap decomposition + co-retrieval invariant) — SHIPPED + LIVE-VERIFIED `a5b6788`
+Spec: [`BUILD_42_SPEC.md`](BUILD_42_SPEC.md). What shipped:
   - **Decomposition (human-gated):** `proposeDecomposition` (Gemini pass, strict JSON `{kernel,leap}` or
     `null`) runs at ingest of a *speculative* doc; the proposal is STAGED on `m8_knowledge_sources.
     pending_decomposition` (NOT written) and surfaced in the ingest reply. `approveDecomposition(source_id,
@@ -56,11 +60,16 @@ _Last updated: 2026-06-15 (Session-36, Opus) — **Build-41 (full epistemic axis
     never surfaced without its kernel + both classifications.
   - **Migration** `m8_kernel_leap.sql` (one `ADD COLUMN pending_decomposition jsonb`) — **NOT yet applied**
     (auto-mode classifier blocked it as not specifically authorized; correct — it's a prod DB write).
-  - **Offline:** `tests/kernel-leap-verify.ps1` **19/19** (standing rule + parse + co-retrieval cap +
-    D2 edge-model consistency); epistemic-axis 23/23, knowledge-verify 43/43, trust-tier 12/12 all green.
-  - **PENDING (need OK):** (1) apply `m8_kernel_leap.sql`, (2) commit+push/deploy, (3) live-verify —
-    ingest a small speculative doc, approve the split, recall the topic and confirm the leap renders
-    only beside its kernel with both classifications (Gemini quota + WRITES test nodes to the real graph).
+  - **Offline:** `tests/kernel-leap-verify.ps1` **19/19**; epistemic-axis 23/23, knowledge-verify 43/43,
+    trust-tier 12/12 all green. Migration `m8_kernel_leap.sql` applied live.
+  - **✅ LIVE-VERIFIED (deploy `a5b6788`):** ingested a vortex-math test doc (source_id 5) → M8 staged a
+    proposal (KERNEL "Digital root … modulo 9" / LEAP "Number patterns reveal energy geometry"), explicitly
+    NOT presenting the kernel as established. `POST /api/knowledge-decompose` → leap 163 (speculative) +
+    kernel 164 (defaulted **speculative** — no established node matched ≥0.82, so it was NOT elevated), edge
+    `163 —derived_from→ 164` (`decomposition=leap_of_kernel`). Recall narrated the kernel as
+    "established arithmetic — mathematically sound" and the leap as "classified speculative … no established
+    or proven results support these broader claims" — co-retrieval invariant held. Test nodes/source
+    deleted afterward (10 nodes + 1 source; 0 orphan edges left).
 
 ## ✅ Resolved: Option 2 — best-of-N L5 gate relaxation (Build-36)
 
