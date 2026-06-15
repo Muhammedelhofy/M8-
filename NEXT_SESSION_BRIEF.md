@@ -83,7 +83,41 @@ probes, `GRAPH_EVIDENCE_CAP` verification, uncertainty-calibration probes) — s
 - The nightly L5 attestation fires ~05:00 AST; with Build-36 the gate can now actually accumulate clean nights — watch the next few land + confirm the POST reaches `/api/loop-attest`.
 - PS gotcha (bit us this session): `ConvertTo-Json` unwraps a single-element array → force the `attachments` JSON array by hand (see repro above).
 
-## Kickoff prompt to paste into the next session
-> Continue M8. Read `M8/HONESTY_TRACK_PLAN.md` + `M8/NEXT_SESSION_BRIEF.md` first, and the auto-memory `epistemic-classification-axis` note (it holds the settled design). **Builds 38/39/40 are SHIPPED + LIVE-VERIFIED (Session-35) — trust tiers, self-status search-routing guard, and the build-state freshness/memory-override fix; do not reopen them.** Top priority: **Build-41 — the full epistemic axis** (multi-bucket serious/speculative classification), now unblocked because "trust before taxonomy" is satisfied by Build-38/39. Spec-first (`M8/BUILD_41_SPEC.md`), built on the existing trust layer, using the team-round design: kernel/leap as TWO linked nodes (co-retrieval invariant) · deterministic out-of-LLM `[SPECULATIVE]` wrapper + schema edge-ban + an Odysseus probe · M8 READS fringe but its generator NEVER emits it · ONE neutral `speculative` bucket (NOT the 6-bucket split). The surgical M4 Lean-refusal exception already shipped (Build-29) — don't duplicate it. Keep the free Gemini/Tavily stack, no paid APIs; migration → code → PS-mirror verify (no local Node) → live-verify (confirm the deploy via `/api/health` `deploy.sha` first, Gemini quota needs my OK); update `M8/HONESTY_TRACK_PLAN.md` as you go.
+## ✅ SESSION-36 (2026-06-15, Opus): FULL EPISTEMIC AXIS COMPLETE
+- **Build-41 (`af8974f`)** + **Build-42 (`a5b6788`)** both SHIPPED + LIVE-VERIFIED. The honesty backbone
+  is done: M8 reliably separates proven / guess / speculative, and handles fringe ideas without laundering
+  them. Build-41 = neutral `speculative` bucket + schema edge-ban + Odysseus probe. Build-42 = kernel/leap
+  split (real core vs speculative leap, two linked nodes, human-gated) + co-retrieval invariant. Specs
+  `M8/BUILD_41_SPEC.md` + `M8/BUILD_42_SPEC.md`.
+- **Decision (Muhammad, end of Session-36):** stop polishing honesty; turn toward USEFULNESS. Next session
+  does the small search fix FIRST, then starts the big problem-solving engine.
 
-> Lower-priority backlog if the axis stalls: #12 search UNDER-routing (build an example corpus first), #11 open-conjecture literature seed reads `empirical` (Build-38 classification refinement). And: **set `CRON_SECRET` aside — it's confirmed enforced (CLOSED).**
+## Kickoff prompt to paste into the next session
+> Continue M8. Read `M8/HONESTY_TRACK_PLAN.md` + `M8/NEXT_SESSION_BRIEF.md` first. The full epistemic
+> axis (Builds 41+42) is DONE + LIVE-VERIFIED — don't reopen it; the honesty backbone is finished.
+>
+> **Do these two things, in order:**
+>
+> **1. FIRST — fix search "under-routing" (backlog #12).** The problem: sometimes M8 answers a
+> checkable, current-fact question from memory/training instead of looking it up, and can be wrong. The
+> trap: if we make it search too eagerly, it does clumsy web searches for things it already knows and
+> answers get worse. So the work is mostly JUDGEMENT, not code: **(a) first build a small corpus of real
+> example questions M8 currently mis-handles** (a mix of "should have searched but didn't" and "correctly
+> answered from its own knowledge — must NOT start searching these"), put it in a test file like
+> `M8/tests/odysseus/` ; **(b) then make a conservative widening** of the search trigger in
+> `lib/intentClassifier.js` that fixes the misses WITHOUT making it search things it already knows; **(c)**
+> prove it with a PS-mirror test (no local Node) + measure the example corpus before/after. Keep the free
+> Gemini/Tavily stack. Ship it the usual way: code → offline verify → confirm deploy via `/api/health`
+> `deploy.sha` → live-verify (Gemini quota needs my OK). Keep it SMALL and safe — it's a modest win, not a
+> big build.
+>
+> **2. THEN — start the big "problem-solving engine" build.** This is the real prize: M8 actually making
+> progress on hard/unsolved problems, not just recording and classifying honestly. **Spec-first** — write
+> `M8/BUILD_43_SPEC.md` proposing the smallest genuinely-useful next rung of the engine (look at
+> `M8/NORTH_STAR.md` Track B + the existing generator/Lean/lemma-DAG pieces to find the real bottleneck),
+> and ask me to pick the direction before building. Don't boil the ocean — propose one concrete, testable
+> step.
+>
+> Standing rules: live runs cost Gemini quota + need my OK; `commitFamily` in `lib/buildState.js` is one
+> ~30KB line — edit only via a unique-anchor replace, never load it into context; M8 lives in its OWN git
+> repo (`github.com/Muhammedelhofy/M8-`), push there, not the Bolt repo.
