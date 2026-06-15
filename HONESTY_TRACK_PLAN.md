@@ -126,9 +126,21 @@ across-nights streak gate, so the relaxation lives in the runner and the streak 
 12. **(Build-40 follow-up) Search UNDER-routing.** The other half of "broaden search routing":
     checkable external facts that fall to NONE and are answered from training, not grounded search.
     Build the example corpus first, then widen carefully (each widening adds low-quality-web-answer
-    risk). Also seen live (Build-40 Q1): the build-state context still names **Build-37** as "most
-    recent" — the build-state data feed lags actual builds (we're at Build-40); a separate
-    data-freshness fix from the routing fix.
+    risk).
+13. ✅ **(Session-35) Build-state freshness + memory-override — FIXED + LIVE-VERIFIED (`d2264c4`).**
+    Live (Build-40 Q1) M8 answered "most recent build = Build-37" though we're at Build-40. THREE
+    causes, each necessary: (a) `lib/buildState.js` `live[]`+`commitFamily` were stale, ending at
+    Build-37 → added Builds 38/39/40 (`1697be5`, `9e0bfbb`); (b) **even after that, the answer
+    didn't change** — M8 anchored on RECALLED conversation memory of its own earlier stale answers
+    over the injected SYSTEM STATUS block (verbatim-identical reply across 3 fresh sessions = a
+    recalled self-claim). The sufficient fix: an explicit GROUND-TRUTH/override directive in
+    `renderBuildState` (same pattern as `GRAPH_GROUND`) — the block OVERRIDES any build number/name
+    in recalled memory or prior messages, and the most-recent build is the FIRST `live[]` item.
+    LIVE: now answers "Build-40: Self-Status Search-Routing Guard". **Lesson: a deterministic
+    injected state block is NOT automatically authoritative — recalled self-authored claims can
+    shadow it; pair the block with an explicit override directive (GRAPH_GROUND precedent).** ⚠ The
+    `commitFamily` is one ~30KB line; edit it in place via a unique-anchor PowerShell `.Replace` +
+    UTF8-no-BOM write, never by loading it into context.
 11. **(Build-39 live obs) Open-conjecture literature seed reads as `empirical`.** The Build-38
     backfill maps curated M2 literature seeds `external → empirical`, so the *statement* of an OPEN
     conjecture (e.g. the Collatz Conjecture seed) lands in the EMPIRICAL tier ("tested/observed, not
