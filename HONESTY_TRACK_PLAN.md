@@ -39,7 +39,18 @@ _Last updated: 2026-06-15 (Session-36, Opus) — **Build-42 (D3 kernel/leap deco
 
 ## 🛠️ Active
 
-- **Build-43 Option D — BUILT + OFFLINE-VERIFIED (Session-37), AWAITING LIVE SIGN-OFF.** `lib/
+- **Build-43 Option D — SHIPPED + LIVE-VERIFIED (Session-37, `cfff4c1`).** Live 4 scenarios: A
+  vortex-doubling idea → split kernel "dr of 2^n cycles 1-2-4-8-7-5" vs leap "energy geometry" (kept
+  speculative), derived period-6 claim, OBSERVED through 10,000, never proven (PASS); C "universe is
+  conscious" → honest "couldn't isolate a checkable kernel, won't invent one" (PASS); D regression
+  "what is the digital root of 1234" → normal answer, not hijacked (PASS). Honesty held on all 4.
+  **FINDING (Scenario B → feeds Option B):** given a FALSE pattern ("dr of 3n is always 3"), the
+  decomposition step extracted the nearest TRUE kernel (period 3 / {3,6,9}) and tested THAT, leaving
+  "always 3" as an untested speculative leap — honest (never validated the false claim) but it did NOT
+  actively falsify the user's *literal* false claim with a counterexample. The falsify-literal-claim
+  path is offline-proven (20/20) but not live-exercised. **→ Fold into Option B: "also test the user's
+  STATED claim, not just the salvaged kernel."** buildState bumped (most-recent build = Build-43 D).
+- _(historical) Build-43 Option D — BUILT + OFFLINE-VERIFIED (Session-37).** `lib/
   kernel-conjecture.js` (new) + hard-route in `lib/orchestrator.js` (`detectKernelTest`/`runKernelTest`,
   non-streamable). Flow: "test the kernel of [vortex/number-pattern idea]" → decompose to kernel/leap
   (Build-42 `proposeDecomposition`) → `kernelToConjecture` proposes a CLOSED-vocabulary computable
