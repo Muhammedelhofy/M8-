@@ -34,10 +34,12 @@ _Last updated: 2026-06-15 (Session-33, Opus) — Build-36 + Team Round 5 + Build
 
 ## 🛠️ Active
 
-- **🚨 Live image vision broken (takeaway #8) — RESOLVE FIRST next session.** Decision gate: confirm
-  the deployed commit. If prod is on HEAD (`aa18326`+) → real Build-34 vision bug → debug
-  `lib/orchestrator.js buildUserParts` → `lib/llm.js generateGeminiWith` (Gemini inlineData format) →
-  fix → re-run the live image test. If prod is **stale** → redeploy `main`, then re-run. Repro (PS):
+- **🚨 Live image vision broken (takeaway #8) — RESOLVE FIRST next session.** ✅ **Deploy confirmed
+  current** (Muhammad checked Vercel 2026-06-15: Production `03abaf2`, Ready, main auto-deploys) → it is
+  a **REAL Build-34 vision bug, not a stale deploy.** Debug `lib/orchestrator.js buildUserParts`/`imgTurn`
+  → `lib/llm.js generate`/`generateGeminiWith` (the `@google/genai` `inlineData` send; prime suspects:
+  SDK field shape `inlineData` vs `inline_data`, the vision model variant, or `contents` being stripped)
+  → fix → re-run the live image test. Repro (PS):
   POST `/api/chat` with `attachments:[{name,kind:'image',mimeType:'image/png',data:<base64-no-prefix>}]`
   (force the JSON array — PS `ConvertTo-Json` unwraps 1-elem arrays); a normal image must be described,
   not answered with "what image?". Only AFTER base vision works can Build-37's guard be live-tested
