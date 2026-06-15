@@ -1,6 +1,20 @@
 # Build-43 Spec — The Problem-Solving Engine: first rung
 
-**Status:** PROPOSAL — pick a direction before any code. Written Session-37 (Opus), 2026-06-15.
+**Status:** ✅ DIRECTION LOCKED (Muhammad, Session-37). Build **all four**, ONE rung at a time
+(ship → offline test → live sign-off → next). **LOCKED ORDER: D → B → A → C.** Building **D now**.
+Shown on the diagram as the "Problem-Solving Engine Roadmap". Written Session-37 (Opus), 2026-06-15.
+
+## Locked roadmap (one rung at a time)
+1. **D — Fringe idea → testable claim** *(BUILDING NOW)* — smallest, matches Muhammad's vortex/
+   patterns/geometria steer, makes the epistemic axis productive.
+2. **B — Better guesses** — richer LLM conjecture proposal, deterministically falsified; raises the
+   quality every later rung depends on.
+3. **A — M8 plans the attack** — drafts the lemma-DAG decomposition (human-gated) → existing M4 leaves.
+4. **C — 2nd problem domain** — port M1/M3 beyond Collatz; proves generality once the core is strong.
+
+_Order is the recommended sequence, not a contract — reorder if a rung proves more valuable. Each
+rung ships + tests + gets sign-off before the next starts._
+
 **Frame:** the honesty backbone (Builds 38–42) is done. Track B's ladder (M1→M3-full→M3.1→
 M4-manual→L5) is shipped. This is the turn from *recording honestly* to *making progress*.
 **Constraint (unchanged, NORTH_STAR):** no autonomous proof-tree search, no Millennium/PDE

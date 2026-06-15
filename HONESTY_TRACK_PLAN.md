@@ -39,13 +39,14 @@ _Last updated: 2026-06-15 (Session-36, Opus) — **Build-42 (D3 kernel/leap deco
 
 ## 🛠️ Active
 
-- **Build-43 (problem-solving engine) — AWAITING DIRECTION.** Spec `BUILD_43_SPEC.md` proposes 4
-  options; LEAD recommendation (after Muhammad's Session-37 steer toward vortex math / patterns /
-  geometria / "unforbidden knowledge") = **(D) speculative-kernel → conjecture bridge**: take a
-  Build-42-approved KERNEL, propose a computable Type-A conjecture from it, run the EXISTING
-  deterministic falsifier, narrate "observed through N" (never proven). Makes the epistemic axis
-  *do work* on the targets he named. Alternatives: (A) human-gated decomposition proposer, (B) richer
-  LLM conjecture generation, (C) 2nd problem domain. **Muhammad to pick before any engine code.**
+- **Build-43 (problem-solving engine) — DIRECTION LOCKED (Muhammad, Session-37): build ALL FOUR, one
+  rung at a time, order `D → B → A → C`. Building D NOW.** Spec `BUILD_43_SPEC.md`; roadmap shown on
+  the diagram. **D = speculative-kernel → conjecture bridge**: take a Build-42-approved KERNEL, propose
+  a computable Type-A conjecture from it, run the EXISTING `conjecture-gen.js` deterministic falsifier,
+  narrate "observed through N" (never proven) — makes the epistemic axis *do work* on the vortex/
+  patterns/geometria targets. Then B (richer LLM conjecture proposal), A (human-gated decomposition
+  proposer → M4 leaves), C (2nd problem domain). Each ships + offline-tests + live-signs-off before the
+  next.
 - _Diagram `m8_full_architecture_2026.html` now shows the Epistemic Axis (Builds 41–42) as its own
   visible layer (vortex/geometria/unforbidden-knowledge) — he asked; done._
 
