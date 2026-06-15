@@ -121,6 +121,9 @@
   .sublayer.dactive { background: #0a1f2b; }
   .sublayer.dactive .sname { color: #6fe3d6; }
   .sublayer.dactive .snum { color: #3a7080; }
+  .sublayer.sdone { background: #0c1f12; }
+  .sublayer.sdone .sname { color: #7fd49a; }
+  .sublayer.sdone .snum { color: #2f6a45; }
 
   .section-tag { display: inline-block; font-size: 9px; padding: 2px 7px; border-radius: 10px; background: #1e2535; color: #4a5568; margin-bottom: 6px; font-weight: 600; letter-spacing: 0.5px; }
   .section-tag.track-a { background: #0d2b2b; color: #4ecdc4; }
@@ -287,10 +290,10 @@
   <div class="layer">
     <div class="layer-label">Problem-Solving Engine — Build-43 Roadmap (LOCKED order) <span class="section-tag track-b">one rung at a time · ship → test → sign-off → next</span></div>
     <div class="sublayers">
-      <div class="sublayer dactive"><div class="snum">D</div><div class="sname">Fringe idea → testable claim</div><div class="sdesc">kernel (Build-42) → computable conjecture → existing falsifier → "observed through N" · BUILDING NOW</div></div>
-      <div class="sublayer"><div class="snum">B</div><div class="sname">Better guesses</div><div class="sdesc">freer LLM conjecture proposal, deterministically falsified</div></div>
-      <div class="sublayer"><div class="snum">A</div><div class="sname">M8 plans the attack</div><div class="sdesc">drafts the lemma-DAG decomposition, human-approved → M4 leaves</div></div>
-      <div class="sublayer"><div class="snum">C</div><div class="sname">2nd problem domain</div><div class="sdesc">port M1/M3 beyond Collatz — prove it generalizes</div></div>
+      <div class="sublayer sdone"><div class="snum">D</div><div class="sname">Fringe idea → testable claim</div><div class="sdesc">kernel (Build-42) → computable conjecture → existing falsifier → "observed through N" · ✅ LIVE</div></div>
+      <div class="sublayer sdone"><div class="snum">B</div><div class="sname">Better guesses</div><div class="sdesc">test the user's literal claim first (counterexample), then nearest-true · ✅ LIVE</div></div>
+      <div class="sublayer dactive"><div class="snum">A</div><div class="sname">M8 plans the attack</div><div class="sdesc">drafts a lemma-DAG, anti-degeneracy-gated (no "L1 ≈ target"), human-approved → M4 leaves k/m · BUILT, awaiting live sign-off</div></div>
+      <div class="sublayer"><div class="snum">C</div><div class="sname">2nd problem domain</div><div class="sdesc">port M1/M3 beyond Collatz — prove it generalizes · NEXT</div></div>
     </div>
     <div style="margin-top:5px; font-size:9px; color:#4a7080; padding-left:4px;">
       ↑ The honest turn from <b>recording</b> ideas to <b>making progress</b> on them. D is pointed straight at vortex math / patterns / geometria.

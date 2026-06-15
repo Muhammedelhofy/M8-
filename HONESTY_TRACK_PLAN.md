@@ -39,6 +39,26 @@ _Last updated: 2026-06-15 (Session-36, Opus) — **Build-42 (D3 kernel/leap deco
 
 ## 🛠️ Active
 
+- **Build-43 Option A — BUILT + OFFLINE-VERIFIED (Session-38, 2026-06-16), awaiting live sign-off.**
+  "M8 plans the attack" — the human-gated decomposition proposer (roadmap rung 3 of D→B→A→C).
+  `lib/decomp-proposer.js` (new) + orchestrator hard-route (`detectDecompProposal`/
+  `buildDecompProposalContext`, non-streamable, fails SAFE) + `migrations/m8_decomp_proposals.sql`
+  (STAGED — apply with explicit OK). Reuses the Build-42 propose→stage→human-approve→write gate.
+  Flow: "propose a decomposition for: <target>" → one Gemini pass drafts a lemma-DAG in the exact M4
+  text format → `parseDAG` validates shape → **`checkNonDegenerate` anti-degeneracy gate** (≥2 lemmas,
+  ≥2 distinct leaves, no lemma with token-overlap ≥0.75 to the target — rejects "L1 ≈ target", the
+  explicit caveat the M4 §0.4 gate logged) → valid plan staged + rendered `[PROPOSED PLAN]` ("a PLAN
+  not a proof; nothing formalized or graph-written"); degenerate/un-splittable → honest refusal, never
+  a fake plan. "approve decomposition #N" loads `dag_text` and hands it VERBATIM to `scaffoldProof` —
+  ZERO change to proof semantics ("leaves verified k/m", target stays an OPEN CONJECTURE, sorried
+  parents UNPROVEN). **Folded in Option-B follow-up #1:** `nearestTrueFromLiteral` — a BARE false
+  digital-root claim now ALWAYS gets a constructive nearest-TRUE pattern (tightest dr_constant-or-dr_set
+  over the observed roots), not only when `proposeDecomposition` yields a kernel. **Bug caught + fixed**
+  in the gate's own `APPROVE_RE` (greedy `[^?.!]{0,12}` swallowed "#1" and captured a stray "2" from
+  "attack plan #12" — the id gap now excludes #/digits). Offline `tests/decomp-proposer-verify.ps1`
+  **37/37** + `tests/nearest-true-verify.ps1` **9/9**; `kernel-conjecture-verify.ps1` 33/33 no
+  regression. Live test `tests/BUILD43A_LIVE_TEST.md` (pending OK + Gemini quota). **NEXT = Option C**
+  (2nd problem domain).
 - **Build-43 Option D — SHIPPED + LIVE-VERIFIED (Session-37, `cfff4c1`).** Live 4 scenarios: A
   vortex-doubling idea → split kernel "dr of 2^n cycles 1-2-4-8-7-5" vs leap "energy geometry" (kept
   speculative), derived period-6 claim, OBSERVED through 10,000, never proven (PASS); C "universe is

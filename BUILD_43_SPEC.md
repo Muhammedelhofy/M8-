@@ -14,7 +14,15 @@ Shown on the diagram as the "Problem-Solving Engine Roadmap". Written Session-37
    then offers the nearest TRUE pattern; new `dr_set` template (digital root always in a set);
    `proposeLiteralClaim` (fidelity over truth); detection tightened so non-math "claim/pattern" can't
    hijack chat. `lib/kernel-conjecture.js`.
-3. **A — M8 plans the attack** — drafts the lemma-DAG decomposition (human-gated) → existing M4 leaves.
+3. **A — M8 plans the attack** ✅ *BUILT + OFFLINE-VERIFIED (37/37 + 9/9), awaiting live sign-off* —
+   `lib/decomp-proposer.js` + orchestrator hard-route + `migrations/m8_decomp_proposals.sql`. M8
+   DRAFTS a candidate lemma-DAG for a target ("propose a decomposition for: …"), validates shape
+   (`parseDAG`) + the **anti-degeneracy gate** (`checkNonDegenerate`: ≥2 lemmas, ≥2 distinct leaves,
+   no lemma whose token-overlap with the target ≥0.75 — rejects "L1 ≈ target"), STAGES it as a
+   `[PROPOSED PLAN]`, and on "approve decomposition #N" hands the staged DAG VERBATIM to the existing
+   `scaffoldProof`/Lean machinery (leaves verified k/m; target stays an OPEN CONJECTURE). Degenerate /
+   un-splittable target → honest refusal, never a fake plan. Also folded in Option-B follow-up #1
+   (`nearestTrueFromLiteral`: a bare false digital-root claim always gets a constructive nearest-TRUE).
 4. **C — 2nd problem domain** — port M1/M3 beyond Collatz; proves generality once the core is strong.
 
 _Order is the recommended sequence, not a contract — reorder if a rung proves more valuable. Each
