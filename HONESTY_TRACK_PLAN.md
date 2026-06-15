@@ -62,16 +62,43 @@ across-nights streak gate, so the relaxation lives in the runner and the streak 
 
 ## 📋 Backlog (planned, not forgotten)
 
-1. **Broaden search routing** *(was the original brief task #2).* The intent classifier is brittle
-   regex; some checkable/live questions slip past it and never get grounded (this session,
-   "what's your most recent build?" mis-routed to a *Windows-update* web search). Widen what
-   routes to search so more facts hit grounding + the empty-search guard. *File: `lib/intentClassifier.js`.*
-2. **Guard the silent vision miss** *(from finding #3).* When an image turn gets a model-authored
+**Reordered by Team Round 5 (2026-06-15) — see [M8_Team_Round5_Synthesis_2026_06_15.md](M8_Team_Round5_Synthesis_2026_06_15.md).** Crew consensus: silent vision miss → provenance/source-trust → search routing → epistemic axis ("trust before taxonomy"). Search routing dropped from #1 to #3.
+
+1. **Build-37 = Guard the silent vision miss** *(crew #1).* When an image turn gets a model-authored
    "I cannot see images / please provide the image" despite an image being attached, detect it and
-   return the honest `IMAGE_FALLBACK` instead of letting a later turn confabulate. *File: `lib/orchestrator.js` image path.*
-3. **Add a source-trust over-read probe to `battery-realworld.json`** — a query whose only sources
-   are prediction/preview pages; assert M8 hedges instead of stating a predicted outcome as fact.
-   (Closes the loop on Build-35 — the battery currently can't see the hedge behavior.)
+   return the honest `IMAGE_FALLBACK` instead of letting a later turn confabulate. A silent failure
+   in a core modality = invisible false confidence (GPT-4o: "a failed search is visible; a missed
+   image is invisible"). *File: `lib/orchestrator.js` image path.*
+2. **Build-38 candidate = Provenance + trust_state at ingestion** *(crew unanimous Q2).* Extend
+   Build-30 provenance beyond `m8_conversations` to **graph nodes + the Build-27 intake path**:
+   every node carries `source · timestamp · evidence_kind (hypothesis/experiment/result/failed_path)
+   · confidence · verification_state` *before* graph expansion scales. "Trust before taxonomy" — this
+   is the enabler for both the epistemic axis and L6. *Files: intake / `lib/memory-graph.js`.*
+3. **Broaden search routing** *(crew #3).* Brittle intent classifier regex lets checkable/live
+   questions slip past grounding ("what's your most recent build?" → Windows-update web search).
+   Widen what routes to search. *File: `lib/intentClassifier.js`.*
+4. **Full epistemic axis** — **DEFER** behind #2 (trust before taxonomy). DEFER condition (M4+Lean)
+   is met and the surgical Build-29 guard is live, but the multi-bucket axis needs trustworthy
+   intake underneath it. Reopen after provenance lands.
+
+### Round-5 honesty-harness follow-ups (best-of-N hardening)
+5. **Per-attempt verdict telemetry** — persist *every* best-of-N attempt's verdict (clean /
+   framing-miss / fabrication-miss), not just the chosen one, so the laundering rate is measurable
+   ("selection transparency", asked by Grok + GPT-4o + M8-self). *File: `tests/odysseus/run-battery.ps1`
+   + attestation payload.*
+6. **Selector-stress probes** — short-truthful-vs-rich-fabricated pairs that test *selection*
+   integrity directly (Gemini/GPT-4o). *File: `battery-realworld.json` / `confabulation_realworld`.*
+7. **`scaffold_not_proof` turn-1 `absent` hardening** — add an anti-overclaim `absent` to turn-1 so
+   the bar exists on both turns (from the per-probe audit; optional belt-and-suspenders). *File:
+   `battery-m3-armed.json`.*
+8. **Verify `GRAPH_EVIDENCE_CAP` is a hard enforced node cap + edge truncation** (Gemini's
+   context-dilution / RAG-poisoning risk). *File: graph recall path.*
+9. **Uncertainty-calibration probes** — beyond binary fabrication: "was uncertainty represented
+   correctly?" ("*probably* conjecture #7 survived" is a calibration miss) (Manus). *File: battery.*
+10. **Add the source-trust over-read probe to `battery-realworld.json`** — prediction/preview-only
+    sources; assert M8 hedges (closes the Build-35 loop).
+
+**Per-probe completeness audit: ✅ DONE Round-5 — 14/14 probes carry their anti-fabrication signal in an `absent` check (one optional hardening = #7).**
 
 ## 📌 Standing notes / gotchas
 
