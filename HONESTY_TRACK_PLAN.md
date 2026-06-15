@@ -50,6 +50,15 @@ _Last updated: 2026-06-15 (Session-36, Opus) — **Build-42 (D3 kernel/leap deco
   actively falsify the user's *literal* false claim with a counterexample. The falsify-literal-claim
   path is offline-proven (20/20) but not live-exercised. **→ Fold into Option B: "also test the user's
   STATED claim, not just the salvaged kernel."** buildState bumped (most-recent build = Build-43 D).
+- **Build-43 Option B — BUILT + OFFLINE-VERIFIED (33/33, Session-37), AWAITING LIVE SIGN-OFF.** The
+  Scenario-B fix + "better guesses": `proposeLiteralClaim` captures the user's STATED claim verbatim
+  (fidelity over truth) and `runKernelTest` tests it FIRST — a false claim now gets a counterexample,
+  then M8 offers the nearest TRUE pattern (salvaged kernel). New `dr_set` template ("digital root of
+  g(n) always in set S") makes "dr(3n) ∈ {3,6,9}" expressible. Detection tightened: broad nouns
+  ("claim"/"pattern") only fire WITH a math signal, so "check this claim [insurance]" / "test a pricing
+  pattern" never hijack. Offline `tests/kernel-conjecture-verify.ps1` **33/33** (dr_set hold/falsify,
+  literal "always 3" → counterexample at n=2, validate/narration/detection). Live test
+  `tests/BUILD43B_LIVE_TEST.md` (pending OK). NEXT after live: A → C.
 - _(historical) Build-43 Option D — BUILT + OFFLINE-VERIFIED (Session-37).** `lib/
   kernel-conjecture.js` (new) + hard-route in `lib/orchestrator.js` (`detectKernelTest`/`runKernelTest`,
   non-streamable). Flow: "test the kernel of [vortex/number-pattern idea]" → decompose to kernel/leap

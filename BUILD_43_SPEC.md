@@ -9,8 +9,11 @@ Shown on the diagram as the "Problem-Solving Engine Roadmap". Written Session-37
    `lib/kernel-conjecture.js` + orchestrator hard-route. Closed-vocabulary checker (dr_periodic /
    dr_constant / mod_cycle over a generator whitelist); LLM proposes within the code-checkable set only;
    deterministic exhaustive check → "observed through N", never proven; leap stays speculative.
-2. **B — Better guesses** — richer LLM conjecture proposal, deterministically falsified; raises the
-   quality every later rung depends on.
+2. **B — Better guesses** ✅ *BUILT + OFFLINE-VERIFIED (33/33), awaiting live sign-off* — tests the
+   user's LITERAL claim first (falsifies a false claim with a counterexample — the Scenario-B fix),
+   then offers the nearest TRUE pattern; new `dr_set` template (digital root always in a set);
+   `proposeLiteralClaim` (fidelity over truth); detection tightened so non-math "claim/pattern" can't
+   hijack chat. `lib/kernel-conjecture.js`.
 3. **A — M8 plans the attack** — drafts the lemma-DAG decomposition (human-gated) → existing M4 leaves.
 4. **C — 2nd problem domain** — port M1/M3 beyond Collatz; proves generality once the core is strong.
 
