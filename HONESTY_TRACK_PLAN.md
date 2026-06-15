@@ -6,7 +6,7 @@ lost and we don't rabbit-hole — a new mid-task issue becomes a *scoped item he
 immediate detour. Update on every change. (Mirrors the auto-memory `[[m8-agent-v2]]`, but
 this is the visible in-repo artifact.)
 
-_Last updated: 2026-06-15 (Session-34, Opus) — **Build-34 vision LIVE-FIXED** + Build-37 live-verified + **Build-38 SHIPPED + migration applied + LIVE-VERIFIED (0 honesty violations across 130 nodes)**._
+_Last updated: 2026-06-15 (Session-35, Opus) — **Build-39 read-path trust tiers SHIPPED + PUSHED + LIVE-VERIFIED** (`85f7752`); CRON_SECRET prod-enforcement confirmed (item closed); `/api/health` now reports deploy SHA. Prior: Build-34 vision LIVE-FIXED, Build-37 live-verified, Build-38 LIVE-VERIFIED (0 honesty violations / 130 nodes)._
 
 ---
 
@@ -73,14 +73,19 @@ across-nights streak gate, so the relaxation lives in the runner and the streak 
 1. ✅ **Build-37 = Guard the silent vision miss** *(crew #1)* — **SHIPPED + LIVE-VERIFIED** (Session-33 ship, Session-34 live test). `vision-blind-verify.ps1` 20/20; live S1/S2/S4 PASS.
    ✅ **Build-34 live vision bug — FIXED Session-34** (`c5023d0`): the clarify/doc early-returns swallowed image turns before `imgTurn` was computed — see Done + takeaway #8.
 2. ✅ **Build-38 = Provenance + trust_state at ingestion — SHIPPED + MIGRATION APPLIED + LIVE-VERIFIED** (Session-34, `4a0e575`/`de0b9e0`, migration `8567e70`). Spec: [`BUILD_38_SPEC.md`](BUILD_38_SPEC.md).
-   ✅ **Build-39 = Read-path trust tiers — OFFLINE-VERIFIED (Session-35, 2026-06-15).** The
+   ✅ **Build-39 = Read-path trust tiers — SHIPPED + PUSHED + LIVE-VERIFIED (Session-35, 2026-06-15, `85f7752`).** The
    follow-on read-path hardening: `renderGraphPacket` now groups the recall packet's nodes into
    trust tiers (VERIFIED/EMPIRICAL/HEURISTIC/UNVERIFIED/REFUTED, most-trusted first, cosine order
    preserved within each tier) plus a `low confidence` flag for `confidence < 0.5` non-proven
    nodes and a closing TRUST TIERS instruction. No migration — pure rendering change in
    `lib/memory-graph.js`. Spec: [`BUILD_39_SPEC.md`](BUILD_39_SPEC.md); `tests/trust-tier-verify.ps1`
-   **12/12**. ⚠ Live verify pending (needs a mixed-trust recall query + Gemini quota, explicit
-   authorization per standing notes).
+   **12/12**. **LIVE (deploy `6215582` confirmed via new `/api/health` `deploy.sha`):** query 1
+   ("what do we know about collatz?") narrated under verbatim **Empirical** + **Unverified
+   (recorded hypotheses — NOT verified)** headers, leading with the established result and flagging
+   the [SPECULATIVE] ingested claim; query 2 ("lean-verified collatz results?") correctly **refused
+   to invent a VERIFIED/proven node** when none was in the top-k, marked the Lean threads
+   `unverified` intentions, and split our-empirical (≤100k) from cited literature (Barina 2021,
+   ≤2^71). Honesty contract held under tiering.
 3. **Broaden search routing** *(crew #3).* Brittle intent classifier regex lets checkable/live
    questions slip past grounding ("what's your most recent build?" → Windows-update web search).
    Widen what routes to search. *File: `lib/intentClassifier.js`.*
@@ -104,6 +109,14 @@ across-nights streak gate, so the relaxation lives in the runner and the streak 
    correctly?" ("*probably* conjecture #7 survived" is a calibration miss) (Manus). *File: battery.*
 10. **Add the source-trust over-read probe to `battery-realworld.json`** — prediction/preview-only
     sources; assert M8 hedges (closes the Build-35 loop).
+11. **(Build-39 live obs) Open-conjecture literature seed reads as `empirical`.** The Build-38
+    backfill maps curated M2 literature seeds `external → empirical`, so the *statement* of an OPEN
+    conjecture (e.g. the Collatz Conjecture seed) lands in the EMPIRICAL tier ("tested/observed, not
+    proven"). It's not dishonest — the narration still says "open conjecture / remains an open
+    problem" and never claims proven — but an open conjecture's *statement* node isn't really
+    empirical evidence. Consider a finer Build-38 rule: a literature seed whose claim is an open
+    conjecture → `unverified` (or a new `conjectured` state), reserving `empirical` for verified-up-to-N
+    literature results (e.g. Barina 2021). Small classification refinement, not a Build-39 rendering bug.
 
 **Per-probe completeness audit: ✅ DONE Round-5 — 14/14 probes carry their anti-fabrication signal in an `absent` check (one optional hardening = #7).**
 

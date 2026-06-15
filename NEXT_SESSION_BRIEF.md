@@ -44,7 +44,23 @@ Also: `M8-L5-Nightly-Attest` task re-registered (StartWhenAvailable, battery-res
 
 ---
 
-## NEXT BUILD → Build-38 (vision now resolved)
+## ✅ SESSION-35 (2026-06-15, Opus): Build-39 shipped + live-verified; CRON_SECRET closed
+
+- **Build-39 — read-path trust tiers** (`85f7752`, pushed, LIVE on deploy `6215582`). `renderGraphPacket`
+  groups recall nodes into VERIFIED/EMPIRICAL/HEURISTIC/UNVERIFIED/REFUTED tiers (most-trusted first,
+  cosine order within tier), flags `confidence<0.5` non-proven nodes "low confidence", appends a TRUST
+  TIERS directive. Makes Build-38's `verification_state`/`confidence` ACT on the read path. No migration.
+  `tests/trust-tier-verify.ps1` 12/12; live query narrated under verbatim Empirical/Unverified headers,
+  flagged the [SPECULATIVE] claim, and refused to invent a VERIFIED node when none was in top-k.
+- **CRON_SECRET in Vercel prod — CONFIRMED enforced** (unauth `/api/graph-relabel` → 401). Backlog
+  item CLOSED — no action was needed.
+- **`/api/health` now reports `deploy.sha`/`ref`/`env`** (`6215582`) — deterministic deploy-confirm so a
+  live test can verify WHICH commit is serving (closes the push→serve-lag gap the live-test docs flag).
+- **NEXT in order:** #2 broaden search routing (`lib/intentClassifier.js`); then #3 full epistemic axis
+  (now unblocked — "trust before taxonomy" satisfied). New small backlog item #11: open-conjecture
+  literature seed reads as `empirical` (Build-38 classification refinement — see HONESTY_TRACK_PLAN).
+
+## (historical) NEXT BUILD → Build-38 (vision now resolved)
 **Provenance + `trust_state` at ingestion** (crew-unanimous Q2, "trust before taxonomy"). Extend Build-30
 provenance beyond `m8_conversations` to **graph nodes + the Build-27 intake path**: every node carries
 `source · timestamp · evidence_kind (hypothesis/experiment/result/failed_path) · confidence ·
