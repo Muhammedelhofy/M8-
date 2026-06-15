@@ -50,7 +50,19 @@ _Last updated: 2026-06-15 (Session-36, Opus) — **Build-42 (D3 kernel/leap deco
   actively falsify the user's *literal* false claim with a counterexample. The falsify-literal-claim
   path is offline-proven (20/20) but not live-exercised. **→ Fold into Option B: "also test the user's
   STATED claim, not just the salvaged kernel."** buildState bumped (most-recent build = Build-43 D).
-- **Build-43 Option B — BUILT + OFFLINE-VERIFIED (33/33, Session-37), AWAITING LIVE SIGN-OFF.** The
+- **Build-43 Option B — SHIPPED + LIVE-VERIFIED (Session-37, `5ce54ec`).** Live 4/4 honest: A "dr(3n)
+  always 3" → FALSIFIED at n=2 (the Scenario-B fix works live); B "dr(2^n) period 6" → OBSERVED through
+  1,000, never proven; C "doubling same value every time, proves numbers alive" → math falsified, leap
+  not endorsed; D "check this claim [insurance]" → normal ops reply, not hijacked. **FINDING (small
+  follow-up):** the nearest-TRUE pattern + explicit leap-note only fire when `proposeDecomposition`
+  yields a kernel/leap; a BARE arithmetic false-claim returns null so the enrichment didn't show (the
+  literal falsification still worked). Fix idea: fall back to proposing a kernel-claim (e.g. `dr_set`)
+  from the literal claim's own generator so a nearest-true is ALWAYS offered — fold into Option A or a
+  D.1. buildState bumped (most-recent = Build-43 Option B). NEXT = **Option A**.
+  _(Vercel webhook missed the 1d0328b push → ~20min no deploy; empty-commit nudge `5ce54ec` redeployed
+  in ~30s. Code was sound the whole time. Lesson: if /api/health stalls >10min with the commit on the
+  remote, push an empty commit to re-trigger.)_
+- _(historical) Build-43 Option B — BUILT + OFFLINE-VERIFIED (33/33, Session-37).** The
   Scenario-B fix + "better guesses": `proposeLiteralClaim` captures the user's STATED claim verbatim
   (fidelity over truth) and `runKernelTest` tests it FIRST — a false claim now gets a counterexample,
   then M8 offers the nearest TRUE pattern (salvaged kernel). New `dr_set` template ("digital root of
