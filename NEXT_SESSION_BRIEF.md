@@ -56,9 +56,16 @@ Also: `M8-L5-Nightly-Attest` task re-registered (StartWhenAvailable, battery-res
   item CLOSED — no action was needed.
 - **`/api/health` now reports `deploy.sha`/`ref`/`env`** (`6215582`) — deterministic deploy-confirm so a
   live test can verify WHICH commit is serving (closes the push→serve-lag gap the live-test docs flag).
-- **NEXT in order:** #2 broaden search routing (`lib/intentClassifier.js`); then #3 full epistemic axis
-  (now unblocked — "trust before taxonomy" satisfied). New small backlog item #11: open-conjecture
-  literature seed reads as `empirical` (Build-38 classification refinement — see HONESTY_TRACK_PLAN).
+- **Build-40 — self-status search-routing guard** (`073150a`, pushed, LIVE on its own deploy).
+  "what's your most recent build?" no longer web-searches Windows updates: shared `SELF_STATUS_RE`/
+  `isSelfStatus` in `lib/intentClassifier.js`, `classifyIntent`→NONE for self-status, orchestrator ORs
+  it into `buildQuery` at both sites. Fixed the stale `classifier-test.js` import too.
+  `tests/intent-routing-verify.ps1` 26/26; live Q1 (self-status→build state, no search) + Q2
+  ("latest keeta news"→still searched) both PASS.
+- **NEXT in order:** #3 **full epistemic axis** (now unblocked — "trust before taxonomy" satisfied by
+  Build-38/39). Then backlog: #12 search UNDER-routing (needs an example corpus first; build-state feed
+  also lags — names Build-37 as "most recent"), #11 open-conjecture literature seed reads `empirical`
+  (Build-38 classification refinement). See HONESTY_TRACK_PLAN backlog for the full list.
 
 ## (historical) NEXT BUILD → Build-38 (vision now resolved)
 **Provenance + `trust_state` at ingestion** (crew-unanimous Q2, "trust before taxonomy"). Extend Build-30

@@ -6,7 +6,7 @@ lost and we don't rabbit-hole — a new mid-task issue becomes a *scoped item he
 immediate detour. Update on every change. (Mirrors the auto-memory `[[m8-agent-v2]]`, but
 this is the visible in-repo artifact.)
 
-_Last updated: 2026-06-15 (Session-35, Opus) — **Build-39 read-path trust tiers SHIPPED + PUSHED + LIVE-VERIFIED** (`85f7752`); CRON_SECRET prod-enforcement confirmed (item closed); `/api/health` now reports deploy SHA. Prior: Build-34 vision LIVE-FIXED, Build-37 live-verified, Build-38 LIVE-VERIFIED (0 honesty violations / 130 nodes)._
+_Last updated: 2026-06-15 (Session-35, Opus) — **Build-39 trust tiers + Build-40 self-status search-routing guard BOTH SHIPPED + PUSHED + LIVE-VERIFIED** (`85f7752`, `073150a`); CRON_SECRET prod-enforcement confirmed (item closed); `/api/health` now reports deploy SHA. Prior: Build-34 vision LIVE-FIXED, Build-37 live-verified, Build-38 LIVE-VERIFIED (0 honesty violations / 130 nodes)._
 
 ---
 
@@ -86,9 +86,23 @@ across-nights streak gate, so the relaxation lives in the runner and the streak 
    to invent a VERIFIED/proven node** when none was in the top-k, marked the Lean threads
    `unverified` intentions, and split our-empirical (≤100k) from cited literature (Barina 2021,
    ≤2^71). Honesty contract held under tiering.
-3. **Broaden search routing** *(crew #3).* Brittle intent classifier regex lets checkable/live
-   questions slip past grounding ("what's your most recent build?" → Windows-update web search).
-   Widen what routes to search. *File: `lib/intentClassifier.js`.*
+3. ✅ **Build-40 = Broaden search routing (self-status guard) — SHIPPED + PUSHED + LIVE-VERIFIED
+   (Session-35, 2026-06-15, `073150a`).** *(crew #3.)* The documented misroute — "what's your most
+   recent build?" → `recent` token in `newsPatterns` → NEWS → Windows-update web search — is fixed.
+   Root cause was two-path (classifier tagged it a search intent AND `BUILD_QUERY` didn't catch the
+   "most recent/latest build" phrasing). Fix: one shared `SELF_STATUS_RE`/`isSelfStatus` exported
+   from `lib/intentClassifier.js`; `classifyIntent` returns NONE for self-referential M8-status
+   questions, and the orchestrator ORs `isSelfStatus` into `buildQuery` at both orchestrate sites
+   (suppresses the search fallback + injects build-state context). Requires a build/version token or
+   explicit you/your, so it never steals external "latest X news". Also fixed the stale
+   `classifier-test.js` import (`../api`→`../lib` — `api/intentClassifier.js` doesn't exist, suite
+   couldn't load). Spec: [`BUILD_40_SPEC.md`](BUILD_40_SPEC.md); `tests/intent-routing-verify.ps1`
+   **26/26**. **LIVE (deploy `073150a`):** Q1 "what's your most recent build?" → answered from build
+   state (no web search); Q2 "latest keeta news" → still searched + honest empty-result hedge.
+   ⏭ **Follow-up (the OTHER half of "broaden search routing"):** *under*-routing — checkable external
+   facts that fall to NONE and get answered from training instead of grounded search. Deferred: needs
+   a concrete corpus of mis-handled examples to tune against without raising the low-quality-web-answer
+   rate. Logged as backlog #12.
 4. **Full epistemic axis** — **DEFER** behind #2 (trust before taxonomy). DEFER condition (M4+Lean)
    is met and the surgical Build-29 guard is live, but the multi-bucket axis needs trustworthy
    intake underneath it. Reopen after provenance lands.
@@ -109,6 +123,12 @@ across-nights streak gate, so the relaxation lives in the runner and the streak 
    correctly?" ("*probably* conjecture #7 survived" is a calibration miss) (Manus). *File: battery.*
 10. **Add the source-trust over-read probe to `battery-realworld.json`** — prediction/preview-only
     sources; assert M8 hedges (closes the Build-35 loop).
+12. **(Build-40 follow-up) Search UNDER-routing.** The other half of "broaden search routing":
+    checkable external facts that fall to NONE and are answered from training, not grounded search.
+    Build the example corpus first, then widen carefully (each widening adds low-quality-web-answer
+    risk). Also seen live (Build-40 Q1): the build-state context still names **Build-37** as "most
+    recent" — the build-state data feed lags actual builds (we're at Build-40); a separate
+    data-freshness fix from the routing fix.
 11. **(Build-39 live obs) Open-conjecture literature seed reads as `empirical`.** The Build-38
     backfill maps curated M2 literature seeds `external → empirical`, so the *statement* of an OPEN
     conjecture (e.g. the Collatz Conjecture seed) lands in the EMPIRICAL tier ("tested/observed, not
