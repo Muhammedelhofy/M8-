@@ -39,8 +39,18 @@ _Last updated: 2026-06-15 (Session-36, Opus) — **Build-42 (D3 kernel/leap deco
 
 ## 🛠️ Active
 
-- **Build-43 Option A — BUILT + OFFLINE-VERIFIED (Session-38, 2026-06-16), awaiting live sign-off.**
-  "M8 plans the attack" — the human-gated decomposition proposer (roadmap rung 3 of D→B→A→C).
+- **Build-43 Option A — SHIPPED + LIVE-VERIFIED 6/6 (Session-38, 2026-06-16, `10edb8d`).** Migration
+  `m8_decomp_proposals.sql` APPLIED LIVE. Live: S1 Collatz→`[PROPOSED PLAN]` (5 lemmas/2 leaves, staged
+  #1); S2 "2+2=4"→honest refusal (anti-degeneracy gate fires live); S3 "approve decomposition #1"→M4
+  packet "leaves verified 0/2", parents sorried, **target stays OPEN CONJECTURE**, no "% proven"; S4 "is
+  it a proof?"→clear no; S5 bare false "dr(3n) always 3"→FALSIFIED n=2 + nearest-true {3,6,9} through
+  10,000 (**follow-up #1 confirmed live**); S6 email→not hijacked. **FINDING (expected, not a bug):**
+  S3's two Collatz leaves returned `lean_unformalizable` — the M4 leaf-formalizer honestly declined to
+  fake-formalize deep Collatz base lemmas (so leaves verified 0/2; honesty held). To demo a VERIFIED
+  leaf (k/m>0), pick a target whose base lemmas include a formalizable fact (e.g. the M4 §0.4 Finset
+  Gauss-sum leaf), not a deep Collatz statement. **NEXT = Option C** (2nd problem domain). Original
+  build note below:
+- _(build note) Build-43 Option A — "M8 plans the attack" — the human-gated decomposition proposer (roadmap rung 3 of D→B→A→C).
   `lib/decomp-proposer.js` (new) + orchestrator hard-route (`detectDecompProposal`/
   `buildDecompProposalContext`, non-streamable, fails SAFE) + `migrations/m8_decomp_proposals.sql`
   (STAGED — apply with explicit OK). Reuses the Build-42 propose→stage→human-approve→write gate.
