@@ -35,8 +35,13 @@
    approve → A→M4 pipeline ran end-to-end, but the Lean checker was COLD so leaves returned `lean_pending`
    (verified 0/2, target OPEN — honest). **⏳ The green verified-leaf is pending a WARM checker** (Cloud
    Run ~9.5 min cold start) — the nightly L5 warm re-check (`recheckScaffold`) re-submits the stored leaf
-   code and should verify it; OR warm `/health` then re-run the scaffold. **NEXT depth iterations** (pick
-   one, spec-first):
+   code and should verify it; OR warm `/health` then re-run the scaffold. **FINDING:** 3 interactive warm attempts (incl. a 9.5-min
+   wait) all returned `lean_pending` — the checker scales to zero + 503s on a cold request, and one
+   `/api/chat` Lean check only holds ~55s, so **interactive M4 can't reliably warm it (infra, not code).**
+   **NEXT depth iterations** (pick one, spec-first):
+   - ⭐ **(recommended) WARM-CHECKER STRATEGY for interactive M4** — pre-warm on the propose/scaffold step
+     (L5-style: `/health` ping then hold/retry until ready) so the checker is hot by the time leaves
+     submit. This directly unblocks the live verified leaf (the only thing standing between us and it).
    - **Make M4 discharge a REAL (non-degenerate) decomposition** — the logged §0.4 caveat was that the
      verified DAG was degenerate (L1 ≈ target). Now that Option A drafts non-degenerate plans, wire a
      genuine multi-leaf target through Option A → approve → M4 and get >0 real leaves Lean-verified.
