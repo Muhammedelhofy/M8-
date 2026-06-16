@@ -19,6 +19,23 @@
 
 **Honesty spine (unchanged law):** `lean_verified` is the ONLY path to `proven`; a counterexample the ONLY path to `refuted`; ingestion/extraction reach neither; narration ≤ evidence; code computes truth, the LLM narrates. Free Gemini/Tavily stack. Live runs cost Gemini quota + need Muhammad's OK.
 
+### ▶ THE PLAN FROM HERE (sequenced — don't lose progress)
+1. **ANTI-LOSS GATE (must pass before the diagram is "done"):** the new mind-diagram (`m8_mind_2026.html`)
+   is NOT finished until it has been verified ITEM-BY-ITEM against [`M8_INVENTORY.md`](M8_INVENTORY.md)'s
+   checklist — the diagram session must output a "PLACED / OMITTED (why)" table covering every checklist
+   line, and Muhammad reviews it. The OLD diagram (`m8_full_architecture_2026.html`) STAYS in place until
+   the new one passes this gate. (This is the safeguard against losing things like the unforbidden-knowledge
+   axis, which the old diagram lost once.)
+2. **Finalize the mind-diagram** (separate session, per `MIND_DIAGRAM_BRIEF.md`) → commit `m8_mind_2026.html`.
+3. **Resume engine DEPTH** (the locked next direction — NOT more domains). Candidate depth levers, pick one
+   spec-first:
+   - **Make M4 discharge a REAL (non-degenerate) decomposition** — the logged §0.4 caveat was that the
+     verified DAG was degenerate (L1 ≈ target). Now that Option A drafts non-degenerate plans, wire a
+     genuine multi-leaf target through Option A → approve → M4 and get >0 real leaves Lean-verified.
+   - **Smarter conjecture generation** (Option B's "richer guesses" — LLM proposes, deterministic falsifier
+     polices) to raise candidate quality.
+   - **Deeper decompositions** (Option A drafting multi-level DAGs, not just one layer).
+
 ---
 
 ## ✅ RESOLVED THIS SESSION: live image vision (Build-34) is FIXED
