@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The M8 Mind — what we are building</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --senses:#5ec8e8; --memory:#54d6c8; --honesty:#ffb74d;
+    --core:#93b6ff; --axis:#ce93d8; --hands:#7fd98a;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #e6ecf5; min-height: 100vh; padding: 26px 16px 48px;
+    background:
+      radial-gradient(900px 500px at 50% -8%, rgba(79,106,245,0.18), transparent 70%),
+      radial-gradient(700px 500px at 12% 30%, rgba(206,147,216,0.08), transparent 70%),
+      radial-gradient(700px 500px at 88% 35%, rgba(84,214,200,0.08), transparent 70%),
+      #06080f;
+    position: relative; overflow-x: hidden;
+  }
+  /* starfield */
+  body::before {
+    content:""; position: fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,.7), transparent),
+      radial-gradient(1px 1px at 70% 20%, rgba(255,255,255,.5), transparent),
+      radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,.6), transparent),
+      radial-gradient(1px 1px at 85% 60%, rgba(255,255,255,.4), transparent),
+      radial-gradient(1px 1px at 55% 45%, rgba(255,255,255,.5), transparent),
+      radial-gradient(1px 1px at 10% 80%, rgba(255,255,255,.4), transparent),
+      radial-gradient(1px 1px at 92% 88%, rgba(255,255,255,.5), transparent);
+    opacity:.5; animation: twinkle 6s ease-in-out infinite alternate;
+  }
+  @keyframes twinkle { from{opacity:.25} to{opacity:.6} }
+  .wrap { max-width: 1140px; margin: 0 auto; position: relative; z-index: 1; }
+
+  /* ---- Header ---- */
+  .header { text-align: center; margin-bottom: 18px; }
+  .header .kicker { font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: #8a9ac4; margin-bottom: 10px; }
+  .header h1 { font-size: 32px; font-weight: 800; letter-spacing:-0.5px;
+    color:#fff; text-shadow: 0 0 22px rgba(120,150,255,.55), 0 0 4px rgba(120,150,255,.8); }
+  .header h1 .bm { filter: drop-shadow(0 0 10px rgba(150,120,255,.8)); }
+  .header .tagline { font-size: 13.5px; color:#9fb0d6; max-width:780px; margin:11px auto 0; line-height:1.6; }
+  .header .tagline b { color:#cdd8f2; }
+
+  /* ---- Big gauges ---- */
+  .gauges { display:flex; gap:14px; justify-content:center; margin:22px 0 24px; flex-wrap:wrap; }
+  .gauge {
+    background: linear-gradient(160deg, rgba(20,28,52,.85), rgba(10,14,26,.85));
+    border:1px solid #2a3554; border-radius:16px; padding:16px 20px;
+    display:flex; align-items:center; gap:16px; min-width:330px; flex:1; max-width:530px;
+    backdrop-filter: blur(4px); box-shadow: 0 0 30px rgba(79,106,245,.08) inset;
+  }
+  .gauge .gtext .glabel { font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:#8a9ac4; margin-bottom:4px; }
+  .gauge .gtext .gbig { font-size:18px; font-weight:800; color:#fff; margin-bottom:5px; }
+  .gauge .gtext .gdesc { font-size:11.5px; color:#9aa9cd; line-height:1.5; }
+  .gauge .gtext .gdesc b { color:#cdd8f2; }
+  .dial circle.fg { filter: drop-shadow(0 0 5px currentColor); }
+
+  .ladder { display:flex; gap:4px; margin-top:9px; }
+  .rung { flex:1; text-align:center; border-radius:6px; padding:5px 2px; font-size:9px; font-weight:700; border:1px solid transparent; line-height:1.25; }
+  .rung .lv { font-size:11px; font-weight:800; }
+  .rung.done { background:#0e2e2c; border-color:#1d6360; color:#54d6c8; }
+  .rung.partial { background:#2c2300; border-color:#6a4d00; color:#ffb12e; }
+  .rung.cur { background:#0c1f44; border-color:#4f6af5; color:#93b6ff; box-shadow:0 0 12px rgba(79,106,245,.5), 0 0 0 1px #4f6af5 inset; }
+  .rung.future { background:#141422; border-color:#2c2c3e; color:#6a6a7c; }
+
+  /* ---- The Mind ---- */
+  .mind {
+    position:relative; border:1px solid #233052; border-radius:24px;
+    background: linear-gradient(180deg, rgba(16,22,42,.5), rgba(8,11,20,.5));
+    padding:22px; overflow:hidden; box-shadow: 0 0 60px rgba(79,106,245,.06);
+  }
+  .mind .watermark {
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-49%);
+    font-size:480px; line-height:1; opacity:.045; pointer-events:none; user-select:none; z-index:0;
+    filter: drop-shadow(0 0 40px rgba(150,150,255,.4));
+  }
+  /* neural synapse layer behind the cards */
+  .synapse { position:absolute; inset:22px; width:calc(100% - 44px); height:calc(100% - 44px); z-index:0; pointer-events:none; }
+  .synapse path { fill:none; stroke-width:.4; opacity:.5; }
+  .synapse .pulse { filter: drop-shadow(0 0 3px currentColor); }
+
+  .region-grid { position:relative; z-index:1; display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+
+  .region {
+    background: rgba(13,19,34,.72); border:1px solid #2a3656; border-radius:16px; padding:14px 15px;
+    display:flex; flex-direction:column; min-height:150px;
+    backdrop-filter: blur(3px); transition: transform .18s, box-shadow .18s;
+  }
+  .region:hover { transform: translateY(-3px); }
+  .region .rhead { display:flex; align-items:center; gap:9px; margin-bottom:7px; }
+  .region .ricon { font-size:21px; line-height:1; }
+  .region .node { width:8px; height:8px; border-radius:50%; margin-left:auto; background: currentColor; box-shadow:0 0 8px currentColor; animation: blip 2.6s ease-in-out infinite; }
+  @keyframes blip { 0%,100%{opacity:.35; transform:scale(.8)} 50%{opacity:1; transform:scale(1.25)} }
+  .region .rtitle { font-size:14px; font-weight:800; color:#fff; }
+  .region .rrole { font-size:11px; color:#93a2c8; margin-bottom:9px; line-height:1.45; flex:1; }
+  .region .rrole b { color:#cdd8f2; }
+  .region .flow { font-size:10.5px; color:#8595bd; margin-bottom:11px; line-height:1.4; }
+  .region .flow .ar { font-weight:800; }
+
+  .bar-wrap { margin-top:auto; }
+  .bar-row { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; }
+  .bar-row .blabel { font-size:9px; letter-spacing:.5px; text-transform:uppercase; color:#7888ad; }
+  .bar-row .bpct { font-size:11.5px; font-weight:800; }
+  .bar { height:7px; border-radius:6px; background:#16203a; overflow:hidden; }
+  .bar > span { display:block; height:100%; border-radius:6px; box-shadow: 0 0 8px currentColor; }
+  .est { font-size:9px; color:#6b7aa0; margin-top:5px; font-style:italic; }
+  .foot { font-size:9px; color:#5c6a8c; margin-top:5px; }
+
+  /* accents */
+  .c-senses  { color: var(--senses); }   .c-senses .rtitle,.c-senses .rrole,.c-senses .flow,.c-senses .est,.c-senses .foot{color:#93a2c8} .c-senses .rtitle{color:#fff}
+  .c-memory  { color: var(--memory); }
+  .c-honesty { color: var(--honesty); }
+  .c-axis    { color: var(--axis); }
+  .c-core    { color: var(--core); }
+  .c-hands   { color: var(--hands); }
+  .region .ricon, .region .bpct, .region .flow .ar { color: currentColor; }
+  .region .bar > span { background: currentColor; }
+  .region.glow-senses { box-shadow:0 0 22px rgba(94,200,232,.12); border-color: rgba(94,200,232,.4); }
+  .region.glow-memory { box-shadow:0 0 22px rgba(84,214,200,.12); border-color: rgba(84,214,200,.4); }
+  .region.glow-honesty{ box-shadow:0 0 22px rgba(255,183,77,.12); border-color: rgba(255,183,77,.4); }
+  .region.glow-axis   { box-shadow:0 0 22px rgba(206,147,216,.12); border-color: rgba(206,147,216,.4); }
+  .region.glow-hands  { box-shadow:0 0 22px rgba(127,217,138,.12); border-color: rgba(127,217,138,.4); }
+
+  /* the core */
+  .region.core { border-color:#4f6af5; background: linear-gradient(180deg, rgba(18,26,53,.9), rgba(13,18,38,.9));
+    box-shadow: 0 0 0 1px rgba(79,106,245,.5) inset, 0 0 40px rgba(79,106,245,.22); animation: corepulse 3.5s ease-in-out infinite; }
+  @keyframes corepulse { 0%,100%{box-shadow:0 0 0 1px rgba(79,106,245,.5) inset, 0 0 30px rgba(79,106,245,.18)} 50%{box-shadow:0 0 0 1px rgba(79,106,245,.7) inset, 0 0 52px rgba(79,106,245,.34)} }
+  .road { display:flex; flex-direction:column; gap:5px; margin:4px 0 10px; }
+  .road .step { display:flex; align-items:center; gap:8px; font-size:10.5px; color:#aeb9d8; }
+  .road .dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+  .road .dot.done { background:#54d6c8; box-shadow:0 0 7px #54d6c8; }
+  .road .dot.next { background:#93b6ff; box-shadow:0 0 0 4px rgba(147,182,255,.2), 0 0 9px #93b6ff; animation: blip 1.8s infinite; }
+  .road .step .nm { color:#d4ddf5; font-weight:700; }
+  .road .step .tag { color:#7283ab; font-size:9px; margin-left:auto; }
+  .road .step.todo .nm { color:#9aa6c9; }
+
+  /* backbone */
+  .backbone { position:relative; z-index:1; margin-top:16px; background:rgba(11,17,30,.7);
+    border:1px dashed #2a3656; border-radius:14px; padding:12px 15px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .backbone .bbicon { font-size:18px; filter:drop-shadow(0 0 6px rgba(120,140,200,.6)); }
+  .backbone .bbtitle { font-size:12.5px; font-weight:800; color:#cdd8f2; }
+  .backbone .bbtitle small { display:block; font-size:10px; font-weight:500; color:#8090b3; margin-top:2px; }
+  .backbone .pill { font-size:10px; color:#9aa9cd; background:#13203a; border:1px solid #273658; border-radius:20px; padding:4px 11px; }
+
+  /* legend */
+  .legend { margin-top:18px; background:rgba(10,16,30,.7); border:1px solid #223052; border-radius:14px; padding:14px 16px; }
+  .legend h3 { font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:#8a9ac4; margin-bottom:9px; }
+  .legend ul { list-style:none; display:grid; grid-template-columns:1fr 1fr; gap:7px 22px; }
+  .legend li { font-size:11.5px; color:#9aa9cd; line-height:1.5; padding-left:16px; position:relative; }
+  .legend li::before { content:"›"; position:absolute; left:2px; color:#5ec8e8; font-weight:800; }
+  .legend li b { color:#cdd8f2; }
+
+  .footer { text-align:center; font-size:10.5px; color:#5c6a8c; margin-top:16px; line-height:1.7; }
+
+  /* ---- Tasks / Projects / Evolution ---- */
+  .evo { position:relative; z-index:1; display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-top:16px; }
+  .evo-col { background:rgba(11,17,30,.7); border:1px solid #223052; border-radius:14px; padding:13px 15px; }
+  .evo-col h4 { font-size:11px; letter-spacing:1px; text-transform:uppercase; color:#8a9ac4; margin-bottom:9px; }
+  .evo-col ul { list-style:none; }
+  .evo-col li { font-size:11.5px; color:#aeb9d8; line-height:1.5; padding:5px 0 5px 14px; position:relative; border-bottom:1px solid rgba(34,48,82,.5); }
+  .evo-col li:last-child { border-bottom:none; }
+  .evo-col li::before { content:"•"; position:absolute; left:2px; color:#5ec8e8; }
+  .evo-col li b { color:#d4ddf5; }
+  .evo-col .tg { display:inline-block; font-size:9px; color:#93b6ff; background:#0c1f44; border:1px solid #2f4f8a; border-radius:10px; padding:1px 8px; margin-left:4px; }
+  .timeline { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:14px; }
+  .timeline .tl { font-size:11px; padding:6px 14px; border-radius:20px; border:1px solid #2a3656; color:#9aa9cd; background:rgba(11,17,30,.7); }
+  .timeline .tl.done { color:#54d6c8; border-color:#1d6360; background:#0e2e2c; }
+  .timeline .tl.cur { color:#93b6ff; border-color:#4f6af5; background:#0c1f44; box-shadow:0 0 12px rgba(79,106,245,.4); }
+  .timeline .tl.future { color:#6a6a7c; }
+
+  /* ---- The hard problems ---- */
+  .probs { position:relative; z-index:1; margin-top:16px; background:rgba(11,17,30,.7); border:1px solid #223052; border-radius:14px; padding:14px 16px; }
+  .probs h3 { font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:#8a9ac4; margin-bottom:11px; }
+  .probs table { width:100%; border-collapse:collapse; }
+  .probs th { text-align:left; font-size:9px; letter-spacing:.5px; text-transform:uppercase; color:#6b7aa0; font-weight:700; padding:0 8px 7px 0; }
+  .probs td { font-size:11px; color:#aeb9d8; line-height:1.45; padding:7px 8px 7px 0; border-top:1px solid rgba(34,48,82,.5); vertical-align:top; }
+  .probs td b { color:#d4ddf5; }
+  .probs .st { white-space:nowrap; font-size:9.5px; font-weight:700; }
+  .probs .st.active { color:#93b6ff; }
+  .probs .st.none { color:#6a6a7c; }
+  .probs .note { font-size:9.5px; color:#5c6a8c; margin-top:9px; font-style:italic; }
+
+  @media (max-width:780px){
+    .region-grid { grid-template-columns:1fr; }
+    .legend ul { grid-template-columns:1fr; }
+    .evo { grid-template-columns:1fr; }
+    .synapse { display:none; }
+    .mind .watermark { font-size:300px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="kicker">M8 · the intelligence we are building</div>
+    <h1><span class="bm">🧠</span> The M8 Mind</h1>
+    <p class="tagline">
+      M8 is a <b>mind we are building</b> — one that runs the business today and is learning to work on
+      hard, unsolved problems. Each region below shows <b>what it does</b>, <b>what it feeds the rest</b>,
+      and <b>how far built it is toward the full vision</b> — where <b>100% = the finished dream, not today's basics</b>.
+      Even our strongest part sits under half — not for lack of work, but because the dream is large.
+    </p>
+  </div>
+
+  <!-- BIG GAUGES -->
+  <div class="gauges">
+    <div class="gauge">
+      <svg class="dial" width="92" height="92" viewBox="0 0 96 96">
+        <circle cx="48" cy="48" r="40" fill="none" stroke="#16203a" stroke-width="10"/>
+        <circle class="fg" cx="48" cy="48" r="40" fill="none" stroke="#4f6af5" stroke-width="10" color="#4f6af5"
+                stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="42" transform="rotate(-90 48 48)"/>
+        <text x="48" y="44" text-anchor="middle" font-size="20" font-weight="800" fill="#fff">L5</text>
+        <text x="48" y="60" text-anchor="middle" font-size="10" fill="#93a2c8">of 6</text>
+      </svg>
+      <div class="gtext">
+        <div class="glabel">How grown-up is the mind?</div>
+        <div class="gbig">Level 5 of 6 — Autonomous Loop</div>
+        <div class="gdesc">It can <b>run on its own nightly</b>. The promotion gate (3 clean nights) is still <b>0/3</b>, so it isn't promoted to Level 6 yet. <i>(capability live, gate pending)</i></div>
+        <div class="ladder">
+          <div class="rung done"><div class="lv">L1</div>chat</div>
+          <div class="rung done"><div class="lv">L2</div>grounded</div>
+          <div class="rung done"><div class="lv">L3</div>ops</div>
+          <div class="rung done"><div class="lv">L4</div>tools</div>
+          <div class="rung cur"><div class="lv">L5</div>now·0/3</div>
+          <div class="rung future"><div class="lv">L6</div>goal</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gauge">
+      <svg class="dial" width="92" height="92" viewBox="0 0 96 96">
+        <circle cx="48" cy="48" r="40" fill="none" stroke="#16203a" stroke-width="10"/>
+        <circle class="fg" cx="48" cy="48" r="40" fill="none" stroke="#ce93d8" stroke-width="10" color="#ce93d8"
+                stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="226" transform="rotate(-90 48 48)"/>
+        <text x="48" y="44" text-anchor="middle" font-size="17" font-weight="800" fill="#fff">~10%</text>
+        <text x="48" y="60" text-anchor="middle" font-size="9" fill="#93a2c8">early</text>
+      </svg>
+      <div class="gtext">
+        <div class="glabel">Toward cracking unsolved problems</div>
+        <div class="gbig">Early — it generalizes, but nothing cracked</div>
+        <div class="gdesc">
+          M8 can <b>test, falsify and machine-check small maths claims</b> (number patterns, vortex-math
+          ideas, geometry) and now works across <b>two problem families</b> (Collatz + reverse-and-add) —
+          so it <b>generalizes</b>. But it has <b>not cracked any open problem</b>, and making it genuinely
+          <b>smarter</b> at solving (depth) has only just begun. Honest, not flattering. <i>(estimate)</i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- THE MIND -->
+  <div class="mind">
+    <div class="watermark">🧠</div>
+
+    <!-- neural connections: pulses flow from each region toward the core -->
+    <svg class="synapse" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <!-- core ≈ (50,72); regions ≈ corners/edges of the 3x2 grid -->
+      <path id="p1" d="M16,26 C28,42 40,56 50,70" stroke="#5ec8e8"/>
+      <path id="p2" d="M50,24 C50,40 50,54 50,68" stroke="#ffb74d"/>
+      <path id="p3" d="M84,26 C72,42 60,56 50,70" stroke="#54d6c8"/>
+      <path id="p4" d="M16,74 C28,74 38,74 47,73" stroke="#ce93d8"/>
+      <path id="p5" d="M84,74 C72,74 62,74 53,73" stroke="#7fd98a"/>
+      <circle class="pulse" r="0.7" fill="#5ec8e8" color="#5ec8e8"><animateMotion dur="3s"  repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#p1"/></animateMotion></circle>
+      <circle class="pulse" r="0.7" fill="#ffb74d" color="#ffb74d"><animateMotion dur="3.4s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#p2"/></animateMotion></circle>
+      <circle class="pulse" r="0.7" fill="#54d6c8" color="#54d6c8"><animateMotion dur="2.7s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#p3"/></animateMotion></circle>
+      <circle class="pulse" r="0.7" fill="#ce93d8" color="#ce93d8"><animateMotion dur="3.2s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#p4"/></animateMotion></circle>
+      <circle class="pulse" r="0.7" fill="#7fd98a" color="#7fd98a"><animateMotion dur="2.9s" repeatCount="indefinite" keyPoints="0;1" keyTimes="0;1" calcMode="linear"><mpath href="#p5"/></animateMotion></circle>
+    </svg>
+
+    <div class="region-grid">
+
+      <div class="region c-senses glow-senses">
+        <div class="rhead"><span class="ricon">👁️</span><span class="rtitle">Senses</span><span class="node"></span></div>
+        <div class="rrole">What M8 <b>takes in</b>: reads files & spreadsheets, sees images/receipts, searches the live web (weighing how trustworthy each source is).</div>
+        <div class="flow"><span class="ar">→</span> feeds raw facts into the <b>Thinking core</b></div>
+        <div class="bar-wrap">
+          <div class="bar-row"><span class="blabel">Built toward the vision</span><span class="bpct">~35%</span></div>
+          <div class="bar"><span style="width:35%"></span></div>
+          <div class="est">reads files/images/web today; deeper understanding & many more inputs to come · estimate</div>
+        </div>
+      </div>
+
+      <div class="region c-honesty glow-honesty">
+        <div class="rhead"><span class="ricon">⚖️</span><span class="rtitle">Conscience</span><span class="node"></span></div>
+        <div class="rrole">The <b>honesty layer</b> — M8's most-proven part. Makes sure it <b>never says more than it can back up</b>: no inventing facts, no calling "tested" the same as "proven".</div>
+        <div class="flow"><span class="ar">→</span> checks <b>every answer</b> before it leaves</div>
+        <div class="bar-wrap">
+          <div class="bar-row"><span class="blabel">Built toward the vision</span><span class="bpct">~45%</span></div>
+          <div class="bar"><span style="width:45%"></span></div>
+          <div class="est">our strongest pillar — yet a fully-evolved conscience (calibrated, self-auditing, any domain) is far · estimate</div>
+          <div class="foot">internally: Odysseus red-team battery (permanent honesty probes) · Odysseus AI = experimental wing (sandbox only, never the deterministic brain)</div>
+        </div>
+      </div>
+
+      <div class="region c-memory glow-memory">
+        <div class="rhead"><span class="ricon">📚</span><span class="rtitle">Memory</span><span class="node"></span></div>
+        <div class="rrole">What it <b>remembers</b>, so it grows smarter each session: facts, past work, even failed attempts — each tagged with how trustworthy it is. The "memory that evolves" part is still young.</div>
+        <div class="flow"><span class="ar">→</span> feeds <b>recall</b> into every answer</div>
+        <div class="bar-wrap">
+          <div class="bar-row"><span class="blabel">Built toward the vision</span><span class="bpct">~30%</span></div>
+          <div class="bar"><span style="width:30%"></span></div>
+          <div class="est">it stores & recalls well; truly self-improving memory is almost all ahead · estimate</div>
+          <div class="foot">internally: provenance + trust tiers on every memory (Builds 38–39); shared by business & research</div>
+        </div>
+      </div>
+
+      <div class="region c-axis glow-axis">
+        <div class="rhead"><span class="ricon">🔍</span><span class="rtitle">Solid-vs-Speculation sorter</span><span class="node"></span></div>
+        <div class="rrole">Separates a <b>proven core</b> from a <b>speculative leap</b>. Keeps wild ideas (vortex math, number patterns, geometry) clearly labelled "<b>not proven yet</b>".</div>
+        <div class="flow"><span class="ar">→</span> tells the core <b>what to trust</b></div>
+        <div class="bar-wrap">
+          <div class="bar-row"><span class="blabel">Built toward the vision</span><span class="bpct">~30%</span></div>
+          <div class="bar"><span style="width:30%"></span></div>
+          <div class="est">this is the <b>labeller</b> — it sorts honestly; actually <b>mining</b> usable knowledge from these ideas is the ~10% gauge above · estimate</div>
+          <div class="foot">internally: Epistemic Axis (Builds 41–42)</div>
+        </div>
+      </div>
+
+      <div class="region core c-core">
+        <div class="rhead"><span class="ricon">🧩</span><span class="rtitle">Thinking &amp; Problem-Solving</span></div>
+        <div class="rrole">The heart. <b>Turns an idea into a tested claim</b> — and machine-checks the maths, so it can say "proven" only when it truly is.</div>
+        <div class="road">
+          <div class="step"><span class="dot done"></span><span class="nm">Idea → testable claim</span><span class="tag">live</span></div>
+          <div class="step"><span class="dot done"></span><span class="nm">Check a claim you're given</span><span class="tag">live</span></div>
+          <div class="step"><span class="dot done"></span><span class="nm">Plan the attack (split into steps)</span><span class="tag">live</span></div>
+          <div class="step"><span class="dot done"></span><span class="nm">Learn a 2nd kind of problem</span><span class="tag">live</span></div>
+          <div class="step todo"><span class="dot next"></span><span class="nm">Get smarter, not wider (depth)</span><span class="tag">just starting</span></div>
+        </div>
+        <div class="bar-wrap">
+          <div class="bar-row"><span class="blabel">Built toward the vision</span><span class="bpct">~20%</span></div>
+          <div class="bar"><span style="width:20%"></span></div>
+          <div class="est">the 4-step plan to attack problems is COMPLETE — but actually cracking anything has barely begun · estimate</div>
+          <div class="foot">under the hood: explore-ladder M1 → M2 → M3 → M3.1 → M4 (Lean) → L5 nightly loop (all live) · roadmap D→B→A→C done · now depth-over-breadth (Build-44)</div>
+        </div>
+      </div>
+
+      <div class="region c-hands glow-hands">
+        <div class="rhead"><span class="ricon">🛠️</span><span class="rtitle">Hands — runs your business</span><span class="node"></span></div>
+        <div class="rrole">Does <b>real work on real data today</b>: fleet performance, verified profit &amp; loss, end-of-service pay, multi-company registry, and early-warning alerts.</div>
+        <div class="flow"><span class="ar">→</span> turns the core's decisions into <b>action</b></div>
+        <div class="bar-wrap">
+          <div class="bar-row"><span class="blabel">Built toward the vision</span><span class="bpct">~35%</span></div>
+          <div class="bar"><span style="width:35%"></span></div>
+          <div class="est">fleet & finance are trusted; email, calendar, tasks & documents not built or connected yet · estimate</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="backbone">
+      <span class="bbicon">🦴</span>
+      <span class="bbtitle">The body it runs on
+        <small>the engines & storage that keep the mind alive — chosen to stay mostly free</small>
+      </span>
+      <span class="pill">Gemini — everyday thinking</span>
+      <span class="pill">Live web search — current facts</span>
+      <span class="pill">Cloud servers — always on</span>
+      <span class="pill">Database — long-term memory</span>
+      <span class="pill">Lean checker — proves the proofs</span>
+    </div>
+  </div>
+
+  <!-- TASKS / PROJECTS / EVOLUTION -->
+  <div class="evo">
+    <div class="evo-col">
+      <h4>Working on now</h4>
+      <ul>
+        <li><b>First machine-verified step</b> — the depth upgrade (Build-44) is shipped; waiting on a warm maths-checker to show its first real Lean-verified leaf <span class="tg">live · pending warm check</span></li>
+      </ul>
+    </div>
+    <div class="evo-col">
+      <h4>Next — depth, not breadth</h4>
+      <ul>
+        <li>Smarter conjectures &amp; deeper decompositions</li>
+        <li>Machine-check more proof leaves (raise the bar past simple plans)</li>
+      </ul>
+    </div>
+    <div class="evo-col">
+      <h4>Backlog (honest pending)</h4>
+      <ul>
+        <li>One literature seed still reads "empirical" — refine (#11)</li>
+        <li>Round-5 honesty follow-ups (telemetry &amp; probes)</li>
+        <li>Let the nightly loop run logged-off (promotion gate)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="timeline">
+    <span class="tl done">Breadth roadmap D→B→A→C ✓</span>
+    <span class="tl cur">Depth begun · Build-44</span>
+    <span class="tl future">L6 — a compound mind</span>
+  </div>
+
+  <!-- THE HARD PROBLEMS -->
+  <div class="probs">
+    <h3>The hard problems — where each is stuck</h3>
+    <table>
+      <tr><th>Problem</th><th>The pain point</th><th>What M8 must grow</th><th>Now</th></tr>
+      <tr><td><b>Collatz</b></td><td>no measure that always shrinks (3n+1 vs ÷2)</td><td>discharge real Lean-checked leaves; deeper lemma-DAGs</td><td class="st active">active · early</td></tr>
+      <tr><td><b>Reverse-and-add (196)</b></td><td>can't prove a number never reaches a palindrome</td><td>stronger structural invariants</td><td class="st active">active · early</td></tr>
+      <tr><td><b>Riemann hypothesis</b></td><td>the behaviour of the zeta zeros</td><td>a complex-analysis domain — none yet</td><td class="st none">not started</td></tr>
+      <tr><td><b>Twin prime</b></td><td>are prime pairs infinite?</td><td>sieve / prime-gap machinery — none yet</td><td class="st none">not started</td></tr>
+      <tr><td><b>Navier–Stokes</b></td><td>do fluid equations stay smooth?</td><td>PDE capability — far out of scope now</td><td class="st none">not started</td></tr>
+    </table>
+    <div class="note">Honest: a real (if early) angle on two problems; no attack path yet on the famous three.</div>
+  </div>
+
+  <div class="legend">
+    <h3>How to read this</h3>
+    <ul>
+      <li><b>Glowing lines &amp; pulses</b> show what flows between regions — the parts feed each other, they aren't separate boxes.</li>
+      <li><b>The bar &amp; %</b> = how far built toward <b>M8's full vision</b> (100% = the finished dream, so even strong parts sit well below 100).</li>
+      <li><b>Two dials on top</b>: left = how grown-up the whole mind is (Level 5 of 6); right = the honest distance to cracking unsolved problems.</li>
+      <li><b>"estimate"</b> = the % is a judgement call. The Levels (L1–L6) come straight from the locked plan.</li>
+      <li><b>Ladder vs bars</b>: the L1–L6 ladder = how grown-up the wiring is; the bars = how far toward the full dream — so a strong, working part can still sit well under half.</li>
+    </ul>
+  </div>
+
+  <div class="footer">
+    Plain-language map of <b>The M8 Mind</b> · drawn from NORTH_STAR.md, the live build list & HONESTY_TRACK_PLAN.md ·
+    status as of Build-44 “Depth-1 — get smarter, not wider” (2026-06-16).<br>
+    The one claim we never make: that we’re already there.
+  </div>
+
+</div>
+</body>
+</html>
