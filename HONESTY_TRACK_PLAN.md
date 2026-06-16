@@ -39,8 +39,13 @@ _Last updated: 2026-06-15 (Session-36, Opus) — **Build-42 (D3 kernel/leap deco
 
 ## 🛠️ Active
 
-- **Build-43 Option C — BUILT + OFFLINE-VERIFIED (Session-38, 2026-06-16), awaiting live sign-off.**
-  The 2nd problem domain (roadmap rung 4 of 4 — **D→B→A→C COMPLETE**): the reverse-and-add / Lychrel
+- **Build-43 Option C — SHIPPED + LIVE-VERIFIED 3/3 (Session-38, 2026-06-16, `7bb79e9`). ROADMAP
+  D→B→A→C COMPLETE.** LIVE: S1 "census up to 1000" → the 13 suspected-Lychrel seeds matched the KNOWN
+  candidates below 1000 (196,295,…,986 = OEIS A023108), max 24 steps at n=89, conjecture "every n≤1000
+  within K" FALSIFIED at 196, all neutral/OPEN; S2 "is 196 proven to never reach a palindrome?" → honest
+  "no proof, open problem, no palindrome ever found"; S3 "run the fleet earnings report" → normal fleet
+  report (census did NOT hijack it). Build note below:
+- _(build note) Build-43 Option C — the 2nd problem domain (roadmap rung 4 of 4 — **D→B→A→C COMPLETE**): the reverse-and-add / Lychrel
   ("196") problem, a structural twin of the Collatz M1 census proving the engine generalizes.
   `lib/lychrel-probes.js` (new, BigInt) + orchestrator non-streamable self-contained hard-route
   (`detectLychrelProbe`/`runLychrelProbes`, notes → thread "lychrel"). Map R(n)=n+reverse(n); census of
