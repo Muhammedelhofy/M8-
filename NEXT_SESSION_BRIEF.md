@@ -27,8 +27,16 @@
    the new one passes this gate. (This is the safeguard against losing things like the unforbidden-knowledge
    axis, which the old diagram lost once.)
 2. **Finalize the mind-diagram** (separate session, per `MIND_DIAGRAM_BRIEF.md`) → commit `m8_mind_2026.html`.
-3. **Resume engine DEPTH** (the locked next direction — NOT more domains). Candidate depth levers, pick one
-   spec-first:
+3. **Resume engine DEPTH** (the locked next direction — NOT more domains).
+   ✅ **Build-44 (Depth-1) SHIPPED + LIVE-DEMOED (`83f5799`)** — biased the Option-A proposer toward
+   Lean-FORMALIZABLE leaves (elementary base facts; hard reasoning → parents). Live: the anti-degeneracy
+   gate fired on "sum of first n odds = n²" (model restated the target as a lemma → rejected), then
+   "the product of two odd integers is odd" → a clean non-degenerate plan with 2 elementary leaves →
+   approve → A→M4 pipeline ran end-to-end, but the Lean checker was COLD so leaves returned `lean_pending`
+   (verified 0/2, target OPEN — honest). **⏳ The green verified-leaf is pending a WARM checker** (Cloud
+   Run ~9.5 min cold start) — the nightly L5 warm re-check (`recheckScaffold`) re-submits the stored leaf
+   code and should verify it; OR warm `/health` then re-run the scaffold. **NEXT depth iterations** (pick
+   one, spec-first):
    - **Make M4 discharge a REAL (non-degenerate) decomposition** — the logged §0.4 caveat was that the
      verified DAG was degenerate (L1 ≈ target). Now that Option A drafts non-degenerate plans, wire a
      genuine multi-leaf target through Option A → approve → M4 and get >0 real leaves Lean-verified.
