@@ -1,6 +1,23 @@
 # M8 — Next Session Brief
-**Written:** 2026-06-15 (Session-34, Opus) · **Branch:** main · **Head:** `7ca2484`
+**Latest:** 2026-06-16 (Session-38, Opus) · **Branch:** main · **Head:** `54162e4`
 **Canonical plan:** [`M8/HONESTY_TRACK_PLAN.md`](HONESTY_TRACK_PLAN.md) ← the living backlog. Read it first.
+(Older Session-34 brief preserved below for history.)
+
+---
+
+## ★ SESSION-38 CURRENT STATE — read this first (the cross-session source of truth)
+
+**The problem-solving-engine roadmap is COMPLETE and LIVE: Build-43 D → B → A → C all shipped + live-verified.**
+- **D** (`cfff4c1`) — fringe idea → testable claim (kernel → computable conjecture → falsifier → "observed through N").
+- **B** (`5ce54ec`) — test the user's LITERAL claim first (counterexample), then offer the nearest-TRUE pattern.
+- **A** (`10edb8d`) — **M8 plans the attack**: drafts an anti-degeneracy-gated lemma-DAG for a target, human approves `#N`, the existing M4/Lean lane verifies the leaves (k/m; target stays an OPEN CONJECTURE). `lib/decomp-proposer.js`; migration `m8_decomp_proposals.sql` applied.
+- **C** (`7bb79e9`) — **2nd problem domain = reverse-and-add / Lychrel "196"** (`lib/lychrel-probes.js`, BigInt). A structural twin of the Collatz M1 census; proves the engine generalizes. LIVE: found exactly the 13 known Lychrel candidates < 1000 (OEIS A023108), conjecture "every n≤1000 within K" falsified at 196, all framed OPEN.
+
+**LOCKED DECISION — depth over breadth ([`m8-depth-over-breadth`] memory):** with C done, the engine has TWO domains so "it generalizes" is proven. **STOP adding problem domains.** Future engine work goes into DEPTH (smarter conjectures, deeper decompositions, discharging more leaves), NOT more domains. Revisit breadth only on an explicit ask.
+
+**IN-FLIGHT (separate session/account):** a "make the M8 diagram better → mind/brain map + Tasks/Projects/Evolution" effort is being done in a DIFFERENT Claude session. Its agreed vision is captured in [`M8/MIND_DIAGRAM_BRIEF.md`](MIND_DIAGRAM_BRIEF.md). That session must `git pull` first (this repo is ahead at `54162e4`) and push its work to the `M8-` repo so it isn't lost. The engine work (this brief) and the diagram work (that brief) are independent — no code overlap.
+
+**Honesty spine (unchanged law):** `lean_verified` is the ONLY path to `proven`; a counterexample the ONLY path to `refuted`; ingestion/extraction reach neither; narration ≤ evidence; code computes truth, the LLM narrates. Free Gemini/Tavily stack. Live runs cost Gemini quota + need Muhammad's OK.
 
 ---
 
