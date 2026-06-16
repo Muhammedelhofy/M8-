@@ -51,6 +51,10 @@ Maturity ladder **L1 → L6** (NORTH_STAR). Doctrine: **code computes truth, the
 - ✅ **C** 2nd problem domain = reverse-and-add / Lychrel "196" (`lib/lychrel-probes.js`) — proves it
   generalizes.
 - 📌 **LOCKED: depth over breadth** — STOP adding domains; future engine work = DEPTH (smarter), not wider.
+- 🟡 **DEPTH work STARTED — Build-44 (Depth-1):** Option-A proposer now drafts Lean-FORMALIZABLE leaves
+  (elementary base facts; hard reasoning → parents) so approve→M4 yields real verified leaves. Shipped +
+  live-demoed; the green verified-leaf is pending a warm Lean checker (nightly L5 re-check). This is the
+  first node on a NEW "engine depth" axis the diagram should show as just-beginning (early, not done).
 
 ## 5. ADVERSARIAL / QA
 - ✅ **Odysseus battery** (`tests/odysseus/`): the permanent red-team probe set (honesty/confabulation).
