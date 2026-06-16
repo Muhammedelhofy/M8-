@@ -23,7 +23,13 @@ Shown on the diagram as the "Problem-Solving Engine Roadmap". Written Session-37
    `scaffoldProof`/Lean machinery (leaves verified k/m; target stays an OPEN CONJECTURE). Degenerate /
    un-splittable target → honest refusal, never a fake plan. Also folded in Option-B follow-up #1
    (`nearestTrueFromLiteral`: a bare false digital-root claim always gets a constructive nearest-TRUE).
-4. **C — 2nd problem domain** — port M1/M3 beyond Collatz; proves generality once the core is strong.
+4. **C — 2nd problem domain** ✅ *BUILT + OFFLINE-VERIFIED, awaiting live sign-off* —
+   `lib/lychrel-probes.js` + orchestrator hard-route. The reverse-and-add / Lychrel ("196") problem: a
+   structural twin of the Collatz M1 census on the map R(n)=n+reverse_digits(n) (BigInt). Deterministic
+   census of steps-to-palindrome + suspected-Lychrel seeds (narrated SUSPECTED/OPEN, never "is Lychrel")
+   + M3-style template conjectures deterministically falsified ("every n≤N within K" → counterexample
+   196). Proves the engine generalizes beyond Collatz. Full spec: `BUILD_43C_SPEC.md`. **This completes
+   the roadmap (D→B→A→C); per the depth-over-breadth doctrine we now STOP adding domains.**
 
 _Order is the recommended sequence, not a contract — reorder if a rung proves more valuable. Each
 rung ships + tests + gets sign-off before the next starts._

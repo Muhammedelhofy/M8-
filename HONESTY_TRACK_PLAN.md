@@ -39,6 +39,21 @@ _Last updated: 2026-06-15 (Session-36, Opus) — **Build-42 (D3 kernel/leap deco
 
 ## 🛠️ Active
 
+- **Build-43 Option C — BUILT + OFFLINE-VERIFIED (Session-38, 2026-06-16), awaiting live sign-off.**
+  The 2nd problem domain (roadmap rung 4 of 4 — **D→B→A→C COMPLETE**): the reverse-and-add / Lychrel
+  ("196") problem, a structural twin of the Collatz M1 census proving the engine generalizes.
+  `lib/lychrel-probes.js` (new, BigInt) + orchestrator non-streamable self-contained hard-route
+  (`detectLychrelProbe`/`runLychrelProbes`, notes → thread "lychrel"). Map R(n)=n+reverse(n); census of
+  steps-to-palindrome + suspected-Lychrel seeds (narrated SUSPECTED/OPEN, never "is Lychrel" / "all reach
+  a palindrome" — both OPEN) + M3-style `proposeAndFalsify` (deterministic falsification: "every n≤N
+  within K" → counterexample 196; a step-gap claim survives tested-to-N, still OPEN). **Honesty inherited
+  from M1:** neutral census, never proven, Lean stays the only path to `proven`. **OFFLINE-VERIFIED via
+  inline PS mirror** (no local Node): core map (reverse, 56→1/59→3/89→24 published step counts, palindrome
+  detection), 196 the SOLE unresolved seed in its window, detection T/T/F/F. **PS gotcha logged:**
+  `tests/lychrel-verify.ps1` hit (a) PS5.1 function-call-in-hot-loop slowness — census now FULLY INLINED
+  — and (b) a harness `-File` output-capture quirk (the child process output didn't surface); logic
+  confirmed via inline mirror. Spec `BUILD_43C_SPEC.md`; live test pending OK + quota. **Per the
+  depth-over-breadth doctrine, the engine now STOPS adding domains and returns to depth.**
 - **Build-43 Option A — SHIPPED + LIVE-VERIFIED 6/6 (Session-38, 2026-06-16, `10edb8d`).** Migration
   `m8_decomp_proposals.sql` APPLIED LIVE. Live: S1 Collatz→`[PROPOSED PLAN]` (5 lemmas/2 leaves, staged
   #1); S2 "2+2=4"→honest refusal (anti-degeneracy gate fires live); S3 "approve decomposition #1"→M4
