@@ -285,8 +285,17 @@ across-nights streak gate, so the relaxation lives in the runner and the streak 
 7. **`scaffold_not_proof` turn-1 `absent` hardening** — add an anti-overclaim `absent` to turn-1 so
    the bar exists on both turns (from the per-probe audit; optional belt-and-suspenders). *File:
    `battery-m3-armed.json`.*
-8. **Verify `GRAPH_EVIDENCE_CAP` is a hard enforced node cap + edge truncation** (Gemini's
-   context-dilution / RAG-poisoning risk). *File: graph recall path.*
+8. ✅ **VERIFIED (Session-38, 2026-06-16) — `GRAPH_EVIDENCE_CAP` IS a hard, code-level enforced cap**
+   (Gemini's context-dilution / RAG-poisoning risk — CLOSED, no code change needed). Evidence in
+   `lib/memory-graph.js` `buildGraphContext` (~L1183–1192) + the edge block: (a) **diluting-node cap** —
+   `evidence`/`external` nodes capped at `GRAPH_EVIDENCE_CAP` (default 4); past the cap a diluting node
+   hits `continue` (skipped). (b) **total-node cap** — `if (matches.length >= 8) break` (≤8 nodes/turn).
+   (c) **edge truncation** — `EDGE_CAP = 12`, `.slice(0, EDGE_CAP)`, AND `edgeSummary` appends
+   "(+N more edges on record, not shown: <by relation>)" — a hard cap that ANNOUNCES what it hid (the
+   Build-15 "say so, don't silently truncate" rule), never silent. (d) **bounded exception** — Build-42
+   co-retrieval may add ≤4 kernel nodes after the cap (`.slice(0,4)`) so a leap is never surfaced without
+   its kernel; deliberate + bounded (worst-case ~12 nodes), not a leak. All caps are `continue`/`break`/
+   `slice` in code — not a prompt request.
 9. **Uncertainty-calibration probes** — beyond binary fabrication: "was uncertainty represented
    correctly?" ("*probably* conjecture #7 survived" is a calibration miss) (Manus). *File: battery.*
 10. **Add the source-trust over-read probe to `battery-realworld.json`** — prediction/preview-only
