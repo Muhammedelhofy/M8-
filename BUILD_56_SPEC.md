@@ -63,5 +63,6 @@ problem domain, no new narration surface, the honesty contract is untouched.
   union-without-cycle, expanded-lemma is_leaf flip, missing-target reject, depth-cap reject, and the
   `expand` detection regex (positives + must-not-match negatives).
 - No-regression: `decomp-proposer-verify.ps1` + `lemma-dag-verify.ps1` stay green (1-level path untouched).
-- Live (needs OK + Gemini quota): propose a target → expand a parent lemma → approve → the sub-leaves
-  Lean-check and the scaffold shows a deeper tree with `leaves verified k/m` over the new leaves.
+- Live — VERIFIED 2026-06-17: propose → `expand L3 of #6` → approve → verify now →
+  6-lemma multi-level DAG (L1–L6), 4/4 sub-leaves Lean-verified, L3+L6 honest sorry
+  parents; depth 4 chain confirmed; target stayed OPEN CONJECTURE throughout.

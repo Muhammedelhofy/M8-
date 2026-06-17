@@ -54,5 +54,6 @@ Each repair = 1 LLM draft + 1 `/check`. Legacy worst case was 2 checks/leaf; def
   stop conditions (converge-to-verified, exhaust-budget, cold-miss-stop, worse-rewrite-stop,
   never-retry-stated/pending/error, MAX=1 legacy parity, MAX=0 disabled).
 - No-regression: existing `tests/lemma-dag-verify.ps1` still green (pure parse/counts untouched).
-- Live (needs OK + Gemini quota): propose a 2-leaf decomposition → warm the checker → approve;
-  a leaf that fails the first repair should now converge on the second.
+- Live — VERIFIED 2026-06-17: propose → expand L3 of #6 → approve → verify now →
+  4/4 leaves Lean-verified (L1 ✓ Iff, L2 ✓, L4 ✓ Iff, L5 ✓); feedback loop active on
+  any lean_rejected leaves; 2 honest sorry parents; target stayed OPEN CONJECTURE.
