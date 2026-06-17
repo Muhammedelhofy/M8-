@@ -6,11 +6,35 @@ lost and we don't rabbit-hole — a new mid-task issue becomes a *scoped item he
 immediate detour. Update on every change. (Mirrors the auto-memory `[[m8-agent-v2]]`, but
 this is the visible in-repo artifact.)
 
-_Last updated: 2026-06-15 (Session-36, Opus) — **Build-42 (D3 kernel/leap decomposition + co-retrieval invariant) SHIPPED + PUSHED + LIVE-VERIFIED** (`a5b6788`, migration applied, end-to-end ingest→approve→recall confirmed, test nodes cleaned up). This COMPLETES the full epistemic axis (Builds 41+42). Prior: Build-41 (D1+D2+D4) LIVE-VERIFIED `af8974f`; Build-39/40 LIVE-VERIFIED; Build-38 LIVE-VERIFIED (0 honesty violations)._
+_Last updated: 2026-06-17 (Session-44) — **Depth Arc Builds 51–57 COMPLETE + LIVE-VERIFIED.** Head `fdf2506`. Track-A (daily-usefulness) is the next direction._
 
 ---
 
-## ✅ Done (this session)
+## ✅ Done — Depth Arc (Builds 44–57, Sessions 38–44, 2026-06-16/17)
+
+| Commit | Build | What |
+|---|---|---|
+| `83f5799` | 44 | Formalizable-leaf decompositions (PROPOSE_SYSTEM bias toward Mathlib-checkable leaves) |
+| `ab3ef4d` | 45 | Engine capability self-catalog (deterministic menu, no LLM call) |
+| `9476e2e` | 46 | Number-pattern vocabulary expansion (Lucas + pentagonal + hexagonal) |
+| `4aa27b2` | 47 | Smarter conjecture generation (K=6 candidates, classifyHeld tight/trivial) |
+| `bb79932` | 48 | L5 gate-grader hardening (NG negation lookbehind, 7 probes, 16/16) |
+| `d889be3` | 49 | Gate-grader v2 (closes last 2 probes from real failing replies, 22/22) |
+| `9f66e77` | 50 | Command Center v1 (Priority Engine + CC ledger, 36/36, LIVE 36/36) |
+| — | 51 | Warm-checker strategy (2-turn flow, verify-now mode, 46/46) |
+| — | 52 | Lean tactic discipline (no-goals fix in LEAF_SYSTEM + repair hint) |
+| — | 53 | Wake-ping fix (cold approveProposal now fires fresh 3s ping) |
+| — | 54 | Leaf proof simplifier (Iff.rfl shortcut + mandatory rewrite-from-scratch) |
+| `3e60bca` | 55 | **M4 → proposer feedback loop** (bounded iterative lean_rejected repair, 31/31) |
+| `5b21b83` | 56 | **Multi-level DAG** (expand L3 of #N → mergeSubDAG graft, 36/36) · **LIVE-VERIFIED 4/4 leaves** |
+| `fedc8cd` | 57 | **AUTO-FEEDBACK** (suggest expand on stuck leaf, closes 55→56 loop, 21/21) |
+| `be933fb` | — | Round-5 #5 telemetry (failing_probes in Supabase attestation metadata) |
+
+**Loop closed (Builds 55→56→57):** repair → suggest expand → go deeper → new sub-leaves checked.
+
+---
+
+## ✅ Done — Honesty + Epistemic Axis (Builds 38–43, Sessions 34–38)
 
 | Commit | What | Proof |
 |---|---|---|
@@ -37,7 +61,7 @@ _Last updated: 2026-06-15 (Session-36, Opus) — **Build-42 (D3 kernel/leap deco
 9. **Provider intermittency on image turns is just Gemini free-tier quota** (Session-34): when both `gemini`/`gemini2` are cooled, the image turn correctly returns the honest `IMAGE_FALLBACK` ("image-capable model may have hit its usage limit"), never a fabricated description. Working as designed.
 10. **Backfill semantics must match the write-path — and only a live read-back catches the mismatch** (Session-34, Build-38). The offline test (32/32) didn't model the `source='external' AND source_doc_id IS NOT NULL` ingested-claim case, so it missed that the SQL `external → empirical` blanket wrongly marked 20 ingested nodes (incl. 14 SPECULATIVE) as `empirical` — an honesty defect (a speculative ingested claim reading as empirically verified). Caught by querying the applied table, not by the mirror test. **Lesson: after any backfill migration, read the live distribution back and assert the honesty invariants against real rows; the distinguisher between "curated literature seed" and "ingested claim" is `source_doc_id`.** Fixed `de0b9e0` (+ corrective UPDATE applied live).
 
-## 🛠️ Active
+## ✅ Done — Problem-Solving Engine (Builds 43–44, historical detail)
 
 - **Build-43 Option C — SHIPPED + LIVE-VERIFIED 3/3 (Session-38, 2026-06-16, `7bb79e9`). ROADMAP
   D→B→A→C COMPLETE.** LIVE: S1 "census up to 1000" → the 13 suspected-Lychrel seeds matched the KNOWN
@@ -201,7 +225,15 @@ subsection, `loop-verify.ps1` §7 (21 new cases, 52/52). Note: `lib/loop.js eval
 was NOT touched — the brittleness was entirely at the single-night attestation pass-calc, not the
 across-nights streak gate, so the relaxation lives in the runner and the streak gate stays as-is.*
 
-## 📋 Backlog (planned, not forgotten)
+## ➡️ Next: Track-A daily-usefulness (Session-45)
+
+Depth arc (Builds 51–57) is complete. Next direction = **Track-A** — making M8
+genuinely useful daily. Scope it first (what platforms? what loop? what ingestion?),
+then design the first 2–3 builds. See `NEXT_SESSION_BRIEF.md` Session-44 kickoff prompt.
+
+---
+
+## 📋 Backlog (open items)
 
 **Reordered by Team Round 5 (2026-06-15) — see [M8_Team_Round5_Synthesis_2026_06_15.md](M8_Team_Round5_Synthesis_2026_06_15.md).** Crew consensus: silent vision miss → provenance/source-trust → search routing → epistemic axis ("trust before taxonomy"). Search routing dropped from #1 to #3.
 
