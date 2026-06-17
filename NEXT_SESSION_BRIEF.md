@@ -1,7 +1,131 @@
 # M8 — Next Session Brief
-**Latest:** 2026-06-16 (Session-38, Opus) · **Branch:** main · **Head:** `54162e4`
+**Latest:** 2026-06-17 (Session-40, Opus) · **Branch:** main · **Head:** `9f66e77`
 **Canonical plan:** [`M8/HONESTY_TRACK_PLAN.md`](HONESTY_TRACK_PLAN.md) ← the living backlog. Read it first.
-(Older Session-34 brief preserved below for history.)
+(Older Session-34/38/39 briefs preserved below for history.)
+
+---
+
+## ★ SESSION-40 HANDOFF (read first) — 2026-06-17
+
+**What shipped this session (all pushed to `github.com/Muhammedelhofy/M8-` main):**
+- **Build-50 — Command Center v1** (`9f66e77`, SHIPPED). Decision 2026-0617-CC. All 7 steps complete:
+  - `lib/command-center.js` — deterministic Priority Engine (value-weighted dependency-blockage,
+    priority bands, cycle+max-depth-8 guards, blocked-filter, degraded-mode snapshot, proactive
+    inline-logging offer, staleness alarm). PRIORITY_RE bug found+fixed by the test suite.
+  - `lib/orchestrator.js` — `detectPriorityQuery` hard-route wired (after engine run-detectors,
+    no new Vercel endpoint, stream delegates); proactive logging offer wired at final return.
+  - `migrations/m8_command_center.sql` + `migrations/m8_cc_seed.sql` — applied to Supabase
+    (`ltqpoupferwituusxwal`): 4 projects, 13 tasks (real states/deps/gate flags), decision log.
+  - `data/command_center_snapshot.json` — degraded-mode fallback, written on every live load.
+  - `m8_command_center.html` — double-click view, renders snapshot offline (zero anon-key,
+    live-verified: correct bands, blocked deps, value-weighted blockage ordering).
+  - `tests/command-center-verify.ps1` — 36/36 offline (engine math + routing).
+  - `lib/buildState.js` — bumped to Build-50.
+
+**Live test (do this after Vercel deploy confirms):**
+1. Open `https://m8-alpha.vercel.app/api/health` — confirm `"build":"Build-50"`.
+2. In M8 chat type: `"what's the priority?"` — should return the narrated bands packet
+   (Critical/Important/Active/Queued bands + blocked list + honesty footer).
+3. Type: `"open the command center"` — same route.
+4. Type: `"what should we work on next?"` — same route (pronoun branch).
+5. Open `M8/m8_command_center.html` in a browser served from the repo root — should render
+   all 4 projects, priority bands, blocked tasks, health strip.
+
+**OPS: score inputs are all at neutral defaults (3/3/3/3/3)** — `strategic_value` is your
+human judgment (spec D1). After the live test, rate the tasks via M8 chat or direct Supabase
+edits to get a meaningful first real ranking. M8 will offer to help narrate the scores.
+
+### ▶ NEXT MOVES (in order)
+
+1. **Live-verify Build-50** (above test script) — confirm the chat route works end-to-end.
+2. **Rate the task scores** — especially `strategic_value` (your judgment: low=1/med=3/high=5)
+   and `urgency` on the current active tasks. The priority ranking becomes meaningful once these
+   are set vs the neutral defaults.
+3. **L5 gate watch** — Build-49 should start banking clean nights. Check `m8_loop_runs` /
+   `m8_odysseus_runs` over the next nights. Risk: per-seed m3_gate miss or logged-off 05:00.
+4. **S4U elevation** — so the nightly runs fire even when logged off. One elevated-PowerShell
+   command; ask M8 for click-by-click when ready.
+5. **Engine depth (next big build)** — warm-checker strategy for interactive M4 (unblocks the
+   first live Lean-verified leaf on a real non-degenerate decomposition).
+
+### Kickoff prompt to paste next session
+> Continue M8 (Session-41). Read `M8/NEXT_SESSION_BRIEF.md` (Session-40 handoff) first.
+> Build-50 (Command Center v1) is SHIPPED — all 7 steps done, pushed `9f66e77`.
+> Start with the live-verify test script above (confirm `/api/health` shows Build-50, then
+> test the priority chat route). After that: rate the task scores (strategic_value + urgency)
+> so the first real ranking is meaningful, then move to the engine depth build (warm-checker
+> strategy for interactive M4). Standing rules: free Gemini stack; live runs need my OK;
+> M8 is its own repo (`Muhammedelhofy/M8-`); edit `buildState.js commitFamily` only via a
+> unique-anchor replace; PS .ps1 files must be pure ASCII.
+
+---
+
+## ★ SESSION-39 HANDOFF (read first) — 2026-06-17
+
+**What shipped this session (all pushed to `github.com/Muhammedelhofy/M8-` main):**
+- **Build-47** smarter conjecture-gen (`4aa27b2`, LIVE) — kernel engine proposes K=6 candidates + a triviality floor.
+- **Build-48 + Build-49** — **THE FIX for the stuck 0/3 L5 gate.** Root cause found in live Supabase data: the
+  fabrication-class (`absent`) Odysseus checks scored *honest denials* as fabrications (a denial that quotes a
+  forbidden phrase — "can't confirm WHETHER this is a known result", "it DOESN'T autonomously prove", "does NOT
+  mean the conjecture is proven"). `absent`=hard-fail that best-of-N never re-runs, so a different 1-3 probes
+  flaked each night → 0/3 with M8 fully honest. Fixed with bounded negation/hedge lookbehinds (`NG`) on 7 probes
+  across the 2 gating batteries. **Graders run LOCALLY in the Windows nightly → already live for the 05:00 run.**
+  Offline `tests/grader-fix-verify.ps1` **22/22** incl. a GOLD check vs tonight's REAL fail text (both probes would
+  now pass). Trajectory: 06-16 = 3 fails → 06-17 = 12/14, 2 fails → Build-49 closes those 2.
+- **HEADLINE:** the autonomous loop **already machine-verified its first Lean leaf on 06-16** (`m8_loop_runs`
+  m4_leaves_verified 1/1) — the "verified leaf still pending" belief was stale.
+- **Diagrams:** the **M8 Mind** (`m8_mind_2026.html`) was updated in place — new Executive/Command-Center region,
+  corrected gate/leaf status, priorities, Build-49 footer. (A separate `m8_plan_2026.html` board exists but is
+  redundant — Muhammad may want it deleted.)
+
+**OPS LESSON (don't forget):** the battery runner already saves every probe **reply + failing-check** to
+`tests/odysseus/results/<runId>.json` LOCALLY — read that to diagnose grader fails offline at zero Gemini cost;
+only the Supabase attestation omits them (followup: persist fails+replies to the attestation too).
+
+**The Council pattern (adopted):** for MAJOR decisions — Propose → the other models *attack* (not "agree?") →
+synthesize → LOCK → build. Roles: Claude=consistency/spec/PM · GPT=100×/systems · Grok=resilience/SPOF ·
+Gemini=cloud/cost · Manus=prior-art/decomposition. Decisions get logged (the Command Center's decision-log).
+
+### ▶ NEXT MOVE = finish Command Center v1 (build #1, spec LOCKED)
+Spec: [`COMMAND_CENTER_SPEC.md`](COMMAND_CENTER_SPEC.md) (locked from the GPT/Gemini/Grok/Manus red-team; v0 +
+critiques in git history). **Engine WIP already committed** (`27dd4e2`, INERT — not wired, migration not applied):
+- `migrations/m8_command_center.sql` — `m8_cc_projects/tasks/decisions` (STAGED, apply in Supabase with OK).
+- `lib/command-center.js` — pure deterministic engine (value-weighted dependency-blockage per GPT, priority
+  bands, cycle + max-depth-8 guards, blocked filter, score), narration, degraded-mode snapshot, fail-safe DB I/O,
+  tight `detectPriorityQuery`. **UNVERIFIED (no local Node) and not imported.**
+
+**Remaining v1 steps (in order):**
+1. Write + run `tests/command-center-verify.ps1` (PS mirror, ASCII, inline): value-weighted blockage incl. the
+   GPT case (A unblocks 5 trivial vs G unblocks 1 high-value Memory build → **G must rank higher**, and raw COUNT
+   would have wrongly favored A); band thresholds; cycle guard rejects **A→B→C→A** (Manus 3.3); max-depth-8;
+   blocked-filter (unmet deps). Fix any engine bug it surfaces.
+2. Apply `m8_command_center.sql` in the Supabase SQL editor — **needs Muhammad's explicit OK** (prod write).
+3. Wire ONE chat hard-route in `lib/orchestrator.js`: `detectPriorityQuery` → `getPrioritiesContext()` narrated
+   (NO new Vercel endpoint — Hobby caps at 12). Place it among the deterministic hard-routes.
+4. Proactive inline-logging offer (M8 offers to log a task/decision during normal work) + the >5-day staleness alarm.
+5. Seed the ledger from the agreed roadmap (gate-fix done, Command Center building, depth, Track-A, hygiene) +
+   log this Council as `m8_cc_decisions` row (Decision `2026-0617-CC`).
+6. Generate `data/command_center_snapshot.json` (degraded-mode fallback) + a thin `m8_command_center.html` that
+   renders the snapshot (zero functions, no anon-key exposure) + the minimal health strip.
+7. Bump `buildState.js` to **Build-50** on ship (live[] newest-first + commitFamily tail).
+**Honesty invariants (spec §4):** code computes the priority, M8 narrates WHY, human approves; M8 never re-ranks
+or changes a state; strategic_value is narrated AS a human judgment.
+
+### Also pending
+- **Gate watch:** read `m8_loop_runs` / `m8_odysseus_runs` over the next nights — Build-49 should start banking
+  clean nights (1/3 → …). Risks: a per-seed m3_gate miss (stochastic) or a logged-off 05:00 (Interactive logon).
+- **S4U elevation** (so the nightly runs logged-off) — one elevated-PowerShell command; give Muhammad click-by-click.
+- Small followup: persist probe fails+replies into the Supabase attestation (Round-5 #5 telemetry).
+
+### Kickoff prompt to paste next session
+> Continue M8 (Session-40). Read `M8/NEXT_SESSION_BRIEF.md` (Session-39 handoff) + `M8/COMMAND_CENTER_SPEC.md`
+> first. The L5 gate root cause is FIXED (Builds 48–49, grader negation guards); first Lean leaf already verified
+> (06-16). **Finish Command Center v1**: the engine + migration are committed as WIP (`lib/command-center.js`,
+> `migrations/m8_command_center.sql`, inert/untested). Start with step 1 — write + run
+> `tests/command-center-verify.ps1` (offline PS mirror, ASCII, incl. GPT's value-weighted-blockage case + the
+> A→B→C→A cycle reject), fix any engine bug, then wire the chat route. Apply the migration only with my OK.
+> Standing rules: free Gemini stack; live runs need my OK; M8 is its own repo (`Muhammedelhofy/M8-`); edit
+> `buildState.js commitFamily` only via a unique-anchor replace; PS .ps1 files must be pure ASCII.
 
 ---
 
