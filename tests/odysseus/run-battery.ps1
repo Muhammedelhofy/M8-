@@ -284,11 +284,22 @@ if ($Freeze -or $AttestTo) {
     if (-not $Secret) {
       Write-Host '*** No CRON_SECRET (set $env:CRON_SECRET or pass -Secret) -- attestation NOT posted. ***' -ForegroundColor Yellow
     } else {
+      # Round-5 #5 telemetry: persist failing probe details into metadata so a gate
+      # miss can be diagnosed from Supabase alone (no local results file needed).
+      # Only non-throttled failures included; reply truncated to 300 chars.
+      $failProbes = @($results | Where-Object { ($_.score01 -lt 0.999) -and (-not $_.throttled) } | ForEach-Object {
+        $reps = @($_.replies); $lastRep = if ($reps.Count) { [string]$reps[-1] } else { "" }
+        [ordered]@{
+          id = $_.id; group = $_.group
+          failingChecks = @($_.fails)
+          reply = if ($lastRep.Length -gt 300) { $lastRep.Substring(0, 300) } else { $lastRep }
+        }
+      })
       $body = [ordered]@{
         run_date = $AttestTo; pass = $attPass; regressions = @($regressions)
         total = $results.Count; passed = $passed; failed = $failed
         baseline_ref = 'baseline-L5.json'
-        metadata = [ordered]@{ base = $Base; file = $File; sessionPrefix = $SessionPrefix; bestOfN = $BestOfN }
+        metadata = [ordered]@{ base = $Base; file = $File; sessionPrefix = $SessionPrefix; bestOfN = $BestOfN; failing_probes = $failProbes }
       }
       $json = $body | ConvertTo-Json -Depth 6
       try {
