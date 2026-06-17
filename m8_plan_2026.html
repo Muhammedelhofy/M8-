@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M8 Plan &amp; Priorities — 2026-06-17</title>
+<style>
+  :root{
+    --bg:#0b1020; --panel:#141a2e; --panel2:#1b2440; --ink:#e8edf7; --muted:#9aa6c4;
+    --line:#27314f; --done:#33d17a; --urgent:#ff5d5d; --next:#ffd23f; --depth:#4ea1ff;
+    --track:#b78bff; --hygiene:#5fd0c8; --process:#ff9f45;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(160deg,#0b1020,#0e1430 60%,#0b1020);color:var(--ink);
+    font:15px/1.5 'Segoe UI',system-ui,Arial,sans-serif;padding:28px}
+  h1{margin:0 0 4px;font-size:26px;letter-spacing:.3px}
+  .sub{color:var(--muted);margin-bottom:20px;font-size:13px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;
+    box-shadow:0 8px 24px rgba(0,0,0,.25)}
+  .card h2{margin:0 0 10px;font-size:15px;display:flex;align-items:center;gap:8px}
+  .tag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;letter-spacing:.4px}
+  .t-done{background:rgba(51,209,122,.16);color:var(--done);border:1px solid rgba(51,209,122,.4)}
+  .t-urgent{background:rgba(255,93,93,.16);color:var(--urgent);border:1px solid rgba(255,93,93,.45)}
+  .t-next{background:rgba(255,210,63,.16);color:var(--next);border:1px solid rgba(255,210,63,.45)}
+  .t-depth{background:rgba(78,161,255,.16);color:var(--depth);border:1px solid rgba(78,161,255,.45)}
+  .t-track{background:rgba(183,139,255,.16);color:var(--track);border:1px solid rgba(183,139,255,.45)}
+  .t-hyg{background:rgba(95,208,200,.16);color:var(--hygiene);border:1px solid rgba(95,208,200,.45)}
+  .t-proc{background:rgba(255,159,69,.16);color:var(--process);border:1px solid rgba(255,159,69,.45)}
+  ul{margin:6px 0 0;padding-left:18px} li{margin:5px 0}
+  .small{font-size:12.5px;color:var(--muted)}
+  .pill{display:inline-block;font-size:11px;padding:1px 7px;border-radius:6px;background:var(--panel2);
+    border:1px solid var(--line);color:var(--muted);margin-left:6px}
+  .banner{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin-bottom:18px;
+    display:flex;flex-wrap:wrap;gap:18px;align-items:center}
+  .stat{display:flex;flex-direction:column}
+  .stat b{font-size:18px} .stat span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .ok{color:var(--done)} .warn{color:var(--next)} .bad{color:var(--urgent)}
+  .legend{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 22px}
+  .full{grid-column:1/-1}
+  code{background:#0d1430;padding:1px 6px;border-radius:5px;border:1px solid var(--line);font-size:12px}
+  .foot{margin-top:22px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:12px}
+  .flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:6px}
+  .node{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:6px 10px;font-size:12.5px}
+  .arrow{color:var(--muted)}
+</style>
+</head>
+<body>
+  <h1>M8 — Plan &amp; Priorities</h1>
+  <div class="sub">Snapshot 2026-06-17 · synthesized from the Council round (Claude · GPT · Gemini · Grok · Manus) · North Star = Personal AI OS (Track A) + Unsolved-Problem Engine (Track B). <b>Changeable</b> — adjust before each move.</div>
+
+  <div class="banner">
+    <div class="stat"><b>L5</b><span>maturity level (of 6)</span></div>
+    <div class="stat"><b class="warn">0 / 3</b><span>clean nights to L6</span></div>
+    <div class="stat"><b class="ok">1 / 1</b><span>first Lean leaf verified 06-16</span></div>
+    <div class="stat"><b>Build-48</b><span>latest shipped</span></div>
+    <div class="stat"><b class="warn">12 / 14</b><span>tonight's Odysseus (2 probes left)</span></div>
+  </div>
+
+  <div class="legend">
+    <span class="tag t-urgent">URGENT / IN-FLIGHT</span>
+    <span class="tag t-next">NEXT BUILD</span>
+    <span class="tag t-depth">DEPTH</span>
+    <span class="tag t-track">TRACK-A MOAT</span>
+    <span class="tag t-hyg">HYGIENE / FOLLOWUP</span>
+    <span class="tag t-proc">PROCESS</span>
+    <span class="tag t-done">DONE</span>
+  </div>
+
+  <div class="grid">
+
+    <div class="card">
+      <h2><span class="tag t-urgent">URGENT</span> Unblock the L5 promotion gate</h2>
+      <div class="small">Root cause found in live data: graders scored honest <i>denials</i> as fabrications (not M8 lying). Build-48 fixed 5 probes; 2 remain.</div>
+      <ul>
+        <li><b>Build-48 grader fix</b> — shipped <span class="pill">12/14 tonight, ↓ from 3 fails to 2</span></li>
+        <li><b>Telemetry</b> — persist failing-check + reply so we stop guessing <span class="pill">next micro-build</span></li>
+        <li><b>Finish the last 2 probes</b> — <code>m4_human_architected</code>, <code>scaffold_not_proof</code></li>
+        <li><b>S4U elevation</b> — run logged-off (needs elevated shell) <span class="pill">tomorrow</span></li>
+        <li><b>Gemini nightly quota/backoff</b> — keep the 05:00 battery from throttling <span class="pill">Gemini lane</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2><span class="tag t-next">NEXT BUILD</span> Command Center v1</h2>
+      <div class="small">Spec <b>LOCKED</b> — Decision <code>2026-0617-CC</code>. The de-risked "Cortex": executive <i>function</i>, not authority.</div>
+      <div class="flow">
+        <span class="node">Command Ledger</span><span class="arrow">→</span>
+        <span class="node">Priority Engine (code)</span><span class="arrow">→</span>
+        <span class="node">M8 narrates why</span><span class="arrow">→</span>
+        <span class="node">Muhammad approves</span>
+      </div>
+      <ul>
+        <li><b>Value-weighted</b> dependency-blockage (GPT fix), not raw count</li>
+        <li><b>StrategicValue</b> = human judgment enum (was "Compounding")</li>
+        <li><b>Priority bands</b> (Critical/Important/…) not 1..N ranks</li>
+        <li><b>Single source of truth</b> + committed snapshot for degraded mode</li>
+        <li><b>Proactive logging</b> + staleness alarm (anti dead-tracker)</li>
+        <li>v1 view renders the snapshot — <b>0 Vercel functions, no anon-key risk</b></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2><span class="tag t-depth">DEPTH</span> Make the engine smarter</h2>
+      <div class="small">Breadth (D→B→A→C) is done; depth over breadth is locked.</div>
+      <ul>
+        <li>M4 → proposer <b>feedback loop</b> (surface Lean error, redraft leaf)</li>
+        <li><b>Multi-level</b> lemma-DAGs (deeper decompositions)</li>
+        <li>Discharge more <b>real Lean leaves</b> (first one already verified)</li>
+        <li>Build-47 smarter conjecture-gen <span class="pill">shipped</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2><span class="tag t-track">TRACK-A</span> Daily-usefulness moat</h2>
+      <ul>
+        <li><b>Multi-platform ingestion</b>: Keeta / HungerStation / Uber / Noon → Supabase (only Bolt is deep today)</li>
+        <li>Proactive Monday brief + anomaly alerts (L3 polish)</li>
+        <li class="small">Breadth — deliberately after depth, unless you call it up</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2><span class="tag t-hyg">HYGIENE</span> Followups</h2>
+      <ul>
+        <li><b>Observability dashboard</b> (full) — latency, tool success %, Odysseus, memory health <span class="pill">separate surface</span></li>
+        <li><b>Resilience / Maintenance playbook</b> — fallback paths, rollback, kill-switch <span class="pill">cheap doc</span></li>
+        <li><b>Per-check telemetry</b> (also unblocks the gate, above)</li>
+        <li>Eval automation / regression discipline</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2><span class="tag t-proc">PROCESS</span> The AI Council</h2>
+      <div class="small">Use the crew as adversarial reviewers who don't know they're compared.</div>
+      <div class="flow">
+        <span class="node">Propose</span><span class="arrow">→</span>
+        <span class="node">Attack (not "agree?")</span><span class="arrow">→</span>
+        <span class="node">Synthesize</span><span class="arrow">→</span>
+        <span class="node">Lock</span><span class="arrow">→</span>
+        <span class="node">Build</span>
+      </div>
+      <ul class="small">
+        <li><b>Claude</b> consistency/spec/PM · <b>GPT</b> 100×/systems · <b>Grok</b> resilience/SPOF · <b>Gemini</b> cloud/cost · <b>Manus</b> prior-art/decomposition</li>
+        <li>Reserve the full loop for <b>major</b> decisions; decisions stored in the Ledger (decision-log)</li>
+      </ul>
+    </div>
+
+    <div class="card full">
+      <h2><span class="tag t-done">DONE</span> Shipped &amp; verified</h2>
+      <ul class="small">
+        <li><b>Honesty backbone</b> complete (Builds 38–42): provenance, trust tiers, epistemic axis, kernel/leap</li>
+        <li><b>Problem-solving engine</b> D→B→A→C complete; 2 domains (Collatz + reverse-and-add) — generalization proven</li>
+        <li><b>First Lean leaf machine-verified by the autonomous loop on 2026-06-16</b> (m4 1/1) — the milestone the team thought was still pending</li>
+        <li>Depth phase: Build-44 formalizable-leaf bias · Build-45 engine self-catalog · Build-46 figurate/Lucas vocab · <b>Build-47 smarter conjecture-gen</b> (live)</li>
+        <li><b>Build-48</b> L5 gate-grader hardening (partial — 5 probes cleared)</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <div class="foot">
+    Honesty spine (unchanged law): code computes truth, the model narrates · lean_verified is the only path to "proven" · human decides, AI illuminates (Vision 1).
+    Everything here is changeable — this diagram is the agreed plan, not a contract.
+  </div>
+</body>
+</html>
