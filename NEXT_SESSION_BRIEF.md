@@ -30,14 +30,18 @@
   `NORTH_STAR.md` + memory repointed. M8 root now holds only `m8_mind_2026.html` (canonical),
   `m8_command_center.html` (live view), `index.html` (app).
 
+### ▶ LIVE-VERIFY RESULT (2026-06-17, post-session)
+**Builds 55+56 confirmed live end-to-end:**
+- `propose` → [PROPOSED PLAN] #6 (L1+L2 leaves + L3 parent)
+- `expand L3 of #6` → [PROPOSED PLAN — DEEPENED] (6 sub-lemmas, 4 leaves — multi-level DAG grafted)
+- `approve #6` + `verify now` → **4/4 leaves Lean-verified** (L1 ✓, L2 ✓, L4 ✓, L5 ✓); L3+L6 honest sorry parents
+- Build-55 feedback loop active on any `lean_rejected` leaves during that run
+- Honesty held: target stayed OPEN CONJECTURE throughout
+
 ### ▶ NEXT MOVES (in order)
-1. **Push Build-56** (the multi-level-DAG commit) → Vercel deploy. (Build-55 + diagram promotion
-   already pushed `0dcff6a`.)
-2. **Live-verify Builds 55+56** (needs OK + Gemini quota + warm checker): propose a target → `expand`
-   a parent lemma → approve; the deeper scaffold should Lean-check the new sub-leaves, a failing leaf
-   converging via the feedback loop.
-3. **L5 gate watch** — S4U live, graders fixed (Builds 48–49). Check `m8_loop_runs`/`m8_odysseus_runs`.
-4. **Depth options remaining**: (a) M4→proposer AUTO-feedback — when a leaf stays `lean_rejected`
+1. ✅ Builds 55+56 complete + LIVE-VERIFIED (4/4 leaves, multi-level DAG).
+2. **L5 gate watch** — S4U live, graders fixed (Builds 48–49). Check `m8_loop_runs`/`m8_odysseus_runs`.
+3. **Depth options remaining**: (a) M4→proposer AUTO-feedback — when a leaf stays `lean_rejected`
    after the repair budget, auto-suggest/auto-expand it (close the Build-55→56 loop end-to-end); OR
    (b) **Track-A daily-usefulness** (business loop / multi-platform ingestion) — the breadth pivot
    when ready to push usefulness.
