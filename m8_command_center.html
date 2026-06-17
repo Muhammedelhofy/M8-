@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>M8 — Command Center</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --teal:#54d6c8;--blue:#5ea8ff;--gold:#ffd166;--red:#ff8a8a;--green:#6ee7b7;
+    --core:#93b6ff;--mut:#8a9ac4;--line:#243154;--txt:#e6ecf5;
+    --band-critical:#ff8a8a;--band-important:#ffd166;--band-active:#5ea8ff;
+    --band-queued:#8a9ac4;--band-parking:#4a5568;
+  }
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--txt);
+    min-height:100vh;padding:24px 16px 60px;overflow-x:hidden;
+    background:radial-gradient(900px 500px at 50% -8%,rgba(79,106,245,.18),transparent 70%),
+               radial-gradient(700px 500px at 12% 30%,rgba(206,147,216,.07),transparent 70%),
+               #06080f;}
+  .wrap{max-width:1100px;margin:0 auto;position:relative;z-index:1;}
+  /* header */
+  .head{display:flex;align-items:center;gap:14px;margin-bottom:20px;flex-wrap:wrap;}
+  .head h1{font-size:24px;font-weight:800;color:#fff;text-shadow:0 0 20px rgba(120,150,255,.5);}
+  .head .kicker{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--mut);}
+  .head .upd{font-size:11px;color:var(--mut);margin-top:2px;}
+  .offline-badge{display:none;align-items:center;gap:6px;background:rgba(255,138,138,.12);
+    border:1px solid rgba(255,138,138,.4);border-radius:8px;padding:5px 11px;font-size:11px;color:var(--red);}
+  .offline-badge.show{display:flex;}
+  .stale-badge{display:none;align-items:center;gap:6px;background:rgba(255,209,102,.1);
+    border:1px solid rgba(255,209,102,.35);border-radius:8px;padding:5px 11px;font-size:11px;color:var(--gold);}
+  .stale-badge.show{display:flex;}
+  /* health strip */
+  .health{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:22px;}
+  .hcard{background:rgba(18,26,48,.8);border:1px solid var(--line);border-radius:10px;
+    padding:10px 14px;min-width:160px;}
+  .hcard .hk{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:4px;}
+  .hcard .hv{font-size:14px;font-weight:700;color:#eaf1ff;}
+  .hcard .hs{font-size:10.5px;color:var(--mut);margin-top:2px;}
+  /* section headers */
+  .sechead{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--mut);
+    margin:22px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line);}
+  /* band rows */
+  .band-block{margin-bottom:18px;}
+  .band-label{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;
+    letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;}
+  .band-dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;}
+  .task-row{display:flex;align-items:flex-start;gap:10px;background:rgba(18,26,48,.7);
+    border:1px solid var(--line);border-radius:10px;padding:11px 14px;margin-bottom:6px;}
+  .task-row:hover{border-color:rgba(94,168,255,.3);}
+  .task-main{flex:1;min-width:0;}
+  .task-title{font-size:13.5px;font-weight:600;color:#eaf1ff;margin-bottom:3px;}
+  .task-meta{font-size:11px;color:var(--mut);display:flex;flex-wrap:wrap;gap:8px;}
+  .tag{background:rgba(255,255,255,.06);border-radius:5px;padding:1px 7px;font-size:10.5px;}
+  .tag-gate{background:rgba(255,209,102,.1);color:var(--gold);border:1px solid rgba(255,209,102,.25);}
+  .tag-sv-high{background:rgba(110,231,183,.1);color:var(--green);border:1px solid rgba(110,231,183,.25);}
+  .score-pill{flex:0 0 auto;background:rgba(255,255,255,.07);border-radius:8px;
+    padding:4px 10px;font-size:11px;font-weight:700;color:var(--mut);white-space:nowrap;}
+  /* blocked */
+  .blocked-row{border-left:2px solid var(--red);}
+  .blocked-row .task-title{color:#ffa8a8;}
+  /* project legend */
+  .proj-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:20px;}
+  .proj-card{background:rgba(18,26,48,.7);border:1px solid var(--line);border-radius:10px;padding:12px 14px;}
+  .proj-track{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut);margin-bottom:4px;}
+  .proj-title{font-size:13px;font-weight:700;color:#eaf1ff;margin-bottom:4px;}
+  .state-pill{display:inline-block;border-radius:5px;padding:1px 8px;font-size:10px;font-weight:600;}
+  .s-active {background:rgba(94,168,255,.15);color:var(--blue);}
+  .s-planned{background:rgba(138,154,196,.12);color:var(--mut);}
+  .s-done   {background:rgba(110,231,183,.12);color:var(--green);}
+  .s-blocked{background:rgba(255,138,138,.12);color:var(--red);}
+  /* honesty footer */
+  .honesty{margin-top:28px;padding:12px 16px;background:rgba(148,163,184,.06);
+    border:1px solid rgba(148,163,184,.15);border-radius:10px;font-size:11px;color:var(--mut);line-height:1.6;}
+  .honesty b{color:#cdd8f2;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="head">
+    <div>
+      <div class="kicker">M8 · Command Center v1</div>
+      <h1>Priority Ledger</h1>
+      <div class="upd" id="upd">loading snapshot…</div>
+    </div>
+    <div id="offlineBadge" class="offline-badge">⚠ OFFLINE — snapshot data (writes blocked)</div>
+    <div id="staleBadge"   class="stale-badge">⚠ Ledger stale — priorities may be outdated</div>
+  </div>
+
+  <!-- health strip -->
+  <div class="health" id="healthStrip"></div>
+
+  <!-- projects -->
+  <div class="sechead">Projects</div>
+  <div class="proj-grid" id="projGrid"></div>
+
+  <!-- ranked bands -->
+  <div class="sechead">Priority Bands</div>
+  <div id="bands"></div>
+
+  <!-- blocked -->
+  <div class="sechead" id="blockedHead" style="display:none">Blocked (unmet dependencies)</div>
+  <div id="blockedList"></div>
+
+  <div class="honesty">
+    <b>Honesty:</b> scores are code-computed from the ledger's explicit fields with fixed weights
+    (Impact×0.2, Urgency×0.3, Blockage×0.4, StrategicValue×0.1, −Risk×0.3, −Effort×0.2).
+    <b>strategic_value</b> is Muhammad's human judgment, not a computed fact.
+    M8 narrates; the human decides. This view renders the last committed snapshot — refresh
+    after an M8 session to pick up the latest write.
+  </div>
+</div>
+
+<script>
+const WEIGHTS = {impact:0.2,urgency:0.3,blockage:0.4,strategic:0.1,risk:0.3,effort:0.2};
+const BLOCKAGE_UNIT=4, BLOCKAGE_CAP=5;
+const BANDS=[
+  {name:'Critical',   min:3.0, color:'var(--band-critical)'},
+  {name:'Important',  min:2.2, color:'var(--band-important)'},
+  {name:'Active',     min:1.4, color:'var(--band-active)'},
+  {name:'Queued',     min:0.6, color:'var(--band-queued)'},
+  {name:'Parking Lot',min:-Infinity, color:'var(--band-parking)'},
+];
+const OPEN=new Set(['planned','active','blocked','waiting','review']);
+
+function reverseAdj(tasks){
+  const ch={};
+  for(const x of tasks) for(const d of (x.deps||[])){
+    if(!ch[d]) ch[d]=[];
+    ch[d].push(x.id);
+  }
+  return ch;
+}
+function downstreamClosure(id,ch){
+  const seen=new Set(),stack=[id];
+  while(stack.length){const c=stack.pop();for(const n of(ch[c]||[])){if(!seen.has(n)){seen.add(n);stack.push(n);}}}
+  return seen;
+}
+function blockageRaw(id,ch,byId){
+  let s=0;
+  for(const i of downstreamClosure(id,ch)){const t=byId[i];if(t)s+=(t.impact||0)+(t.strategic_value||0);}
+  return s;
+}
+function scoreTask(t,bs){
+  return WEIGHTS.impact*(t.impact||0)+WEIGHTS.urgency*(t.urgency||0)+WEIGHTS.blockage*bs
+        +WEIGHTS.strategic*(t.strategic_value||0)-WEIGHTS.risk*(t.risk||0)-WEIGHTS.effort*(t.effort||0);
+}
+function bandOf(s){for(const b of BANDS)if(s>=b.min)return b;return BANDS[BANDS.length-1];}
+function unmet(t,byId){return(t.deps||[]).filter(d=>{const u=byId[d];return!u||u.state!=='done';});}
+
+function buildRanked(tasks){
+  const byId={};for(const t of tasks)byId[t.id]=t;
+  const ch=reverseAdj(tasks);
+  const rows=[];
+  for(const t of tasks){
+    if(!OPEN.has(t.state))continue;
+    const raw=blockageRaw(t.id,ch,byId);
+    const bs=Math.min(BLOCKAGE_CAP,raw/BLOCKAGE_UNIT);
+    const sc=scoreTask(t,bs);
+    rows.push({...t,blockageRaw:raw,blockageScore:+bs.toFixed(2),score:+sc.toFixed(2),band:bandOf(sc),blocked_by:unmet(t,byId)});
+  }
+  return{
+    rankable:rows.filter(r=>!r.blocked_by.length).sort((a,b)=>b.score-a.score),
+    blocked: rows.filter(r=>r.blocked_by.length).sort((a,b)=>b.score-a.score),
+  };
+}
+
+function stateClass(s){return's-'+(s||'planned');}
+function tag(text,cls){return`<span class="tag${cls?' '+cls:''}">${text}</span>`;}
+
+function renderHealth(snap,projects,tasks,ranked){
+  const active=tasks.filter(t=>t.state==='active').length;
+  const done=tasks.filter(t=>t.state==='done').length;
+  const critical=(ranked.rankable.filter(r=>r.band.name==='Critical')||[]).length;
+  const genDate=(snap.generated_at||'').slice(0,10)||'unknown';
+  return[
+    {k:'Snapshot date',v:genDate,s:'Overwritten on every live load'},
+    {k:'Projects',v:projects.length,s:`${projects.filter(p=>p.state==='active').length} active`},
+    {k:'Open tasks',v:tasks.length-done,s:`${done} done · ${active} in-progress`},
+    {k:'Critical band',v:critical||'—',s:critical?'needs attention now':'nothing critical'},
+    {k:'Blocked tasks',v:ranked.blocked.length,s:ranked.blocked.length?'unmet dependencies':'all clear'},
+  ].map(h=>`<div class="hcard"><div class="hk">${h.k}</div><div class="hv">${h.v}</div><div class="hs">${h.s}</div></div>`).join('');
+}
+
+function renderProjects(projects,tasks){
+  const byProj={};for(const t of tasks){if(!byProj[t.project_id])byProj[t.project_id]=[];byProj[t.project_id].push(t);}
+  return projects.map(p=>{
+    const pts=byProj[p.id]||[];
+    const done=pts.filter(t=>t.state==='done').length;
+    const total=pts.length;
+    return`<div class="proj-card">
+      <div class="proj-track">${p.track}</div>
+      <div class="proj-title">${esc(p.title)}</div>
+      <span class="state-pill ${stateClass(p.state)}">${p.state}</span>
+      <div style="font-size:11px;color:var(--mut);margin-top:5px;">${done}/${total} tasks done</div>
+    </div>`;
+  }).join('');
+}
+
+function renderTaskRow(r,byId,cls){
+  const why=`impact ${r.impact} · urgency ${r.urgency} · unblocks ${r.blockageRaw} value-pts`;
+  const tags=[];
+  if(r.gate_status)tags.push(tag(r.gate_status,'tag-gate'));
+  if(r.strategic_value>=5)tags.push(tag('strategic HIGH','tag-sv-high'));
+  if(r.blocked_by&&r.blocked_by.length){
+    const names=r.blocked_by.map(id=>{const t=byId[id];return t?`#${id} ${esc(t.title.slice(0,20))}`:`#${id}`;}).join(', ');
+    tags.push(tag('blocked by: '+names));
+  }
+  const proj=byId['p'+r.project_id]||null;
+  return`<div class="task-row${cls?' '+cls:''}">
+    <div class="task-main">
+      <div class="task-title">#${r.id} ${esc(r.title)}</div>
+      <div class="task-meta">${tags.join('')}<span>${why}</span>${proj?`<span>${esc(proj.title)}</span>`:''}</div>
+    </div>
+    <div class="score-pill">${r.score}</div>
+  </div>`;
+}
+
+function renderBands(ranked,byId){
+  const order=['Critical','Important','Active','Queued','Parking Lot'];
+  return order.map(name=>{
+    const bandDef=BANDS.find(b=>b.name===name);
+    const rows=ranked.rankable.filter(r=>r.band.name===name);
+    if(!rows.length)return'';
+    return`<div class="band-block">
+      <div class="band-label">
+        <div class="band-dot" style="background:${bandDef.color};box-shadow:0 0 6px ${bandDef.color}"></div>
+        <span style="color:${bandDef.color}">${name}</span>
+        <span style="color:var(--mut);font-weight:400">(${rows.length})</span>
+      </div>
+      ${rows.map(r=>renderTaskRow(r,byId,'')).join('')}
+    </div>`;
+  }).join('');
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+async function loadAndRender(){
+  let snap=null;
+  // Try localStorage first (cached from last session), then fetch the committed JSON.
+  try{const lc=localStorage.getItem('m8_cc_snap');if(lc)snap=JSON.parse(lc);}catch{}
+  try{
+    const r=await fetch('data/command_center_snapshot.json?_='+Date.now());
+    if(r.ok){snap=await r.json();try{localStorage.setItem('m8_cc_snap',JSON.stringify(snap));}catch{}}
+  }catch{
+    document.getElementById('offlineBadge').classList.add('show');
+  }
+  if(!snap){document.getElementById('upd').textContent='No snapshot found — run M8 once to generate it.';return;}
+
+  const{projects=[],tasks=[],health={}}=snap;
+  const genDate=(snap.generated_at||'').slice(0,16).replace('T',' ')||'unknown';
+  document.getElementById('upd').textContent='Snapshot: '+genDate+' UTC';
+
+  if(health.stale)document.getElementById('staleBadge').classList.add('show');
+
+  const ranked=buildRanked(tasks);
+  const byId={};
+  for(const t of tasks)byId[t.id]=t;
+  for(const p of projects)byId['p'+p.id]=p;
+
+  document.getElementById('healthStrip').innerHTML=renderHealth(snap,projects,tasks,ranked);
+  document.getElementById('projGrid').innerHTML=renderProjects(projects,tasks);
+  document.getElementById('bands').innerHTML=renderBands(ranked,byId);
+
+  if(ranked.blocked.length){
+    document.getElementById('blockedHead').style.display='';
+    document.getElementById('blockedList').innerHTML=ranked.blocked.map(r=>renderTaskRow(r,byId,'blocked-row')).join('');
+  }
+}
+loadAndRender();
+</script>
+</body>
+</html>

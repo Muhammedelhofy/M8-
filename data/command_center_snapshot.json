@@ -1,0 +1,26 @@
+{
+  "generated_at": "2026-06-17T00:00:00.000Z",
+  "note": "Bootstrap snapshot — reflects the seeded ledger state. Overwritten on every live getPrioritiesContext() call.",
+  "projects": [
+    { "id": 1, "title": "L5 honesty gate",              "track": "infra",       "state": "active"  },
+    { "id": 2, "title": "Command Center v1",             "track": "infra",       "state": "active"  },
+    { "id": 3, "title": "Problem-solving engine depth",  "track": "B_research",  "state": "planned" },
+    { "id": 4, "title": "Track-A daily usefulness",      "track": "A_ops",       "state": "planned" }
+  ],
+  "tasks": [
+    { "id": 1,  "project_id": 1, "title": "Grader negation guards (Build 48-49)",     "state": "done",    "deps": [], "impact": 3, "urgency": 3, "risk": 3, "strategic_value": 3, "effort": 3, "gate_status": null },
+    { "id": 2,  "project_id": 1, "title": "Bank 3 consecutive clean nightly gate runs","state": "active",  "deps": [], "impact": 3, "urgency": 3, "risk": 3, "strategic_value": 3, "effort": 3, "gate_status": "L5 gate" },
+    { "id": 3,  "project_id": 1, "title": "S4U elevation so the nightly runs logged-off","state":"planned","deps": [], "impact": 3, "urgency": 3, "risk": 3, "strategic_value": 3, "effort": 3, "gate_status": null },
+    { "id": 4,  "project_id": 2, "title": "CC engine + offline verify (step 1)",       "state": "done",    "deps": [], "impact": 3, "urgency": 3, "risk": 3, "strategic_value": 3, "effort": 3, "gate_status": null },
+    { "id": 5,  "project_id": 2, "title": "CC priority chat-route (step 3)",           "state": "done",    "deps": [], "impact": 3, "urgency": 3, "risk": 3, "strategic_value": 3, "effort": 3, "gate_status": null },
+    { "id": 6,  "project_id": 2, "title": "CC migration applied (step 2)",             "state": "done",    "deps": [], "impact": 3, "urgency": 3, "risk": 3, "strategic_value": 3, "effort": 3, "gate_status": null },
+    { "id": 7,  "project_id": 2, "title": "CC proactive logging + staleness alarm (step 4)", "state": "planned", "deps": [], "impact": 3, "urgency": 3, "risk": 3, "strategic_value": 3, "effort": 3, "gate_status": null },
+    { "id": 8,  "project_id": 2, "title": "CC snapshot JSON + HTML view (step 6)",    "state": "planned", "deps": [4], "impact": 3, "urgency": 3, "risk": 3, "strategic_value": 3, "effort": 3, "gate_status": null },
+    { "id": 9,  "project_id": 2, "title": "CC ship as Build-50 (step 7)",              "state": "planned", "deps": [7, 8], "impact": 3, "urgency": 3, "risk": 3, "strategic_value": 3, "effort": 3, "gate_status": null },
+    { "id": 10, "project_id": 3, "title": "Warm-checker strategy for interactive M4",  "state": "planned", "deps": [], "impact": 3, "urgency": 3, "risk": 3, "strategic_value": 3, "effort": 3, "gate_status": null },
+    { "id": 11, "project_id": 3, "title": "M4 discharge a real non-degenerate decomposition", "state": "planned", "deps": [10], "impact": 3, "urgency": 3, "risk": 3, "strategic_value": 3, "effort": 3, "gate_status": null },
+    { "id": 12, "project_id": 3, "title": "Multi-level DAG decompositions",            "state": "planned", "deps": [], "impact": 3, "urgency": 3, "risk": 3, "strategic_value": 3, "effort": 3, "gate_status": null },
+    { "id": 13, "project_id": 4, "title": "Business loop / multi-platform ingestion",  "state": "planned", "deps": [], "impact": 3, "urgency": 3, "risk": 3, "strategic_value": 3, "effort": 3, "gate_status": null }
+  ],
+  "health": { "stale": false, "staleDays": 0 }
+}
