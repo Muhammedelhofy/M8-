@@ -5,7 +5,33 @@
 
 ---
 
-## ★ SESSION-43 HANDOFF (read first) — 2026-06-17
+## ★ SESSION-44 HANDOFF (read first) — 2026-06-17
+
+**What shipped this session (committed to `Muhammedelhofy/M8-` main, NOT yet pushed — 2 commits await Muhammad's OK):**
+- `3e60bca` — **Build-55: M4 → proposer FEEDBACK LOOP.** Generalized `dischargeLeaf`'s single
+  `lean_rejected` repair into a BOUNDED iterative loop (redraft from the latest Lean error up to
+  `MAX_LEAF_REPAIRS`, default 2; env `M4_MAX_LEAF_REPAIRS`, clamp [0..4]; =1 legacy, =0 off). New pure
+  helper `shouldRetryLeaf` retries ONLY `lean_rejected`; fail-safe stops keep the last real verdict;
+  `/check` stays sole truth judge; target stays OPEN; the nightly `recheckScaffold` still does NO LLM
+  redraft. Offline `tests/feedback-loop-verify.ps1` 31/31 + `lemma-dag-verify.ps1` 42/42 no-reg.
+  Spec `BUILD_55_SPEC.md`.
+- `f0fd8f4` — **Canonical diagram = the M8 Mind view.** `m8_mind_2026.html` promoted to THE canonical
+  diagram (Muhammad: the old dense one was noise). Archived to `archive/diagrams/`:
+  `m8_full_architecture_2026.html`, `m8_plan_2026.html`, `m8_tracker.html` (moved, NOT deleted).
+  `NORTH_STAR.md` + memory repointed. M8 root now holds only `m8_mind_2026.html` (canonical),
+  `m8_command_center.html` (live view), `index.html` (app).
+
+### ▶ NEXT MOVES (in order)
+1. **Push the 2 queued commits** (Build-55 + the diagram promotion) when ready → triggers Vercel deploy.
+2. **Live-verify Build-55** (needs OK + Gemini quota): propose a 2-leaf decomposition → warm the
+   checker → approve; a leaf that fails the first repair should now converge on the second.
+3. **L5 gate watch** — S4U live, graders fixed (Builds 48–49). Check `m8_loop_runs`/`m8_odysseus_runs`.
+4. **Depth continues**: multi-level DAG (a parent lemma gets its own sub-decomposition) is the next
+   depth rung after the feedback loop. OR Track-A daily-usefulness when ready.
+
+---
+
+## ★ SESSION-43 HANDOFF — 2026-06-17
 
 **What shipped this session (Sessions 42+43, 2026-06-17):**
 - `26f68a0` — buildState.js syntax fix (dangling string from Session-41 PS replace → 500 on all chat)
