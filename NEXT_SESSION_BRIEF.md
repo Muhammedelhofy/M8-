@@ -15,6 +15,15 @@
   `/check` stays sole truth judge; target stays OPEN; the nightly `recheckScaffold` still does NO LLM
   redraft. Offline `tests/feedback-loop-verify.ps1` 31/31 + `lemma-dag-verify.ps1` 42/42 no-reg.
   Spec `BUILD_55_SPEC.md`.
+- **Build-56: MULTI-LEVEL DAG (recursive sub-decomposition).** `expand L3 of #N` / `go deeper on L2`
+  takes a lemma's prose as a sub-target, re-runs the proposer (same anti-degeneracy gate), and
+  `mergeSubDAG` grafts the sub-DAG in (sub-lemmas re-indexed +offset, expanded lemma's deps UNION the
+  sub-roots, re-parsed to re-validate); re-stages `#N` in place. Approve is unchanged → the new
+  sub-leaves get Lean-checked (with the Build-55 loop). Pure `dagDepth`/`subDagRoots`/`mergeSubDAG`;
+  depth cap `MAX_DECOMP_DEPTH` (default 4, env `M8_MAX_DECOMP_DEPTH`). Honesty unchanged: grafting only
+  adds leaves to check; a fully-verified deeper tree is STILL an OPEN CONJECTURE. Offline
+  `tests/multilevel-dag-verify.ps1` 36/36 + decomp 37 + lemma-dag 42 + feedback-loop 31 no-reg.
+  Spec `BUILD_56_SPEC.md`. (PUSHED — Build-55 + diagram promotion already live; push Build-56 next.)
 - `f0fd8f4` — **Canonical diagram = the M8 Mind view.** `m8_mind_2026.html` promoted to THE canonical
   diagram (Muhammad: the old dense one was noise). Archived to `archive/diagrams/`:
   `m8_full_architecture_2026.html`, `m8_plan_2026.html`, `m8_tracker.html` (moved, NOT deleted).
@@ -22,12 +31,16 @@
   `m8_command_center.html` (live view), `index.html` (app).
 
 ### ▶ NEXT MOVES (in order)
-1. **Push the 2 queued commits** (Build-55 + the diagram promotion) when ready → triggers Vercel deploy.
-2. **Live-verify Build-55** (needs OK + Gemini quota): propose a 2-leaf decomposition → warm the
-   checker → approve; a leaf that fails the first repair should now converge on the second.
+1. **Push Build-56** (the multi-level-DAG commit) → Vercel deploy. (Build-55 + diagram promotion
+   already pushed `0dcff6a`.)
+2. **Live-verify Builds 55+56** (needs OK + Gemini quota + warm checker): propose a target → `expand`
+   a parent lemma → approve; the deeper scaffold should Lean-check the new sub-leaves, a failing leaf
+   converging via the feedback loop.
 3. **L5 gate watch** — S4U live, graders fixed (Builds 48–49). Check `m8_loop_runs`/`m8_odysseus_runs`.
-4. **Depth continues**: multi-level DAG (a parent lemma gets its own sub-decomposition) is the next
-   depth rung after the feedback loop. OR Track-A daily-usefulness when ready.
+4. **Depth options remaining**: (a) M4→proposer AUTO-feedback — when a leaf stays `lean_rejected`
+   after the repair budget, auto-suggest/auto-expand it (close the Build-55→56 loop end-to-end); OR
+   (b) **Track-A daily-usefulness** (business loop / multi-platform ingestion) — the breadth pivot
+   when ready to push usefulness.
 
 ---
 
