@@ -1,7 +1,39 @@
 # M8 — Next Session Brief
-**Latest:** 2026-06-17 (Session-40, Opus) · **Branch:** main · **Head:** `9f66e77`
+**Latest:** 2026-06-17 (Session-41) · **Branch:** main · **Head:** `55f5fa2`
 **Canonical plan:** [`M8/HONESTY_TRACK_PLAN.md`](HONESTY_TRACK_PLAN.md) ← the living backlog. Read it first.
-(Older Session-34/38/39 briefs preserved below for history.)
+(Older Session-34/38/39/40 briefs preserved below for history.)
+
+---
+
+## ★ SESSION-41 HANDOFF (read first) — 2026-06-17
+
+**What shipped this session:**
+- **S4U elevation** — `M8-L5-Nightly-Attest` task now runs with `LogonType=S4U`, fires at 05:00 even when logged off. Done via Admin PowerShell `Set-ScheduledTask -Principal`. Verified: `(Get-ScheduledTask ...).Principal.LogonType` = `S4U`.
+- **Build-51 — Warm-Checker Strategy for Interactive M4** (`55f5fa2`, SHIPPED + OFFLINE-VERIFIED 46/46).
+  - `lib/leanClient.js`: `warmLeanChecker({ timeoutMs })` — 8s health ping, `{ warm, reason }`, never throws.
+  - `lib/decomp-proposer.js`: propose fires a 3s `leanHealth` wake-ping IN PARALLEL with Gemini (zero latency cost; Cloud Run starts warming while user reads the plan). `approveProposal` warm-gate: 8s health check — cold → `narrateWarmPending(id)` ("say **verify now** in ~60s"), status stays `pending`, no migration; warm → proceeds to `scaffoldProof` immediately. `VERIFY_NOW_RE` + `detectVerifyNow` + `findLatestPendingProposal`: "verify now" / "check leaves" / "recheck" → `mode=verify_now` → looks up most-recent pending decomp → calls `approveProposal` again (checker warm by now).
+  - No new Vercel endpoint. No migration. Offline `tests/warm-checker-verify.ps1` 46/46.
+
+**Live test (do this after Vercel deploy confirms):**
+1. Open `https://m8-alpha.vercel.app/api/health` — confirm `"build":"Build-51"` (commit `55f5fa2`).
+2. Type `"propose a decomposition for: the product of two odd integers is odd"` — M8 drafts a plan + wakes the checker in background.
+3. Wait ~90 seconds, then type `"approve decomposition #N"` (use the ID from step 2).
+   - **If checker was cold:** M8 says "warming… say verify now". Then say `"verify now"` → leaves run.
+   - **If checker was warm:** M8 runs the leaves immediately this turn.
+4. Confirm leaves show `lean_verified` or `lean_stated` (NOT `lean_pending`).
+5. Regression: `"run the fleet earnings report"` → fleet report (not hijacked by verify_now).
+6. Regression: `"verify in lean: 2+2=4"` → Lean formalization lane (not hijacked by verify_now).
+
+### ▶ NEXT MOVES (in order)
+1. **Live-verify Build-51** (test script above) — goal is the first live Lean-verified leaf on a real non-degenerate decomposition.
+2. **Rate task scores** in the Command Center ledger (strategic_value + urgency) — all currently at neutral defaults 3/3. Quick Supabase edit or ask M8 to walk through them.
+3. **L5 gate watch** — S4U now live, Build-49 graders fixed. Should bank clean nights. Check `m8_loop_runs` / `m8_odysseus_runs` over next nights.
+4. **Engine depth** after Build-51 is live-verified: M4→proposer feedback loop (surface Lean error, redraft leaf) OR multi-level DAG decompositions.
+
+### Kickoff prompt to paste next session
+> Continue M8 (Session-42). Read `M8/NEXT_SESSION_BRIEF.md` (Session-41 handoff) first.
+> S4U elevation DONE (nightly gate fires logged-off). Build-51 (warm-checker for M4) SHIPPED `55f5fa2` — 46/46 offline.
+> Start with the live-verify test script above (confirm `/api/health` shows Build-51, then test the warm-checker flow). After that: rate task scores, then move to the next engine depth step (feedback loop OR multi-level DAGs). Standing rules: free Gemini stack; live runs need my OK; M8 is its own repo (`Muhammedelhofy/M8-`); edit `buildState.js commitFamily` only via a unique-anchor replace; PS .ps1 files must be pure ASCII.
 
 ---
 
