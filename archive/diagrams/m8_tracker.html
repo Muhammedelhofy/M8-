@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>M8 — where we stand</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root{
+    --teal:#54d6c8; --blue:#5ea8ff; --gold:#ffd166; --gray:#7a86a8; --red:#ff8a8a;
+    --core:#93b6ff; --axis:#ce93d8;
+    --line:#243154; --txt:#e6ecf5; --mut:#8a9ac4;
+  }
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--txt);
+    min-height:100vh;padding:24px 16px 60px;overflow-x:hidden;
+    background:
+      radial-gradient(900px 500px at 50% -8%,rgba(79,106,245,.18),transparent 70%),
+      radial-gradient(700px 500px at 12% 30%,rgba(206,147,216,.07),transparent 70%),
+      radial-gradient(700px 500px at 88% 35%,rgba(84,214,200,.07),transparent 70%),
+      #06080f;
+  }
+  body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%,rgba(255,255,255,.7),transparent),
+      radial-gradient(1px 1px at 70% 20%,rgba(255,255,255,.5),transparent),
+      radial-gradient(1px 1px at 40% 70%,rgba(255,255,255,.6),transparent),
+      radial-gradient(1px 1px at 85% 60%,rgba(255,255,255,.4),transparent),
+      radial-gradient(1px 1px at 55% 45%,rgba(255,255,255,.5),transparent);
+    animation:tw 6s ease-in-out infinite alternate;}
+  @keyframes tw{from{opacity:.25}to{opacity:.6}}
+  .wrap{max-width:1180px;margin:0 auto;position:relative;z-index:1;}
+
+  .head{display:flex;align-items:center;gap:18px;margin-bottom:18px;flex-wrap:wrap;}
+  .brainmark{flex:0 0 auto;filter:drop-shadow(0 0 10px rgba(120,150,255,.6));}
+  .head .kicker{font-size:10.5px;letter-spacing:3.5px;text-transform:uppercase;color:var(--mut);}
+  .head h1{font-size:27px;font-weight:800;letter-spacing:-.4px;color:#fff;text-shadow:0 0 20px rgba(120,150,255,.5);}
+  .head .upd{font-size:11px;color:var(--mut);margin-top:3px;}
+
+  .now{display:flex;align-items:center;gap:12px;background:linear-gradient(160deg,rgba(20,32,68,.85),rgba(10,16,32,.85));
+    border:1px solid #2f4f8a;border-radius:14px;padding:12px 16px;margin-bottom:20px;box-shadow:0 0 26px rgba(79,106,245,.12) inset;}
+  .now .dot{width:11px;height:11px;border-radius:50%;background:var(--blue);box-shadow:0 0 12px var(--blue);animation:bl 1.6s ease-in-out infinite;flex:0 0 auto;}
+  @keyframes bl{0%,100%{opacity:.45}50%{opacity:1}}
+  .now .nlabel{font-size:10px;letter-spacing:2px;color:var(--blue);text-transform:uppercase;}
+  .now .ntitle{font-size:15px;font-weight:700;color:#fff;}
+  .now .nnote{font-size:12px;color:var(--mut);}
+
+  .sechead{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin:6px 0 12px;}
+  .suphead{font-size:14px;font-weight:800;letter-spacing:.6px;color:#cfe0ff;margin:24px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+  .suphead .gp{font-weight:400;color:var(--mut);font-size:11px;}
+  .suphead .bar0{width:4px;height:16px;border-radius:2px;background:var(--core);flex:0 0 auto;}
+
+  .caps{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:12px;margin-bottom:18px;align-items:start;}
+  .cap{background:linear-gradient(160deg,rgba(18,26,48,.8),rgba(9,13,26,.8));border:1px solid var(--line);border-radius:12px;padding:13px 15px;}
+  .capk{font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase;color:#5a6e9a;margin-bottom:5px;}
+  .captop{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:7px;}
+  .capn{font-size:13.5px;font-weight:700;color:#eaf1ff;}
+  .capt{font-size:11.5px;color:#bcd0ee;line-height:1.5;margin-bottom:6px;}
+  .capg{font-size:11px;color:var(--mut);line-height:1.5;}
+  .capg b{color:#cdd8f2;font-weight:700;}
+  .capb{font-size:10px;color:#6f82ac;margin-top:7px;border-top:1px solid rgba(36,49,84,.5);padding-top:6px;}
+
+  .cogs{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:18px;align-items:start;}
+  .cog{background:linear-gradient(160deg,rgba(18,26,48,.8),rgba(9,13,26,.8));border:1px solid var(--line);border-radius:12px;padding:13px 15px;}
+  .cog .cgn{font-size:13px;font-weight:700;color:#eaf1ff;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+  .cog .cgw{font-size:11.5px;color:#bcd0ee;line-height:1.5;margin-bottom:7px;}
+  .cog .cgl{font-size:9.5px;color:#5f739c;border-top:1px solid rgba(36,49,84,.5);padding-top:6px;}
+
+  .score{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:18px;}
+  .sc{background:linear-gradient(160deg,rgba(18,26,48,.8),rgba(9,13,26,.8));border:1px solid var(--line);border-radius:12px;padding:13px 15px;}
+  .sc .scv{font-size:18px;font-weight:800;color:#fff;}
+  .sc .scn{font-size:11px;color:var(--mut);margin-top:3px;}
+  .sc .scd{font-size:9.5px;color:#5f739c;margin-top:4px;}
+  .sc .scbar{height:5px;border-radius:4px;background:#10182e;overflow:hidden;margin-top:8px;}
+  .sc .scbar i{display:block;height:100%;background:var(--teal);}
+
+  .topgrid{display:grid;grid-template-columns:320px 1fr;gap:16px;margin-bottom:18px;}
+  @media(max-width:760px){.topgrid{grid-template-columns:1fr;}}
+  .card{background:linear-gradient(160deg,rgba(18,26,48,.8),rgba(9,13,26,.8));border:1px solid var(--line);border-radius:14px;padding:16px 18px;}
+  .card h2{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:12px;}
+  .gauge .big{font-size:38px;font-weight:800;color:#fff;line-height:1;text-shadow:0 0 18px rgba(94,168,255,.5);}
+  .gauge .sub{font-size:12px;color:var(--mut);margin-top:5px;}
+  .gauge .pos{font-size:12px;color:var(--core);margin-top:7px;font-weight:700;}
+
+  .ladder{display:flex;gap:4px;}
+  .rung{flex:1;text-align:center;border-radius:7px;padding:8px 2px;border:1px solid transparent;line-height:1.25;}
+  .rung .lv{font-size:13px;font-weight:800;} .rung .nm{font-size:8.5px;margin-top:2px;opacity:.85;} .rung .rn{font-size:7.5px;margin-top:2px;opacity:.7;}
+  .rung.done{background:#0e2e2c;border-color:#1d6360;color:var(--teal);}
+  .rung.cur{background:#0c1f44;border-color:#4f6af5;color:var(--core);box-shadow:0 0 12px rgba(79,106,245,.5),0 0 0 1px #4f6af5 inset;}
+  .rung.future{background:#141422;border-color:#2c2c3e;color:#6a6a7c;}
+
+  .mile{margin-bottom:18px;}
+  .mile h3{font-size:15px;font-weight:800;color:#fff;margin-bottom:3px;}
+  .mile .mn{font-size:11px;color:var(--mut);margin-bottom:10px;}
+  .mile .mi{display:flex;align-items:center;gap:9px;font-size:12px;color:#cdd8f2;padding:5px 0;}
+  .mile .mi .bx{width:14px;height:14px;border-radius:4px;border:1px solid var(--line);flex:0 0 auto;}
+  .mile .mi.done .bx{background:var(--teal);border-color:var(--teal);}
+  .mile .then{font-size:11px;color:#8fd3ff;margin-top:10px;border-top:1px solid rgba(36,49,84,.5);padding-top:9px;line-height:1.5;}
+
+  .regions{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin-bottom:6px;align-items:start;}
+  .rhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;gap:8px;}
+  .rhead .rt{font-size:13px;font-weight:700;color:#dbe6ff;}
+  .rhead .rc{font-size:11px;color:var(--mut);flex:0 0 auto;}
+  .mod{margin-bottom:11px;}
+  .mtop{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:4px;}
+  .mname{font-size:12.5px;color:#e6ecf5;}
+  .mtag{font-size:9px;color:var(--mut);border:1px solid var(--line);border-radius:5px;padding:1px 5px;flex:0 0 auto;white-space:nowrap;}
+  .bar{height:7px;border-radius:5px;background:#10182e;overflow:hidden;}
+  .bar i{display:block;height:100%;border-radius:5px;}
+  .mfoot{display:flex;justify-content:space-between;align-items:center;margin-top:4px;}
+  .mpct{font-size:11px;font-weight:700;color:#cdd8f2;}
+  .chip{font-size:9px;letter-spacing:.5px;text-transform:uppercase;border-radius:5px;padding:1px 7px;}
+  .mnote{font-size:10px;color:var(--mut);margin-top:3px;font-style:italic;}
+  .st-shipped{color:var(--teal);} .bar i.st-shipped{background:var(--teal);}
+  .st-verified{color:var(--gold);} .bar i.st-verified{background:var(--gold);}
+  .st-active{color:var(--blue);} .bar i.st-active{background:var(--blue);}
+  .st-planned{color:var(--gray);} .bar i.st-planned{background:var(--gray);}
+  .st-blocked{color:var(--red);} .bar i.st-blocked{background:var(--red);}
+  .chip.st-shipped{background:rgba(84,214,200,.12);} .chip.st-verified{background:rgba(255,209,102,.12);}
+  .chip.st-active{background:rgba(94,168,255,.12);} .chip.st-planned{background:rgba(122,134,168,.14);} .chip.st-blocked{background:rgba(255,138,138,.12);}
+
+  .midgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin:18px 0;}
+  @media(max-width:980px){.midgrid{grid-template-columns:1fr;}}
+  .list{list-style:none;}
+  .list li{font-size:12px;line-height:1.5;padding:7px 0 7px 18px;position:relative;border-bottom:1px solid rgba(36,49,84,.5);color:#cdd8f2;}
+  .list li:last-child{border-bottom:none;}
+  .list li::before{content:"";position:absolute;left:2px;top:12px;width:7px;height:7px;border-radius:50%;}
+  .list.bn li::before{background:var(--red);box-shadow:0 0 8px var(--red);}
+  .list.pn li::before{background:var(--gold);box-shadow:0 0 8px var(--gold);}
+  .list.gp li::before{background:var(--blue);box-shadow:0 0 8px var(--blue);}
+  .list.cn li::before{background:var(--red);box-shadow:0 0 8px var(--red);}
+  .list.gp li .g{float:right;font-weight:700;color:#fff;}
+
+  .board{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;}
+  @media(max-width:980px){.board{grid-template-columns:repeat(2,1fr);}}
+  .col h3{font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:9px;display:flex;justify-content:space-between;}
+  .col .ct{background:rgba(255,255,255,.08);border-radius:9px;padding:0 7px;font-size:10px;}
+  .tk{background:#0c1326;border:1px solid var(--line);border-left-width:3px;border-radius:8px;padding:9px 10px;margin-bottom:8px;}
+  .tk .tt{font-size:12px;color:#e6ecf5;} .tk .tn{font-size:10px;color:var(--mut);margin-top:2px;}
+  .col.c-planned h3{color:var(--gray);} .col.c-planned .tk{border-left-color:var(--gray);}
+  .col.c-active h3{color:var(--blue);} .col.c-active .tk{border-left-color:var(--blue);}
+  .col.c-blocked h3{color:var(--red);} .col.c-blocked .tk{border-left-color:var(--red);}
+  .col.c-review h3{color:var(--gold);} .col.c-review .tk{border-left-color:var(--gold);}
+  .col.c-done h3{color:var(--teal);} .col.c-done .tk{border-left-color:var(--teal);opacity:.85;}
+  .note-line{font-size:11px;color:var(--mut);margin:-6px 0 12px;line-height:1.55;max-width:820px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <svg class="brainmark" width="52" height="52" viewBox="0 0 52 52">
+      <path d="M26 8 C20 5 13 7 11 13 C5 14 4 22 9 25 C4 29 8 37 15 37 C18 43 28 43 31 37 C39 38 44 30 39 25 C44 22 42 14 36 13 C34 7 30 5 26 8 Z" fill="none" stroke="#5ea8ff" stroke-width="1.6"/>
+      <path d="M26 9 L26 38" stroke="#5ea8ff" stroke-width="1" opacity=".5"/>
+      <circle cx="26" cy="23" r="6" fill="#93b6ff" opacity=".9"/>
+    </svg>
+    <div>
+      <div class="kicker">Personal AI OS · Unsolved-Problem Engine</div>
+      <h1>M8 — where we stand</h1>
+      <div class="upd" id="upd"></div>
+    </div>
+  </div>
+
+  <div class="now">
+    <div class="dot"></div>
+    <div>
+      <div class="nlabel">Now building</div>
+      <div class="ntitle" id="focus-title"></div>
+      <div class="nnote" id="focus-note"></div>
+    </div>
+  </div>
+
+  <div class="sechead" style="margin-top:4px">Can you depend on M8 for…?</div>
+  <div class="caps" id="caps"></div>
+
+  <div class="sechead">How M8 thinks — the shared core that serves both tracks</div>
+  <div class="cogs" id="cognition"></div>
+
+  <div class="sechead">Trust &amp; honesty — why the green items are green</div>
+  <div class="score" id="trust"></div>
+
+  <div class="topgrid">
+    <div class="card"><h2>Build progress</h2>
+      <div class="gauge"><div class="big" id="ov-pct"></div><div class="sub" id="ov-sub"></div><div class="pos" id="ov-pos"></div></div>
+      <div style="font-size:10.5px;color:var(--mut);margin-top:9px;line-height:1.5">% of the planned system that exists — <b style="color:#cdd8f2">not</b> a readiness score. What you can actually rely on is in the top panel.</div>
+    </div>
+    <div class="card"><h2>Maturity ladder · L1 → L6</h2><div class="ladder" id="ladder"></div></div>
+  </div>
+
+  <div class="sechead">Next milestone</div>
+  <div class="card mile" id="mile"></div>
+
+  <div id="groups"></div>
+
+  <div class="sechead" style="margin-top:22px">Domains M8 can grow into — on demand (planned)</div>
+  <div class="note-line">M8 does not pre-load "all knowledge." It acquires a domain on demand through the learning pipeline and compounds it — so a domain here isn't <i>missing</i>, it's just <i>not learned yet</i>. We track the core plus the ones you name.</div>
+  <div id="personal"></div>
+
+  <div class="midgrid">
+    <div class="card"><h2 style="color:var(--red)">Bottlenecks</h2><ul class="list bn" id="bottlenecks"></ul></div>
+    <div class="card"><h2 style="color:var(--gold)">Pending</h2><ul class="list pn" id="pending"></ul></div>
+    <div class="card"><h2 style="color:var(--blue)">Biggest gaps</h2><ul class="list gp" id="gaps"></ul></div>
+  </div>
+
+  <div class="sechead">Boundaries — what M8 will not do</div>
+  <div class="card"><ul class="list cn" id="cannot"></ul></div>
+
+  <div class="sechead" style="margin-top:18px">Roadmap board</div>
+  <div class="board" id="board"></div>
+</div>
+
+<script>
+/* ============================================================
+   M8 PLAN — edit ONLY this object to update progress.
+   LOCKED structure 2026-06-16: Core + Track A + Track B + Substrate.
+   status: shipped | verified | active | planned | blocked
+   Numbers are coarse until wired to /api/health (Task #3).
+   ============================================================ */
+window.M8_PLAN = {
+  updated: "2026-06-16",
+  focus: {
+    title: "Option C — second problem domain (Build-43, rung C)",
+    note: "Port M1/M3 beyond Collatz — prove it generalizes. D, B, A all live (A 6/6). Maturity at L5, climbing to L6 Compound."
+  },
+
+  capabilities: [
+    { area:"Operator", name:"Business financial analysis", ready:"dependable",
+      today:"Verified P&L across your fleet and companies, on demand.",
+      gap:"novel or edge cases still need your eye.", trust:"Basis: deterministic finance engine + verified P&L." },
+    { area:"Operator", name:"Presentations & decks", ready:"review",
+      today:"Generates PPTX / HTML / Markdown decks from your data.",
+      gap:"you must vet the narrative and numbers before sending.", trust:"Basis: deckgen.js (shipped)." },
+    { area:"Operator", name:"KSA legal · EOSB · labour", ready:"dependable",
+      today:"Codified ZATCA / labour / end-of-service playbooks.",
+      gap:"anything outside the codified rules — it is not a lawyer.", trust:"Basis: deterministic playbooks." },
+    { area:"Operator", name:"Stay reality-aware (news · world · markets)", ready:"building",
+      today:"Pulls recent info via web search when you ask about a topic.",
+      gap:"not yet proactive or always-on situational awareness (geopolitics, markets, opportunities).",
+      trust:"Basis: grounded web search; awareness layer not built yet." },
+    { area:"Operator", name:"Suggest your next move (proactive)", ready:"building",
+      today:"Thinks with you and proposes actions — a deck, an analysis, a follow-up — when you open a topic.",
+      gap:"not yet automatic across your whole operation; you prompt it.",
+      trust:"Basis: reasoning + honesty layer; proactivity emerging." },
+    { area:"Operator", name:"Tasks, follow-ups & messaging", ready:"notbuilt",
+      today:"Not built yet — planned (Track A surface).",
+      gap:"build tasks/reminders, calendar, email and WhatsApp/SMS triage.", trust:"Basis: —" },
+    { area:"Operator", name:"Document analysis", ready:"notbuilt",
+      today:"Partial — the web app can read files/images; not yet a reliable contract/PDF/sheet reasoner.",
+      gap:"first-class document understanding over your operational docs.", trust:"Basis: web-app vision only." },
+    { area:"Researcher", name:"Explore & verify known math", ready:"dependable",
+      today:"Discovery loop, OEIS probing, Lean-checked lemmas.",
+      gap:"—", trust:"Basis: Lean verification (37/37) + Odysseus battery." },
+    { area:"Researcher", name:"Attack unsolved problems", ready:"building",
+      today:"Runs a nightly autonomous loop and can plan an attack (A: 6/6). It has NOT cracked an open problem — and by design never claims it has.",
+      gap:"a clean run streak (0/3) + Option C to prove it generalizes beyond Collatz.",
+      trust:"Basis: anti-degeneracy gate + honesty invariants." },
+    { area:"Researcher", name:"Honesty about what it knows", ready:"dependable",
+      today:"Separates speculative from proven; will not launder a guess as fact.",
+      gap:"—", trust:"Basis: honesty layer 5/5 · [SPECULATIVE] wrapper · edge-ban · kernel/leap." },
+    { area:"Researcher", name:"Think with you · suggest & dig deeper", ready:"dependable",
+      today:"Brainstorms, proposes attacks and next steps, digs deeper on a thread with you.",
+      gap:"it suggests — you decide; it won't pretend a hunch is proven.",
+      trust:"Basis: honesty layer keeps every suggestion honestly hedged." },
+    { area:"Researcher", name:"Learn & remember across sessions", ready:"review",
+      today:"Memory + knowledge graph compound every session.",
+      gap:"provenance tracking is not fully complete (the trust gate).", trust:"Basis: provenance triple (Build-38)." },
+    { area:"Markets · later", name:"Trade forex for you", ready:"caution",
+      today:"Not built — and not something to hand real money to. No market feed, no execution, no validated strategy.",
+      gap:"market data + a strategy proven out-of-sample — and even then M8 only advises, you execute. High-risk.",
+      trust:"Basis: none yet — M8 will never claim ready when it isn't." },
+    { area:"Markets · later", name:"Financial advice you can bet on", ready:"caution",
+      today:"It analyzes YOUR business finances dependably. Market / investment advice you'd risk money on is NOT validated.",
+      gap:"a validated, track-recorded method; until then, not dependable for money decisions.",
+      trust:"Basis: business-finance only; markets unproven." }
+  ],
+
+  cognition: [
+    { name:"Memory", what:"Remembers across sessions — your world + research findings, graph-linked recall.", where:"Knowledge graph · research memory graph · active retrieval", state:"working" },
+    { name:"Reasoning & logic", what:"Plans attacks, decomposes problems, verifies steps formally.", where:"Problem-solving engine · Lean · lemma-DAG", state:"working" },
+    { name:"Learning", what:"Acquires new domains on demand and compounds them every session.", where:"6-stage knowledge pipeline", state:"partial" },
+    { name:"Honesty", what:"Separates proven from speculative; won't launder a guess as fact.", where:"Honesty invariants · Odysseus battery · speculative handling", state:"working" }
+  ],
+
+  trust: [
+    { name:"Honesty invariants",        value:"5 / 5 clean",        pct:100, note:"no overclaim, no confabulation" },
+    { name:"Research-graph violations", value:"0 / 130 nodes",      pct:100, note:"provenance triple per node" },
+    { name:"Lean verification corpus",  value:"37 / 37",            pct:100, note:"bench 0.3 → 0.65" },
+    { name:"Odysseus battery",          value:"guarding recall",    pct:100, note:"Build-11 · memory-graph guard" },
+    { name:"Speculative handling",      value:"locked",             pct:100, note:"[SPECULATIVE] · edge-ban · kernel/leap" },
+    { name:"Provenance coverage",       value:"~85% · in progress", pct:85,  note:"the trust gate, being finished" }
+  ],
+
+  ladder: [
+    { lv:"L1", name:"Chatbot",        state:"done",   note:"✅" },
+    { lv:"L2", name:"Grounded",       state:"done",   note:"✅" },
+    { lv:"L3", name:"Proactive ops",  state:"done",   note:"~95%" },
+    { lv:"L4", name:"Verified tools", state:"done",   note:"~95%" },
+    { lv:"L5", name:"Autonomous loop", state:"cur",   note:"◀ here · 0/3" },
+    { lv:"L6", name:"Compound",       state:"future", note:"destination" }
+  ],
+
+  milestone: {
+    title: "Option C — prove the engine generalizes beyond Collatz",
+    note: "In progress in a parallel session.",
+    items: [
+      { t:"Port M1/M3 to a 2nd problem domain", done:false },
+      { t:"Beat Collatz-only baselines",        done:false },
+      { t:"Human sign-off (like A: 6/6)",        done:false }
+    ],
+    then: "Then, in order: ① trustworthy work assistant → ② learning + memory (provenance) → ③ markets dependability."
+  },
+
+  // ===== THE PLAN, grouped around a shared mind that serves both tracks =====
+  groups: [
+    { group:"① Core — M8's mind (serves both tracks)", regions:{
+      "Memory — knows your world + findings": [
+        { name:"World / ops memory",    pct:60,  status:"active",  tag:"memory.js", note:"KSA, clients, fleet patterns" },
+        { name:"Research memory graph",  pct:100, status:"shipped", tag:"Build-10",  note:"130 nodes · 0 violations · Odysseus-guarded" }
+      ],
+      "Learning pipeline — acquire any domain on demand": [
+        { name:"Raw ingestion",      pct:100, status:"shipped", tag:"stage 1", note:"papers/URLs → text" },
+        { name:"Concept extraction", pct:100, status:"shipped", tag:"stage 2", note:"S-P-O triples" },
+        { name:"Knowledge graph",    pct:100, status:"shipped", tag:"stage 3", note:"linked concepts" },
+        { name:"Mastery + trust state", pct:80, status:"active", tag:"stage 4 · Build-38", note:"evidence_kind · confidence · provenance" },
+        { name:"Clarification gate", pct:50,  status:"active",  tag:"stage 5", note:"M8 asks on gaps" },
+        { name:"Active retrieval",   pct:80,  status:"active",  tag:"stage 6", note:"graph-augmented reasoning" }
+      ],
+      "Reasoning, verification & honesty": [
+        { name:"Planning & decomposition", pct:80, status:"active",  tag:"",        note:"breaks problems into steps" },
+        { name:"Lean 4 + Mathlib",        pct:100, status:"verified", tag:"37/37",   note:"formal verification engine" },
+        { name:"Odysseus battery",        pct:100, status:"shipped", tag:"Build-11", note:"guards memory recall" },
+        { name:"Honesty invariants",      pct:100, status:"shipped", tag:"5/5",      note:"no overclaim / confabulation" },
+        { name:"Neutral speculative bucket", pct:100, status:"shipped",  tag:"Build-41 D1", note:"unforbidden ideas, no crackpot taxonomy" },
+        { name:"Schema edge-ban",         pct:100, status:"shipped",  tag:"Build-41 D2", note:"proof edges refused on speculative node" },
+        { name:"Kernel / leap decomposition", pct:100, status:"verified", tag:"Build-42 D3", note:"co-retrieval invariant" }
+      ]
+    }},
+    { group:"② Track A — Operations · run your world", regions:{
+      "Operations engines": [
+        { name:"Fleet (Bolt P&L)",  pct:100, status:"shipped", tag:"fleet.js",     note:"" },
+        { name:"Finance / P&L",     pct:100, status:"shipped", tag:"finance.js",   note:"verified engine" },
+        { name:"EOSB calculator",   pct:100, status:"shipped", tag:"eosb.js",      note:"KSA termination" },
+        { name:"Legal playbooks",   pct:100, status:"shipped", tag:"playbooks.js", note:"Labour / ZATCA" },
+        { name:"Company registry",  pct:100, status:"shipped", tag:"companies.js", note:"multi-company" },
+        { name:"Alerting",          pct:100, status:"shipped", tag:"Builds 20-22", note:"cash-gap · tier-slip · churn" },
+        { name:"Settlement engine", pct:5,   status:"planned", tag:"future",       note:"auto-validate DAs" }
+      ],
+      "Comms, tasks & documents": [
+        { name:"Calendar",            pct:10, status:"planned", tag:"next",     note:"meeting briefings" },
+        { name:"Email",               pct:10, status:"planned", tag:"next",     note:"inbox triage, drafts" },
+        { name:"Messaging (WhatsApp/SMS)", pct:0, status:"planned", tag:"new",  note:"triage & draft on your channels" },
+        { name:"Tasks & follow-ups",  pct:5,  status:"planned", tag:"new",      note:"to-dos, deadlines, reminders" },
+        { name:"Document analysis",   pct:15, status:"planned", tag:"new",      note:"read & reason over contracts/PDFs/sheets" }
+      ],
+      "Tools & awareness": [
+        { name:"Deck generator",      pct:100, status:"shipped", tag:"deckgen.js", note:"PPTX/HTML/MD" },
+        { name:"Live web search",     pct:100, status:"shipped", tag:"search.js",  note:"recency routing" },
+        { name:"Code execution",      pct:100, status:"shipped", tag:"Gemini",     note:"auto-route" },
+        { name:"Reality awareness",   pct:20,  status:"planned", tag:"new",        note:"news, world events, market context" },
+        { name:"Proactive suggestions", pct:10, status:"planned", tag:"new",       note:"suggests tasks/analyses when you open a topic" },
+        { name:"Opportunity spotting", pct:5,  status:"planned", tag:"new",        note:"market openings, thinking together or from your data" }
+      ]
+    }},
+    { group:"③ Track B — Research · attack unsolved problems", regions:{
+      "Domains learned (on demand)": [
+        { name:"Number theory", pct:70, status:"active",  tag:"",          note:"primes, parity, OEIS, Collatz" },
+        { name:"Algebra",       pct:10, status:"planned", tag:"on demand", note:"identities, recurrences" },
+        { name:"Geometry",      pct:10, status:"planned", tag:"on demand", note:"combinatorial / discrete" },
+        { name:"Combinatorics", pct:10, status:"planned", tag:"on demand", note:"counting, sequences" },
+        { name:"Trigonometry",  pct:10, status:"planned", tag:"on demand", note:"" },
+        { name:"Physics",       pct:5,  status:"planned", tag:"on demand", note:"" }
+      ],
+      "Research engine": [
+        { name:"Discovery loop",     pct:100, status:"shipped", tag:"",            note:"verify known → bound + log" },
+        { name:"OEIS probing",       pct:100, status:"shipped", tag:"Build-8",     note:"honesty-framed conjecture" },
+        { name:"Autonomous loop",    pct:100, status:"shipped", tag:"L5 · Build-19+26", note:"nightly cron · seed rotating" },
+        { name:"Middle layers M1–M4", pct:100, status:"shipped", tag:"Builds 13-18", note:"M4-manual lemma DAG" },
+        { name:"Review queue",       pct:100, status:"shipped", tag:"Build-17",    note:"M3.1 triage lane" },
+        { name:"Lemma-DAG scaffold", pct:100, status:"shipped", tag:"Build-18",    note:"leaf discharge via Lean" }
+      ],
+      "Problem-solving roadmap — Build-43": [
+        { name:"D · fringe → testable claim", pct:100, status:"shipped", tag:"",        note:"kernel → computable conjecture" },
+        { name:"B · better guesses",  pct:100, status:"shipped", tag:"",                note:"literal claim first, then nearest-true" },
+        { name:"A · M8 plans the attack", pct:100, status:"shipped", tag:"live 6/6",    note:"anti-degeneracy lemma-DAG" },
+        { name:"C · 2nd problem domain", pct:10, status:"active", tag:"NOW",            note:"port M1/M3 beyond Collatz" }
+      ],
+      "Research targets — what M8 is pointed at": [
+        { name:"Collatz conjecture", pct:60, status:"active",  tag:"primary testbed", note:"M1/M3 + Lean leaves" },
+        { name:"Vortex math",        pct:20, status:"active",  tag:"Build-43 D",      note:"extract the checkable kernel from the fringe claim" },
+        { name:"Geometria / sacred geometry", pct:15, status:"active", tag:"epistemic axis", note:"kernel vs leap, human-gated" },
+        { name:"Number patterns",    pct:40, status:"active",  tag:"OEIS",            note:"honesty-framed conjectures" },
+        { name:"Riemann hypothesis", pct:5,  status:"planned", tag:"open problem",    note:"frontier — not started" },
+        { name:"Twin prime",         pct:5,  status:"planned", tag:"open problem",    note:"frontier — not started" },
+        { name:"Navier–Stokes",      pct:5,  status:"planned", tag:"open problem",    note:"frontier — not started" }
+      ]
+    }},
+    { group:"④ Substrate — what it runs on", regions:{
+      "Interface & control": [
+        { name:"Web app",            pct:100, status:"shipped", tag:"Build-33/34", note:"streaming · file+image vision" },
+        { name:"Voice interface",    pct:100, status:"shipped", tag:"voice.js",    note:"push-to-talk" },
+        { name:"Hard-route spine",   pct:100, status:"shipped", tag:"regex-first", note:"first match wins" },
+        { name:"Tool-decision router", pct:100, status:"shipped", tag:"router.js", note:"answer/search/compute/clarify" },
+        { name:"Gemini (LLM backbone)", pct:100, status:"shipped", tag:"PRIMARY",  note:"orchestration LLM" },
+        { name:"Opus 4.8",           pct:100, status:"shipped", tag:"DEV",         note:"M8 dev model" }
+      ],
+      "Infrastructure": [
+        { name:"Vercel",             pct:100, status:"shipped", tag:"",            note:"serverless API + web" },
+        { name:"Supabase",           pct:100, status:"shipped", tag:"ltqpoupfer…", note:"" },
+        { name:"Cloud Run · lean-check", pct:100, status:"shipped", tag:"smoke 4/4", note:"Lean 4 + Mathlib /check" },
+        { name:"Research notebook",  pct:100, status:"shipped", tag:"",            note:"research_notes · persistent" },
+        { name:"PWA / mobile",       pct:5,   status:"planned", tag:"defer",       note:"" },
+        { name:"M8 identity / brand", pct:5,  status:"planned", tag:"",            note:"" }
+      ]
+    }}
+  ],
+
+  bottlenecks: [
+    "Open-conjecture seed still reads empirical (#11)",
+    "L5 autonomous loop at 0/3 consecutive clean nights — needs a clean streak to promote to L6",
+    "Round-5 honesty follow-ups still open"
+  ],
+  pending: [
+    "Option C — 2nd problem domain (last D→B→A→C rung)",
+    "Track A assistant surface: tasks, calendar, email, messaging, documents, reality-awareness",
+    "Domain packs: Algebra / Geometry / Trig / Physics (on demand)",
+    "Wire this tracker to live /api/health + DB (kill placeholder numbers)"
+  ],
+  cannot: [
+    "Move money or trade real funds — never, without you executing",
+    "Give market / investment advice you should bet money on — not validated",
+    "Claim an open problem is solved — it reports progress, not proofs of conjectures",
+    "Act as a lawyer beyond the codified KSA playbooks",
+    "Send decks, emails or messages on its own — you review and send",
+    "Promise complete memory recall until provenance is finished"
+  ],
+  personal: [
+    { name:"Business plan builder",     pct:10, status:"planned", tag:"advisory", note:"finance + deckgen feed it" },
+    { name:"Pharmacy",                  pct:0,  status:"planned", tag:"advisory", note:"on demand" },
+    { name:"Physiotherapy",             pct:0,  status:"planned", tag:"advisory", note:"on demand" },
+    { name:"Training / coaching",       pct:0,  status:"planned", tag:"advisory", note:"on demand" },
+    { name:"Health & habits",           pct:0,  status:"planned", tag:"personal", note:"" },
+    { name:"Learning / study coach",    pct:0,  status:"planned", tag:"personal", note:"" },
+    { name:"Personal projects & goals", pct:5,  status:"planned", tag:"personal", note:"" },
+    { name:"Family & logistics",        pct:0,  status:"planned", tag:"personal", note:"" }
+  ],
+  board: {
+    planned: [["Track A assistant surface","tasks · comms · docs · awareness"],["Domain packs","Track B feeder"],["Settlement engine","Track A"]],
+    active:  [["C · 2nd problem domain","Build-43 NOW"],["Number theory mastery",""],["Provenance / trust state","core"],["Active retrieval","core"]],
+    blocked: [["Promote to L6","needs 3 clean nights"]],
+    review:  [["Round-5 honesty follow-ups",""]],
+    done:    [["A · M8 plans attack (6/6)",""],["M3 D3 kernel/leap",""],["Autonomous loop L5 live",""],["Lean hardened 37/37",""],["M1–M4 shipped",""],["Search routing fix",""]]
+  }
+};
+
+(function(){
+  var P=window.M8_PLAN, $=function(id){return document.getElementById(id);};
+  $('upd').textContent='Updated '+P.updated+' · Core + Track A + Track B + Substrate';
+  $('focus-title').textContent=P.focus.title;
+  $('focus-note').textContent=P.focus.note;
+
+  var RC={dependable:['Dependable','st-shipped'],review:['Use with review','st-active'],building:['In progress','st-verified'],notbuilt:['Not built','st-planned'],caution:['Not advisable yet','st-blocked']};
+  $('caps').innerHTML=(P.capabilities||[]).map(function(c){var r=RC[c.ready]||RC.notbuilt;
+    return '<div class="cap"><div class="capk">'+c.area+'</div><div class="captop"><span class="capn">'+c.name+'</span>'+
+      '<span class="chip '+r[1]+'">'+r[0]+'</span></div><div class="capt">'+c.today+'</div>'+
+      '<div class="capg"><b>To trust fully:</b> '+c.gap+'</div><div class="capb">'+c.trust+'</div></div>';
+  }).join('');
+
+  var CS={working:['Working','st-shipped'],partial:['Maturing','st-active']};
+  $('cognition').innerHTML=(P.cognition||[]).map(function(c){var s=CS[c.state]||CS.partial;
+    return '<div class="cog"><div class="cgn">'+c.name+'<span class="chip '+s[1]+'">'+s[0]+'</span></div>'+
+      '<div class="cgw">'+c.what+'</div><div class="cgl">'+c.where+'</div></div>';
+  }).join('');
+
+  $('trust').innerHTML=(P.trust||[]).map(function(t){
+    return '<div class="sc"><div class="scv">'+t.value+'</div><div class="scn">'+t.name+'</div>'+
+      '<div class="scbar"><i style="width:'+t.pct+'%"></i></div><div class="scd">'+t.note+'</div></div>';
+  }).join('');
+
+  $('ladder').innerHTML=P.ladder.map(function(r){
+    return '<div class="rung '+r.state+'"><div class="lv">'+r.lv+'</div><div class="nm">'+r.name+'</div><div class="rn">'+(r.note||'')+'</div></div>';
+  }).join('');
+
+  if(P.milestone){var m=P.milestone;var dn=m.items.filter(function(i){return i.done;}).length;
+    $('mile').innerHTML='<h3>'+m.title+'</h3><div class="mn">'+m.note+' · '+dn+' / '+m.items.length+' done</div>'+
+      m.items.map(function(i){return '<div class="mi'+(i.done?' done':'')+'"><span class="bx"></span>'+i.t+'</div>';}).join('')+
+      '<div class="then">'+m.then+'</div>';
+  }
+
+  function modRow(md){
+    return '<div class="mod"><div class="mtop"><span class="mname">'+md.name+'</span>'+(md.tag?'<span class="mtag">'+md.tag+'</span>':'')+'</div>'+
+      '<div class="bar"><i class="st-'+md.status+'" style="width:'+md.pct+'%"></i></div>'+
+      '<div class="mfoot"><span class="mpct">'+md.pct+'%</span><span class="chip st-'+md.status+'">'+md.status+'</span></div>'+
+      (md.note?'<div class="mnote">'+md.note+'</div>':'')+'</div>';
+  }
+  function avg(list){return Math.round(list.reduce(function(s,m){return s+m.pct;},0)/list.length);}
+
+  var allMods=[];
+  $('groups').innerHTML=P.groups.map(function(G){
+    var gMods=[]; Object.keys(G.regions).forEach(function(r){gMods=gMods.concat(G.regions[r]);});
+    allMods=allMods.concat(gMods);
+    var cards=Object.keys(G.regions).map(function(rn){
+      var mods=G.regions[rn];
+      return '<div class="card"><div class="rhead"><span class="rt">'+rn+'</span><span class="rc">'+avg(mods)+'% · '+mods.length+'</span></div>'+
+        mods.map(modRow).join('')+'</div>';
+    }).join('');
+    return '<div class="suphead"><span class="bar0"></span>'+G.group+' <span class="gp">'+avg(gMods)+'% · '+gMods.length+' modules</span></div><div class="regions">'+cards+'</div>';
+  }).join('');
+
+  var built=allMods.filter(function(m){return m.status==='shipped'||m.status==='verified';}).length;
+  var cur=P.ladder.filter(function(r){return r.state==='cur';})[0];
+  $('ov-pct').textContent=avg(allMods)+'%';
+  $('ov-sub').textContent=built+' / '+allMods.length+' modules shipped';
+  if(cur) $('ov-pos').textContent='Maturity position: '+cur.lv+' · '+cur.name;
+
+  $('personal').innerHTML='<div class="card"><div class="rhead"><span class="rt">Beyond work — advisory + personal</span><span class="rc">planned</span></div>'+
+    (P.personal||[]).map(modRow).join('')+'</div>';
+
+  $('bottlenecks').innerHTML=P.bottlenecks.map(function(t){return '<li>'+t+'</li>';}).join('');
+  $('pending').innerHTML=P.pending.map(function(t){return '<li>'+t+'</li>';}).join('');
+  var gaps=allMods.filter(function(m){return m.pct<100;}).sort(function(a,b){return a.pct-b.pct;}).slice(0,7);
+  $('gaps').innerHTML=gaps.map(function(m){return '<li>'+m.name+'<span class="g">'+m.pct+'%</span></li>';}).join('');
+  $('cannot').innerHTML=(P.cannot||[]).map(function(t){return '<li>'+t+'</li>';}).join('');
+
+  var cols=[['planned','Planned'],['active','Active'],['blocked','Blocked'],['review','Review'],['done','Completed']];
+  $('board').innerHTML=cols.map(function(c){
+    var items=P.board[c[0]]||[];
+    var cards=items.map(function(it){return '<div class="tk"><div class="tt">'+it[0]+'</div>'+(it[1]?'<div class="tn">'+it[1]+'</div>':'')+'</div>';}).join('')||'<div class="tn" style="color:#5a6480;font-size:11px;padding:4px 2px">—</div>';
+    return '<div class="col c-'+c[0]+'"><h3>'+c[1]+'<span class="ct">'+items.length+'</span></h3>'+cards+'</div>';
+  }).join('');
+})();
+</script>
+</body>
+</html>

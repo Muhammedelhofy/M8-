@@ -2,8 +2,8 @@
 
 > Single source of truth for M8's vision. **Do not redraw or re-derive it per session.**
 > If the vision genuinely changes, edit this file and the diagram deliberately — never silently regenerate.
-> **Canonical diagram:** [`m8_full_architecture_2026.html`](./m8_full_architecture_2026.html)
-> (A Desktop copy is kept in sync; the repo copy is authoritative.)
+> **Canonical diagram:** [`m8_mind_2026.html`](./m8_mind_2026.html) — the "M8 Mind" view (promoted Session-44, 2026-06-17).
+> (The old dense `m8_full_architecture_2026.html` is archived under `archive/diagrams/` — superseded, not deleted.)
 >
 > **Session-close ritual (standing):** when a session is finalized, update *this file*
 > and *the diagram* with what shipped — flip status cells, bump maturity %, move the
