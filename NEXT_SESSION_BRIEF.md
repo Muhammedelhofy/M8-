@@ -1,13 +1,54 @@
 # M8 — Next Session Brief
-**Latest:** 2026-06-17 (Session-41) · **Branch:** main · **Head:** `55f5fa2`
+**Latest:** 2026-06-17 (Session-44) · **Branch:** main · **Head:** `be933fb`
 **Canonical plan:** [`M8/HONESTY_TRACK_PLAN.md`](HONESTY_TRACK_PLAN.md) ← the living backlog. Read it first.
-(Older Session-34/38/39/40 briefs preserved below for history.)
+(Older Session-34/38/39/40/41/43 briefs preserved below for history.)
 
 ---
 
-## ★ SESSION-44 HANDOFF (read first) — 2026-06-17
+## ★ SESSION-44 FINAL STATE — 2026-06-17 (read this first next session)
 
-**What shipped this session (committed to `Muhammedelhofy/M8-` main, NOT yet pushed — 2 commits await Muhammad's OK):**
+### What shipped this session (ALL pushed to `Muhammedelhofy/M8-` main)
+
+| Commit | Build | Summary |
+|---|---|---|
+| `3e60bca` | Build-55 | M4 → proposer **feedback loop** — bounded iterative `lean_rejected` repair (max 2, env `M4_MAX_LEAF_REPAIRS`) |
+| `5b21b83` | Build-56 | **Multi-level DAG** — `expand L3 of #N` grafts a sub-DAG via `mergeSubDAG`; depth cap `MAX_DECOMP_DEPTH` |
+| `f0fd8f4` | Diagram | `m8_mind_2026.html` promoted to canonical; old dense diagram + plan/tracker boards archived |
+| `fedc8cd` | Build-57 | **AUTO-FEEDBACK** — stuck leaf (rejected after repairs) → scaffold shows `expand L<n>` suggestion; closes Build-55→56 loop end-to-end |
+| `be933fb` | Telemetry | **Round-5 #5 fix** — `failing_probes` (id + failingChecks + reply 300-char) now persisted in `m8_odysseus_runs.metadata`; gate misses diagnosable from Supabase without local file |
+
+### Live-verify result (2026-06-17)
+Builds 55+56 confirmed end-to-end: `propose` → `expand L3 of #6` → `approve #6` → `verify now` → **4/4 leaves Lean-verified**, 2 honest sorry parents, OPEN CONJECTURE footer held.
+
+### Depth arc status: COMPLETE
+Builds 51–57 form a closed depth arc:
+- **51** warm-checker strategy · **52** tactic discipline · **53** wake-ping fix · **54** leaf simplifier
+- **55** bounded repair loop · **56** multi-level DAG · **57** auto-feedback (suggest expand)
+
+Loop is closed: repair → suggest expand → go deeper → new sub-leaves checked.
+
+### ▶ NEXT SESSION: Track-A daily-usefulness
+The depth arc is done. The recommended next direction is **Track-A** — making M8 genuinely useful daily (business loop / multi-platform ingestion). First step next session: **scope it** (10–15 min) by answering:
+- What does "daily useful" mean to Muhammad concretely? (fleet summaries? alerts? something else?)
+- What platforms to ingest from? (WhatsApp, email, manual?)
+- What does "business loop" mean? (recurring report? alert → action → confirm?)
+
+Then design the first 2–3 builds from that answer.
+
+### Kickoff prompt for next session
+> Continue M8 (Session-45). Read `M8/NEXT_SESSION_BRIEF.md` (Session-44 final state) first.
+> Depth arc Builds 51–57 complete + live-verified. Latest commit `be933fb`.
+> Next direction: Track-A daily-usefulness. Start by scoping it with Muhammad (5 min),
+> then propose the first 2 builds. Standing rules: free Gemini stack; live runs need my OK;
+> M8 repo is `Muhammedelhofy/M8-`; edit `buildState.js` commitFamily only via unique-anchor
+> replace; PS `.ps1` files must be pure ASCII; update BOTH `m8_mind_2026.html` AND
+> `NEXT_SESSION_BRIEF.md` at session close.
+
+---
+
+## ★ SESSION-44 HANDOFF (historical detail) — 2026-06-17
+
+**What shipped this session (ALL pushed):**
 - `3e60bca` — **Build-55: M4 → proposer FEEDBACK LOOP.** Generalized `dischargeLeaf`'s single
   `lean_rejected` repair into a BOUNDED iterative loop (redraft from the latest Lean error up to
   `MAX_LEAF_REPAIRS`, default 2; env `M4_MAX_LEAF_REPAIRS`, clamp [0..4]; =1 legacy, =0 off). New pure
