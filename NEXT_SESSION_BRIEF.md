@@ -1,7 +1,41 @@
 # M8 — Next Session Brief
-**Latest:** 2026-06-17 (Session-44) · **Branch:** main · **Head:** `be933fb`
+**Latest:** 2026-06-18 (Session-45) · **Branch:** main · **Head:** `be933fb`
 **Canonical plan:** [`M8/HONESTY_TRACK_PLAN.md`](HONESTY_TRACK_PLAN.md) ← the living backlog. Read it first.
-(Older Session-34/38/39/40/41/43 briefs preserved below for history.)
+(Older Session-34/38/39/40/41/43/44 briefs preserved below for history.)
+
+---
+
+## ★ SESSION-45 FINAL STATE — 2026-06-18 (read this first next session)
+
+### What shipped this session (ALL pushed to `Muhammedelhofy/M8-` main)
+
+| Build | Summary | Status |
+|---|---|---|
+| Build-58 | **Knowledge Ingestion Pipeline** — `api/ingest-book.js` splits any book into chapters, runs each through ingestDocument→extractConcepts→populateGraph. `migrations/m8_book_ingestion.sql` adds `metadata jsonb` to `m8_knowledge_sources` (applied in Supabase). Books stored with speculative/established class. | ✅ live |
+| Build-59 | **Universal Format Converter** — `lib/converter.js` + `api/convert.js` + `api/pdf-to-text.js`. Converts PDF (Gemini Files API, parallel 25-page batches, BLOCK_NONE safety), EPUB (pure ZIP parser), images (Gemini inline + Pixtral fallback), HTML, text. Wired as orchestrator hard-route when user says "convert this…". | ✅ live |
+| Build-60 | **Chat File Attachment (PDF/EPUB)** — `api/presign.js` + `api/upload-file.js` + frontend changes. Browser uploads raw binary directly to Supabase Storage (bypasses Vercel 4.5 MB body limit), backend downloads + converts via parallel Gemini OCR, returns text. Chat shows ⏳→📄(N words) chip; send blocked while converting. | ✅ live |
+
+### Active issue (in progress at session close)
+- The Arktos PDF (247 pages, scanned, Nazi occultism content) is being tested end-to-end.
+- Upload path fixed (Supabase Storage bypass). Extraction fixed (BLOCK_NONE + parallel batches).
+- Last test timed out (504) — parallel extraction deployed as final fix, not yet confirmed working.
+- **Test on next session open**: attach the Arktos PDF, wait for 📄 chip, confirm word count > 0.
+
+### ▶ NEXT SESSION priorities
+1. **Confirm Arktos OCR working** (quick check — attach PDF, verify 📄 chip, word count)
+2. **Ingest Arktos** into M8's speculative knowledge graph via `/api/ingest-book` (needs the extracted text first)
+3. **Scope Track-A daily-usefulness** — what does "daily useful" mean concretely? Fleet summaries? Alerts? Business loop?
+4. **Depth arc done** (Builds 51–57) — no further engine depth needed unless Muhammad asks
+
+### Kickoff prompt for next session
+> Continue M8 (Session-46). Read `M8/NEXT_SESSION_BRIEF.md` (Session-45 final state) first.
+> Builds 58–60 (knowledge ingestion + format converter + chat PDF attachment) are LIVE.
+> Start by confirming the Arktos PDF OCR works (attach the file at m8-alpha.vercel.app, wait for the 📄 chip).
+> If it works, ingest it via the chat: "ingest this as a book: title=Arktos, author=Joscelyn Godwin, year=1993, source_class=speculative".
+> Then scope Track-A daily-usefulness with Muhammad (10-15 min).
+> Standing rules: free Gemini stack; live runs need Muhammad's OK; M8 repo is `Muhammedelhofy/M8-`;
+> edit buildState.js commitFamily only via unique-anchor replace; PS .ps1 files must be pure ASCII;
+> update BOTH `m8_mind_2026.html` AND `NEXT_SESSION_BRIEF.md` at session close.
 
 ---
 
