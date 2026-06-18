@@ -29,6 +29,15 @@ async function convertBuffer(buffer, mimeType, name) {
   // Inline minimal dispatcher (mirrors lib/converter.js convertUrl logic)
   const { GoogleGenAI } = require("@google/genai");
 
+  if (fmt === "docx") {
+    const mammoth = require("mammoth");
+    const result  = await mammoth.extractRawText({ buffer });
+    const text    = (result.value || "").trim();
+    if (!text) throw new Error("mammoth extracted no text from this .docx file");
+    const words = text.split(/\s+/).length;
+    return { text, pages: Math.max(1, Math.round(words / 300)), format: "docx" };
+  }
+
   if (fmt === "epub") {
     // Use the EPUB parser directly
     const zlib = require("zlib");
