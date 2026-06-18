@@ -494,6 +494,30 @@ html, body {
   background: rgba(244, 67, 54, 0.14);
 }
 
+/* Document-state chip variants */
+.attachment-chip.converting .attachment-name { color: var(--text-muted); font-style: italic; }
+.attachment-chip.error .attachment-name      { color: #f87171; }
+.attachment-chip.ready .attachment-name      { color: #86efac; }
+
+/* Download-text button on converted document chips */
+.attachment-chip .attachment-download {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(134, 239, 172, 0.4);
+  background: rgba(134, 239, 172, 0.08);
+  color: #86efac;
+  border-radius: 4px;
+  font-size: 10px;
+  padding: 1px 5px;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-left: 4px;
+  white-space: nowrap;
+}
+.attachment-chip .attachment-download:hover {
+  background: rgba(134, 239, 172, 0.18);
+}
+
 /* Small attachment chips rendered below a sent user message */
 .message-attachments {
   display: flex;

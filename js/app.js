@@ -265,6 +265,29 @@ function renderAttachmentChips() {
     }
     chip.appendChild(name);
 
+    // Download button: appears on successfully converted documents so the user
+    // can get the FULL extracted text without relying on M8 to output it.
+    if (att.kind === "document" && !att.converting && !att.error && att.convertedText) {
+      const dlBtn = document.createElement("button");
+      dlBtn.type = "button";
+      dlBtn.className = "attachment-download";
+      dlBtn.title = "Download extracted text as .txt";
+      dlBtn.textContent = "⬇ txt";
+      dlBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const blob = new Blob([att.convertedText], { type: "text/plain;charset=utf-8" });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement("a");
+        a.href     = url;
+        a.download = att.name.replace(/\.[^.]+$/, "") + ".txt";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+      });
+      chip.appendChild(dlBtn);
+    }
+
     const remove = document.createElement("button");
     remove.type = "button";
     remove.className = "attachment-remove";
@@ -293,6 +316,9 @@ function flashStatus(text) {
   _flashTimer = setTimeout(() => setStatus("idle"), 2200);
 }
 
+// Documents can be much larger — match the orchestrator's MAX_DOC_ATTACHMENT_CHARS.
+const MAX_DOC_ATTACHMENT_CHARS = 80000;
+
 // Cap + format a pending attachment for the wire — server re-caps too, this
 // just avoids shipping huge payloads from the browser.
 function packAttachments() {
@@ -303,10 +329,11 @@ function packAttachments() {
     if (a.kind === "document") {
       // Send the converted text (not the binary). If still converting, send a placeholder.
       const text = a.convertedText || `[Document "${a.name}" — conversion pending or failed]`;
+      const limit = MAX_DOC_ATTACHMENT_CHARS;
       return {
         name: a.name,
         kind: "document",
-        content: text.length > MAX_ATTACHMENT_CHARS ? text.slice(0, MAX_ATTACHMENT_CHARS) : text,
+        content: text.length > limit ? text.slice(0, limit) + `\n[...truncated — ${a.wordCount?.toLocaleString() || "?"} words total. Use the ⬇ button on the attachment chip to download the full text.]` : text,
         wordCount: a.wordCount || 0,
         pages: a.pages || null,
       };
