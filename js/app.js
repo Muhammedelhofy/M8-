@@ -233,6 +233,90 @@ async function handlePaste(e) {
   await ingestFiles(files);
 }
 
+// ── DOCX download for extracted documents (Build-N) ──────────────────────
+// Loads docx.js from CDN (same lazy-load pattern as pptxgenjs in chat.js)
+// then builds a formatted Word document from the extracted text.
+function _ensureDocxLib() {
+  if (window.docx) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js";
+    s.onload = resolve;
+    s.onerror = () => reject(new Error("docx library failed to load"));
+    document.head.appendChild(s);
+  });
+}
+
+async function downloadAsDocx(att) {
+  try {
+    await _ensureDocxLib();
+    const { Document, Packer, Paragraph, TextRun, HeadingLevel } = window.docx;
+
+    const text = att.convertedText || "";
+    const lines = text.split("\n");
+    const paragraphs = [];
+
+    const CHAPTER_RE = /^(chapter\s+\w+[\s:\-–]|chapter\s+[ivxlcdm]+\b)/i;
+    const PART_RE    = /^(part\s+\w+[\s:\-–]|part\s+[ivxlcdm]+\b)/i;
+    // Short all-caps line (like "BIBLIOGRAPHY", "POLAR WANDERING", "THE ARCTIC LEGEND")
+    const ALLCAPS_RE = /^[A-Z][A-Z\s\-–:]{4,}$/;
+
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+
+      if (!line) {
+        // Blank line → small spacer paragraph
+        paragraphs.push(new Paragraph({ children: [] }));
+        continue;
+      }
+
+      if (CHAPTER_RE.test(line)) {
+        paragraphs.push(new Paragraph({
+          heading: HeadingLevel.HEADING_1,
+          children: [new TextRun(line)],
+        }));
+      } else if (PART_RE.test(line)) {
+        paragraphs.push(new Paragraph({
+          heading: HeadingLevel.HEADING_2,
+          children: [new TextRun(line)],
+        }));
+      } else if (ALLCAPS_RE.test(line) && line.length < 80) {
+        paragraphs.push(new Paragraph({
+          heading: HeadingLevel.HEADING_2,
+          children: [new TextRun(line)],
+        }));
+      } else {
+        paragraphs.push(new Paragraph({
+          children: [new TextRun(line)],
+        }));
+      }
+    }
+
+    const doc = new Document({
+      sections: [{
+        properties: {
+          page: { size: { width: 12240, height: 15840 }, margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } }
+        },
+        children: paragraphs,
+      }],
+    });
+
+    const buffer = await Packer.toBuffer(doc);
+    const blob   = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+    const url    = URL.createObjectURL(blob);
+    const a      = document.createElement("a");
+    a.href       = url;
+    a.download   = att.name.replace(/\.[^.]+$/, "") + ".docx";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  } catch (e) {
+    console.error("docx build error", e);
+    alert("Could not build .docx — use the .txt download instead.");
+  }
+}
+
 function renderAttachmentChips() {
   UI.attachmentChips.innerHTML = "";
   pendingAttachments.forEach((att, i) => {
@@ -265,15 +349,15 @@ function renderAttachmentChips() {
     }
     chip.appendChild(name);
 
-    // Download button: appears on successfully converted documents so the user
-    // can get the FULL extracted text without relying on M8 to output it.
+    // Download buttons: appear on successfully converted documents.
     if (att.kind === "document" && !att.converting && !att.error && att.convertedText) {
-      const dlBtn = document.createElement("button");
-      dlBtn.type = "button";
-      dlBtn.className = "attachment-download";
-      dlBtn.title = "Download extracted text as .txt";
-      dlBtn.textContent = "⬇ txt";
-      dlBtn.addEventListener("click", (e) => {
+      // .txt download
+      const dlTxt = document.createElement("button");
+      dlTxt.type = "button";
+      dlTxt.className = "attachment-download";
+      dlTxt.title = "Download extracted text as .txt";
+      dlTxt.textContent = "⬇ txt";
+      dlTxt.addEventListener("click", (e) => {
         e.stopPropagation();
         const blob = new Blob([att.convertedText], { type: "text/plain;charset=utf-8" });
         const url  = URL.createObjectURL(blob);
@@ -285,7 +369,24 @@ function renderAttachmentChips() {
         a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 1500);
       });
-      chip.appendChild(dlBtn);
+      chip.appendChild(dlTxt);
+
+      // .docx download — formatted Word document with heading styles
+      const dlDocx = document.createElement("button");
+      dlDocx.type = "button";
+      dlDocx.className = "attachment-download";
+      dlDocx.title = "Download as formatted Word document (.docx)";
+      dlDocx.textContent = "⬇ docx";
+      dlDocx.addEventListener("click", (e) => {
+        e.stopPropagation();
+        dlDocx.textContent = "⏳";
+        dlDocx.disabled = true;
+        downloadAsDocx(att).finally(() => {
+          dlDocx.textContent = "⬇ docx";
+          dlDocx.disabled = false;
+        });
+      });
+      chip.appendChild(dlDocx);
     }
 
     const remove = document.createElement("button");

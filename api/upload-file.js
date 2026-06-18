@@ -155,6 +155,30 @@ async function convertBuffer(buffer, mimeType, name) {
   // Regex to detect AI-generated continuation notes (not actual PDF text)
   const AI_NOTE_RE = /^\[(?:document continues|note:|remaining chapters|this is page|truncated|the pdf|pages \d)/i;
 
+  // Detect Gemini token loops: if any non-trivial line repeats 4+ consecutive times, truncate there.
+  // This catches the "sentence repeated 200 times" LLM generation failure.
+  function removeTokenLoops(text) {
+    if (!text || text.length < 300) return text;
+    const lines = text.split("\n");
+    const out = [];
+    let prevLine = "";
+    let streak = 0;
+    for (const line of lines) {
+      const norm = line.trim();
+      if (norm.length > 20) {
+        if (norm === prevLine) {
+          streak++;
+          if (streak >= 4) break; // 5th identical non-trivial line → loop → truncate
+        } else {
+          streak = 0;
+          prevLine = norm;
+        }
+      }
+      out.push(line);
+    }
+    return out.join("\n");
+  }
+
   async function extractBatch(start, end) {
     try {
       const r = await ai.models.generateContent({
@@ -175,10 +199,11 @@ async function convertBuffer(buffer, mimeType, name) {
         ]}],
         config: { maxOutputTokens: 8192, temperature: 0, safetySettings: SAFETY },
       });
-      const text = (r.text || "").trim();
+      const raw = (r.text || "").trim();
       // Reject AI-generated notes masquerading as extracted text
-      if (AI_NOTE_RE.test(text)) return { start, text: "" };
-      return { start, text };
+      if (AI_NOTE_RE.test(raw)) return { start, text: "" };
+      // Remove any Gemini token loops before returning
+      return { start, text: removeTokenLoops(raw) };
     } catch {
       return { start, text: "" };
     }
