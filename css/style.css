@@ -306,6 +306,77 @@ html, body {
   opacity: 1;
 }
 
+/* Reply-to-message: reply button on message footer */
+.reply-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 5px;
+  opacity: 0.55;
+  transition: opacity 0.15s, color 0.15s, background 0.15s;
+}
+.reply-btn svg { width: 13px; height: 13px; }
+.reply-btn:hover {
+  opacity: 1;
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+/* Reply bar above the input footer */
+.reply-bar {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0;
+  overflow: hidden;
+  transition: max-height 0.18s ease, opacity 0.18s ease;
+  max-height: 80px;
+  opacity: 1;
+}
+.reply-bar--hidden {
+  max-height: 0;
+  opacity: 0;
+  border: none;
+  pointer-events: none;
+}
+.reply-bar__quote {
+  flex: 1;
+  padding: 8px 14px;
+  font-size: 12px;
+  color: var(--text-muted);
+  border-left: 3px solid var(--accent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.5;
+}
+.reply-bar__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.reply-bar__close:hover { color: var(--text); }
+
+/* Message wrapper: position relative so reply button can be overlaid */
+.message { position: relative; }
+
 /* Lean / M4 lemma-DAG status badges (Build-23) */
 .lean-badge {
   display: inline-block;

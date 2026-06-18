@@ -35,6 +35,16 @@
 
   <!-- ── INPUT BAR ──────────────────────────── -->
   <div id="attachment-chips" class="attachment-chips"></div>
+  <!-- Reply-to-message bar (hidden by default, shown when user taps Reply on a message) -->
+  <div id="reply-bar" class="reply-bar reply-bar--hidden">
+    <div class="reply-bar__quote" id="reply-quote"></div>
+    <button class="reply-bar__close" id="reply-cancel" title="Cancel reply">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+           stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
   <footer class="input-bar">
     <textarea
       id="text-input"

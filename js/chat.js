@@ -197,6 +197,42 @@ function stripM8ChartMarker(text) {
 // ── Copy-to-clipboard (small button under every message) ───────────────────
 const COPY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>';
 const COPY_ICON_DONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+const REPLY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>';
+
+// ── Reply-to-message (Build-60b) ─────────────────────────────────────────────
+// State for the active reply context. When set, the next sent message is
+// prefixed with "[Replying to: <quoted>]\n\n" so M8 has the reference.
+const _replyState = { active: false, quote: "" };
+
+function _getReplyBar()    { return document.getElementById("reply-bar"); }
+function _getReplyQuote()  { return document.getElementById("reply-quote"); }
+function _getReplyCancel() { return document.getElementById("reply-cancel"); }
+
+function setReply(fullText) {
+  const clean = stripM8ChartMarker(fullText || "").replace(/\s+/g, " ").trim();
+  const preview = clean.length > 120 ? clean.slice(0, 120) + "…" : clean;
+  _replyState.active = true;
+  _replyState.quote  = clean;
+  const bar   = _getReplyBar();
+  const quote = _getReplyQuote();
+  if (bar)   bar.classList.remove("reply-bar--hidden");
+  if (quote) quote.textContent = preview;
+  const inp = document.getElementById("text-input");
+  if (inp) inp.focus();
+}
+
+function clearReply() {
+  _replyState.active = false;
+  _replyState.quote  = "";
+  const bar = _getReplyBar();
+  if (bar) bar.classList.add("reply-bar--hidden");
+}
+
+// Wire the cancel button once DOM is ready.
+document.addEventListener("DOMContentLoaded", () => {
+  const cancel = _getReplyCancel();
+  if (cancel) cancel.addEventListener("click", clearReply);
+});
 
 class ChatManager {
   constructor(container) {
@@ -268,8 +304,16 @@ class ChatManager {
     copyBtn.innerHTML = COPY_ICON;
     copyBtn.addEventListener("click", () => this._copyMessage(msg, copyBtn));
 
+    const replyBtn = document.createElement("button");
+    replyBtn.type = "button";
+    replyBtn.className = "reply-btn";
+    replyBtn.title = "Reply to this message";
+    replyBtn.innerHTML = REPLY_ICON;
+    replyBtn.addEventListener("click", () => setReply(msg.content || ""));
+
     footer.appendChild(timeEl);
     footer.appendChild(copyBtn);
+    footer.appendChild(replyBtn);
     wrapper.appendChild(footer);
     return footer;
   }

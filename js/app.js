@@ -562,7 +562,12 @@ function handleSend() {
     flashStatus(currentLang === "ar" ? "انتظر… جارٍ تحويل الملف" : "Please wait — document is still converting…");
     return;
   }
-  if (text || pendingAttachments.length) sendMessage(text);
+  if (text || pendingAttachments.length) {
+    // Capture and clear reply state before send
+    const replyQuote = (typeof _replyState !== "undefined" && _replyState.active) ? _replyState.quote : "";
+    if (replyQuote && typeof clearReply === "function") clearReply();
+    sendMessage(text, replyQuote);
+  }
 }
 
 // Flip to false to force the proven buffered path (no streaming) without a redeploy.
@@ -573,7 +578,7 @@ const STREAMING_ENABLED = true;
 // Mirrors lib/deckgen.js looksDeck so the UI and backend agree on what's a deck.
 const DECK_RE = /\b(decks?|slides?|slide\s*deck|presentations?|pitch(?:\s*deck)?|power\s?point|ppt|pptx|keynote)\b/i;
 
-async function sendMessage(text) {
+async function sendMessage(text, replyQuote) {
   const attachments = packAttachments();
   if ((!text && !attachments.length) || isProcessing) return;
   isProcessing = true;
@@ -589,6 +594,13 @@ async function sendMessage(text) {
   if (!text) {
     text = currentLang === "ar" ? "من فضلك راجع الملف المرفق." : "Please take a look at the attached file.";
   }
+
+  // When replying to a specific message, the displayed text is just what the
+  // user typed, but the API message includes the quoted context so M8 knows
+  // exactly which message is being referenced.
+  const apiText = replyQuote
+    ? `[Replying to this message — use it as context for my request below]\n\n"${replyQuote.slice(0, 800)}"\n\n---\n\n${text}`
+    : text;
 
   // Display user message + attachment chips, then clear pending attachments.
   // Images carry a thumb dataURL so the sent message shows a preview too.
@@ -608,18 +620,21 @@ async function sendMessage(text) {
   const pastHistory = chat.getHistory().slice(0, -1);
 
   try {
-    // Deck path first — its own endpoint + download buttons. On any failure we
-    // fall through to the normal chat so a deck request is never a dead end.
-    if (DECK_RE.test(text)) {
-      try { await deckMessage(text, pastHistory); return; }
+    // Deck path — its own endpoint + download buttons. Skip when a reply is
+    // active (the user is directing M8 to a specific context, not asking for a
+    // generic deck) or when the text looks like a fleet/report export (those
+    // route to /api/fleet-export via the orchestrator's export marker).
+    const isFleetExport = /\b(fleet|report|driver|earnings|performance)\b/i.test(apiText);
+    if (DECK_RE.test(text) && !replyQuote && !isFleetExport) {
+      try { await deckMessage(apiText, pastHistory); return; }
       catch (deckErr) { console.warn("Deck path failed, falling back to chat:", deckErr); }
     }
     let streamed = false;
     if (STREAMING_ENABLED) {
-      try { streamed = await streamMessage(text, pastHistory, attachments); }
+      try { streamed = await streamMessage(apiText, pastHistory, attachments); }
       catch (streamErr) { console.warn("Stream failed, falling back to buffered:", streamErr); streamed = false; }
     }
-    if (!streamed) await bufferedMessage(text, pastHistory, attachments);
+    if (!streamed) await bufferedMessage(apiText, pastHistory, attachments);
   } catch (err) {
     console.error("Send error:", err);
     chat.hideTyping();
