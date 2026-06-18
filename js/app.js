@@ -27,10 +27,15 @@ const MAX_ATTACHMENTS = 3;
 const MAX_ATTACHMENT_CHARS = 20000;
 // Build-34: image attachments. Vision-capable types only.
 const ATTACHMENT_IMAGE_RE = /^image\/(png|jpe?g|webp|gif)$/i;
-const MAX_IMAGE_DIM = 1600;          // long-edge px — high enough to keep document/receipt text legible
-const MAX_IMAGE_BYTES = 4 * 1024 * 1024; // ~4MB post-downscale ceiling (base64 payload stays well under Vercel limits)
+const MAX_IMAGE_DIM = 1600;
+const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
+// Document attachments: PDF and EPUB — converted server-side via /api/upload-file
+const ATTACHMENT_DOC_RE  = /^application\/(pdf|epub\+zip)$/i;
+const ATTACHMENT_DOC_EXT = /\.(pdf|epub)$/i;
+const MAX_DOC_BYTES      = 20 * 1024 * 1024; // 20 MB ceiling
 // pendingAttachments holds EITHER a text file {name, content, size}
-// OR an image {name, kind:'image', mimeType, data(base64), thumb(dataURL), size}.
+// OR an image {name, kind:'image', mimeType, data(base64), thumb(dataURL), size}
+// OR a document {name, kind:'document', mimeType, data(base64), size, converting, convertedText}.
 let pendingAttachments = [];
 
 function isTextAttachment(file) {
@@ -39,6 +44,23 @@ function isTextAttachment(file) {
 
 function isImageAttachment(file) {
   return ATTACHMENT_IMAGE_RE.test(file.type || "");
+}
+
+function isDocumentAttachment(file) {
+  return ATTACHMENT_DOC_RE.test(file.type || "") || ATTACHMENT_DOC_EXT.test(file.name || "");
+}
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      const comma = dataUrl.indexOf(",");
+      resolve(comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl);
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
 }
 
 function readFileAsText(file) {
@@ -118,20 +140,34 @@ async function ingestFiles(fileList) {
   if (!files.length) return;
 
   for (const file of files) {
-    const isText = isTextAttachment(file);
+    const isText  = isTextAttachment(file);
     const isImage = isImageAttachment(file);
-    if (!isText && !isImage) {
-      flashStatus(currentLang === "ar" ? "نوع الملف غير مدعوم — نص أو صورة فقط" : "Only text and image files are supported");
+    const isDoc   = isDocumentAttachment(file);
+    if (!isText && !isImage && !isDoc) {
+      flashStatus(currentLang === "ar" ? "نوع الملف غير مدعوم" : "Unsupported file type");
       continue;
     }
     if (pendingAttachments.length >= MAX_ATTACHMENTS) {
       flashStatus(currentLang === "ar" ? `حد أقصى ${MAX_ATTACHMENTS} ملفات` : `Max ${MAX_ATTACHMENTS} attached files`);
       break;
     }
+    if (isDoc && file.size > MAX_DOC_BYTES) {
+      flashStatus(currentLang === "ar" ? "الملف كبير جداً — الحد 20 ميغابايت" : "File too large — 20 MB limit");
+      continue;
+    }
     try {
       if (isImage) {
         const img = await processImage(file);
         pendingAttachments.push({ name: file.name || "image.png", kind: "image", mimeType: img.mimeType, data: img.data, thumb: img.thumb, size: file.size || 0 });
+      } else if (isDoc) {
+        const mimeType = file.type || (file.name.endsWith(".epub") ? "application/epub+zip" : "application/pdf");
+        const base64   = await readFileAsBase64(file);
+        const att = { name: file.name || "document.pdf", kind: "document", mimeType, data: base64, size: file.size || 0, converting: true, convertedText: null };
+        pendingAttachments.push(att);
+        renderAttachmentChips();
+        // Convert server-side immediately so the text is ready when the user sends
+        convertDocumentAttachment(att);
+        continue; // renderAttachmentChips already called above
       } else {
         const text = await readFileAsText(file);
         pendingAttachments.push({ name: file.name || "file.txt", content: text, size: file.size || text.length });
@@ -141,6 +177,28 @@ async function ingestFiles(fileList) {
       console.error("attachment read error:", err);
     }
   }
+}
+
+// Upload a document attachment to /api/upload-file for server-side conversion.
+// Updates att.converting/att.convertedText in-place and re-renders chips.
+async function convertDocumentAttachment(att) {
+  try {
+    const resp = await fetch("/api/upload-file", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ data: att.data, name: att.name, mimeType: att.mimeType }),
+    });
+    const json = await resp.json();
+    att.converting    = false;
+    att.convertedText = json.text || null;
+    att.wordCount     = json.word_count || 0;
+    att.pages         = json.pages || null;
+    if (!json.text) att.error = json.error || "Conversion failed";
+  } catch (e) {
+    att.converting = false;
+    att.error      = e.message;
+  }
+  renderAttachmentChips();
 }
 
 async function handlePaste(e) {
@@ -168,7 +226,20 @@ function renderAttachmentChips() {
 
     const name = document.createElement("span");
     name.className = "attachment-name";
-    name.textContent = att.kind === "image" ? `🖼️ ${att.name}` : `📎 ${att.name}`;
+    if (att.kind === "document") {
+      if (att.converting) {
+        name.textContent = `⏳ ${att.name} — converting…`;
+        chip.classList.add("converting");
+      } else if (att.error) {
+        name.textContent = `❌ ${att.name} — ${att.error}`;
+        chip.classList.add("error");
+      } else {
+        name.textContent = `📄 ${att.name} (${att.wordCount?.toLocaleString() || "?"} words)`;
+        chip.classList.add("ready");
+      }
+    } else {
+      name.textContent = att.kind === "image" ? `🖼️ ${att.name}` : `📎 ${att.name}`;
+    }
     chip.appendChild(name);
 
     const remove = document.createElement("button");
@@ -201,6 +272,17 @@ function packAttachments() {
   return pendingAttachments.map((a) => {
     if (a.kind === "image") {
       return { name: a.name, kind: "image", mimeType: a.mimeType, data: a.data };
+    }
+    if (a.kind === "document") {
+      // Send the converted text (not the binary). If still converting, send a placeholder.
+      const text = a.convertedText || `[Document "${a.name}" — conversion pending or failed]`;
+      return {
+        name: a.name,
+        kind: "document",
+        content: text.length > MAX_ATTACHMENT_CHARS ? text.slice(0, MAX_ATTACHMENT_CHARS) : text,
+        wordCount: a.wordCount || 0,
+        pages: a.pages || null,
+      };
     }
     return {
       name: a.name,

@@ -14,7 +14,8 @@
     "api/loop-attest.js": { "maxDuration": 30 },
     "api/ingest-book.js": { "maxDuration": 300 },
     "api/pdf-to-text.js": { "maxDuration": 300 },
-    "api/convert.js":     { "maxDuration": 300 }
+    "api/convert.js":     { "maxDuration": 300 },
+    "api/upload-file.js": { "maxDuration": 300 }
   },
   "crons": [
     { "path": "/api/cron-summarize", "schedule": "0 2 * * *" },
