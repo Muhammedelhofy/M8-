@@ -89,11 +89,13 @@ async function convertBuffer(buffer, mimeType, name) {
   }
 
   // PDF and images: use Gemini
+  // BLOCK_NONE: historical/academic documents (polar mythology, occultism, etc.)
+  // must not be filtered — we are doing OCR/extraction, not generation.
   const SAFETY = [
-    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" },
-    { category: "HARM_CATEGORY_HARASSMENT",        threshold: "BLOCK_ONLY_HIGH" },
-    { category: "HARM_CATEGORY_HATE_SPEECH",       threshold: "BLOCK_ONLY_HIGH" },
-    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
+    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+    { category: "HARM_CATEGORY_HARASSMENT",        threshold: "BLOCK_NONE" },
+    { category: "HARM_CATEGORY_HATE_SPEECH",       threshold: "BLOCK_NONE" },
+    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
   ];
 
   const apiKey = process.env.GEMINI_API_KEY;
@@ -114,26 +116,30 @@ async function convertBuffer(buffer, mimeType, name) {
     return { text: result.text || "", pages: 1, format: "image" };
   }
 
-  // PDF — upload to Gemini Files API, paginate
-  const PAGE_BATCH = 12;
+  // PDF — upload to Gemini Files API then extract in batches.
+  // PAGE_BATCH=25: ~10 batches for a 247-page book fits in 300s; 12 batches needed 21 calls.
+  const PAGE_BATCH = 25;
   const blob    = new Blob([buffer], { type: "application/pdf" });
   const upload  = await ai.files.upload({ file: blob, config: { mimeType: "application/pdf", displayName: name || "upload.pdf" } });
   const fileUri = upload.uri || upload.file?.uri;
   if (!fileUri) throw new Error("Gemini file upload returned no URI");
 
-  // Probe page count
-  let totalPages = 200;
+  // Probe page count — use 300 as fallback for large books
+  let totalPages = 300;
   try {
     const probe = await ai.models.generateContent({
       model,
       contents: [{ role: "user", parts: [
         { fileData: { mimeType: "application/pdf", fileUri } },
-        { text: "How many pages does this PDF have? Reply with only the integer." },
+        { text: "How many total pages does this document have? Reply with ONLY the number." },
       ]}],
       config: { maxOutputTokens: 10, temperature: 0, safetySettings: SAFETY },
     });
     const m = (probe.text || "").match(/\d+/);
-    if (m) totalPages = parseInt(m[0], 10);
+    if (m) {
+      const n = parseInt(m[0], 10);
+      if (n > 0 && n < 5000) totalPages = n;
+    }
   } catch { /* use fallback */ }
 
   const parts = [];
@@ -145,16 +151,16 @@ async function convertBuffer(buffer, mimeType, name) {
         model,
         contents: [{ role: "user", parts: [
           { fileData: { mimeType: "application/pdf", fileUri } },
-          { text: `Extract ALL text from pages ${start} to ${end}. Output only the extracted text, preserving headings and paragraphs.` },
+          { text: `This is a scanned book PDF. Using OCR, extract ALL visible text from pages ${start} to ${end} exactly as it appears — body text, headings, captions, footnotes. Output only the extracted text, preserving paragraph breaks.` },
         ]}],
-        config: { maxOutputTokens: 8000, temperature: 0, safetySettings: SAFETY },
+        config: { maxOutputTokens: 8192, temperature: 0, safetySettings: SAFETY },
       });
       const chunk = (result.text || "").trim();
       if (chunk.length > 20) parts.push(chunk);
       failures = 0;
     } catch (e) {
       failures++;
-      if (failures >= 3) break;
+      if (failures >= 5) break; // allow more retries before giving up
     }
   }
 
