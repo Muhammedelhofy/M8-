@@ -30,8 +30,8 @@ const ATTACHMENT_IMAGE_RE = /^image\/(png|jpe?g|webp|gif)$/i;
 const MAX_IMAGE_DIM = 1600;
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 // Document attachments: PDF and EPUB — converted server-side via /api/upload-file
-const ATTACHMENT_DOC_RE  = /^application\/(pdf|epub\+zip)$/i;
-const ATTACHMENT_DOC_EXT = /\.(pdf|epub)$/i;
+const ATTACHMENT_DOC_RE  = /^application\/(pdf|epub\+zip|vnd\.openxmlformats-officedocument\.wordprocessingml\.document|msword)$/i;
+const ATTACHMENT_DOC_EXT = /\.(pdf|epub|docx|doc)$/i;
 const MAX_DOC_BYTES      = 20 * 1024 * 1024; // 20 MB ceiling
 // pendingAttachments holds EITHER a text file {name, content, size}
 // OR an image {name, kind:'image', mimeType, data(base64), thumb(dataURL), size}
