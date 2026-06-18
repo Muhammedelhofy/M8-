@@ -116,8 +116,9 @@ async function convertBuffer(buffer, mimeType, name) {
     return { text: result.text || "", pages: 1, format: "image" };
   }
 
-  // PDF — upload to Gemini Files API then extract in batches.
-  // PAGE_BATCH=25: ~10 batches for a 247-page book fits in 300s; 12 batches needed 21 calls.
+  // PDF — upload to Gemini Files API then extract batches IN PARALLEL.
+  // Sequential: 10 batches × ~25s = 250s → exceeds 300s total budget.
+  // Parallel: all batches fire at once → ~25-40s total regardless of page count.
   const PAGE_BATCH = 25;
   const blob    = new Blob([buffer], { type: "application/pdf" });
   const upload  = await ai.files.upload({ file: blob, config: { mimeType: "application/pdf", displayName: name || "upload.pdf" } });
@@ -142,27 +143,31 @@ async function convertBuffer(buffer, mimeType, name) {
     }
   } catch { /* use fallback */ }
 
-  const parts = [];
-  let failures = 0;
+  // Build all batch requests and fire them in parallel
+  const batches = [];
   for (let start = 1; start <= totalPages; start += PAGE_BATCH) {
-    const end = Math.min(start + PAGE_BATCH - 1, totalPages);
-    try {
-      const result = await ai.models.generateContent({
+    batches.push({ start, end: Math.min(start + PAGE_BATCH - 1, totalPages) });
+  }
+
+  const batchResults = await Promise.all(
+    batches.map(({ start, end }) =>
+      ai.models.generateContent({
         model,
         contents: [{ role: "user", parts: [
           { fileData: { mimeType: "application/pdf", fileUri } },
           { text: `This is a scanned book PDF. Using OCR, extract ALL visible text from pages ${start} to ${end} exactly as it appears — body text, headings, captions, footnotes. Output only the extracted text, preserving paragraph breaks.` },
         ]}],
         config: { maxOutputTokens: 8192, temperature: 0, safetySettings: SAFETY },
-      });
-      const chunk = (result.text || "").trim();
-      if (chunk.length > 20) parts.push(chunk);
-      failures = 0;
-    } catch (e) {
-      failures++;
-      if (failures >= 5) break; // allow more retries before giving up
-    }
-  }
+      })
+      .then(r => ({ start, text: (r.text || "").trim() }))
+      .catch(() => ({ start, text: "" }))   // non-fatal: skip failed batch
+    )
+  );
+
+  const parts = batchResults
+    .sort((a, b) => a.start - b.start)
+    .map(r => r.text)
+    .filter(t => t.length > 20);
 
   // Cleanup uploaded file
   try {
