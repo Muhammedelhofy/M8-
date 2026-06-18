@@ -256,6 +256,10 @@ function renderAttachmentChips() {
     UI.attachmentChips.appendChild(chip);
   });
   UI.attachmentChips.classList.toggle("visible", pendingAttachments.length > 0);
+  // Disable send button while any document is still converting
+  const stillConverting = pendingAttachments.some(a => a.kind === "document" && a.converting);
+  UI.sendBtn.disabled = stillConverting;
+  UI.sendBtn.title = stillConverting ? "Wait for document conversion to finish…" : "Send message";
 }
 
 // Briefly show a message in the status line, then restore the normal status.
@@ -403,6 +407,10 @@ function showWelcome() {
 
 function handleSend() {
   const text = UI.textInput.value.trim();
+  if (pendingAttachments.some(a => a.kind === "document" && a.converting)) {
+    flashStatus(currentLang === "ar" ? "انتظر… جارٍ تحويل الملف" : "Please wait — document is still converting…");
+    return;
+  }
   if (text || pendingAttachments.length) sendMessage(text);
 }
 
