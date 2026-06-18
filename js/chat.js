@@ -82,7 +82,33 @@ function appendWithLeanBadges(bubble, text) {
 // The JSON is a small, code-computed {type,title,labels,data,datasetLabel}
 // spec — never produced or seen by the LLM. We strip the marker from the
 // displayed text and render a <canvas> Chart.js chart in its place.
-const M8_CHART_RE = /<!--M8-CHART:(\{[\s\S]*?\})-->/;
+const M8_CHART_RE    = /<!--M8-CHART:(\{[\s\S]*?\})-->/;
+const M8_DOWNLOAD_RE = /<!--M8-DOWNLOAD:(\{[\s\S]*?\})-->/;
+
+// Renders a styled download button for fleet file exports (XLSX / PPTX).
+// spec = { url, filename, label, format } — all code-computed, never LLM.
+function renderM8Download(bubble, spec) {
+  const wrap = document.createElement("div");
+  wrap.className = "m8-download-wrap";
+
+  const isPptx = (spec.format || spec.filename || "").toLowerCase().includes("pptx");
+  const icon   = isPptx
+    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M8 7h3a2 2 0 0 1 0 4H8z"/></svg>`
+    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`;
+
+  const btn = document.createElement("a");
+  btn.href     = spec.url;
+  btn.download = spec.filename || "fleet-report";
+  btn.className = "m8-download-btn";
+  btn.innerHTML = `${icon}<span>${spec.label || "Download Report"}</span>`;
+  btn.addEventListener("click", () => {
+    btn.classList.add("m8-download-btn--clicked");
+    setTimeout(() => btn.classList.remove("m8-download-btn--clicked"), 2000);
+  });
+
+  wrap.appendChild(btn);
+  bubble.appendChild(wrap);
+}
 
 function _ensureChartJs() {
   if (window.Chart) return Promise.resolve();
@@ -134,26 +160,38 @@ function renderM8Chart(bubble, spec) {
     });
 }
 
-// Strips an M8-CHART marker (if present) from `text`, renders the remaining
-// text via appendWithLeanBadges, then renders the chart (if any) below it.
-function appendWithCharts(bubble, text) {
-  const m = M8_CHART_RE.exec(text);
-  let chartSpec = null;
+// Strips M8 marker(s) from text, returns {cleanText, chartSpec, downloadSpec}.
+function _parseM8Markers(text) {
   let cleanText = text;
-  if (m) {
-    cleanText = (text.slice(0, m.index) + text.slice(m.index + m[0].length)).replace(/\s+$/, "");
-    try { chartSpec = JSON.parse(m[1]); } catch (_) { chartSpec = null; }
+  let chartSpec = null;
+  let downloadSpec = null;
+
+  const cm = M8_CHART_RE.exec(cleanText);
+  if (cm) {
+    cleanText = (cleanText.slice(0, cm.index) + cleanText.slice(cm.index + cm[0].length)).replace(/\s+$/, "");
+    try { chartSpec = JSON.parse(cm[1]); } catch (_) {}
   }
-  appendWithLeanBadges(bubble, cleanText);
-  if (chartSpec) renderM8Chart(bubble, chartSpec);
+  const dm = M8_DOWNLOAD_RE.exec(cleanText);
+  if (dm) {
+    cleanText = (cleanText.slice(0, dm.index) + cleanText.slice(dm.index + dm[0].length)).replace(/\s+$/, "");
+    try { downloadSpec = JSON.parse(dm[1]); } catch (_) {}
+  }
+  return { cleanText, chartSpec, downloadSpec };
 }
 
-// For the copy-to-clipboard button: drop the M8-CHART marker so the chart's
-// raw JSON spec never lands on the clipboard, just the spoken/displayed text.
+// Strips M8-CHART / M8-DOWNLOAD markers from `text`, renders the cleaned text
+// via appendWithLeanBadges, then renders chart and/or download button below.
+function appendWithCharts(bubble, text) {
+  const { cleanText, chartSpec, downloadSpec } = _parseM8Markers(text);
+  appendWithLeanBadges(bubble, cleanText);
+  if (chartSpec)    renderM8Chart(bubble, chartSpec);
+  if (downloadSpec) renderM8Download(bubble, downloadSpec);
+}
+
+// For the copy-to-clipboard button: strip all M8 markers so raw JSON never
+// lands on the clipboard, just the spoken/displayed text.
 function stripM8ChartMarker(text) {
-  const m = M8_CHART_RE.exec(text);
-  if (!m) return text;
-  return (text.slice(0, m.index) + text.slice(m.index + m[0].length)).replace(/\s+$/, "");
+  return _parseM8Markers(text).cleanText;
 }
 
 // ── Copy-to-clipboard (small button under every message) ───────────────────
