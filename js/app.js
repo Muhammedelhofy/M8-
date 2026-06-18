@@ -161,11 +161,11 @@ async function ingestFiles(fileList) {
         pendingAttachments.push({ name: file.name || "image.png", kind: "image", mimeType: img.mimeType, data: img.data, thumb: img.thumb, size: file.size || 0 });
       } else if (isDoc) {
         const mimeType = file.type || (file.name.endsWith(".epub") ? "application/epub+zip" : "application/pdf");
-        const base64   = await readFileAsBase64(file);
-        const att = { name: file.name || "document.pdf", kind: "document", mimeType, data: base64, size: file.size || 0, converting: true, convertedText: null };
+        const att = { name: file.name || "document.pdf", kind: "document", mimeType, rawFile: file, size: file.size || 0, converting: true, convertedText: null };
         pendingAttachments.push(att);
         renderAttachmentChips();
-        // Convert server-side immediately so the text is ready when the user sends
+        // Upload directly to Supabase Storage (bypasses Vercel 4.5 MB body limit),
+        // then ask the backend to convert from storage path.
         convertDocumentAttachment(att);
         continue; // renderAttachmentChips already called above
       } else {
@@ -179,16 +179,37 @@ async function ingestFiles(fileList) {
   }
 }
 
-// Upload a document attachment to /api/upload-file for server-side conversion.
-// Updates att.converting/att.convertedText in-place and re-renders chips.
+// Upload a document directly to Supabase Storage (bypasses Vercel body limit),
+// then ask the backend to convert from the storage path.
 async function convertDocumentAttachment(att) {
   try {
-    const resp = await fetch("/api/upload-file", {
+    // Step 1: get a presigned upload URL from the backend
+    const presignResp = await fetch("/api/presign", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data: att.data, name: att.name, mimeType: att.mimeType }),
+      body: JSON.stringify({ name: att.name, mimeType: att.mimeType }),
     });
-    const json = await resp.json();
+    if (!presignResp.ok) {
+      const e = await presignResp.json().catch(() => ({}));
+      throw new Error(e.error || `Presign failed (${presignResp.status})`);
+    }
+    const { uploadUrl, path } = await presignResp.json();
+
+    // Step 2: upload the raw file binary directly to Supabase (no Vercel in the way)
+    const uploadResp = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": att.mimeType || "application/octet-stream" },
+      body: att.rawFile,
+    });
+    if (!uploadResp.ok) throw new Error(`Storage upload failed (${uploadResp.status})`);
+
+    // Step 3: ask the backend to convert from the storage path
+    const convertResp = await fetch("/api/upload-file", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ storagePath: path, name: att.name, mimeType: att.mimeType }),
+    });
+    const json = await convertResp.json();
     att.converting    = false;
     att.convertedText = json.text || null;
     att.wordCount     = json.word_count || 0;
@@ -198,6 +219,8 @@ async function convertDocumentAttachment(att) {
     att.converting = false;
     att.error      = e.message;
   }
+  // Free the raw file reference — no longer needed
+  att.rawFile = null;
   renderAttachmentChips();
 }
 

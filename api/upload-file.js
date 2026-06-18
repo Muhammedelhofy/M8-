@@ -170,14 +170,33 @@ async function convertBuffer(buffer, mimeType, name) {
 module.exports = async (req, res) => {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
 
-  const { data, name, mimeType } = req.body || {};
-  if (!data) return res.status(400).json({ error: "data (base64) is required" });
+  const { data, storagePath, name, mimeType } = req.body || {};
 
   let buffer;
-  try {
-    buffer = Buffer.from(data, "base64");
-  } catch (e) {
-    return res.status(400).json({ error: "Invalid base64 data" });
+
+  if (storagePath) {
+    // File was uploaded directly to Supabase Storage — download it here
+    const { createClient } = require("@supabase/supabase-js");
+    const sb = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_KEY,
+      { auth: { persistSession: false } }
+    );
+    const { data: blob, error } = await sb.storage.from("temp-uploads").download(storagePath);
+    if (error) return res.status(500).json({ error: `Storage download failed: ${error.message}` });
+    const arrayBuf = await blob.arrayBuffer();
+    buffer = Buffer.from(arrayBuf);
+    // Delete temp file — non-fatal if it fails
+    sb.storage.from("temp-uploads").remove([storagePath]).catch(() => {});
+  } else if (data) {
+    // Legacy small-file path: base64-encoded body (≤ 4.5 MB Vercel limit)
+    try {
+      buffer = Buffer.from(data, "base64");
+    } catch (e) {
+      return res.status(400).json({ error: "Invalid base64 data" });
+    }
+  } else {
+    return res.status(400).json({ error: "Either storagePath or data (base64) is required" });
   }
 
   if (buffer.length < 100) {
