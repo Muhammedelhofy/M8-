@@ -116,10 +116,11 @@ async function convertBuffer(buffer, mimeType, name) {
     return { text: result.text || "", pages: 1, format: "image" };
   }
 
-  // PDF — upload to Gemini Files API then extract batches IN PARALLEL.
-  // Sequential: 10 batches × ~25s = 250s → exceeds 300s total budget.
-  // Parallel: all batches fire at once → ~25-40s total regardless of page count.
-  const PAGE_BATCH = 25;
+  // PDF — upload to Gemini Files API then extract in parallel batches.
+  // PAGE_BATCH = 8: 8 pages ≈ 2,500–3,500 words ≈ 3,500–5,000 tokens,
+  // well within the 8,192 output-token limit. 25 pages was too large —
+  // Gemini would truncate mid-sentence and emit an AI-generated summary note.
+  const PAGE_BATCH = 8;
   const blob    = new Blob([buffer], { type: "application/pdf" });
   const upload  = await ai.files.upload({ file: blob, config: { mimeType: "application/pdf", displayName: name || "upload.pdf" } });
   const fileUri = upload.uri || upload.file?.uri;
@@ -132,7 +133,7 @@ async function convertBuffer(buffer, mimeType, name) {
       model,
       contents: [{ role: "user", parts: [
         { fileData: { mimeType: "application/pdf", fileUri } },
-        { text: "How many total pages does this document have? Reply with ONLY the number." },
+        { text: "How many total pages does this document have? Reply with ONLY the integer number, nothing else." },
       ]}],
       config: { maxOutputTokens: 10, temperature: 0, safetySettings: SAFETY },
     });
@@ -143,31 +144,58 @@ async function convertBuffer(buffer, mimeType, name) {
     }
   } catch { /* use fallback */ }
 
-  // Build all batch requests and fire them in parallel
+  // Build all batch requests and fire them in parallel.
+  // Concurrent Gemini calls are rate-limited to 10 at a time to avoid 429s.
+  const CONCURRENCY = 10;
   const batches = [];
   for (let start = 1; start <= totalPages; start += PAGE_BATCH) {
     batches.push({ start, end: Math.min(start + PAGE_BATCH - 1, totalPages) });
   }
 
-  const batchResults = await Promise.all(
-    batches.map(({ start, end }) =>
-      ai.models.generateContent({
+  // Regex to detect AI-generated continuation notes (not actual PDF text)
+  const AI_NOTE_RE = /^\[(?:document continues|note:|remaining chapters|this is page|truncated|the pdf|pages \d)/i;
+
+  async function extractBatch(start, end) {
+    try {
+      const r = await ai.models.generateContent({
         model,
         contents: [{ role: "user", parts: [
           { fileData: { mimeType: "application/pdf", fileUri } },
-          { text: `This is a scanned book PDF. Using OCR, extract ALL visible text from pages ${start} to ${end} exactly as it appears — body text, headings, captions, footnotes. Output only the extracted text, preserving paragraph breaks.` },
+          {
+            text:
+              `Extract the raw text from pages ${start} to ${end} of this PDF document.\n` +
+              `Rules (follow exactly):\n` +
+              `- Output ONLY the verbatim text as it appears on those pages.\n` +
+              `- Preserve chapter headings and paragraph breaks.\n` +
+              `- Do NOT add any notes, comments, summaries, or explanations.\n` +
+              `- Do NOT write things like "[Document continues]", "[End of extraction]", "[Note: ...]", or any brackets.\n` +
+              `- If a page has no readable text, output nothing for that page and move on.\n` +
+              `- Stop when you have extracted pages ${end}. Do not go beyond page ${end}.`,
+          },
         ]}],
         config: { maxOutputTokens: 8192, temperature: 0, safetySettings: SAFETY },
-      })
-      .then(r => ({ start, text: (r.text || "").trim() }))
-      .catch(() => ({ start, text: "" }))   // non-fatal: skip failed batch
-    )
-  );
+      });
+      const text = (r.text || "").trim();
+      // Reject AI-generated notes masquerading as extracted text
+      if (AI_NOTE_RE.test(text)) return { start, text: "" };
+      return { start, text };
+    } catch {
+      return { start, text: "" };
+    }
+  }
+
+  // Process in chunks of CONCURRENCY to avoid rate limits
+  const batchResults = [];
+  for (let i = 0; i < batches.length; i += CONCURRENCY) {
+    const chunk = batches.slice(i, i + CONCURRENCY);
+    const results = await Promise.all(chunk.map(({ start, end }) => extractBatch(start, end)));
+    batchResults.push(...results);
+  }
 
   const parts = batchResults
     .sort((a, b) => a.start - b.start)
     .map(r => r.text)
-    .filter(t => t.length > 20);
+    .filter(t => t.length > 10);
 
   // Cleanup uploaded file
   try {
