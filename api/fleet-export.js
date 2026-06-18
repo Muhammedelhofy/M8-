@@ -111,16 +111,30 @@ function buildReportData(entries) {
     }
   }
 
-  // Inconsistency detection
-  const byName = new Map();
-  for (const i of monthIndices) {
+  // Inconsistency detection + daily-per-driver nets for the grid sheet
+  const byName = new Map(); // name → [net per day in chronological order]
+  const dailyGrid = [];     // [{dayLabel, dayNum, netByDriver: Map<name,net>}] sorted
+
+  // Sort monthIndices by date so the grid columns are chronological
+  const sortedDayIdx = [...monthIndices].sort((a, b) => {
+    return ymdKey(periodYMD(entries[a].period)) - ymdKey(periodYMD(entries[b].period));
+  });
+
+  for (const i of sortedDayIdx) {
+    const p = periodYMD(entries[i].period);
+    const dayLabel = p ? `${p.d} ${MONTH_ABBR[p.m]}` : "?";
+    const dayNum   = p ? p.d : 0;
+    const netByDriver = new Map();
     for (const d of (entries[i].drivers || [])) {
       if (!d.isActive || !d.name) continue;
       const nm = d.name.trim();
+      netByDriver.set(nm, _r2(d.netEarnings || 0));
       if (!byName.has(nm)) byName.set(nm, []);
       byName.get(nm).push(d.netEarnings || 0);
     }
+    dailyGrid.push({ dayLabel, dayNum, netByDriver });
   }
+
   const inconsistent = [];
   for (const [name, dailyNets] of byName.entries()) {
     if (dailyNets.length < 3) continue;
@@ -132,6 +146,21 @@ function buildReportData(entries) {
   }
   inconsistent.sort((a, b) => b.cv - a.cv);
 
+  // Trend: last-7-day avg vs first-7-day avg per driver (needs ≥10 days of data)
+  const trendByName = new Map();
+  if (dailyGrid.length >= 10) {
+    const first7 = dailyGrid.slice(0, 7);
+    const last7  = dailyGrid.slice(-7);
+    for (const [nm] of byName.entries()) {
+      const earlyNets = first7.map((d) => d.netByDriver.get(nm) || 0);
+      const lateNets  = last7.map((d)  => d.netByDriver.get(nm) || 0);
+      const earlyAvg  = earlyNets.reduce((s, v) => s + v, 0) / earlyNets.length;
+      const lateAvg   = lateNets.reduce((s, v)  => s + v, 0) / lateNets.length;
+      const delta     = earlyAvg > 0 ? Math.round((lateAvg - earlyAvg) / earlyAvg * 100) : 0;
+      trendByName.set(nm, { earlyAvg: _r2(earlyAvg), lateAvg: _r2(lateAvg), delta });
+    }
+  }
+
   const generatedAt = new Date().toLocaleString("en-US", { timeZone: "Asia/Riyadh", dateStyle: "medium", timeStyle: "short" });
 
   return {
@@ -139,6 +168,7 @@ function buildReportData(entries) {
     totalNet, avgPerDriver, top3Pct, top3Net,
     rankings, darkDrivers: darkDrivers.slice(0, 5),
     inconsistent: inconsistent.slice(0, 3),
+    dailyGrid, trendByName,
     generatedAt, target: TARGET,
   };
 }
@@ -273,6 +303,197 @@ async function generateXLSX(data) {
       ...data.rankings.filter((d) => d.status === "CLOSE").map((d) => [d.name, `${fmtSAR(d.net)} SAR MTD · projected ${fmtSAR(d.projected)} SAR · gap ${fmtSAR(data.target - d.net)} SAR`]),
     ]);
   }
+
+  // ── Sheet 3: Fleet Summary ─────────────────────────────────────────────────
+  const ws3 = wb.addWorksheet("Fleet Summary");
+  ws3.getColumn(1).width = 32;
+  ws3.getColumn(2).width = 22;
+
+  const addKpi = (label, value, note) => {
+    const r = ws3.addRow([label, value, note || ""]);
+    r.height = 20;
+    r.getCell(1).font   = { color: { argb: "FF94A3B8" }, size: 11 };
+    r.getCell(2).font   = { bold: true, color: WHITE, size: 13 };
+    r.getCell(3).font   = { italic: true, color: { argb: "FF94A3B8" }, size: 10 };
+    r.getCell(2).numFmt = "#,##0.00";
+    r.eachCell((c) => { c.border = CELL_BDR; c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF0D1B2A" } }; });
+  };
+  const addKpiInt = (label, value, note) => {
+    const r = ws3.addRow([label, value, note || ""]);
+    r.height = 20;
+    r.getCell(1).font   = { color: { argb: "FF94A3B8" }, size: 11 };
+    r.getCell(2).font   = { bold: true, color: WHITE, size: 13 };
+    r.getCell(3).font   = { italic: true, color: { argb: "FF94A3B8" }, size: 10 };
+    r.eachCell((c) => { c.border = CELL_BDR; c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF0D1B2A" } }; });
+  };
+
+  // Title
+  ws3.mergeCells("A1:C1");
+  const s3Title = ws3.getCell("A1");
+  s3Title.value = `Fleet Summary — ${data.monthLabel} (as of ${data.generatedAt})`;
+  s3Title.font  = { bold: true, size: 14, color: WHITE };
+  s3Title.fill  = HDR_FILL;
+  s3Title.alignment = { horizontal: "center" };
+  ws3.getRow(1).height = 26;
+  ws3.addRow([]);
+
+  addKpi("Total Fleet Net (SAR)", data.totalNet, `${data.rankings.length} active drivers`);
+  addKpi("Average per Driver (SAR)", data.avgPerDriver, "MTD net ÷ active drivers");
+  addKpi("Top 3 Drivers — combined (SAR)", data.top3Net, `${data.top3Pct}% of total fleet net`);
+  ws3.addRow([]);
+  addKpiInt("Days Elapsed", data.daysElapsed, `of ${data.daysInMonth} in ${data.monthLabel}`);
+  addKpiInt("Days Remaining", data.daysRemaining, "calendar days left this month");
+  ws3.addRow([]);
+  addKpiInt("Drivers Exceeding Target (≥ 5,500 SAR proj.)", data.rankings.filter((d) => d.status === "EXCEEDING").length);
+  addKpiInt("Drivers On Pace (≥ 5,000 SAR proj.)",          data.rankings.filter((d) => d.status === "ON TRACK").length);
+  addKpiInt("Drivers Close (≥ 4,000 SAR proj.)",            data.rankings.filter((d) => d.status === "CLOSE").length);
+  addKpiInt("Drivers Off Pace (< 4,000 SAR proj.)",         data.rankings.filter((d) => d.status === "OFF PACE").length);
+  ws3.addRow([]);
+  addKpiInt("Dark Drivers (gone ≥ 5 days)",           data.darkDrivers.length);
+  addKpiInt("Inconsistent Earners (high variance)",   data.inconsistent.length);
+  ws3.getColumn(3).width = 34;
+
+  // ── Sheet 4: Daily Breakdown ───────────────────────────────────────────────
+  if (data.dailyGrid.length) {
+    const ws4 = wb.addWorksheet("Daily Breakdown");
+    const days = data.dailyGrid;
+    // Drivers sorted by MTD rank
+    const driverOrder = data.rankings.map((d) => d.name);
+
+    // Header row: Driver | Day 1 | Day 2 | ... | MTD Total
+    const hdrValues = ["Driver", ...days.map((d) => d.dayLabel), "MTD Total"];
+    const hRow = ws4.addRow(hdrValues);
+    hRow.height = 22;
+    hRow.eachCell((c) => {
+      c.fill = HDR_FILL; c.font = HDR_FONT; c.border = CELL_BDR;
+      c.alignment = { horizontal: "center", vertical: "middle" };
+    });
+    hRow.getCell(1).alignment = { horizontal: "left", vertical: "middle" };
+
+    // Column widths
+    ws4.getColumn(1).width = 26;
+    for (let ci = 2; ci <= days.length + 2; ci++) ws4.getColumn(ci).width = 9;
+
+    // High/Low cell color thresholds
+    const HIGH_FILL = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1A4A2A" } }; // dark green
+    const LOW_FILL  = { type: "pattern", pattern: "solid", fgColor: { argb: "FF4A1A1A" } }; // dark red
+    const MID_FILL  = { type: "pattern", pattern: "solid", fgColor: { argb: "FF0D1B2A" } }; // base bg
+    const OFF_FILL  = { type: "pattern", pattern: "solid", fgColor: { argb: "FF111827" } }; // absent
+
+    for (const driverName of driverOrder) {
+      const rowVals = [driverName];
+      let mtdTotal = 0;
+      for (const day of days) {
+        const v = day.netByDriver.get(driverName);
+        rowVals.push(v != null ? v : "");
+        if (v != null) mtdTotal += v;
+      }
+      rowVals.push(_r2(mtdTotal));
+
+      const dr = ws4.addRow(rowVals);
+      dr.height = 18;
+      dr.getCell(1).font      = { color: WHITE, size: 11 };
+      dr.getCell(1).border    = CELL_BDR;
+      dr.getCell(1).alignment = { horizontal: "left" };
+      // Last cell = MTD total
+      const totCell = dr.getCell(days.length + 2);
+      totCell.font   = { bold: true, color: WHITE, size: 11 };
+      totCell.numFmt = "#,##0.00";
+      totCell.fill   = HDR_FILL;
+      totCell.border = CELL_BDR;
+      totCell.alignment = { horizontal: "center" };
+
+      for (let ci = 2; ci <= days.length + 1; ci++) {
+        const cell = dr.getCell(ci);
+        const v    = rowVals[ci - 1];
+        cell.border    = CELL_BDR;
+        cell.alignment = { horizontal: "center" };
+        if (v === "" || v == null) {
+          cell.fill = OFF_FILL;
+        } else {
+          cell.numFmt = "#,##0.00";
+          cell.font   = { color: WHITE, size: 10 };
+          cell.fill   = v >= 300 ? HIGH_FILL : v < 150 ? LOW_FILL : MID_FILL;
+        }
+      }
+    }
+
+    // Totals row
+    const totVals = ["DAILY TOTAL"];
+    for (const day of days) {
+      let s = 0;
+      day.netByDriver.forEach((v) => { s += v; });
+      totVals.push(_r2(s));
+    }
+    totVals.push(_r2(data.totalNet));
+    const totRow = ws4.addRow(totVals);
+    totRow.height = 20;
+    totRow.eachCell((c, ci) => {
+      c.fill   = HDR_FILL;
+      c.font   = { bold: true, color: WHITE, size: 10 };
+      c.border = CELL_BDR;
+      c.alignment = { horizontal: ci === 1 ? "left" : "center" };
+      if (ci > 1) c.numFmt = "#,##0.00";
+    });
+  }
+
+  // ── Sheet 5: Projections ───────────────────────────────────────────────────
+  const ws5 = wb.addWorksheet("Projections");
+  const TREND_GREEN = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1A4A2A" } };
+  const TREND_RED   = { type: "pattern", pattern: "solid", fgColor: { argb: "FF4A1A1A" } };
+  const TREND_FLAT  = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1E2D40" } };
+
+  const p5Hdr = ws5.addRow(["#", "Driver", "MTD Net", "Daily Avg", "Required Daily*", "Projected EOM", "Target Gap", "Status", "7d Trend", "Trend %"]);
+  p5Hdr.height = 22;
+  p5Hdr.eachCell((c) => { c.fill = HDR_FILL; c.font = HDR_FONT; c.border = CELL_BDR; c.alignment = { horizontal: "center", vertical: "middle" }; });
+  p5Hdr.getCell(2).alignment = { horizontal: "left", vertical: "middle" };
+
+  ws5.getColumn(1).width  = 5;
+  ws5.getColumn(2).width  = 26;
+  ws5.getColumn(3).width  = 14;
+  ws5.getColumn(4).width  = 12;
+  ws5.getColumn(5).width  = 16;
+  ws5.getColumn(6).width  = 14;
+  ws5.getColumn(7).width  = 12;
+  ws5.getColumn(8).width  = 12;
+  ws5.getColumn(9).width  = 12;
+  ws5.getColumn(10).width = 10;
+
+  data.rankings.forEach((d, i) => {
+    const gap      = data.target - d.net;
+    const required = gap > 0 && data.daysRemaining > 0 ? _r2(gap / data.daysRemaining) : 0;
+    const trend    = data.trendByName.get(d.name);
+    const trendDir = trend ? (trend.delta >= 5 ? "▲ RISING" : trend.delta <= -5 ? "▼ FALLING" : "→ FLAT") : "—";
+    const trendPct = trend ? `${trend.delta > 0 ? "+" : ""}${trend.delta}%` : "—";
+    const trendFill = trend ? (trend.delta >= 5 ? TREND_GREEN : trend.delta <= -5 ? TREND_RED : TREND_FLAT) : TREND_FLAT;
+    const sc = STATUS_FILL[d.status] || STATUS_FILL["OFF PACE"];
+
+    const pr = ws5.addRow([
+      i + 1, d.name, d.net, d.calAvgPerDay,
+      required > 0 ? required : "—",
+      d.projected, gap > 0 ? gap : 0,
+      d.status, trendDir, trendPct,
+    ]);
+    pr.height = 18;
+    pr.eachCell((c, ci) => {
+      c.border = CELL_BDR;
+      c.alignment = { horizontal: ci === 2 ? "left" : "center", vertical: "middle" };
+      if ([3,4,5,6,7].includes(ci) && typeof c.value === "number") c.numFmt = "#,##0.00";
+    });
+    pr.getCell(2).font  = { color: WHITE };
+    pr.getCell(8).fill  = sc;
+    pr.getCell(8).font  = { bold: true, color: WHITE, size: 10 };
+    pr.getCell(9).fill  = trendFill;
+    pr.getCell(9).font  = { bold: true, color: WHITE, size: 10 };
+    pr.getCell(10).fill = trendFill;
+    pr.getCell(10).font = { color: WHITE, size: 10 };
+  });
+
+  // Footnote
+  ws5.addRow([]);
+  const fnRow = ws5.addRow(["* Required Daily = SAR needed per remaining day to hit 5,000 SAR target"]);
+  fnRow.getCell(1).font = { italic: true, color: { argb: "FF94A3B8" }, size: 10 };
+  ws5.mergeCells(`A${fnRow.number}:J${fnRow.number}`);
 
   return wb.xlsx.writeBuffer();
 }

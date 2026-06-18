@@ -385,20 +385,18 @@
     <div class="evo-col">
       <h4>Working on now</h4>
       <ul>
-        <li><b>Depth arc — DONE</b>, Builds 51–57 complete + live-verified (4/4 Lean leaves, multi-level DAG) <span class="tg">✓ Build-57</span></li>
+        <li><b>Phase A — Fleet insight engine — LIVE</b>: pace flags, dark drivers, inconsistency, concentration, recommended actions in every fleet turn <span class="tg">✓ Build-59</span></li>
+        <li><b>Phase B — File exports — LIVE</b>: Excel (5 sheets: Rankings, Insight Flags, Fleet Summary, Daily Breakdown, Projections) + PPTX fleet deck on demand; reply-to-message UX <span class="tg">✓ Build-60b</span></li>
         <li><b>Knowledge ingestion — LIVE</b>, books (PDF/EPUB) → M8's memory via Gemini OCR + chapter pipeline <span class="tg">✓ Build-58</span></li>
-        <li><b>Universal converter — LIVE</b>, PDF/EPUB/image/HTML → text in chat or via /api/convert <span class="tg">✓ Build-59</span></li>
-        <li><b>Chat file attachment — LIVE</b>, PDF/EPUB chips with ⏳→📄 conversion, Supabase Storage bypass <span class="tg">✓ Build-60</span></li>
-        <li><b>Fleet query engine — LIVE (partial)</b> — Build-58a→58d: paceTargetRef + driverMTDRankings spine, LLM classifier fallback, real chart renders with correct driver data. <span class="tg">✓ Build-58d</span> <span style="color:#ff7043;font-size:10px;font-weight:700;">⚠️ PAIN POINT — see below</span></li>
       </ul>
     </div>
     <div class="evo-col">
       <h4>Next — in order</h4>
       <ul>
-        <li><b>1 · Fleet text ↔ spine disconnect</b> — M8's text reply is still sometimes wrong even when the deterministic chart is correct; needs deeper fix (see pain point)</li>
-        <li><b>2 · Arktos book ingestion</b> — ingest Joscelyn Godwin's Arktos into M8's speculative knowledge graph</li>
-        <li><b>3 · Track-A daily-usefulness</b> — scope what "daily useful" means (fleet summaries? alerts? business loop?)</li>
-        <li><b>4 · Command Center v2</b> — richer ledger, auto-ingested signals</li>
+        <li><b>Phase B2 — Parametric PPTX types</b> — M8 asks intent (Analysis / Future Plan / Board / Operational) before generating; different slide structure + graph slides per type; audience-aware layout. <span style="color:#fbbf24;font-size:10px;font-weight:700;">PLANNED</span></li>
+        <li><b>Phase C — Multi-book knowledge graph</b> — concept extraction → graph nodes with book/chapter provenance → cross-book pattern query (convergence, contradiction, gaps) <span style="color:#fbbf24;font-size:10px;font-weight:700;">PLANNED</span></li>
+        <li><b>Track-A daily-usefulness</b> — scope what "daily useful" means (fleet summaries? alerts? business loop?)</li>
+        <li><b>Command Center v2</b> — richer ledger, auto-ingested signals</li>
       </ul>
     </div>
     <div class="evo-col">
@@ -406,7 +404,7 @@
       <ul>
         <li>Persist per-check fails + replies into the Supabase attestation (telemetry blind-spot)</li>
         <li>Observability dashboard + resilience playbook (incl. nightly quota/backoff)</li>
-        <li>Per-check telemetry · one literature seed reads "empirical" (#11)</li>
+        <li>P&amp;L analysis — requires driver cost profiles (salary/fleet-cut/rent) to be configured in the fleet dashboard first</li>
         <li>Memory that <b>evolves</b> — learn from past failures (a later compounding win)</li>
       </ul>
     </div>
