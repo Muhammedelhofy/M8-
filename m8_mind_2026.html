@@ -2,7 +2,7 @@
 <!-- CANONICAL M8 DIAGRAM (promoted 2026-06-17, Session-44). This "M8 Mind" view is now the single
      source-of-truth visual — the old dense architecture diagram was archived to archive/diagrams/.
      Update THIS file on every ship: bump the Build/Session in the footer + this note, flip status/%
-     cells, do NOT regenerate the structure. Currently: Session-45 / Build-60. -->
+     cells, do NOT regenerate the structure. Currently: Session-46 / Build-58d. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -389,14 +389,16 @@
         <li><b>Knowledge ingestion — LIVE</b>, books (PDF/EPUB) → M8's memory via Gemini OCR + chapter pipeline <span class="tg">✓ Build-58</span></li>
         <li><b>Universal converter — LIVE</b>, PDF/EPUB/image/HTML → text in chat or via /api/convert <span class="tg">✓ Build-59</span></li>
         <li><b>Chat file attachment — LIVE</b>, PDF/EPUB chips with ⏳→📄 conversion, Supabase Storage bypass <span class="tg">✓ Build-60</span></li>
+        <li><b>Fleet query engine — LIVE (partial)</b> — Build-58a→58d: paceTargetRef + driverMTDRankings spine, LLM classifier fallback, real chart renders with correct driver data. <span class="tg">✓ Build-58d</span> <span style="color:#ff7043;font-size:10px;font-weight:700;">⚠️ PAIN POINT — see below</span></li>
       </ul>
     </div>
     <div class="evo-col">
       <h4>Next — in order</h4>
       <ul>
-        <li><b>1 · Arktos book ingestion</b> — once OCR is confirmed working, ingest Joscelyn Godwin's Arktos into M8's speculative knowledge graph</li>
-        <li><b>2 · Track-A daily-usefulness</b> — scope what "daily useful" means (fleet summaries? alerts? business loop?)</li>
-        <li><b>3 · Command Center v2</b> — richer ledger, auto-ingested signals</li>
+        <li><b>1 · Fleet text ↔ spine disconnect</b> — M8's text reply is still sometimes wrong even when the deterministic chart is correct; needs deeper fix (see pain point)</li>
+        <li><b>2 · Arktos book ingestion</b> — ingest Joscelyn Godwin's Arktos into M8's speculative knowledge graph</li>
+        <li><b>3 · Track-A daily-usefulness</b> — scope what "daily useful" means (fleet summaries? alerts? business loop?)</li>
+        <li><b>4 · Command Center v2</b> — richer ledger, auto-ingested signals</li>
       </ul>
     </div>
     <div class="evo-col">
@@ -429,7 +431,26 @@
       <tr><td><b>Twin prime</b></td><td>are prime pairs infinite?</td><td>sieve / prime-gap machinery — none yet</td><td class="st none">not started</td></tr>
       <tr><td><b>Navier–Stokes</b></td><td>do fluid equations stay smooth?</td><td>PDE capability — far out of scope now</td><td class="st none">not started</td></tr>
     </table>
-    <div class="note">Honest: a real (if early) angle on two problems; no attack path yet on the famous three.</div>
+    </table>
+    <div style="margin-top:18px;border:1.5px solid #ff7043;border-radius:12px;padding:14px 18px;background:rgba(255,112,67,0.06);">
+      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#ff7043;font-weight:700;margin-bottom:8px;">⚠️ Track-A Pain Point — Session-46 — needs deeper investigation</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <tr><th style="text-align:left;padding:4px 8px;color:#ff9a78;">Area</th><th style="text-align:left;padding:4px 8px;color:#ff9a78;">What's broken</th><th style="text-align:left;padding:4px 8px;color:#ff9a78;">Root cause (current theory)</th><th style="text-align:left;padding:4px 8px;color:#ff9a78;">What to dig</th></tr>
+        <tr style="border-top:1px solid rgba(255,112,67,0.2);">
+          <td style="padding:6px 8px;"><b>Fleet text ↔ spine disconnect</b></td>
+          <td style="padding:6px 8px;">Chart renders real driver data correctly (deterministic spine works). M8's <em>text</em> simultaneously says "I cannot generate a visual" + draws ASCII bars + sometimes fabricates driver names — as if the LLM never saw the FLEET DATA block that produced the chart.</td>
+          <td style="padding:6px 8px;">Two possibilities: (a) FLEET DATA block IS injected but M8 ignores it when base-system beliefs conflict ("I can't generate graphics"); (b) deployment timing — 03:27 query hit old code mid-rollout while 03:28 hit new code. Build-58d adds explicit "CHART ALREADY RENDERED — do NOT say you cannot generate a visual" instruction. Unverified post-fix.</td>
+          <td style="padding:6px 8px;">Re-test both queries after Build-58d deploys. If still wrong: add server-side logging to confirm FLEET DATA block is injected; check if M8's base model belief overrides the injected instruction; consider moving chart notice to a higher-priority position in the system prompt.</td>
+        </tr>
+        <tr style="border-top:1px solid rgba(255,112,67,0.2);">
+          <td style="padding:6px 8px;"><b>Semantic confusion: "Bolt fleet" vs "internal system"</b></td>
+          <td style="padding:6px 8px;">M8 says "I don't have access to your <em>Bolt fleet's</em> specific data — I can only use my <em>internal system</em>" — treating them as two different sources when they are the same Supabase row synced from Bolt.</td>
+          <td style="padding:6px 8px;">Base model training: M8 knows "Bolt" as the external app and has no trained association between Bolt and its own Supabase data. The system prompt didn't previously clarify the identity. Build-58d adds one line: "FLEET DATA IS synced from Bolt — there is no separate Bolt fleet."</td>
+          <td style="padding:6px 8px;">Verify after Build-58d: does M8 now say "your Bolt fleet" correctly? If confusion persists, add a persona-level statement in M8_SYSTEM_PROMPT that names the data source explicitly in the opening character paragraph.</td>
+        </tr>
+      </table>
+    </div>
+    <div class="note" style="margin-top:10px;">Honest: a real (if early) angle on two problems; no attack path yet on the famous three.</div>
   </div>
 
   <div class="legend">
@@ -445,7 +466,7 @@
 
   <div class="footer">
     Plain-language map of <b>The M8 Mind</b> · drawn from NORTH_STAR.md, the live build list & HONESTY_TRACK_PLAN.md ·
-    status as of <b>Session-45 · Build-60</b> (2026-06-18) · priorities set with the AI Council (GPT · Gemini · Grok · Manus).<br>
+    status as of <b>Session-46 · Build-58d</b> (2026-06-18) · priorities set with the AI Council (GPT · Gemini · Grok · Manus).<br>
     The one claim we never make: that we’re already there.
   </div>
 
