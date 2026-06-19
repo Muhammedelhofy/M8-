@@ -87,6 +87,8 @@ const M8_DOWNLOAD_RE = /<!--M8-DOWNLOAD:(\{[\s\S]*?\})-->/;
 
 // Renders a styled download button for fleet file exports (XLSX / PPTX).
 // spec = { url, filename, label, format } — all code-computed, never LLM.
+// Uses fetch() so HTTP errors are surfaced to the user instead of silently
+// downloading a JSON error body named "fleet-report.xlsx".
 function renderM8Download(bubble, spec) {
   const wrap = document.createElement("div");
   wrap.className = "m8-download-wrap";
@@ -96,17 +98,56 @@ function renderM8Download(bubble, spec) {
     ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M8 7h3a2 2 0 0 1 0 4H8z"/></svg>`
     : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`;
 
-  const btn = document.createElement("a");
-  btn.href     = spec.url;
-  btn.download = spec.filename || "fleet-report";
+  const SPINNER = `<svg class="m8-download-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10" stroke-opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/></svg>`;
+
+  const btn = document.createElement("button");
+  btn.type      = "button";
   btn.className = "m8-download-btn";
   btn.innerHTML = `${icon}<span>${spec.label || "Download Report"}</span>`;
+
+  const errEl = document.createElement("div");
+  errEl.className = "m8-download-error";
+  errEl.hidden = true;
+
   btn.addEventListener("click", () => {
-    btn.classList.add("m8-download-btn--clicked");
-    setTimeout(() => btn.classList.remove("m8-download-btn--clicked"), 2000);
+    if (btn.disabled) return;
+    btn.disabled  = true;
+    btn.innerHTML = `${SPINNER}<span>Generating…</span>`;
+    errEl.hidden  = true;
+
+    fetch(spec.url)
+      .then((res) => {
+        if (!res.ok) {
+          return res.json()
+            .catch(() => ({ error: `Export failed (HTTP ${res.status})` }))
+            .then((body) => Promise.reject(new Error(body.error || `Export failed (HTTP ${res.status})`)));
+        }
+        return res.blob();
+      })
+      .then((blob) => {
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href     = objectUrl;
+        a.download = spec.filename || "fleet-report";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
+        btn.disabled  = false;
+        btn.innerHTML = `${icon}<span>${spec.label || "Download Report"}</span>`;
+        btn.classList.add("m8-download-btn--clicked");
+        setTimeout(() => btn.classList.remove("m8-download-btn--clicked"), 2000);
+      })
+      .catch((err) => {
+        btn.disabled  = false;
+        btn.innerHTML = `${icon}<span>${spec.label || "Download Report"}</span>`;
+        errEl.textContent = err.message || "Download failed — please try again.";
+        errEl.hidden = false;
+      });
   });
 
   wrap.appendChild(btn);
+  wrap.appendChild(errEl);
   bubble.appendChild(wrap);
 }
 

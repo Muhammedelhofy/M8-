@@ -468,6 +468,22 @@ html, body {
 .m8-download-btn svg {
   flex-shrink: 0;
 }
+.m8-download-btn:disabled {
+  opacity: 0.75;
+  cursor: default;
+}
+.m8-download-spinner {
+  flex-shrink: 0;
+  animation: m8-spin 0.9s linear infinite;
+}
+@keyframes m8-spin {
+  to { transform: rotate(360deg); }
+}
+.m8-download-error {
+  margin-top: 7px;
+  font-size: 12px;
+  color: #f87171;
+}
 
 /* Fleet earnings chart (Build-31) */
 .m8-chart-wrap {
