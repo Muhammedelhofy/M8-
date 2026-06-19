@@ -121,19 +121,29 @@ results.splitPct = String(packet.splitPct); // 0.5
 console.log(JSON.stringify(results));
 '@
 
-$tmpJs = "$env:TEMP\p1_bonus_test.js"
+$tmpJs = ".\p1_bonus_test_tmp.js"
 $js | Out-File -FilePath $tmpJs -Encoding utf8 -NoNewline
 
-$raw = node $tmpJs 2>&1
-if ($LASTEXITCODE -ne 0) {
-  Write-Host "FATAL: node exited $LASTEXITCODE"
+# Locate node: PATH first, then Kimi bundled runtime
+$_nodeCmd = Get-Command node -ErrorAction SilentlyContinue
+if ($_nodeCmd) { $nodeBin = $_nodeCmd.Source } else { $nodeBin = "$env:LOCALAPPDATA\Programs\kimi-desktop\resources\resources\runtime\node.exe" }
+if (-not (Test-Path $nodeBin)) {
+  Write-Host "FATAL: node not found. Add Node.js to PATH or install it from nodejs.org."
+  exit 1
+}
+
+$raw = & $nodeBin $tmpJs 2>&1
+$exitCode = $LASTEXITCODE
+Remove-Item $tmpJs -ErrorAction SilentlyContinue
+if ($exitCode -ne 0) {
+  Write-Host "FATAL: node exited $exitCode"
   Write-Host $raw
   exit 1
 }
 $r = $raw | ConvertFrom-Json
 
 Write-Host ""
-Write-Host "── bonusFor ──────────────────────────────────────────"
+Write-Host "-- bonusFor --------------------------------------------------"
 T "bf(0)    => 0/0/null"              $r.bf0    "0,0,null"
 T "bf(3999) => 0/0/null"              $r.bf3999 "0,0,null"
 T "bf(4000) => 1500/750/4000"         $r.bf4000 "1500,750,4000"
@@ -142,49 +152,49 @@ T "bf(5000) => 2000/1000/5000"        $r.bf5000 "2000,1000,5000"
 T "bf(5999) => 2000/1000/5000"        $r.bf5999 "2000,1000,5000"
 T "bf(6000) => 2500/1250/6000"        $r.bf6000 "2500,1250,6000"
 T "bf(7500) => 2500/1250/6000"        $r.bf7500 "2500,1250,6000"
-T "bf custom 60% split @4500"         $r.bfCustom "1000,600,4000"
+T "bf custom 60pct split @4500"       $r.bfCustom "1000,600,4000"
 
 Write-Host ""
-Write-Host "── bonusGapFor ───────────────────────────────────────"
+Write-Host "-- bonusGapFor -----------------------------------------------"
 T "bg(0)    => 4000 sar, 750, T4"     $r.bg0    "4000,750,4000"
 T "bg(3999) => 1 sar, 750, T4"        $r.bg3999 "1,750,4000"
-T "bg(4000) => 1000 sar, 1000, T5"   $r.bg4000 "1000,1000,5000"
-T "bg(4500) => 500 sar, 1000, T5"    $r.bg4500 "500,1000,5000"
-T "bg(5000) => 1000 sar, 1250, T6"   $r.bg5000 "1000,1250,6000"
-T "bg(5500) => 500 sar, 1250, T6"    $r.bg5500 "500,1250,6000"
-T "bg(6000) => null (at max)"         $r.bg6000 "null"
-T "bg(7000) => null (at max)"         $r.bg7000 "null"
+T "bg(4000) => 1000 sar, 1000, T5"    $r.bg4000 "1000,1000,5000"
+T "bg(4500) => 500 sar, 1000, T5"     $r.bg4500 "500,1000,5000"
+T "bg(5000) => 1000 sar, 1250, T6"    $r.bg5000 "1000,1250,6000"
+T "bg(5500) => 500 sar, 1250, T6"     $r.bg5500 "500,1250,6000"
+T "bg(6000) => null at max"            $r.bg6000 "null"
+T "bg(7000) => null at max"            $r.bg7000 "null"
 
 Write-Host ""
-Write-Host "── computeFleetBonusPacket (Ahmed 5200, Khalid 3800, Majed 6100) ──"
-T "totalGross = 4500"                 $r.pktGross    "4500"
-T "totalCompany = 2250"               $r.pktCompany  "2250"
-T "driverBonuses.length = 3"          $r.pktLen      "3"
-T "Ahmed tierFloor = 5000 (T5)"       $r.ahmedTier   "5000"
-T "Ahmed companyBonus = 1000"         $r.ahmedBonus  "1000"
-T "Ahmed gap.sarToNextTier = 800"     $r.ahmedGapSar "800"
-T "Ahmed gap.bonusUnlocked = 1250"    $r.ahmedUnlock "1250"
-T "Khalid tierFloor = null (none)"    $r.khalidTier  "null"
-T "Khalid gap.sarToNextTier = 200"    $r.khalidGapSar "200"
-T "Khalid gap.bonusUnlocked = 750"    $r.khalidUnlock "750"
-T "Majed tierFloor = 6000 (T6)"       $r.majedTier   "6000"
-T "Majed companyBonus = 1250"         $r.majedBonus  "1250"
-T "Majed gap = null (at max)"         $r.majedGap    "null"
-T "splitPct = 0.5"                    $r.splitPct    "0.5"
+Write-Host "-- computeFleetBonusPacket (3 drivers) -----------------------"
+T "totalGross = 4500"                  $r.pktGross    "4500"
+T "totalCompany = 2250"                $r.pktCompany  "2250"
+T "driverBonuses.length = 3"           $r.pktLen      "3"
+T "Ahmed tierFloor = 5000 T5"          $r.ahmedTier   "5000"
+T "Ahmed companyBonus = 1000"          $r.ahmedBonus  "1000"
+T "Ahmed gap sarToNextTier = 800"      $r.ahmedGapSar "800"
+T "Ahmed gap bonusUnlocked = 1250"     $r.ahmedUnlock "1250"
+T "Khalid tierFloor = null none"       $r.khalidTier  "null"
+T "Khalid gap sarToNextTier = 200"     $r.khalidGapSar "200"
+T "Khalid gap bonusUnlocked = 750"     $r.khalidUnlock "750"
+T "Majed tierFloor = 6000 T6"          $r.majedTier   "6000"
+T "Majed companyBonus = 1250"          $r.majedBonus  "1250"
+T "Majed gap = null at max"            $r.majedGap    "null"
+T "splitPct = 0.5"                     $r.splitPct    "0.5"
 
 Write-Host ""
-Write-Host "── renderFleetBonusLines ─────────────────────────────"
-T "returns array"                     $r.linesIsArray    "true"
-T "line[0] has BOLT BONUS header"     $r.line0HasHeader  "true"
-T "line[0] shows gross 4,500 SAR"     $r.line0HasGross   "true"
-T "line[0] shows company 2,250 SAR"   $r.line0HasCompany "true"
-T "line[1] names Ahmed (earned T5)"   $r.line1HasAhmed   "true"
-T "line[1] names Majed (earned T6)"   $r.line1HasMajed   "true"
-T "line[2] names Khalid (near T4)"    $r.line2HasKhalid  "true"
-T "line[2] shows 200 SAR to next"     $r.line2HasSar200  "true"
-T "renderFleetBonusLines(null) = []"  $r.nullLinesIsEmpty "true"
+Write-Host "-- renderFleetBonusLines -------------------------------------"
+T "returns array"                      $r.linesIsArray    "true"
+T "line0 has BOLT BONUS header"        $r.line0HasHeader  "true"
+T "line0 shows gross 4,500 SAR"        $r.line0HasGross   "true"
+T "line0 shows company 2,250 SAR"      $r.line0HasCompany "true"
+T "line1 names Ahmed earned T5"        $r.line1HasAhmed   "true"
+T "line1 names Majed earned T6"        $r.line1HasMajed   "true"
+T "line2 names Khalid near T4"         $r.line2HasKhalid  "true"
+T "line2 shows 200 SAR to next"        $r.line2HasSar200  "true"
+T "renderFleetBonusLines null = empty" $r.nullLinesIsEmpty "true"
 
 Write-Host ""
 $total = $pass + $fail
-Write-Host "── RESULT: $pass/$total passed ──────────────────────"
+Write-Host "-- RESULT: $pass/$total passed -------------------------------"
 if ($fail -gt 0) { exit 1 } else { exit 0 }

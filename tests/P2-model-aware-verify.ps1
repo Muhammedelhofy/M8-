@@ -171,63 +171,73 @@ results.def_flag = String(defaultFleet.modelAware); // false (default off)
 console.log(JSON.stringify(results));
 '@
 
-$tmpJs = "$env:TEMP\p2_model_aware_test.js"
+$tmpJs = ".\p2_model_aware_test_tmp.js"
 $js | Out-File -FilePath $tmpJs -Encoding utf8 -NoNewline
 
-$raw = node $tmpJs 2>&1
-if ($LASTEXITCODE -ne 0) {
-  Write-Host "FATAL: node exited $LASTEXITCODE"
+# Locate node: PATH first, then Kimi bundled runtime
+$_nodeCmd = Get-Command node -ErrorAction SilentlyContinue
+if ($_nodeCmd) { $nodeBin = $_nodeCmd.Source } else { $nodeBin = "$env:LOCALAPPDATA\Programs\kimi-desktop\resources\resources\runtime\node.exe" }
+if (-not (Test-Path $nodeBin)) {
+  Write-Host "FATAL: node not found. Add Node.js to PATH or install it from nodejs.org."
+  exit 1
+}
+
+$raw = & $nodeBin $tmpJs 2>&1
+$exitCode = $LASTEXITCODE
+Remove-Item $tmpJs -ErrorAction SilentlyContinue
+if ($exitCode -ne 0) {
+  Write-Host "FATAL: node exited $exitCode"
   Write-Host $raw
   exit 1
 }
 $r = $raw | ConvertFrom-Json
 
 Write-Host ""
-Write-Host "── computeDriverPnLV2: R model (Rent) ───────────────"
-T "income = 0 (not company revenue)"   $r.r_income     "0"
-T "driverNet = 5200 (exposed for tier)" $r.r_driverNet  "5200"
-T "carRent = +1500 (company collects)"  $r.r_carRent    "1500"
-T "netPnL = 1500 (rent only)"           $r.r_netPnL     "1500"
+Write-Host "-- computeDriverPnLV2: R model (Rent) -----------------------"
+T "income = 0 not company revenue"      $r.r_income     "0"
+T "driverNet = 5200 exposed for tier"   $r.r_driverNet  "5200"
+T "carRent = 1500 company collects"     $r.r_carRent    "1500"
+T "netPnL = 1500 rent only"             $r.r_netPnL     "1500"
 T "_modelAware flag = true"             $r.r_modelAware "true"
-T "acctRent IN 800, income=0, pnl=800"  $r.r2_netPnL    "800"
-T "R+acctRent: income still 0"          $r.r2_income    "0"
-T "R+acctRent: acctRent = 800"          $r.r2_acctRent  "800"
+T "acctRent IN 800 income=0 pnl=800"    $r.r2_netPnL    "800"
+T "R+acctRent income still 0"           $r.r2_income    "0"
+T "R+acctRent acctRent = 800"           $r.r2_acctRent  "800"
 
 Write-Host ""
-Write-Host "── computeDriverPnLV2: F model (Fleet-account) ──────"
-T "income = 6000 (company collects)"    $r.f_income     "6000"
+Write-Host "-- computeDriverPnLV2: F model (Fleet-account) --------------"
+T "income = 6000 company collects"      $r.f_income     "6000"
 T "driverNet = 6000"                    $r.f_driverNet  "6000"
 T "salary = -2000"                      $r.f_salary     "-2000"
 T "netPnL = 4000"                       $r.f_netPnL     "4000"
 
 Write-Host ""
-Write-Host "── computeDriverPnLV2: S model (Salaried) ───────────"
-T "income = 4500 (same as F)"           $r.s_income     "4500"
+Write-Host "-- computeDriverPnLV2: S model (Salaried) -------------------"
+T "income = 4500 same as F"             $r.s_income     "4500"
 T "netPnL = 3000"                       $r.s_netPnL     "3000"
 
 Write-Host ""
-Write-Host "── Spec S2e worked example ───────────────────────────"
-T "P2 P&L for rent driver = 1500"       $r.s2e_pnl      "1500"
-T "bonus companyShare(5200) = 1000"     $r.s2e_bonus    "1000"
-T "combined (rent+bonus) = 2500"        $r.s2e_combined "2500"
+Write-Host "-- Spec S2e worked example -----------------------------------"
+T "P2 PnL for rent driver = 1500"       $r.s2e_pnl      "1500"
+T "bonus companyShare 5200 = 1000"      $r.s2e_bonus    "1000"
+T "combined rent+bonus = 2500"          $r.s2e_combined "2500"
 
 Write-Host ""
-Write-Host "── computeFleetPnL V2 flag ON (mixed R+F fleet) ─────"
-T "income = 6000 (Majed only, Ahmed R)" $r.v2_income    "6000"
-T "inflow = 1500 (Ahmed rent)"          $r.v2_inflow    "1500"
-T "costs  = 2000 (Majed salary)"        $r.v2_costs     "2000"
+Write-Host "-- computeFleetPnL V2 flag ON mixed fleet -------------------"
+T "income = 6000 Majed only Ahmed R"    $r.v2_income    "6000"
+T "inflow = 1500 Ahmed rent"            $r.v2_inflow    "1500"
+T "costs = 2000 Majed salary"           $r.v2_costs     "2000"
 T "netPnL = 5500"                       $r.v2_netPnL    "5500"
 T "drivers = 2"                         $r.v2_drivers   "2"
 T "modelAware flag = true"              $r.v2_flag      "true"
 
 Write-Host ""
-Write-Host "── Legacy mode unchanged (V2 flag OFF) ──────────────"
-T "legacy income = 11200 (inflated)"    $r.leg_income   "11200"
+Write-Host "-- Legacy mode unchanged V2 flag OFF -------------------------"
+T "legacy income = 11200 inflated"      $r.leg_income   "11200"
 T "legacy netPnL = 10700"               $r.leg_netPnL   "10700"
 T "legacy modelAware = false"           $r.leg_flag     "false"
-T "default (no config) = false"         $r.def_flag     "false"
+T "default no config = false"           $r.def_flag     "false"
 
 Write-Host ""
 $total = $pass + $fail
-Write-Host "── RESULT: $pass/$total passed ──────────────────────"
+Write-Host "-- RESULT: $pass/$total passed -------------------------------"
 if ($fail -gt 0) { exit 1 } else { exit 0 }
