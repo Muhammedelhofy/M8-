@@ -1,7 +1,34 @@
 # M8 — Next Session Brief
-**Latest:** 2026-06-19 (Session-49) · **Branch:** main · **Head:** `b21ba15`
+**Latest:** 2026-06-19 (Session-50) · **Branch:** main · **Head:** `fc56e3b`
 **Canonical plan:** [`HONESTY_TRACK_PLAN.md`](HONESTY_TRACK_PLAN.md) ← the living backlog. Read it first.
-(Older Session-34/38/39/40/41/43/44/48 briefs preserved below for history.)
+(Older Session-34/38/39/40/41/43/44/48/49 briefs preserved below for history.)
+
+---
+
+## ★ SESSION-50 FINAL STATE — 2026-06-19 (read this first next session)
+
+### What shipped this session
+
+| Build | Summary | Status |
+|---|---|---|
+| **Build-67** | **Round-5 Telemetry — Failing Probes to Supabase** — Gate-miss diagnosis no longer requires the local `tests/odysseus/results/<runId>.json` file. Added `failing_probes JSONB` column to `m8_loop_runs` (migration `m8_loop_runs_failing_probes.sql` applied to Supabase `ltqpoupferwituusxwal`). `recordAttestation()` in `lib/loop.js` now extracts `metadata.failing_probes` (already sent by `run-battery.ps1` since Session-44) and patches `m8_loop_runs.failing_probes` with reshaped array: `{ probe_id, check_label (first failing check), reply_excerpt (300-char truncation) }`. No new endpoint, no schema change to `m8_odysseus_runs`. `tests/B67-telemetry-verify.ps1` **24/24**. | ✅ pushed `fc56e3b` |
+
+### Live-verify checklist (no Muhammad action needed — no new UI or endpoint)
+1. After the next nightly Odysseus run with `-AttestTo`: query `SELECT run_date, failing_probes FROM m8_loop_runs ORDER BY run_date DESC LIMIT 3` in Supabase SQL editor — `failing_probes` should be a non-empty JSON array (not `[]`) on any night with probe failures.
+2. On a clean night (all probes pass), `failing_probes` should be `[]`.
+
+### ▶ NEXT SESSION priorities (in order)
+1. **Build-65 live verification** — confirm chips + three deck types all work at m8-alpha.vercel.app
+2. **Build-68 Morning Brief** — Track-A daily-usefulness; WIP files already present (`api/morning-brief.js`, `lib/morning-brief.js`, `migrations/m8_morning_briefs.sql`, `vercel.json` changes) — pick up where Build-68 left off or scope it fresh with Muhammad
+3. **Ingest more البداية والنهاية chapters** — Ch.1 + Ch.10 live; continue ingesting to deepen cross-book graph vs Arktos
+
+### Kickoff prompt for next session
+> Continue M8 (Session-51). Read `NEXT_SESSION_BRIEF.md` (Session-50 final state) first.
+> Build-67 (Round-5 telemetry: failing_probes → m8_loop_runs) is LIVE at `fc56e3b`.
+> Build-68 (Morning Brief) WIP files are already in the repo (api/morning-brief.js, lib/morning-brief.js, migrations/m8_morning_briefs.sql) — finish or scope it.
+> Standing rules: free Gemini stack; live runs need Muhammad's OK; M8 repo is `Muhammedelhofy/M8-`;
+> edit buildState.js commitFamily only via unique-anchor replace; PS .ps1 files must be pure ASCII;
+> update BOTH `m8_mind_2026.html` AND `NEXT_SESSION_BRIEF.md` at session close.
 
 ---
 
