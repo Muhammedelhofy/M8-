@@ -414,7 +414,7 @@
     <div class="evo-col">
       <h4>Backlog (honest pending)</h4>
       <ul>
-        <li><b>Fix knowledge-ingestion persistence</b> — resumable/chunked ingest so a Vercel timeout doesn't lose the book → <b>re-ingest البداية والنهاية Ch.1</b>; verify via <code>/api/knowledge-inventory</code> (0 books persist today — unblocks the Memory pillar's honesty)</li>
+        <li><b>Re-ingest البداية والنهاية (bn01–bn20)</b> — the persistence fix <b>shipped</b> (Build-77/78: resumable, idempotent, checkpointed ingest + resumable OCR + chat wiring so an uploaded book reaches the resilient engine; <code>tests</code> 80/80). Live re-ingest is now blocked ONLY on <b>Gemini paid-tier propagation</b> (free-tier OCR quota 429); once a paid key from the billed project is active, attach each PDF + "ingest this as a book…", verify via <code>/api/knowledge-inventory</code> <span class="tg">✓ Build-77/78 · live pending quota</span></li>
         <li>Observability dashboard + resilience playbook (incl. nightly quota/backoff)</li>
         <li>P&amp;L analysis — requires driver cost profiles (salary/fleet-cut/rent) to be configured in the fleet dashboard first</li>
         <li>Memory that <b>evolves</b> — learn from past failures (a later compounding win)</li>
@@ -442,7 +442,8 @@
     <span class="tl done">Command Center v2 — scoring + approval + drift · LIVE-VERIFIED 63/63 ✓</span>
     <span class="tl done">Build-76 smarter context routing — topic memory (code-complete 58/58, pending deploy) ✓</span>
     <span class="tl done">Knowledge-inventory endpoint — DB check found 0 books actually persisted ✓</span>
-    <span class="tl cur">Re-ingest البداية والنهاية Ch.1 (needs a resumable-ingest fix first)</span>
+    <span class="tl done">Build-77/78 resilient book ingestion — resumable·idempotent·checkpointed + chat wiring + resumable OCR (80/80 tests) ✓</span>
+    <span class="tl cur">Re-ingest البداية والنهاية (bn01–bn20) — code ready; blocked on Gemini paid-tier propagation (OCR 429)</span>
     <span class="tl future">evolving memory · driver cost profiles → real P&amp;L</span>
     <span class="tl future">L6 — a compound mind</span>
   </div>

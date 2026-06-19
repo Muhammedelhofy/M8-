@@ -1,5 +1,5 @@
 # M8 — Next Session Brief
-**Latest:** 2026-06-19 (Session-52) · **Branch:** main · **Head:** Build-74 Command Center v2 (this session) atop the parallel session's Build-72b/73/75 — shared tree, see "Note on the working tree" below
+**Latest:** 2026-06-20 (Session-53) · **Branch:** main · **Head:** `203096b` Build-78d (resilient book ingestion + resumable OCR) atop the parallel finance session's Build P1/P2 (`lib/finance.js`) — shared tree
 **Canonical plan:** [`HONESTY_TRACK_PLAN.md`](HONESTY_TRACK_PLAN.md) ← the living backlog. Read it first.
 (Older Session-34/38/39/40/41/43/44/48/49/51 briefs preserved below for history.)
 
@@ -15,9 +15,10 @@
 
 | Slot | Status | Lane | Session / focus | Started |
 |---|---|---|---|---|
-| Session A | 🔴 active | LANE 2 — RESEARCH (ingestion) | **Build-77: resumable/idempotent book ingestion** (fix the 0-books persistence gap). OWNS `lib/knowledge-intake.js`, `api/ingest-book.js`, `api/pdf-to-text.js`, `lib/converter.js`, `lib/memory-graph.js`, `lib/buildState.js` (sole bumper this round), + new migration/test. **MUST NOT touch** `lib/orchestrator.js`, `lib/fleet-analysis.js`, `lib/router.js`, `m8_mind_2026.html`, `NEXT_SESSION_BRIEF.md`. | 2026-06-19 |
+| Session A | ✅ done | LANE 2 — RESEARCH (ingestion) | **Builds 77 + 78 + 78a/c/d SHIPPED + PUSHED + LIVE** (`203096b`): resilient/idempotent/timeout-safe book ingestion + chat wiring (uploaded book → resilient engine) + resumable OCR + free-tier OCR throttle. Migration `m8_ingest_checkpoints` APPLIED; `m8_ocr_checkpoints` PENDING. **Edited `lib/orchestrator.js` with Muhammad's explicit OK after he freed the Cleanup lane.** Live ingest of bn01.pdf BLOCKED on Gemini paid-tier propagation (see Session-53 state). | 2026-06-20 |
 | Session B | ✅ done | LANE 2 | Inventory helper (`af99fe4`) + 0-books finding. (Builds 74/76 pushed; live.) | 2026-06-19 |
-| Cleanup | 🔴 active | LANE 3 + change-slot | #3 change-analysis fix committed `1135c22` (guard-preserving overwrite). Owns `lib/orchestrator.js` change-slot, `lib/fleet-analysis.js`, the diagram + this brief. | 2026-06-19 |
+| Finance | ⚪ status unknown | LANE 1 — BUSINESS | Parallel session shipped **Build P1** (Bolt bonus-tier engine) + **Build P2** (model-aware per-driver P&L) in `lib/finance.js` (`1261a22`, `b62e551`). Confirm with that session before touching `lib/finance.js`. | 2026-06-20 |
+| Cleanup | ✅ freed | LANE 3 | Closed by Muhammad mid-session so Session A could wire `lib/orchestrator.js`. Last commit `1135c22`. Diagram + brief now maintained by Session A this round. | 2026-06-20 |
 
 **⛔ CLOSE RULE while parallel sessions run:** Sessions A and B do **NOT** edit `m8_mind_2026.html`
 or `NEXT_SESSION_BRIEF.md` at close (those are Lane 3's, to avoid a 3-way merge fight). At close,
@@ -55,6 +56,34 @@ only when running solo.)
 **Commit rule for parallel work:** each session commits ONLY its own lane's files (`git add` the specific
 paths, never `git add .`). Bump `lib/buildState.js` via the unique-anchor replace so two sessions can both
 append without clobbering. If a session needs a shared-core file the other is editing, wait — don't fork it.
+
+---
+
+## ★ SESSION-53 FINAL STATE — 2026-06-20 (read this first next session)
+
+### What shipped this session (all pushed to `Muhammedelhofy/M8-` main, head `203096b`)
+
+| Build | Summary | Status |
+|---|---|---|
+| **Build-77** | **Resumable / idempotent / timeout-safe book ingestion.** Root cause of the 0-books gap: `api/ingest-book.js` was idempotent only on "a chapter source row exists", but that row is written BEFORE the slow Gemini extraction — so a chapter that timed out mid-extraction was skipped forever with 0 nodes. Fix: `m8_ingest_checkpoints` table (migration **APPLIED**), a chapter marked `done` ONLY after its nodes commit; bounded per invocation (`M8_INGEST_MAX_CHAPTERS`=6) returning `done/resume/next_chapter`; idempotent (no dup sources/nodes); `getIngestionInventory` reports per-book progress. `tests/B77` 33/33. | ✅ live |
+| **Build-78a** | **Resumable OCR** (`api/pdf-to-text.js` + `lib/converter.js`): `m8_ocr_checkpoints` table (migration **PENDING**) persists each page-batch's text so OCR resumes after a timeout. Pure helpers in converter.js. `tests/B78` 29/29. | ✅ live (migration pending) |
+| **Build-78** | **Chat wiring** — the resilient endpoints existed but nothing called them, and "ingest this as a book" routed to the single-shot 16K-cap path that never even saw an uploaded PDF's text (a doc attachment's `convertedText` goes only into the LLM contents block, never `message`). Moved the engine into `lib/knowledge-intake.js` as `ingestBookText()` (ingest-book.js is now a thin wrapper); added `detectBookIngest`/`parseBookIngestMessage`; **`lib/orchestrator.js`** now detects "ingest this as a book" + a document attachment, pulls the attachment text, drives `ingestBookText`, returns a resume-aware packet. Added `!knowledgeIngestMode` to the stream gate. `tests/B78b` 18/18. **Edited orchestrator.js (shared core) with Muhammad's OK after the Cleanup lane was freed.** | ✅ live |
+| **Build-78c/78d** | **OCR upload hardening** (`api/upload-file.js`): wait-for-ACTIVE before extracting; surface per-batch errors (the old bare `catch{}` hid them) so an all-empty OCR throws a real diagnostic; concurrency 10→3 (`M8_OCR_CONCURRENCY`) + 429 backoff (6/12/18s) for the free tier. | ✅ live |
+
+### ⛔ THE ONE THING BLOCKING THE LIVE PROOF — Gemini paid-tier propagation
+- Live ingest of `bn01.pdf` (82-page scanned البداية والنهاية) kept failing at the **OCR** step (not the ingest wiring — that never got to run). Diagnosed via Vercel runtime logs: **HTTP 429** whose quota violation references **`FreeTier` + `PerDay`**.
+- Muhammad **bought $10 Gemini credits** (balance +$8.91, project "M8 Agent" on a paid billing account) — but a retry STILL 429'd as FreeTier. Cause is either (a) **paid-tier rate limits not yet propagated** (minutes–~30m after enabling billing) or (b) the **`GEMINI_API_KEY` in Vercel belongs to a different project** than the billed "M8 Agent" one.
+- **NEXT SESSION step 1:** wait for propagation, retry the `bn01.pdf` upload ONCE. If it still says `FreeTier`, check AI Studio → API Keys → which project each key is in; point M8 at a key from the **M8 Agent** project. Then ingest `bn01.pdf`…`bn20.pdf` (full set on `C:\Users\m7ofy\OneDrive\Desktop\books\`). With paid quota, set Vercel env **`M8_OCR_CONCURRENCY=10`** for full OCR speed.
+- **Unverified live:** the Build-78 ingest wiring (every attempt died at OCR first). Zero-OCR proof file ready: `C:\Users\m7ofy\OneDrive\Desktop\books\m8_test_book.docx` (DOCX = no OCR) → attach + `ingest this as a book: title=Test Book, source_class=established` → check `/api/knowledge-inventory`.
+
+### Parallel session (Lane 1 — BUSINESS) — reconcile, do not clobber
+- A finance session shipped **Build P1** (Bolt bonus-tier engine) and **Build P2** (model-aware per-driver P&L) in `lib/finance.js` (`1261a22`, `b62e551`) into this shared tree. Spec: `BUILD_PNL_SPEC.md` (untracked). Don't touch `lib/finance.js` without confirming with that lane.
+
+### Kickoff prompt for next session
+> Continue M8 (Session-54). Read `NEXT_SESSION_BRIEF.md` (Session-53 final state) first.
+> Builds 77/78/78a/78c/78d are LIVE (`203096b`): resilient book ingestion + chat wiring + resumable OCR + free-tier OCR throttle. `m8_ingest_checkpoints` applied; `m8_ocr_checkpoints` PENDING.
+> The live proof is blocked ONLY on Gemini paid-tier propagation — retry `bn01.pdf` upload; if still `FreeTier` 429, fix the key↔project mismatch (use a key from the billed "M8 Agent" project), then ingest the bn01–bn20 set and set `M8_OCR_CONCURRENCY=10`.
+> Standing rules: free Gemini stack by default; live runs need Muhammad's OK; repo `Muhammedelhofy/M8-`; edit buildState.js commitFamily only via unique-anchor replace; PS .ps1 files pure ASCII; update BOTH `m8_mind_2026.html` AND `NEXT_SESSION_BRIEF.md` at session close.
 
 ---
 
