@@ -105,6 +105,27 @@ Check "2-day driver -> TOO EARLY (under threshold)"     ($two.daysOnline -lt $MI
 $three = Project-Driver 600 3
 Check "3-day driver -> projected (meets threshold)"     ($three.daysOnline -ge $MIN)
 
+Write-Host "`n== Section B3: over-target gap label (Build-72) ==" -ForegroundColor Cyan
+
+# A driver already past 5,000 MTD must read "hit (+X over)", not a negative gap.
+$TGT = 5000
+function Gap-Fields($net) {
+    $hit = ($net -ge $TGT)
+    $gap = 0
+    $over = 0
+    if ($hit) { $over = [math]::Round($net - $TGT) }
+    else { $gap = [math]::Round($TGT - $net) }
+    return [pscustomobject]@{ hit = $hit; gap = $gap; over = $over }
+}
+$g1 = Gap-Fields 5884
+Check "over-target 5884 -> hit TRUE"     ($g1.hit -eq $true)
+Check "over-target 5884 -> overBy 884"   ($g1.over -eq 884)
+Check "over-target 5884 -> gap 0"        ($g1.gap -eq 0)
+$g2 = Gap-Fields 3000
+Check "under-target 3000 -> hit FALSE"   ($g2.hit -eq $false)
+Check "under-target 3000 -> gap 2000"    ($g2.gap -eq 2000)
+Check "under-target 3000 -> overBy 0"    ($g2.over -eq 0)
+
 Write-Host "`n== Section C: detectMorningBriefQuery ==" -ForegroundColor Cyan
 
 # Mirror of BRIEF_QUERY_PATTERNS (PowerShell uses .NET regex, case-insensitive).
