@@ -235,8 +235,10 @@ async function convertDocumentAttachment(att) {
     // Tick the elapsed-time counter every 5s so Muhammad knows it's alive
     const tickTimer = setInterval(() => renderAttachmentChips(), 5000);
 
-    // 4-minute client timeout — if the server hasn't replied, show a clear error
+    // 4-minute client timeout — if the server hasn't replied, show a clear error.
+    // Store on att so the chip remove button can abort an in-flight conversion.
     const abortCtrl = new AbortController();
+    att._abortCtrl = abortCtrl;
     const abortTimer = setTimeout(() => abortCtrl.abort(), 240000);
 
     let json;
@@ -251,6 +253,7 @@ async function convertDocumentAttachment(att) {
     } finally {
       clearInterval(tickTimer);
       clearTimeout(abortTimer);
+      att._abortCtrl = null;
     }
     // Cost-guard confirmation gate: server says PDF is large and needs user approval
     if (json.requiresConfirmation) {
@@ -301,6 +304,7 @@ async function confirmLargePdfExtraction(att) {
 
   const tickTimer  = setInterval(() => renderAttachmentChips(), 5000);
   const abortCtrl  = new AbortController();
+  att._abortCtrl   = abortCtrl;
   const abortTimer = setTimeout(() => abortCtrl.abort(), 240000);
   const cacheKey   = `${att.name}_${att.size}`;
   try {
@@ -316,6 +320,7 @@ async function confirmLargePdfExtraction(att) {
     } finally {
       clearInterval(tickTimer);
       clearTimeout(abortTimer);
+      att._abortCtrl = null;
     }
     att.converting    = false;
     att.uploadStage   = null;
@@ -466,7 +471,7 @@ function renderAttachmentChips() {
         cancelBtn.className = "attachment-remove";
         cancelBtn.title = "Cancel — remove this file";
         cancelBtn.textContent = "✕ Cancel";
-        cancelBtn.addEventListener("click", () => { pendingAttachments.splice(i, 1); renderAttachmentChips(); });
+        cancelBtn.addEventListener("click", () => { if (att._abortCtrl) att._abortCtrl.abort(); pendingAttachments.splice(i, 1); renderAttachmentChips(); });
         chip.appendChild(cancelBtn);
         UI.attachmentChips.appendChild(chip);
         return; // skip the generic remove button below
@@ -544,6 +549,7 @@ function renderAttachmentChips() {
     remove.title = "Remove";
     remove.textContent = "×";
     remove.addEventListener("click", () => {
+      if (att._abortCtrl) att._abortCtrl.abort();
       pendingAttachments.splice(i, 1);
       renderAttachmentChips();
     });
@@ -707,7 +713,7 @@ function showWelcome() {
 
 function handleSend() {
   const text = UI.textInput.value.trim();
-  if (pendingAttachments.some(a => a.kind === "document" && a.converting)) {
+  if (pendingAttachments.some(a => a.kind === "document" && (a.converting || a.pendingConfirm))) {
     flashStatus(currentLang === "ar" ? "انتظر… جارٍ تحويل الملف" : "Please wait — document is still converting…");
     return;
   }
@@ -833,16 +839,24 @@ async function streamMessage(text, pastHistory, attachments) {
     }
   };
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buf += decoder.decode(value, { stream: true });
-    let nl;
-    while ((nl = buf.indexOf("\n\n")) >= 0) { handle(buf.slice(0, nl)); buf = buf.slice(nl + 2); }
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      let nl;
+      while ((nl = buf.indexOf("\n\n")) >= 0) { handle(buf.slice(0, nl)); buf = buf.slice(nl + 2); }
+    }
+    if (buf.trim()) handle(buf);
+  } catch (readErr) {
+    reader.cancel().catch(() => {});
+    throw readErr;   // re-throw so sendMessage falls back to buffered path
   }
-  if (buf.trim()) handle(buf);
 
-  if (!got || errored) return false;   // no content or error event → fall back
+  if (!got || errored) {
+    reader.cancel().catch(() => {});
+    return false;   // no content or error event → fall back
+  }
   voice.endStream();
   return true;
 }

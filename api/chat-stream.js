@@ -47,6 +47,7 @@ module.exports = async function handler(req, res) {
     console.error("[M8] /api/chat-stream error:", err?.message || err);
     send({ error: err?.message || "stream failed" });
   } finally {
-    try { res.write("data: [DONE]\n\n"); res.end(); } catch (_) {}
+    try { res.write("data: [DONE]\n\n"); } catch (_) {}
+    try { res.end(); } catch (_) {}
   }
 };

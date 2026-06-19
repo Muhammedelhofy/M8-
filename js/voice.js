@@ -104,7 +104,7 @@ class VoiceManager {
 
     // Small delay to ensure cancellation takes effect
     setTimeout(() => {
-      const utterance = new SpeechSynthesisUtterance(text);
+      const utterance = new SpeechSynthesisUtterance(this._stripMarkdown(text));
       utterance.lang = this.currentLang;
       utterance.rate = 1.0;
       utterance.pitch = 1.0;
@@ -150,21 +150,35 @@ class VoiceManager {
     this.isSpeaking = false;
   }
 
+  // Strip markdown syntax that TTS would vocalise as literal punctuation names.
+  _stripMarkdown(text) {
+    return text
+      .replace(/\*\*([^*]+)\*\*/g, "$1")   // **bold**
+      .replace(/\*([^*]+)\*/g, "$1")        // *italic*
+      .replace(/`[^`]*`/g, "")             // `inline code` — omit entirely
+      .replace(/^#{1,6}\s+/gm, "")         // # headings
+      .replace(/^[-*+]\s+/gm, "")          // - bullet list items
+      .replace(/^\d+\.\s+/gm, "")          // 1. numbered list items
+      .replace(/__([^_]+)__/g, "$1")       // __bold__
+      .replace(/_([^_]+)_/g, "$1");        // _italic_
+  }
+
   feedStream(delta) {
     this._pending = (this._pending || "") + (delta || "");
-    const boundary = /[.!?؟\n]+["')\]]?\s*/;   // sentence end (+ optional closer)
+    // sentence end: Arabic comma ، included so Arabic prose is chunked at pauses
+    const boundary = /[.!?؟،\n]+["')\]]?\s*/;
     let m;
     while ((m = boundary.exec(this._pending)) !== null) {
       const end = m.index + m[0].length;
       const sentence = this._pending.slice(0, end).trim();
       this._pending = this._pending.slice(end);
-      if (sentence) this._enqueueUtterance(sentence);
+      if (sentence) this._enqueueUtterance(this._stripMarkdown(sentence));
     }
   }
 
   endStream() {
     if (this._pending && this._pending.trim()) {
-      this._enqueueUtterance(this._pending.trim());
+      this._enqueueUtterance(this._stripMarkdown(this._pending.trim()));
     }
     this._pending = "";
   }
