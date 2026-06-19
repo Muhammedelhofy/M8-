@@ -11,6 +11,12 @@
  * POST /api/presign
  * Body: { name: string, mimeType?: string }
  * Returns: { uploadUrl, path }
+ *
+ * DELETE /api/presign
+ * Body: { path: string }
+ * Returns: { ok: true }
+ * Used by the frontend to clean up a temp-uploads file when the user cancels
+ * a large-PDF confirmation prompt before extraction begins.
  */
 
 const { createClient } = require("@supabase/supabase-js");
@@ -19,13 +25,9 @@ const BUCKET = "temp-uploads";
 
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "POST, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
-
-  const { name, mimeType } = req.body || {};
-  if (!name) return res.status(400).json({ error: "name is required" });
 
   const supabaseUrl = process.env.SUPABASE_URL;
   const serviceKey  = process.env.SUPABASE_SERVICE_KEY;
@@ -34,6 +36,20 @@ module.exports = async (req, res) => {
   }
 
   const sb = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+
+  // ── DELETE: clean up a temp file the user chose not to extract ─────────────
+  if (req.method === "DELETE") {
+    const { path } = req.body || {};
+    if (!path) return res.status(400).json({ error: "path is required" });
+    const { error } = await sb.storage.from(BUCKET).remove([path]);
+    if (error) console.error("[presign] cleanup failed:", error.message);
+    return res.status(200).json({ ok: true });
+  }
+
+  if (req.method !== "POST") return res.status(405).json({ error: "POST or DELETE only" });
+
+  const { name, mimeType } = req.body || {};
+  if (!name) return res.status(400).json({ error: "name is required" });
 
   // Safe filename: strip anything that isn't alphanumeric, dot, dash or underscore
   const safeName = name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 200);

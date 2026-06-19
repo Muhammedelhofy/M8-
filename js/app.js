@@ -260,6 +260,7 @@ async function convertDocumentAttachment(att) {
       att.converting    = false;
       att.uploadStage   = null;
       att.extractStart  = null;
+      att.rawFile       = null;
       att.pendingConfirm = {
         storagePath:      path,
         estimatedPages:   json.estimatedPages,
@@ -338,6 +339,7 @@ async function confirmLargePdfExtraction(att) {
     att.uploadStage = null;
     att.error       = e.message;
   }
+  att.rawFile = null;
   renderAttachmentChips();
 }
 
@@ -471,7 +473,7 @@ function renderAttachmentChips() {
         cancelBtn.className = "attachment-remove";
         cancelBtn.title = "Cancel — remove this file";
         cancelBtn.textContent = "✕ Cancel";
-        cancelBtn.addEventListener("click", () => { if (att._abortCtrl) att._abortCtrl.abort(); pendingAttachments.splice(i, 1); renderAttachmentChips(); });
+        cancelBtn.addEventListener("click", () => { if (att._abortCtrl) att._abortCtrl.abort(); if (att.pendingConfirm && att.pendingConfirm.storagePath) { fetch("/api/presign", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: att.pendingConfirm.storagePath }) }).catch(() => {}); } pendingAttachments.splice(i, 1); renderAttachmentChips(); });
         chip.appendChild(cancelBtn);
         UI.attachmentChips.appendChild(chip);
         return; // skip the generic remove button below
