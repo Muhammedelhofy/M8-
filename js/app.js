@@ -252,6 +252,19 @@ async function convertDocumentAttachment(att) {
       clearInterval(tickTimer);
       clearTimeout(abortTimer);
     }
+    // Cost-guard confirmation gate: server says PDF is large and needs user approval
+    if (json.requiresConfirmation) {
+      att.converting    = false;
+      att.uploadStage   = null;
+      att.extractStart  = null;
+      att.pendingConfirm = {
+        storagePath:      path,
+        estimatedPages:   json.estimatedPages,
+        estimatedCostUSD: json.estimatedCostUSD,
+      };
+      renderAttachmentChips();
+      return;
+    }
     att.converting    = false;
     att.uploadStage   = null;
     att.extractStart  = null;
@@ -273,6 +286,53 @@ async function convertDocumentAttachment(att) {
   }
   // Free the raw file reference — no longer needed
   att.rawFile = null;
+  renderAttachmentChips();
+}
+
+// Re-send extract request with confirmed:true after user approves the cost.
+async function confirmLargePdfExtraction(att) {
+  const pc = att.pendingConfirm;
+  if (!pc) return;
+  att.pendingConfirm = null;
+  att.converting    = true;
+  att.uploadStage   = "extracting";
+  att.extractStart  = Date.now();
+  renderAttachmentChips();
+
+  const tickTimer  = setInterval(() => renderAttachmentChips(), 5000);
+  const abortCtrl  = new AbortController();
+  const abortTimer = setTimeout(() => abortCtrl.abort(), 240000);
+  const cacheKey   = `${att.name}_${att.size}`;
+  try {
+    let json;
+    try {
+      const convertResp = await fetch("/api/upload-file", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ storagePath: pc.storagePath, name: att.name, mimeType: att.mimeType, confirmed: true }),
+        signal: abortCtrl.signal,
+      });
+      json = await convertResp.json();
+    } finally {
+      clearInterval(tickTimer);
+      clearTimeout(abortTimer);
+    }
+    att.converting    = false;
+    att.uploadStage   = null;
+    att.extractStart  = null;
+    att.convertedText = json.text || null;
+    att.wordCount     = json.word_count || 0;
+    att.pages         = json.pages || null;
+    if (!json.text) {
+      att.error = json.error || "Conversion failed";
+    } else {
+      _docConvertCache.set(cacheKey, { text: json.text, word_count: json.word_count, pages: json.pages });
+    }
+  } catch (e) {
+    att.converting  = false;
+    att.uploadStage = null;
+    att.error       = e.message;
+  }
   renderAttachmentChips();
 }
 
@@ -386,7 +446,31 @@ function renderAttachmentChips() {
     const name = document.createElement("span");
     name.className = "attachment-name";
     if (att.kind === "document") {
-      if (att.converting) {
+      if (att.pendingConfirm) {
+        // Large PDF cost-guard: show estimate and ask for confirmation
+        const pc = att.pendingConfirm;
+        name.textContent = `⚠️ ${att.name} — ~${pc.estimatedPages} pages, est. $${pc.estimatedCostUSD} — proceed?`;
+        chip.classList.add("converting");
+        chip.appendChild(name);
+        // Confirm button
+        const confirmBtn = document.createElement("button");
+        confirmBtn.type = "button";
+        confirmBtn.className = "attachment-download";
+        confirmBtn.textContent = "✓ Proceed";
+        confirmBtn.title = `Extract this PDF (~${pc.estimatedPages} pages, est. cost $${pc.estimatedCostUSD})`;
+        confirmBtn.addEventListener("click", (e) => { e.stopPropagation(); confirmLargePdfExtraction(att); });
+        chip.appendChild(confirmBtn);
+        // Cancel button
+        const cancelBtn = document.createElement("button");
+        cancelBtn.type = "button";
+        cancelBtn.className = "attachment-remove";
+        cancelBtn.title = "Cancel — remove this file";
+        cancelBtn.textContent = "✕ Cancel";
+        cancelBtn.addEventListener("click", () => { pendingAttachments.splice(i, 1); renderAttachmentChips(); });
+        chip.appendChild(cancelBtn);
+        UI.attachmentChips.appendChild(chip);
+        return; // skip the generic remove button below
+      } else if (att.converting) {
         if (att.uploadStage === "uploading") {
           name.textContent = `📤 ${att.name} — uploading…`;
         } else if (att.uploadStage === "extracting") {
@@ -469,9 +553,9 @@ function renderAttachmentChips() {
   });
   UI.attachmentChips.classList.toggle("visible", pendingAttachments.length > 0);
   // Disable send button while any document is still converting
-  const stillConverting = pendingAttachments.some(a => a.kind === "document" && a.converting);
+  const stillConverting = pendingAttachments.some(a => a.kind === "document" && (a.converting || a.pendingConfirm));
   UI.sendBtn.disabled = stillConverting;
-  UI.sendBtn.title = stillConverting ? "Wait for document conversion to finish…" : "Send message";
+  UI.sendBtn.title = stillConverting ? "Resolve the document status above before sending…" : "Send message";
 }
 
 // Briefly show a message in the status line, then restore the normal status.

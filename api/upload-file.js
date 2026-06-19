@@ -21,7 +21,7 @@ module.exports.config = {
 };
 
 // Re-use converter internals for buffer-based conversion (no URL fetch needed)
-async function convertBuffer(buffer, mimeType, name) {
+async function convertBuffer(buffer, mimeType, name, confirmed = false) {
   // Dynamically import the internal converters from lib/converter.js
   // by reconstructing the same logic — avoids re-exporting private functions
   const fmt = detectFormat(name || "", mimeType || "");
@@ -132,16 +132,19 @@ async function convertBuffer(buffer, mimeType, name) {
 
   // ── COST GUARD ────────────────────────────────────────────────────────────
   // Each Gemini batch call sends the full PDF as context — costs scale with
-  // pages. Hard-cap at 200 PDF pages (~$0.40 max per upload). Books larger
-  // than this must be split into chapters before uploading.
+  // pages. Warn (confirmation gate) at 200 PDF pages (~$0.40 max per upload).
+  // If the caller sends { confirmed: true } in the request body, proceed anyway.
   const MAX_PDF_PAGES  = 200;
   const estimatedPages = Math.max(Math.ceil(buffer.length / (80 * 1024)), 10);
-  if (estimatedPages > MAX_PDF_PAGES) {
-    return res.status(400).json({
-      error: `PDF too large: estimated ${estimatedPages} pages — limit is ${MAX_PDF_PAGES} per upload to control Gemini costs. Split the file into chapters and upload each separately.`,
-      estimated_pages: estimatedPages,
-      limit: MAX_PDF_PAGES,
-    });
+  // estimatedCostUSD: (pages / PAGE_BATCH) batches * 8192 output tokens * $0.30/M
+  const estimatedCostUSD = Number(((estimatedPages / 8) * 8192 * 0.30 / 1_000_000).toFixed(4));
+  if (estimatedPages > MAX_PDF_PAGES && !confirmed) {
+    // Throw a sentinel that the handler catches and converts to requiresConfirmation
+    const err = new Error("REQUIRES_CONFIRMATION");
+    err.requiresConfirmation = true;
+    err.estimatedPages = estimatedPages;
+    err.estimatedCostUSD = estimatedCostUSD;
+    throw err;
   }
   // ──────────────────────────────────────────────────────────────────────────
 
@@ -251,7 +254,7 @@ async function convertBuffer(buffer, mimeType, name) {
 module.exports = async (req, res) => {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
 
-  const { data, storagePath, name, mimeType } = req.body || {};
+  const { data, storagePath, name, mimeType, confirmed } = req.body || {};
 
   let buffer;
 
@@ -285,7 +288,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const result = await convertBuffer(buffer, mimeType, name);
+    const result = await convertBuffer(buffer, mimeType, name, !!confirmed);
     const word_count = result.text.trim().split(/\s+/).length;
     return res.status(200).json({
       text:       result.text,
@@ -294,6 +297,15 @@ module.exports = async (req, res) => {
       format:     result.format,
     });
   } catch (e) {
+    // Confirmation gate: PDF too large — return special response so the frontend
+    // can show the user an estimated cost and ask them to confirm.
+    if (e.requiresConfirmation) {
+      return res.status(200).json({
+        requiresConfirmation: true,
+        estimatedPages:       e.estimatedPages,
+        estimatedCostUSD:     e.estimatedCostUSD,
+      });
+    }
     console.error("[upload-file]", e.message);
     return res.status(500).json({ error: e.message });
   }
