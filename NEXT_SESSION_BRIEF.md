@@ -1,6 +1,6 @@
 # M8 — Next Session Brief
 **Latest:** 2026-06-18 (Session-45) · **Branch:** main · **Head:** `be933fb`
-**Canonical plan:** [`M8/HONESTY_TRACK_PLAN.md`](HONESTY_TRACK_PLAN.md) ← the living backlog. Read it first.
+**Canonical plan:** [`HONESTY_TRACK_PLAN.md`](HONESTY_TRACK_PLAN.md) ← the living backlog. Read it first.
 (Older Session-34/38/39/40/41/43/44 briefs preserved below for history.)
 
 ---
@@ -28,7 +28,7 @@
 4. **Depth arc done** (Builds 51–57) — no further engine depth needed unless Muhammad asks
 
 ### Kickoff prompt for next session
-> Continue M8 (Session-46). Read `M8/NEXT_SESSION_BRIEF.md` (Session-45 final state) first.
+> Continue M8 (Session-46). Read `NEXT_SESSION_BRIEF.md` (Session-45 final state) first.
 > Builds 58–60 (knowledge ingestion + format converter + chat PDF attachment) are LIVE.
 > Start by confirming the Arktos PDF OCR works (attach the file at m8-alpha.vercel.app, wait for the 📄 chip).
 > If it works, ingest it via the chat: "ingest this as a book: title=Arktos, author=Joscelyn Godwin, year=1993, source_class=speculative".
@@ -70,7 +70,7 @@ The depth arc is done. The recommended next direction is **Track-A** — making 
 Then design the first 2–3 builds from that answer.
 
 ### Kickoff prompt for next session
-> Continue M8 (Session-45). Read `M8/NEXT_SESSION_BRIEF.md` (Session-44 final state) first.
+> Continue M8 (Session-45). Read `NEXT_SESSION_BRIEF.md` (Session-44 final state) first.
 > Depth arc Builds 51–57 complete + live-verified. Latest commit `be933fb`.
 > Next direction: Track-A daily-usefulness. Start by scoping it with Muhammad (5 min),
 > then propose the first 2 builds. Standing rules: free Gemini stack; live runs need my OK;
@@ -141,7 +141,7 @@ Then design the first 2–3 builds from that answer.
 4. **Track A** (task #13, strategic HIGH): business loop / multi-platform ingestion when ready for usefulness push.
 
 ### Kickoff prompt to paste next session
-> Continue M8 (Session-44). Read M8/NEXT_SESSION_BRIEF.md (Session-43 handoff) first.
+> Continue M8 (Session-44). Read NEXT_SESSION_BRIEF.md (Session-43 handoff) first.
 > Builds 51–54 complete. Task #11 DONE: 2/2 leaves verified (L1 ✓ Iff.rfl, L2 ✓). CC ledger scored. Latest commit 02bac06.
 > Next: (1) L5 gate watch (check tonight's nightly); (2) engine depth — feedback loop OR multi-level DAG. Standing rules: free Gemini stack; live runs need my OK; M8 repo is Muhammedelhofy/M8-; edit buildState.js commitFamily only via unique-anchor replace; PS .ps1 files must be pure ASCII.
 
@@ -172,7 +172,7 @@ Then design the first 2–3 builds from that answer.
    (Critical/Important/Active/Queued bands + blocked list + honesty footer).
 3. Type: `"open the command center"` — same route.
 4. Type: `"what should we work on next?"` — same route (pronoun branch).
-5. Open `M8/m8_command_center.html` in a browser served from the repo root — should render
+5. Open `m8_command_center.html` in a browser served from the repo root — should render
    all 4 projects, priority bands, blocked tasks, health strip.
 
 **OPS: score inputs are all at neutral defaults (3/3/3/3/3)** — `strategic_value` is your
@@ -193,7 +193,7 @@ edits to get a meaningful first real ranking. M8 will offer to help narrate the 
    first live Lean-verified leaf on a real non-degenerate decomposition).
 
 ### Kickoff prompt to paste next session
-> Continue M8 (Session-41). Read `M8/NEXT_SESSION_BRIEF.md` (Session-40 handoff) first.
+> Continue M8 (Session-41). Read `NEXT_SESSION_BRIEF.md` (Session-40 handoff) first.
 > Build-50 (Command Center v1) is SHIPPED — all 7 steps done, pushed `9f66e77`.
 > Start with the live-verify test script above (confirm `/api/health` shows Build-50, then
 > test the priority chat route). After that: rate the task scores (strategic_value + urgency)
@@ -262,7 +262,7 @@ or changes a state; strategic_value is narrated AS a human judgment.
 - Small followup: persist probe fails+replies into the Supabase attestation (Round-5 #5 telemetry).
 
 ### Kickoff prompt to paste next session
-> Continue M8 (Session-40). Read `M8/NEXT_SESSION_BRIEF.md` (Session-39 handoff) + `M8/COMMAND_CENTER_SPEC.md`
+> Continue M8 (Session-40). Read `NEXT_SESSION_BRIEF.md` (Session-39 handoff) + `COMMAND_CENTER_SPEC.md`
 > first. The L5 gate root cause is FIXED (Builds 48–49, grader negation guards); first Lean leaf already verified
 > (06-16). **Finish Command Center v1**: the engine + migration are committed as WIP (`lib/command-center.js`,
 > `migrations/m8_command_center.sql`, inert/untested). Start with step 1 — write + run
@@ -283,7 +283,7 @@ or changes a state; strategic_value is narrated AS a human judgment.
 
 **LOCKED DECISION — depth over breadth ([`m8-depth-over-breadth`] memory):** with C done, the engine has TWO domains so "it generalizes" is proven. **STOP adding problem domains.** Future engine work goes into DEPTH (smarter conjectures, deeper decompositions, discharging more leaves), NOT more domains. Revisit breadth only on an explicit ask.
 
-**IN-FLIGHT (separate session/account):** a "make the M8 diagram better → mind/brain map + Tasks/Projects/Evolution" effort is being done in a DIFFERENT Claude session. Its agreed vision is captured in [`M8/MIND_DIAGRAM_BRIEF.md`](MIND_DIAGRAM_BRIEF.md). That session must `git pull` first (this repo is ahead at `54162e4`) and push its work to the `M8-` repo so it isn't lost. The engine work (this brief) and the diagram work (that brief) are independent — no code overlap.
+**IN-FLIGHT (separate session/account):** a "make the M8 diagram better → mind/brain map + Tasks/Projects/Evolution" effort is being done in a DIFFERENT Claude session. Its agreed vision is captured in [`MIND_DIAGRAM_BRIEF.md`](MIND_DIAGRAM_BRIEF.md). That session must `git pull` first (this repo is ahead at `54162e4`) and push its work to the `M8-` repo so it isn't lost. The engine work (this brief) and the diagram work (that brief) are independent — no code overlap.
 
 **Honesty spine (unchanged law):** `lean_verified` is the ONLY path to `proven`; a counterexample the ONLY path to `refuted`; ingestion/extraction reach neither; narration ≤ evidence; code computes truth, the LLM narrates. Free Gemini/Tavily stack. Live runs cost Gemini quota + need Muhammad's OK.
 
@@ -403,12 +403,12 @@ probes, `GRAPH_EVIDENCE_CAP` verification, uncertainty-calibration probes) — s
   is done: M8 reliably separates proven / guess / speculative, and handles fringe ideas without laundering
   them. Build-41 = neutral `speculative` bucket + schema edge-ban + Odysseus probe. Build-42 = kernel/leap
   split (real core vs speculative leap, two linked nodes, human-gated) + co-retrieval invariant. Specs
-  `M8/BUILD_41_SPEC.md` + `M8/BUILD_42_SPEC.md`.
+  `BUILD_41_SPEC.md` + `BUILD_42_SPEC.md`.
 - **Decision (Muhammad, end of Session-36):** stop polishing honesty; turn toward USEFULNESS. Next session
   does the small search fix FIRST, then starts the big problem-solving engine.
 
 ## Kickoff prompt to paste into the next session
-> Continue M8. Read `M8/HONESTY_TRACK_PLAN.md` + `M8/NEXT_SESSION_BRIEF.md` first. The full epistemic
+> Continue M8. Read `HONESTY_TRACK_PLAN.md` + `NEXT_SESSION_BRIEF.md` first. The full epistemic
 > axis (Builds 41+42) is DONE + LIVE-VERIFIED — don't reopen it; the honesty backbone is finished.
 >
 > **Do these two things, in order:**
@@ -419,7 +419,7 @@ probes, `GRAPH_EVIDENCE_CAP` verification, uncertainty-calibration probes) — s
 > answers get worse. So the work is mostly JUDGEMENT, not code: **(a) first build a small corpus of real
 > example questions M8 currently mis-handles** (a mix of "should have searched but didn't" and "correctly
 > answered from its own knowledge — must NOT start searching these"), put it in a test file like
-> `M8/tests/odysseus/` ; **(b) then make a conservative widening** of the search trigger in
+> `tests/odysseus/` ; **(b) then make a conservative widening** of the search trigger in
 > `lib/intentClassifier.js` that fixes the misses WITHOUT making it search things it already knows; **(c)**
 > prove it with a PS-mirror test (no local Node) + measure the example corpus before/after. Keep the free
 > Gemini/Tavily stack. Ship it the usual way: code → offline verify → confirm deploy via `/api/health`
@@ -428,8 +428,8 @@ probes, `GRAPH_EVIDENCE_CAP` verification, uncertainty-calibration probes) — s
 >
 > **2. THEN — start the big "problem-solving engine" build.** This is the real prize: M8 actually making
 > progress on hard/unsolved problems, not just recording and classifying honestly. **Spec-first** — write
-> `M8/BUILD_43_SPEC.md` proposing the smallest genuinely-useful next rung of the engine (look at
-> `M8/NORTH_STAR.md` Track B + the existing generator/Lean/lemma-DAG pieces to find the real bottleneck),
+> `BUILD_43_SPEC.md` proposing the smallest genuinely-useful next rung of the engine (look at
+> `NORTH_STAR.md` Track B + the existing generator/Lean/lemma-DAG pieces to find the real bottleneck),
 > and ask me to pick the direction before building. Don't boil the ocean — propose one concrete, testable
 > step.
 >
