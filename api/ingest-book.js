@@ -41,7 +41,7 @@ const {
 const BATCH_WORDS = 12000;
 
 // Chapter header patterns: "Chapter 1", "CHAPTER I", "1.", "Part Two", etc.
-const CHAPTER_RE = /^(?:chapter|part|section|book)\s+(?:\d+|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|[a-z]+)\b/im;
+const CHAPTER_RE = /^(?:chapter|part|section|book)\s+(?:\d+|[ivxlcdm]+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|[a-z]+)\b|^(?:الجزء|الباب|الفصل|القسم|الكتاب|المقدمة|الخاتمة|ذكر|بيان|فصل|باب)\s*(?:\d+|الأول|الثاني|الثالث|الرابع|الخامس|السادس|السابع|الثامن|التاسع|العاشر|[٠-٩]+)?/im;
 
 /**
  * Split text on chapter header lines. Returns array of { title, text } objects.
