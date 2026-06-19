@@ -2,7 +2,7 @@
 <!-- CANONICAL M8 DIAGRAM (promoted 2026-06-17, Session-44). This "M8 Mind" view is now the single
      source-of-truth visual — the old dense architecture diagram was archived to archive/diagrams/.
      Update THIS file on every ship: bump the Build/Session in the footer + this note, flip status/%
-     cells, do NOT regenerate the structure. Currently: Session-52 / Build-74 Command Center v2 (scoring + approval + drift). -->
+     cells, do NOT regenerate the structure. Currently: Session-52 — Build-76 smarter context routing (code-complete 58/58, committed 2bd4ba5, PENDING DEPLOY) + Build-74 Command Center v2 (live 63/63). Parallel sessions done; cleanup integrated. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -309,7 +309,7 @@
           <div class="bar-row"><span class="blabel">Built toward the vision</span><span class="bpct">~30%</span></div>
           <div class="bar"><span style="width:30%"></span></div>
           <div class="est">it stores & recalls well; truly self-improving memory is almost all ahead · estimate</div>
-          <div class="foot">internally: provenance + trust tiers on every memory (Builds 38–39); shared by business &amp; research; <b>book ingestion live</b> (Build-58) + <b>cross-book pattern analysis live</b> (Build-62) — Arktos + البداية والنهاية Ch.1 (201 nodes) + Ch.10 (176 nodes, conquest of Persia 16 AH) ingested; keyword fallback for cross-language entity names (Build-66); convergences/gaps detected across books</div>
+          <div class="foot">internally: provenance + trust tiers on every memory (Builds 38–39); shared by business &amp; research. <b>Ingestion + cross-book analysis CODE is built</b> (Builds 58/62/66), but a direct DB check (Session-52, 2026-06-19) found <b>0 books actually persisted</b> — Arktos &amp; البداية والنهاية never survived ingest (likely Vercel OCR timeouts); all 161 graph nodes are math-engine content. <b>Re-ingestion pending</b>; cross-book analysis unverified on real books until then.</div>
         </div>
       </div>
 
@@ -414,6 +414,7 @@
     <div class="evo-col">
       <h4>Backlog (honest pending)</h4>
       <ul>
+        <li><b>Fix knowledge-ingestion persistence</b> — resumable/chunked ingest so a Vercel timeout doesn't lose the book → <b>re-ingest البداية والنهاية Ch.1</b>; verify via <code>/api/knowledge-inventory</code> (0 books persist today — unblocks the Memory pillar's honesty)</li>
         <li>Observability dashboard + resilience playbook (incl. nightly quota/backoff)</li>
         <li>P&amp;L analysis — requires driver cost profiles (salary/fleet-cut/rent) to be configured in the fleet dashboard first</li>
         <li>Memory that <b>evolves</b> — learn from past failures (a later compounding win)</li>
@@ -437,11 +438,12 @@
     <span class="tl done">Build-70 Hands — brief email delivery ✓</span>
     <span class="tl done">Build-71 morning-brief polish ✓</span>
     <span class="tl done">LLM fix — gemini-2.0-flash + thinkingConfig guard ✓</span>
-    <span class="tl cur">Build-72 smarter context routing (in progress)</span>
-    <span class="tl done">Build-72b fleet intelligence depth ✓</span>
-    <span class="tl done">Build-73 driver-nudge drafts ✓</span>
-    <span class="tl done">Command Center v2 — scoring + approval + drift ✓</span>
-    <span class="tl future">البداية والنهاية Ch.2-9+ · evolving memory</span>
+    <span class="tl done">Build-72 brief consistency · Build-72b fleet change analysis · Build-73 nudge drafts ✓</span>
+    <span class="tl done">Command Center v2 — scoring + approval + drift · LIVE-VERIFIED 63/63 ✓</span>
+    <span class="tl done">Build-76 smarter context routing — topic memory (code-complete 58/58, pending deploy) ✓</span>
+    <span class="tl done">Knowledge-inventory endpoint — DB check found 0 books actually persisted ✓</span>
+    <span class="tl cur">Re-ingest البداية والنهاية Ch.1 (needs a resumable-ingest fix first)</span>
+    <span class="tl future">evolving memory · driver cost profiles → real P&amp;L</span>
     <span class="tl future">L6 — a compound mind</span>
   </div>
 
@@ -473,7 +475,7 @@
 
   <div class="footer">
     Plain-language map of <b>The M8 Mind</b> · drawn from NORTH_STAR.md, the live build list & HONESTY_TRACK_PLAN.md ·
-    status as of <b>Session-51 · LLM-fix</b> (2026-06-19) · priorities set with the AI Council (GPT · Gemini · Grok · Manus).<br>
+    status as of <b>Session-52 · Build-76 smarter context routing (code-complete, pending deploy) + Build-74 Command Center v2 (live)</b> (2026-06-19) · priorities set with the AI Council (GPT · Gemini · Grok · Manus).<br>
     The one claim we never make: that we’re already there.
   </div>
 

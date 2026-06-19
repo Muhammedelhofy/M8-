@@ -15,8 +15,16 @@
 
 | Slot | Status | Lane | Session / focus | Started |
 |---|---|---|---|---|
-| Session A | 🟢 idle | — | — | — |
-| Session B | 🟢 idle | — | — | — |
+| Session A | ✅ done | SHARED CORE | Build-76 smarter context routing — topic memory (committed `2bd4ba5`, **not pushed**) | 2026-06-19 |
+| Session B | ✅ done | LANE 2 | Inventory helper (`af99fe4`). Finding: **0 books in DB** — re-ingest needed from Ch.1. | 2026-06-19 |
+| Cleanup | ✅ done | LANE 3 — QA | Integrated diagram + brief + engineer brief; final commit. Slots clear. | 2026-06-19 |
+
+**⛔ CLOSE RULE while parallel sessions run:** Sessions A and B do **NOT** edit `m8_mind_2026.html`
+or `NEXT_SESSION_BRIEF.md` at close (those are Lane 3's, to avoid a 3-way merge fight). At close,
+A and B **commit ONLY their own code/data files** and leave a 2–3 line summary of what shipped; the
+**Cleanup/Lane-3 session integrates both summaries into the diagram + brief** so the end-state stays
+clean. (This overrides the older "every session updates the diagram + brief" rule — that one applies
+only when running solo.)
 
 **The 3 lanes (files never overlap):**
 

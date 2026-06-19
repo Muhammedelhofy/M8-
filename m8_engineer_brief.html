@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>M8 — Engineer Brief</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--bg:#0b0f1a;--panel:#121829;--panel2:#0e1422;--line:#23304f;--ink:#e6ecf5;--mut:#93a2c8;
+        --teal:#54d6c8;--blue:#5ea8ff;--purple:#ce93d8;--green:#7fd98a;--gold:#ffd166;--red:#ff8a8a;--code:#0a1020;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:
+    radial-gradient(900px 500px at 50% -10%,rgba(79,106,245,.16),transparent 70%),var(--bg);
+    color:var(--ink);line-height:1.55;padding:32px 18px 70px;}
+  .wrap{max-width:980px;margin:0 auto;}
+  h1{font-size:27px;font-weight:800;color:#fff;letter-spacing:-.4px;}
+  .kick{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--mut);margin-bottom:8px;}
+  .lede{font-size:14.5px;color:#bcd0ee;margin:12px 0 4px;max-width:760px;}
+  .lede b{color:#eaf1ff;}
+  h2{font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--blue);
+     margin:30px 0 12px;padding-bottom:7px;border-bottom:1px solid var(--line);}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 15px;}
+  .card h3{font-size:13px;color:#eaf1ff;margin-bottom:5px;display:flex;gap:7px;align-items:center;}
+  .card p{font-size:12px;color:var(--mut);}
+  .card .tag{font-size:9.5px;color:var(--teal);background:rgba(84,214,200,.1);border:1px solid rgba(84,214,200,.3);
+     border-radius:20px;padding:1px 8px;margin-left:auto;}
+  code{background:var(--code);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:12px;color:#cdd8f2;}
+  ul{list-style:none;} li{font-size:13px;color:#cdd8f2;padding:6px 0 6px 18px;position:relative;border-bottom:1px solid rgba(35,48,79,.5);}
+  li:last-child{border-bottom:none;} li::before{content:"›";position:absolute;left:3px;color:var(--blue);font-weight:800;}
+  li b{color:#fff;}
+  /* request flow */
+  .flow{display:flex;flex-direction:column;gap:0;background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:18px;}
+  .step{display:flex;gap:14px;align-items:flex-start;}
+  .step .rail{display:flex;flex-direction:column;align-items:center;flex:0 0 auto;}
+  .step .dot{width:13px;height:13px;border-radius:50%;background:var(--blue);box-shadow:0 0 9px var(--blue);margin-top:4px;}
+  .step .ln{width:2px;flex:1;background:var(--line);margin:3px 0;min-height:14px;}
+  .step:last-child .ln{display:none;}
+  .step .body{padding-bottom:16px;}
+  .step .t{font-size:13.5px;font-weight:700;color:#eaf1ff;}
+  .step .t code{font-size:11.5px;}
+  .step .d{font-size:12px;color:var(--mut);margin-top:2px;}
+  .pillrow{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px;}
+  .pill{font-size:11px;color:#bcd0ee;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:3px 11px;}
+  .principle{background:linear-gradient(160deg,rgba(20,28,53,.9),rgba(13,18,38,.9));border:1px solid #4f6af5;
+     border-radius:14px;padding:16px 18px;box-shadow:0 0 30px rgba(79,106,245,.12) inset;}
+  .principle b{color:#9db8ff;}
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media(max-width:680px){.twocol{grid-template-columns:1fr;}}
+  .track{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;}
+  .track.a{border-top:3px solid var(--teal);} .track.b{border-top:3px solid var(--purple);}
+  .track h3{font-size:14px;color:#fff;margin-bottom:7px;}
+  .state{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;color:#cdd8f2;padding:5px 0;}
+  .state .m{flex:0 0 auto;font-weight:800;}
+  .ok{color:var(--green);} .warn{color:var(--gold);} .gap{color:var(--red);}
+  .foot{font-size:11px;color:var(--mut);margin-top:30px;border-top:1px solid var(--line);padding-top:14px;line-height:1.7;}
+  .foot b{color:#cdd8f2;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="kick">M8 · technical brief (for an engineer)</div>
+  <h1>M8 — a deterministic-first personal AI agent</h1>
+  <p class="lede">M8 is a web-based AI assistant with <b>two jobs</b>: <b>(A)</b> run a real business — a Bolt
+     ride-hailing fleet in Riyadh (P&amp;L, driver pace, alerts, reports), and <b>(B)</b> act as a research
+     engine that attacks small, unsolved math problems with <b>machine-checked</b> proofs. The whole design
+     bet is that an <b>LLM should orchestrate and narrate, but never own the truth</b> — deterministic code
+     computes facts, the model only explains them. Live at <code>m8-alpha.vercel.app</code>.</p>
+
+  <h2>The stack (all on a mostly-free tier)</h2>
+  <div class="grid">
+    <div class="card"><h3>Frontend <span class="tag">vanilla JS</span></h3><p>Single-page chat PWA — <code>index.html</code> + <code>js/{app,chat,voice}.js</code>. Streaming (SSE), file/image attach, push-to-talk voice. No framework.</p></div>
+    <div class="card"><h3>Backend <span class="tag">Vercel</span></h3><p>Serverless Node functions in <code>api/*.js</code> (Hobby plan, 12-function cap). Cron jobs for the nightly research loop + the 6am fleet brief.</p></div>
+    <div class="card"><h3>LLM <span class="tag">Gemini</span></h3><p>Google <code>gemini-2.0-flash</code> primary, with Groq/Mistral fallbacks on quota. Used for orchestration + narration only — never as the source of a number or a proof.</p></div>
+    <div class="card"><h3>Database <span class="tag">Supabase</span></h3><p>Postgres + <code>pgvector</code>. Stores fleet data, the research memory graph, the priority ledger, provenance/trust tiers, and run telemetry.</p></div>
+    <div class="card"><h3>Formal proofs <span class="tag">Cloud Run</span></h3><p><code>m8-lean-check</code> — a Lean 4 + Mathlib service exposing <code>/check</code>. It is the <i>only</i> thing allowed to mark a math claim "proven".</p></div>
+    <div class="card"><h3>Delivery <span class="tag">Resend</span></h3><p>Transactional email (the morning fleet brief). The first "reach the user outside chat" seam; nudges/WhatsApp drafts build on it.</p></div>
+  </div>
+
+  <h2>Request lifecycle — what happens on one chat message</h2>
+  <div class="flow">
+    <div class="step"><div class="rail"><div class="dot"></div><div class="ln"></div></div>
+      <div class="body"><div class="t">1 · Browser → <code>api/chat.js</code> / <code>api/chat-stream.js</code></div>
+      <div class="d">Message + history + any attachments POSTed; the stream path replies over SSE.</div></div></div>
+    <div class="step"><div class="rail"><div class="dot"></div><div class="ln"></div></div>
+      <div class="body"><div class="t">2 · Orchestrator hard-route spine — <code>lib/orchestrator.js</code></div>
+      <div class="d">Regex-first, <b>first match wins</b>. A deterministic ladder of detectors (fleet query, morning brief, command-center priority, research command, …) decides if a request is handled by code before any LLM call. This is the deterministic-first core.</div></div></div>
+    <div class="step"><div class="rail"><div class="dot"></div><div class="ln"></div></div>
+      <div class="body"><div class="t">3 · Tool-decision router — <code>lib/router.js</code> / <code>intentClassifier.js</code></div>
+      <div class="d">When no hard route fires, classify intent: <code>answer</code> · <code>search</code> (live web) · <code>compute</code> (code-exec) · <code>clarify</code>. Source-trust + recency gates rank any web results before they reach the model.</div></div></div>
+    <div class="step"><div class="rail"><div class="dot"></div><div class="ln"></div></div>
+      <div class="body"><div class="t">4 · Deterministic engines compute the facts — <code>lib/*</code></div>
+      <div class="d">Fleet P&amp;L, finance, the priority engine, the math probes, etc. run as pure code and return a structured "packet" of ground-truth numbers/results.</div>
+      <div class="pillrow"><span class="pill">fleet.js</span><span class="pill">finance.js</span><span class="pill">command-center.js</span><span class="pill">morning-brief.js</span><span class="pill">lemma-dag.js</span><span class="pill">memory-graph.js</span></div></div></div>
+    <div class="step"><div class="rail"><div class="dot"></div><div class="ln"></div></div>
+      <div class="body"><div class="t">5 · LLM narrates the packet — under honesty directives</div>
+      <div class="d">Gemini turns the packet into prose. It is told it may not invent numbers, may not call "tested" the same as "proven", and must hedge on weak sources. An <b>Odysseus red-team battery</b> of permanent probes guards against overclaim regressions.</div></div></div>
+    <div class="step"><div class="rail"><div class="dot"></div></div>
+      <div class="body"><div class="t">6 · Persist + stream back</div>
+      <div class="d">Memory/provenance written to Supabase; reply streamed to the browser. Every write fails <i>safe</i> — a DB error degrades, it never fabricates.</div></div></div>
+  </div>
+
+  <h2>The one design principle everything hangs on</h2>
+  <div class="principle">
+    <b>Code computes truth; the model only narrates it.</b> A number comes from a deterministic engine, not the
+    LLM. A math claim is "proven" only when the Lean checker says so — never because the model is confident.
+    Memory carries explicit <b>provenance + trust tiers</b> (verified / empirical / heuristic / unverified / refuted),
+    and the read path surfaces the most-trusted first. The product's headline rule: <b>it never claims more than it can back up.</b>
+  </div>
+
+  <h2>The two tracks</h2>
+  <div class="twocol">
+    <div class="track a">
+      <h3>Track A — Operations (the business today)</h3>
+      <div class="state"><span class="m ok">✓</span><div>Verified fleet P&amp;L, multi-company registry, KSA labour/EOSB/ZATCA playbooks, deck/Excel/PPTX export.</div></div>
+      <div class="state"><span class="m ok">✓</span><div>Daily 5,000-SAR-pace "morning brief" (the SAR target is a Bolt bonus tier), Arabic driver-nudge drafts, anomaly alerts, "what changed &amp; why" analysis.</div></div>
+      <div class="state"><span class="m warn">◑</span><div>True profit / driver cost profiles — <b>not yet modelled</b> (rental + Bolt bonus economics need capturing first).</div></div>
+    </div>
+    <div class="track b">
+      <h3>Track B — Research (unsolved-problem engine)</h3>
+      <div class="state"><span class="m ok">✓</span><div>Idea → testable claim → exhaustive check → "observed through N" (never "proven"). Two problem families (Collatz, reverse-and-add).</div></div>
+      <div class="state"><span class="m ok">✓</span><div>Human-gated lemma-DAG decomposition; leaves discharged through the Lean checker; a nightly autonomous loop (L5).</div></div>
+      <div class="state"><span class="m warn">◑</span><div>The L5 promotion gate sits at 0/3 clean nights (honesty graders, now fixed); no open problem cracked — and by design it never claims one is.</div></div>
+    </div>
+  </div>
+
+  <h2>Honest current state — what's solid vs half-built</h2>
+  <ul>
+    <li><b class="ok">Solid &amp; live:</b> the chat app, the deterministic orchestration spine, fleet/finance engines, the priority "Command Center", the honesty layer + Odysseus battery, Lean verification of small leaves.</li>
+    <li><b class="warn">Built but unproven:</b> the autonomous nightly loop (capability live, promotion gate not yet banked).</li>
+    <li><b class="gap">Known gap (just found):</b> the document-ingestion pipeline (PDF/EPUB OCR → knowledge graph) <b>exists in code but has 0 books actually persisted</b> — prior ingests died on serverless timeouts. Needs a resumable/chunked ingest before it's real. A read-only inventory endpoint (<code>GET /api/knowledge-inventory</code>) now reports the true state.</li>
+    <li><b>Deferred:</b> native mobile/PWA, calendar/email/task integrations, multi-platform order ingestion (only Bolt is deep today).</li>
+  </ul>
+
+  <div class="foot">
+    <b>One-line summary for a busy engineer:</b> a Vercel + Supabase + Gemini chat agent whose defining choice is a
+    deterministic hard-route spine in front of the LLM, so code (and a Lean proof checker) owns every fact and the
+    model only explains — built to run a real fleet business and to probe small math conjectures without ever overclaiming.<br>
+    <b>To go deeper:</b> the orchestrator (<code>lib/orchestrator.js</code>) is the spine; <code>lib/command-center.js</code> is a clean self-contained example of the "code computes, model narrates, human approves" pattern.
+    Status: Build-74 · 2026-06-19.
+  </div>
+
+</div>
+</body>
+</html>
