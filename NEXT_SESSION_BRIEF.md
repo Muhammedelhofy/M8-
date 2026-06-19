@@ -15,9 +15,9 @@
 
 | Slot | Status | Lane | Session / focus | Started |
 |---|---|---|---|---|
-| Session A | ✅ done | SHARED CORE | Build-76 smarter context routing — topic memory (committed `2bd4ba5`, **not pushed**) | 2026-06-19 |
-| Session B | ✅ done | LANE 2 | Inventory helper (`af99fe4`). Finding: **0 books in DB** — re-ingest needed from Ch.1. | 2026-06-19 |
-| Cleanup | ✅ done | LANE 3 — QA | Integrated diagram + brief + engineer brief; final commit. Slots clear. | 2026-06-19 |
+| Session A | 🔴 active | LANE 2 — RESEARCH (ingestion) | **Build-77: resumable/idempotent book ingestion** (fix the 0-books persistence gap). OWNS `lib/knowledge-intake.js`, `api/ingest-book.js`, `api/pdf-to-text.js`, `lib/converter.js`, `lib/memory-graph.js`, `lib/buildState.js` (sole bumper this round), + new migration/test. **MUST NOT touch** `lib/orchestrator.js`, `lib/fleet-analysis.js`, `lib/router.js`, `m8_mind_2026.html`, `NEXT_SESSION_BRIEF.md`. | 2026-06-19 |
+| Session B | ✅ done | LANE 2 | Inventory helper (`af99fe4`) + 0-books finding. (Builds 74/76 pushed; live.) | 2026-06-19 |
+| Cleanup | 🔴 active | LANE 3 + change-slot | #3 change-analysis fix committed `1135c22` (guard-preserving overwrite). Owns `lib/orchestrator.js` change-slot, `lib/fleet-analysis.js`, the diagram + this brief. | 2026-06-19 |
 
 **⛔ CLOSE RULE while parallel sessions run:** Sessions A and B do **NOT** edit `m8_mind_2026.html`
 or `NEXT_SESSION_BRIEF.md` at close (those are Lane 3's, to avoid a 3-way merge fight). At close,
