@@ -394,6 +394,7 @@
         <li><b>Phase B2 — Parametric PPTX</b>: chips clarification (Analysis / Board / Operational) before generating; 3 deck generators (7/5/6 slides); type-aware download URL <span class="tg">✓ Build-65</span></li>
         <li><b>البداية والنهاية Ch.10 ingested</b>: 176 nodes — conquest of Persia, siege of Behrasir, fall of Al-Mada'in (Ctesiphon), flight of Yazdegerd III, 16 AH <span class="tg">✓ Session-49</span></li>
         <li><b>Cross-book keyword fallback</b>: entity names (e.g. Khosrow / كسرى) now found even when embedding search misses across languages; fixed misleading empty-graph message <span class="tg">✓ Build-66</span></li>
+        <li><b>Round-5 telemetry — failing probes to Supabase</b>: gate-miss diagnosis now possible from Supabase alone; <code>failing_probes</code> JSONB column added to <code>m8_loop_runs</code>; <code>recordAttestation()</code> patches it with <code>{ probe_id, check_label, reply_excerpt }</code> per failed probe; 24/24 offline <span class="tg">✓ Build-67</span></li>
       </ul>
     </div>
     <div class="evo-col">
@@ -407,7 +408,6 @@
     <div class="evo-col">
       <h4>Backlog (honest pending)</h4>
       <ul>
-        <li>Persist per-check fails + replies into the Supabase attestation — <span class="tg">▶ Build-67 in progress</span></li>
         <li>Observability dashboard + resilience playbook (incl. nightly quota/backoff)</li>
         <li>P&amp;L analysis — requires driver cost profiles (salary/fleet-cut/rent) to be configured in the fleet dashboard first</li>
         <li>Memory that <b>evolves</b> — learn from past failures (a later compounding win)</li>
@@ -425,7 +425,8 @@
     <span class="tl done">Phase B2 PPTX types ✓</span>
     <span class="tl done">البداية والنهاية Ch.10 ✓</span>
     <span class="tl done">Cross-book keyword fallback ✓</span>
-    <span class="tl cur">Build-67 telemetry · Build-68 morning brief</span>
+    <span class="tl done">Build-67 failing-probes telemetry ✓</span>
+    <span class="tl cur">Build-68 morning brief</span>
     <span class="tl future">البداية والنهاية Ch.2-9+ · Track-A daily</span>
     <span class="tl future">L6 — a compound mind</span>
   </div>
