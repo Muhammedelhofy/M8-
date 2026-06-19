@@ -1,7 +1,37 @@
 # M8 — Next Session Brief
-**Latest:** 2026-06-19 (Session-50) · **Branch:** main · **Head:** Build-71 (merged)
+**Latest:** 2026-06-19 (Session-51) · **Branch:** main · **Head:** LLM-fix `d4c73b8`
 **Canonical plan:** [`HONESTY_TRACK_PLAN.md`](HONESTY_TRACK_PLAN.md) ← the living backlog. Read it first.
 (Older Session-34/38/39/40/41/43/44/48/49 briefs preserved below for history.)
+
+---
+
+## ★ SESSION-51 FINAL STATE — 2026-06-19 (read this first next session)
+
+### What shipped this session
+
+| Build | Summary | Status |
+|---|---|---|
+| **LLM fix** | **`thinkingConfig` guard** — `gemini-2.0-flash` rejects the `thinkingConfig` field entirely (only gemini-2.5-* supports it). Code was always sending `{ thinkingBudget: 0 }` by default → 400 errors on every stream call. Fix: only set `thinkingConfig` when `thinkingBudget > 0`. `lib/llm.js` `d4c73b8`. | ✅ pushed + live |
+| **GEMINI_MODEL** | Muhammad updated `GEMINI_MODEL=gemini-2.0-flash` in Vercel env vars (replaces deprecated `gemini-1.5-flash`). | ✅ env updated |
+| **Build-69** | Fleet Intelligence — context-aware routing. Live-verified: bare ordinals, Arabic vocab, history context carry-forward all working. "what was net on the 7th?" → June 7 data ✅ | ✅ live-verified |
+| **Build-70** | Morning brief email (Resend). `RESEND_API_KEY` added by Muhammad. On-demand "send me the brief email now" → email delivered to mohd.hofy@gmail.com ✅ | ✅ live-verified |
+| **Build-71** | Morning brief polish (min-days guard, directive fix, on-demand email). Morning brief in chat showing correct data ✅ | ✅ live-verified |
+
+### ▶ NEXT SESSION priorities (in order)
+1. **Build-72: Smarter context routing** — Muhammad explicitly asked for M8 to understand conversation intent regardless of specific keywords ("M8 has to be smarter than this, not only words trigger it"). Short-term topic memory layer that biases routing without keyword re-confirmation. Goes beyond Build-69's history gate to full topic-awareness.
+2. **Build-65 live verification** — chips + three PPTX deck types at m8-alpha.vercel.app still unverified
+3. **Track-A v2** — per-driver coaching nudges, WhatsApp/email delivery, weekly roll-up
+4. **Verify automated 6am email** — first automated morning brief email fires 2026-06-20 at 3am UTC (6am Riyadh); check mohd.hofy@gmail.com
+
+### Kickoff prompt for next session
+> Continue M8 (Session-52). Read `NEXT_SESSION_BRIEF.md` (Session-51 final state) first.
+> All live and verified: Build-69 (fleet intelligence), Build-70 (email delivery), Build-71 (brief polish).
+> LLM fix `d4c73b8` guards `thinkingConfig` — gemini-2.0-flash now the active model with no errors.
+> NEXT = Build-72: smarter context routing — Muhammad wants M8 to understand intent from conversation
+> context, not just keyword matching. Design a topic-memory layer that biases routing without re-confirmation.
+> Standing rules: free Gemini stack; live runs need Muhammad's OK; M8 repo is `Muhammedelhofy/M8-`;
+> edit buildState.js commitFamily only via unique-anchor replace; PS .ps1 files must be pure ASCII;
+> update BOTH `m8_mind_2026.html` AND `NEXT_SESSION_BRIEF.md` at session close.
 
 ---
 
