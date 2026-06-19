@@ -30,10 +30,26 @@
 
 const { GoogleGenAI } = require("@google/genai");
 const { ingestDocument, normalizeSourceClass } = require("../lib/knowledge-intake");
+const {
+  ocrDocKey,
+  loadOcrCheckpoints,
+  saveOcrBatch,
+  batchesToProcess,
+  ocrProgress,
+  assembleOcrText,
+} = require("../lib/converter");
 
 const DEFAULT_BATCH = 12;
 const MAX_BATCH     = 20;
 const MAX_OUTPUT_TOKENS = 8000;
+
+// Build-78a: bound OCR work per invocation so a large scan returns a "continue"
+// signal instead of timing out; the caller re-POSTs to resume. Already-OCR'd
+// page-batches are skipped via the m8_ocr_checkpoints table.
+const MAX_OCR_BATCHES_PER_INVOCATION =
+  Math.min(50, Math.max(1, parseInt(process.env.M8_OCR_MAX_BATCHES, 10) || 10));
+const OCR_TIMEOUT_GUARD_MS = 8000;
+const OCR_VERCEL_MAX_MS    = parseInt(process.env.VERCEL_MAX_DURATION_MS, 10) || 290000;
 
 // Safety settings matching M8's global config (from lib/llm.js)
 const SAFETY = [
@@ -188,19 +204,53 @@ module.exports = async (req, res) => {
   const pageCount = await detectPageCount(ai, fileUri);
   const totalPages = pageCount || 300; // conservative fallback
 
-  // ── Step 4: Extract text in batches ────────────────────────────
-  const textParts = [];
+  // ── Step 4: Extract text in batches (Build-78a: resumable + checkpointed) ──
+  // A page-batch is persisted to m8_ocr_checkpoints the moment it is OCR'd, so a
+  // timeout on a later batch can never lose it. On re-POST the done batches are
+  // skipped and only the remaining pages are sent to Gemini. When the checkpoint
+  // table is missing (migration not applied) we fall back to a single-shot OCR.
+  const docKey = ocrDocKey(title || pdf_url, pdf_url);
+  let ocrCps = null;
+  try { ocrCps = await loadOcrCheckpoints(docKey); }
+  catch (e) { console.error("[pdf-to-text] loadOcrCheckpoints (non-fatal):", e.message); }
+  const checkpointing = ocrCps !== null;
+
+  const doneStarts = [];
+  const doneRows   = [];
+  if (checkpointing) {
+    for (const [start, row] of ocrCps) { doneStarts.push(start); doneRows.push(row); }
+  }
+
+  // Only bound the batch count when we can actually resume; without the table a
+  // bound would truncate the book with no way to finish it.
+  const effMaxBatches = checkpointing ? MAX_OCR_BATCHES_PER_INVOCATION : totalPages;
+  const todo = batchesToProcess(totalPages, batchSize, doneStarts, effMaxBatches);
+
+  const newRows = [];
   let batchesProcessed = 0;
   let failed = 0;
+  let timedOut = false;
+  const startedAt = Date.now();
 
-  for (let start = 1; start <= totalPages; start += batchSize) {
+  for (const start of todo) {
+    if (Date.now() - startedAt > OCR_VERCEL_MAX_MS - OCR_TIMEOUT_GUARD_MS) { timedOut = true; break; }
     const end = Math.min(start + batchSize - 1, totalPages);
     try {
       const chunk = await extractPageBatch(ai, fileUri, start, end);
-      if (chunk && !chunk.includes("[page") || chunk.length > 30) {
-        textParts.push(chunk);
+      const keep = (chunk && !chunk.includes("[page")) || (chunk && chunk.length > 30);
+      if (keep) {
+        newRows.push({ batch_start: start, batch_end: end, page_text: chunk });
+        if (checkpointing) {
+          try {
+            await saveOcrBatch({
+              doc_key: docKey, batch_start: start, batch_end: end,
+              page_text: chunk, total_pages: totalPages, title: title || null,
+            });
+          } catch (e) { console.error("[pdf-to-text] saveOcrBatch (non-fatal):", e.message); }
+        }
       }
       batchesProcessed++;
+      failed = 0;
     } catch (e) {
       console.error(`[pdf-to-text] batch ${start}-${end} failed:`, e.message);
       failed++;
@@ -209,11 +259,40 @@ module.exports = async (req, res) => {
     }
   }
 
-  // Cleanup: delete uploaded file from Gemini (storage costs)
+  // Cleanup: delete uploaded file from Gemini (storage costs). The PDF is
+  // re-uploaded fresh on the next invocation if we still need to resume.
   await deleteFile(ai, fileUri);
 
-  const fullText  = textParts.join("\n\n");
+  const allRows   = doneRows.concat(newRows);
+  const fullText  = assembleOcrText(allRows);
   const wordCount = fullText.trim().split(/\s+/).length;
+
+  // Resume contract: complete only when every batch is done and we didn't bail.
+  const doneCount   = checkpointing ? allRows.length : batchesProcessed;
+  const progress    = ocrProgress(totalPages, batchSize, doneCount);
+  const ocrComplete = !checkpointing || (progress.complete && !timedOut);
+
+  if (!ocrComplete) {
+    // More pages remain — return a continue signal; do NOT save/ingest yet.
+    const newDone = new Set(doneStarts);
+    for (const r of newRows) newDone.add(r.batch_start);
+    const nextBatch = batchesToProcess(totalPages, batchSize, [...newDone], 1)[0] || null;
+    return res.status(200).json({
+      ok:                true,
+      done:              false,
+      resume:            true,
+      word_count:        wordCount,
+      pages_detected:    pageCount,
+      total_pages:       totalPages,
+      batches_done:      progress.batches_done,
+      batches_total:     progress.batches_total,
+      batches_remaining: progress.batches_remaining,
+      next_batch:        nextBatch,
+      timed_out:         timedOut,
+      checkpointing,
+      message:           "OCR partial — re-POST the same body to resume from where it stopped.",
+    });
+  }
 
   if (wordCount < 50) {
     return res.status(422).json({
@@ -308,9 +387,15 @@ module.exports = async (req, res) => {
   }
 
   return res.status(200).json({
+    ok:                true,
+    done:              true,
+    resume:            false,
     word_count:        wordCount,
     pages_detected:    pageCount,
+    total_pages:       totalPages,
     batches_processed: batchesProcessed,
+    batches_total:     progress.batches_total,
+    checkpointing,
     source_id:         source_id || null,
     ingest:            ingestResult,
     text:              fullText,
