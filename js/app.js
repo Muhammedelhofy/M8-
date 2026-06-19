@@ -842,7 +842,7 @@ async function streamMessage(text, pastHistory, attachments) {
   }
   if (buf.trim()) handle(buf);
 
-  if (!got) return false;        // server errored before any content → fall back
+  if (!got || errored) return false;   // no content or error event → fall back
   voice.endStream();
   return true;
 }
