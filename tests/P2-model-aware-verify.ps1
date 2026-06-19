@@ -102,7 +102,7 @@ const fleetPl = computeDriverPnLV2("Majed", mk(2026, 5), fleetEntries, fleetProf
 results.f_income    = String(fleetPl.income);    // 6000 -- F model: earnings land in company
 results.f_driverNet = String(fleetPl.driverNet); // 6000
 results.f_salary    = String(fleetPl.salary);    // -2000
-results.f_netPnL    = String(fleetPl.netPnL);    // 4000 (6000 - 2000)
+results.f_netPnL    = String(fleetPl.netPnL);    // 3250 (6000 - 2000 - 750 F-incentive at T6)
 
 // ── computeDriverPnLV2: S model (salaried, same as F) ─────────────
 const salProfiles = {
@@ -139,12 +139,12 @@ const mixedEntries = makeEntries([
 ], 5, 2026);
 const v2Fleet = computeFleetPnL(mk(2026, 5), mixedEntries, mixedProfiles, {}, { modelAwarePnL: true });
 // Ahmed R: income=0, carRent=+1500, netPnL=1500
-// Majed F: income=6000, salary=-2000, netPnL=4000
-// totals: income=6000 (only Majed's), inflow=1500 (Ahmed's rent), costs=2000, netPnL=5500
+// Majed F: income=6000, salary=-2000, incentiveOut=750 (T6), netPnL=3250
+// totals: income=6000 (only Majed's), inflow=1500 (Ahmed's rent), costs=2750, netPnL=4750
 results.v2_income   = String(v2Fleet.totals.income);   // 6000
 results.v2_inflow   = String(v2Fleet.totals.inflow);   // 1500
-results.v2_costs    = String(v2Fleet.totals.costs);    // 2000
-results.v2_netPnL   = String(v2Fleet.totals.netPnL);  // 5500
+results.v2_costs    = String(v2Fleet.totals.costs);    // 2750
+results.v2_netPnL   = String(v2Fleet.totals.netPnL);  // 4750
 results.v2_drivers  = String(v2Fleet.totals.drivers);  // 2
 results.v2_flag     = String(v2Fleet.modelAware);      // true
 
@@ -164,9 +164,9 @@ results.leg_income  = String(legacyFleet.totals.income);  // 11200
 results.leg_netPnL  = String(legacyFleet.totals.netPnL);  // 10700
 results.leg_flag    = String(legacyFleet.modelAware);     // false
 
-// Default (no financeConfig arg) should use FLEET_FINANCE_CONFIG default (false)
+// Default (no financeConfig arg) uses FLEET_FINANCE_CONFIG — now true since P3a
 const defaultFleet = computeFleetPnL(mk(2026, 5), mixedEntries, mixedProfiles, {});
-results.def_flag = String(defaultFleet.modelAware); // false (default off)
+results.def_flag = String(defaultFleet.modelAware); // true (P3a flipped default on)
 
 console.log(JSON.stringify(results));
 '@
@@ -208,7 +208,7 @@ Write-Host "-- computeDriverPnLV2: F model (Fleet-account) --------------"
 T "income = 6000 company collects"      $r.f_income     "6000"
 T "driverNet = 6000"                    $r.f_driverNet  "6000"
 T "salary = -2000"                      $r.f_salary     "-2000"
-T "netPnL = 4000"                       $r.f_netPnL     "4000"
+T "netPnL = 3250 (P3a F-incentive 750)"  $r.f_netPnL     "3250"
 
 Write-Host ""
 Write-Host "-- computeDriverPnLV2: S model (Salaried) -------------------"
@@ -225,8 +225,8 @@ Write-Host ""
 Write-Host "-- computeFleetPnL V2 flag ON mixed fleet -------------------"
 T "income = 6000 Majed only Ahmed R"    $r.v2_income    "6000"
 T "inflow = 1500 Ahmed rent"            $r.v2_inflow    "1500"
-T "costs = 2000 Majed salary"           $r.v2_costs     "2000"
-T "netPnL = 5500"                       $r.v2_netPnL    "5500"
+T "costs = 2750 salary+F-incentive"     $r.v2_costs     "2750"
+T "netPnL = 4750"                       $r.v2_netPnL    "4750"
 T "drivers = 2"                         $r.v2_drivers   "2"
 T "modelAware flag = true"              $r.v2_flag      "true"
 
@@ -235,7 +235,7 @@ Write-Host "-- Legacy mode unchanged V2 flag OFF -------------------------"
 T "legacy income = 11200 inflated"      $r.leg_income   "11200"
 T "legacy netPnL = 10700"               $r.leg_netPnL   "10700"
 T "legacy modelAware = false"           $r.leg_flag     "false"
-T "default no config = false"           $r.def_flag     "false"
+T "default no config = true (P3a on)"   $r.def_flag     "true"
 
 Write-Host ""
 $total = $pass + $fail
