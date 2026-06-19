@@ -118,6 +118,21 @@ $nneg = @(
 )
 foreach ($m in $nneg) { Check ("NOT-NUDGE: '{0}'" -f $m) (-not (Detect-Nudge $m)) }
 
+Write-Host "`n== Section E: Arabic day-count agreement rule (Build-75) ==" -ForegroundColor Cyan
+# Mirror of arabicDays() category selection (ASCII tokens, not the Arabic glyphs):
+# 1 -> 'one', 2 -> 'two', 3-10 -> 'few', 11+ -> 'many'.
+function Day-Grammar($n) {
+    $d = [math]::Round($n)
+    if ($d -eq 1) { return "one" }
+    if ($d -eq 2) { return "two" }
+    if ($d -ge 3 -and $d -le 10) { return "few" }
+    return "many"
+}
+Check "1 day  -> singular (one)"  ((Day-Grammar 1) -eq "one")
+Check "2 days -> dual (two)"       ((Day-Grammar 2) -eq "two")
+Check "5 days -> few (3-10)"       ((Day-Grammar 5) -eq "few")
+Check "14 days -> many (11+)"      ((Day-Grammar 14) -eq "many")
+
 Write-Host ""
 Write-Host ("RESULT: {0}/{1} passed, {2} failed" -f $global:pass, $global:tot, $global:fail) -ForegroundColor Yellow
 if ($global:fail -gt 0) { exit 1 }
