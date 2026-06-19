@@ -1,7 +1,42 @@
 # M8 — Next Session Brief
-**Latest:** 2026-06-18 (Session-45) · **Branch:** main · **Head:** `be933fb`
+**Latest:** 2026-06-19 (Session-47) · **Branch:** main · **Head:** `c00bdff`
 **Canonical plan:** [`HONESTY_TRACK_PLAN.md`](HONESTY_TRACK_PLAN.md) ← the living backlog. Read it first.
 (Older Session-34/38/39/40/41/43/44 briefs preserved below for history.)
+
+---
+
+## ★ SESSION-47 FINAL STATE — 2026-06-19 (read this first next session)
+
+### What shipped this session (ALL pushed to `Muhammedelhofy/M8-` main)
+
+| Build | Summary | Status |
+|---|---|---|
+| Build-58e | **Charts & Graphics hard rule** — Added top-level CHARTS & GRAPHICS section to M8_SYSTEM_PROMPT; bans "I cannot generate a visual" and ASCII bars — prevents base model belief from overriding the per-turn chart instruction. Fixes fleet chart text ↔ spine disconnect. | ✅ live |
+| Build-59 | **Fleet Insight Engine (Phase A)** — `fleetInsightEngine()`: pace flags, dark drivers, inconsistency, concentration. `renderInsightPacket()` appends recommended actions to every fleet turn. Financial thinking mode: margin %, deal quality, CFO-style analysis. | ✅ live |
+| Build-60b | **Fleet file exports (Phase B)** — `/api/fleet-export?format=xlsx|pptx`: Excel (5 sheets: Rankings, Insight Flags, Fleet Summary, Daily Breakdown, Projections) + PPTX (5 slides). Reply-to-message UX: reply bar, quoted preview, quoted context in API call. | ✅ live |
+| Build-61 | **DOCX support** — `mammoth` added; `.docx/.doc` attachable in chat + via `/api/convert.js`. Download button shows `⬇ txt` + `⬇ docx` (formatted Word with heading styles). Gemini token-loop guard (4+ repeated lines → truncate). | ✅ live |
+| Build-61c | **Arabic chapter detection** — `CHAPTER_RE` extended with Arabic patterns (الجزء، الباب، الفصل، القسم + ordinal numbers). Enables proper chapter-level provenance for Arabic books like البداية والنهاية. | ✅ live |
+| Build-62 | **Phase C — Cross-book knowledge graph** — `detectCrossBookQuery()` + `buildCrossBookContext()` in `lib/memory-graph.js`. Groups graph nodes by book, detects convergences (same concept in 2+ books) and gaps (unique to one book). Arktos is live; comparison enriches with each new book. | ✅ live |
+| Builds 63–63d | **Adaptive PDF extraction** — No more page-count probe (unreliable for Arabic PDFs). Adaptive loop: 10 concurrent 8-page batches until 2 consecutive empty rounds. `PAGE_SAFETY_CAP` from file size prevents Gemini hallucination loop. Live elapsed timer (ticks every 5s) + 4-min hard timeout on chip. Three-stage chip: uploading → extracting → ready (word + page count). | ✅ live |
+| Build-64 | **PDF cost guard + session cache** — Server rejects PDFs estimated >200 pages before touching Gemini (~$0.40 max cap). Session cache: re-uploading the same file within a session costs zero tokens. Chip shows estimated page count before extraction starts. | ✅ live |
+
+### Key outcome: Arktos ingested ✓
+- Arktos (Joscelyn Godwin, 1993, 247 pages, scanned Nazi occultism PDF) successfully OCR'd and ingested into M8's knowledge graph.
+- Cross-book analysis is live — ready to enrich once a second book is ingested.
+
+### ▶ NEXT SESSION priorities
+1. **Ingest البداية والنهاية** (Ibn Kathir) — Arabic book; test Arabic chapter detection + cross-book convergence detection with Arktos
+2. **Phase B2 — Parametric PPTX types** — M8 asks intent (Analysis / Board / Operational) before generating; audience-aware slide structure
+3. **Track-A daily-usefulness** — scope what "daily useful" means concretely (fleet summaries? alerts? business loop?)
+
+### Kickoff prompt for next session
+> Continue M8 (Session-48). Read `NEXT_SESSION_BRIEF.md` (Session-47 final state) first.
+> Builds 59–64 are LIVE: fleet insight engine, file exports (Excel 5-sheet + PPTX), docx support, cross-book graph, adaptive PDF OCR, cost guard.
+> Arktos is ingested in the knowledge graph. Next: ingest البداية والنهاية to test Arabic chapter detection + cross-book analysis.
+> Then scope Phase B2 (parametric PPTX) and Track-A daily-usefulness with Muhammad.
+> Standing rules: free Gemini stack; live runs need Muhammad's OK; M8 repo is `Muhammedelhofy/M8-`;
+> edit buildState.js commitFamily only via unique-anchor replace; PS .ps1 files must be pure ASCII;
+> update BOTH `m8_mind_2026.html` AND `NEXT_SESSION_BRIEF.md` at session close.
 
 ---
 

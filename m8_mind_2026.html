@@ -2,7 +2,7 @@
 <!-- CANONICAL M8 DIAGRAM (promoted 2026-06-17, Session-44). This "M8 Mind" view is now the single
      source-of-truth visual — the old dense architecture diagram was archived to archive/diagrams/.
      Update THIS file on every ship: bump the Build/Session in the footer + this note, flip status/%
-     cells, do NOT regenerate the structure. Currently: Session-46 / Build-58d. -->
+     cells, do NOT regenerate the structure. Currently: Session-47 / Build-64. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -280,12 +280,12 @@
 
       <div class="region c-senses glow-senses">
         <div class="rhead"><span class="ricon">👁️</span><span class="rtitle">Senses</span><span class="node"></span></div>
-        <div class="rrole">What M8 <b>takes in</b>: reads files & spreadsheets, sees images/receipts, searches the live web (weighing how trustworthy each source is) — and now reads <b>PDF and EPUB documents</b> directly in chat, converting scanned books via Gemini OCR — including historical and speculative-content material.</div>
+        <div class="rrole">What M8 <b>takes in</b>: reads files &amp; spreadsheets, sees images/receipts, searches the live web (weighing how trustworthy each source is) — and now reads <b>PDF, EPUB, DOCX documents</b> directly in chat, converting scanned books via Gemini OCR (adaptive page extraction, cost-guarded, Arabic-aware) — including historical and speculative-content material.</div>
         <div class="flow"><span class="ar">→</span> feeds raw facts into the <b>Thinking core</b></div>
         <div class="bar-wrap">
-          <div class="bar-row"><span class="blabel">Built toward the vision</span><span class="bpct">~40%</span></div>
-          <div class="bar"><span style="width:40%"></span></div>
-          <div class="est">reads files/images/web/PDFs/EPUBs today; deeper understanding & many more inputs to come · estimate</div>
+          <div class="bar-row"><span class="blabel">Built toward the vision</span><span class="bpct">~45%</span></div>
+          <div class="bar"><span style="width:45%"></span></div>
+          <div class="est">reads files/images/web/PDFs/EPUBs/DOCX today; adaptive OCR; deeper understanding &amp; many more inputs to come · estimate</div>
         </div>
       </div>
 
@@ -309,7 +309,7 @@
           <div class="bar-row"><span class="blabel">Built toward the vision</span><span class="bpct">~30%</span></div>
           <div class="bar"><span style="width:30%"></span></div>
           <div class="est">it stores & recalls well; truly self-improving memory is almost all ahead · estimate</div>
-          <div class="foot">internally: provenance + trust tiers on every memory (Builds 38–39); shared by business & research; <b>book ingestion live</b> — any book can be added to M8's knowledge graph, chapter-by-chapter (Build-58)</div>
+          <div class="foot">internally: provenance + trust tiers on every memory (Builds 38–39); shared by business &amp; research; <b>book ingestion live</b> (Build-58) + <b>cross-book pattern analysis live</b> (Build-62) — Arktos ingested; convergences/gaps detected across books; Arabic book detection ready (Build-61c)</div>
         </div>
       </div>
 
@@ -348,9 +348,9 @@
         <div class="rrole">Does <b>real work on real data today</b>: fleet performance, verified profit &amp; loss, end-of-service pay, multi-company registry, and early-warning alerts.</div>
         <div class="flow"><span class="ar">→</span> turns the core's decisions into <b>action</b></div>
         <div class="bar-wrap">
-          <div class="bar-row"><span class="blabel">Built toward the vision</span><span class="bpct">~35%</span></div>
-          <div class="bar"><span style="width:35%"></span></div>
-          <div class="est">fleet & finance are trusted; email, calendar, tasks & documents not built or connected yet · estimate</div>
+          <div class="bar-row"><span class="blabel">Built toward the vision</span><span class="bpct">~42%</span></div>
+          <div class="bar"><span style="width:42%"></span></div>
+          <div class="est">fleet &amp; finance trusted; Excel (5 sheets) + PPTX export on demand; fleet insight flags; reply-to-message UX; email, calendar, tasks not yet connected · estimate</div>
         </div>
       </div>
 
@@ -383,18 +383,20 @@
   <!-- TASKS / PROJECTS / EVOLUTION -->
   <div class="evo">
     <div class="evo-col">
-      <h4>Working on now</h4>
+      <h4>Recently shipped ✓</h4>
       <ul>
-        <li><b>Phase A — Fleet insight engine — LIVE</b>: pace flags, dark drivers, inconsistency, concentration, recommended actions in every fleet turn <span class="tg">✓ Build-59</span></li>
-        <li><b>Phase B — File exports — LIVE</b>: Excel (5 sheets: Rankings, Insight Flags, Fleet Summary, Daily Breakdown, Projections) + PPTX fleet deck on demand; reply-to-message UX <span class="tg">✓ Build-60b</span></li>
-        <li><b>Knowledge ingestion — LIVE</b>, books (PDF/EPUB) → M8's memory via Gemini OCR + chapter pipeline <span class="tg">✓ Build-58</span></li>
+        <li><b>Phase A — Fleet insight engine</b>: pace flags, dark drivers, inconsistency, concentration, recommended actions <span class="tg">✓ Build-59</span></li>
+        <li><b>Phase B — File exports</b>: Excel (5 sheets) + PPTX fleet deck on demand; reply-to-message UX <span class="tg">✓ Build-60b/60c</span></li>
+        <li><b>DOCX support</b>: Word files attachable in chat; Arabic chapter detection for book ingestion <span class="tg">✓ Build-61</span></li>
+        <li><b>Phase C — Cross-book knowledge graph</b>: Arktos ingested; convergences &amp; gaps across books detected <span class="tg">✓ Build-62</span></li>
+        <li><b>Adaptive PDF extraction</b>: no page-count probe, cost guard (≤200 pages), session cache, live timer, 4-min timeout <span class="tg">✓ Builds 63–64</span></li>
       </ul>
     </div>
     <div class="evo-col">
       <h4>Next — in order</h4>
       <ul>
-        <li><b>Phase B2 — Parametric PPTX types</b> — M8 asks intent (Analysis / Future Plan / Board / Operational) before generating; different slide structure + graph slides per type; audience-aware layout. <span style="color:#fbbf24;font-size:10px;font-weight:700;">PLANNED</span></li>
-        <li><b>Phase C — Multi-book knowledge graph</b> — concept extraction → graph nodes with book/chapter provenance → cross-book pattern query (convergence, contradiction, gaps) <span style="color:#fbbf24;font-size:10px;font-weight:700;">PLANNED</span></li>
+        <li><b>Ingest البداية والنهاية</b> (Ibn Kathir) — Arabic book, ~8 volumes; test Arabic chapter detection; enrich cross-book graph</li>
+        <li><b>Phase B2 — Parametric PPTX types</b> — M8 asks intent (Analysis / Board / Operational) before generating; audience-aware layout. <span style="color:#fbbf24;font-size:10px;font-weight:700;">PLANNED</span></li>
         <li><b>Track-A daily-usefulness</b> — scope what "daily useful" means (fleet summaries? alerts? business loop?)</li>
         <li><b>Command Center v2</b> — richer ledger, auto-ingested signals</li>
       </ul>
@@ -414,7 +416,9 @@
     <span class="tl done">2/2 Lean leaves ✓</span>
     <span class="tl done">Command Center v1 ✓</span>
     <span class="tl done">Knowledge ingestion ✓</span>
-    <span class="tl cur">Depth</span>
+    <span class="tl done">Cross-book graph ✓</span>
+    <span class="tl done">Fleet exports ✓</span>
+    <span class="tl cur">Arabic books + depth</span>
     <span class="tl future">L6 — a compound mind</span>
   </div>
 
@@ -430,24 +434,6 @@
       <tr><td><b>Navier–Stokes</b></td><td>do fluid equations stay smooth?</td><td>PDE capability — far out of scope now</td><td class="st none">not started</td></tr>
     </table>
     </table>
-    <div style="margin-top:18px;border:1.5px solid #ff7043;border-radius:12px;padding:14px 18px;background:rgba(255,112,67,0.06);">
-      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#ff7043;font-weight:700;margin-bottom:8px;">⚠️ Track-A Pain Point — Session-46 — needs deeper investigation</div>
-      <table style="width:100%;border-collapse:collapse;font-size:12px;">
-        <tr><th style="text-align:left;padding:4px 8px;color:#ff9a78;">Area</th><th style="text-align:left;padding:4px 8px;color:#ff9a78;">What's broken</th><th style="text-align:left;padding:4px 8px;color:#ff9a78;">Root cause (current theory)</th><th style="text-align:left;padding:4px 8px;color:#ff9a78;">What to dig</th></tr>
-        <tr style="border-top:1px solid rgba(255,112,67,0.2);">
-          <td style="padding:6px 8px;"><b>Fleet text ↔ spine disconnect</b></td>
-          <td style="padding:6px 8px;">Chart renders real driver data correctly (deterministic spine works). M8's <em>text</em> simultaneously says "I cannot generate a visual" + draws ASCII bars + sometimes fabricates driver names — as if the LLM never saw the FLEET DATA block that produced the chart.</td>
-          <td style="padding:6px 8px;">Two possibilities: (a) FLEET DATA block IS injected but M8 ignores it when base-system beliefs conflict ("I can't generate graphics"); (b) deployment timing — 03:27 query hit old code mid-rollout while 03:28 hit new code. Build-58d adds explicit "CHART ALREADY RENDERED — do NOT say you cannot generate a visual" instruction. Unverified post-fix.</td>
-          <td style="padding:6px 8px;">Re-test both queries after Build-58d deploys. If still wrong: add server-side logging to confirm FLEET DATA block is injected; check if M8's base model belief overrides the injected instruction; consider moving chart notice to a higher-priority position in the system prompt.</td>
-        </tr>
-        <tr style="border-top:1px solid rgba(255,112,67,0.2);">
-          <td style="padding:6px 8px;"><b>Semantic confusion: "Bolt fleet" vs "internal system"</b></td>
-          <td style="padding:6px 8px;">M8 says "I don't have access to your <em>Bolt fleet's</em> specific data — I can only use my <em>internal system</em>" — treating them as two different sources when they are the same Supabase row synced from Bolt.</td>
-          <td style="padding:6px 8px;">Base model training: M8 knows "Bolt" as the external app and has no trained association between Bolt and its own Supabase data. The system prompt didn't previously clarify the identity. Build-58d adds one line: "FLEET DATA IS synced from Bolt — there is no separate Bolt fleet."</td>
-          <td style="padding:6px 8px;">Verify after Build-58d: does M8 now say "your Bolt fleet" correctly? If confusion persists, add a persona-level statement in M8_SYSTEM_PROMPT that names the data source explicitly in the opening character paragraph.</td>
-        </tr>
-      </table>
-    </div>
     <div class="note" style="margin-top:10px;">Honest: a real (if early) angle on two problems; no attack path yet on the famous three.</div>
   </div>
 
@@ -464,7 +450,7 @@
 
   <div class="footer">
     Plain-language map of <b>The M8 Mind</b> · drawn from NORTH_STAR.md, the live build list & HONESTY_TRACK_PLAN.md ·
-    status as of <b>Session-46 · Build-58d</b> (2026-06-18) · priorities set with the AI Council (GPT · Gemini · Grok · Manus).<br>
+    status as of <b>Session-47 · Build-64</b> (2026-06-19) · priorities set with the AI Council (GPT · Gemini · Grok · Manus).<br>
     The one claim we never make: that we’re already there.
   </div>
 
