@@ -2,7 +2,7 @@
 <!-- CANONICAL M8 DIAGRAM (promoted 2026-06-17, Session-44). This "M8 Mind" view is now the single
      source-of-truth visual — the old dense architecture diagram was archived to archive/diagrams/.
      Update THIS file on every ship: bump the Build/Session in the footer + this note, flip status/%
-     cells, do NOT regenerate the structure. Currently: Session-48 / Audit-Pass. -->
+     cells, do NOT regenerate the structure. Currently: Session-49 / Build-66. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -309,7 +309,7 @@
           <div class="bar-row"><span class="blabel">Built toward the vision</span><span class="bpct">~30%</span></div>
           <div class="bar"><span style="width:30%"></span></div>
           <div class="est">it stores & recalls well; truly self-improving memory is almost all ahead · estimate</div>
-          <div class="foot">internally: provenance + trust tiers on every memory (Builds 38–39); shared by business &amp; research; <b>book ingestion live</b> (Build-58) + <b>cross-book pattern analysis live</b> (Build-62) — Arktos ingested; convergences/gaps detected across books; Arabic book detection ready (Build-61c)</div>
+          <div class="foot">internally: provenance + trust tiers on every memory (Builds 38–39); shared by business &amp; research; <b>book ingestion live</b> (Build-58) + <b>cross-book pattern analysis live</b> (Build-62) — Arktos + البداية والنهاية Ch.1 (201 nodes) + Ch.10 (176 nodes, conquest of Persia 16 AH) ingested; keyword fallback for cross-language entity names (Build-66); convergences/gaps detected across books</div>
         </div>
       </div>
 
@@ -333,7 +333,7 @@
           <div class="step"><span class="dot done"></span><span class="nm">Check a claim you're given</span><span class="tag">live</span></div>
           <div class="step"><span class="dot done"></span><span class="nm">Plan the attack (split into steps)</span><span class="tag">live</span></div>
           <div class="step"><span class="dot done"></span><span class="nm">Learn a 2nd kind of problem</span><span class="tag">live</span></div>
-          <div class="step todo"><span class="dot next"></span><span class="nm">Get smarter, not wider (depth)</span><span class="tag">building · Builds 51–56</span></div>
+          <div class="step todo"><span class="dot next"></span><span class="nm">Get smarter, not wider (depth)</span><span class="tag">active · Builds 51–57 ✓</span></div>
         </div>
         <div class="bar-wrap">
           <div class="bar-row"><span class="blabel">Built toward the vision</span><span class="bpct">~20%</span></div>
@@ -392,20 +392,22 @@
         <li><b>Adaptive PDF extraction</b>: no page-count probe, cost guard (confirmation gate, not hard block), session cache <span class="tg">✓ Builds 63–64</span></li>
         <li><b>Full pillar audit</b>: 19 bugs fixed across Infra / Consciousness / Voice+UI / Senses / Hands — provider timeouts, Arabic TTS, false empty-graph, ingest idempotency, Gemini key fallback, export error UX <span class="tg">✓ Session-48</span></li>
         <li><b>Phase B2 — Parametric PPTX</b>: chips clarification (Analysis / Board / Operational) before generating; 3 deck generators (7/5/6 slides); type-aware download URL <span class="tg">✓ Build-65</span></li>
+        <li><b>البداية والنهاية Ch.10 ingested</b>: 176 nodes — conquest of Persia, siege of Behrasir, fall of Al-Mada'in (Ctesiphon), flight of Yazdegerd III, 16 AH <span class="tg">✓ Session-49</span></li>
+        <li><b>Cross-book keyword fallback</b>: entity names (e.g. Khosrow / كسرى) now found even when embedding search misses across languages; fixed misleading empty-graph message <span class="tg">✓ Build-66</span></li>
       </ul>
     </div>
     <div class="evo-col">
       <h4>Next — in order</h4>
       <ul>
-        <li><b>Ingest more البداية والنهاية chapters</b> — Ch.1 live; continue ingesting to deepen cross-book graph vs Arktos</li>
-        <li><b>Track-A daily-usefulness</b> — scope what "daily useful" means (fleet summaries? alerts? business loop?)</li>
+        <li><b>Ingest more البداية والنهاية chapters</b> — Ch.1 + Ch.10 live; continue ingesting to deepen cross-book graph vs Arktos</li>
+        <li><b>Track-A Morning Brief</b> — 5000 SAR net pace tracking; on-track / below / dropped-yesterday sections; 6 AM Riyadh cron <span class="tg">▶ Build-68 in progress</span></li>
         <li><b>Command Center v2</b> — richer ledger, auto-ingested signals</li>
       </ul>
     </div>
     <div class="evo-col">
       <h4>Backlog (honest pending)</h4>
       <ul>
-        <li>Persist per-check fails + replies into the Supabase attestation (telemetry blind-spot)</li>
+        <li>Persist per-check fails + replies into the Supabase attestation — <span class="tg">▶ Build-67 in progress</span></li>
         <li>Observability dashboard + resilience playbook (incl. nightly quota/backoff)</li>
         <li>P&amp;L analysis — requires driver cost profiles (salary/fleet-cut/rent) to be configured in the fleet dashboard first</li>
         <li>Memory that <b>evolves</b> — learn from past failures (a later compounding win)</li>
@@ -421,7 +423,10 @@
     <span class="tl done">Fleet exports ✓</span>
     <span class="tl done">Arabic books Ch.1 ✓</span>
     <span class="tl done">Phase B2 PPTX types ✓</span>
-    <span class="tl cur">البداية والنهاية Ch.2+ → Track-A</span>
+    <span class="tl done">البداية والنهاية Ch.10 ✓</span>
+    <span class="tl done">Cross-book keyword fallback ✓</span>
+    <span class="tl cur">Build-67 telemetry · Build-68 morning brief</span>
+    <span class="tl future">البداية والنهاية Ch.2-9+ · Track-A daily</span>
     <span class="tl future">L6 — a compound mind</span>
   </div>
 
@@ -453,7 +458,7 @@
 
   <div class="footer">
     Plain-language map of <b>The M8 Mind</b> · drawn from NORTH_STAR.md, the live build list & HONESTY_TRACK_PLAN.md ·
-    status as of <b>Session-48 · Audit-Pass</b> (2026-06-19) · priorities set with the AI Council (GPT · Gemini · Grok · Manus).<br>
+    status as of <b>Session-49 · Build-66</b> (2026-06-19) · priorities set with the AI Council (GPT · Gemini · Grok · Manus).<br>
     The one claim we never make: that we’re already there.
   </div>
 
