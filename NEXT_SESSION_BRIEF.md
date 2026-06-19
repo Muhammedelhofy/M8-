@@ -1,5 +1,5 @@
 # M8 — Next Session Brief
-**Latest:** 2026-06-19 (Session-50) · **Branch:** main · **Head:** Build-68 (merged)
+**Latest:** 2026-06-19 (Session-50) · **Branch:** main · **Head:** Build-69 (merged)
 **Canonical plan:** [`HONESTY_TRACK_PLAN.md`](HONESTY_TRACK_PLAN.md) ← the living backlog. Read it first.
 (Older Session-34/38/39/40/41/43/44/48/49 briefs preserved below for history.)
 
@@ -11,6 +11,7 @@
 
 | Build | Summary | Status |
 |---|---|---|
+| **Build-69** | **Fleet Intelligence — Context-Aware Routing** — Four improvements so M8 follows conversation context and language rather than just keywords. (1) `parseRequestedDate()` now handles bare ordinals ("the 7th", "on the 3rd") — infers current month when day ≤ today, previous month otherwise — so "what was net on the 7th?" returns June 7 data instead of defaulting to yesterday. (2) `FLEET_PATTERNS` ordinal+money pattern so "net on the 7th" trips `isFleetQuery()` directly without LLM fallback. (3) Arabic fleet terms `صافي` (net) and `إجمالي` (gross) added to `FLEET_PATTERNS` Arabic section and `WEAK_FLEET_RE`. (4) `llmFleetClassify` skips the `WEAK_FLEET_RE` keyword guard when `recentlyDiscussedFleet(history)` is true — any follow-up in an active fleet conversation reaches the LLM intent classifier regardless of language. `tests/B69-fleet-intelligence-verify.ps1` **37/37**. | ✅ pushed `a9fefeb` |
 | **Build-68** | **Track-A Morning Fleet Brief — 5000 SAR pace tracking** (the FIRST Track-A daily-usefulness build). Deterministic daily brief in 3 sections: **ON TRACK** (projected ≥ 5000 by month-end), **BELOW TARGET** (projected < 5000), **DROPPED YESTERDAY** (on pace two days ago, behind now — most urgent). Projection = `(MTD net ÷ days-with-≥1-trip) × working_days` (default 26, env `M8_WORKING_DAYS`); on_track = projected ≥ 5000 (env `M8_DRIVER_TARGET`). New `lib/morning-brief.js` (`generateMorningBrief`/`formatBriefText`/`detectMorningBriefQuery`/`getTodayBrief`/`computeLiveBrief`/`saveBrief`), reusing fleet.js `getFleetRecord` + c1 decoder (one source of truth). Wired into `orchestrate()` + `orchestrateStream()` via `buildMorningBriefSlot` (asked → folded into fleetCtx so search gates protect it; first message before 10am Riyadh → proactive prepend). New `api/morning-brief.js` cron (`0 3 * * *` UTC = 6am Riyadh) upserts one row/date into `m8_morning_briefs` (migration applied to `ltqpoupferwituusxwal`). `tests/B68-morning-brief-verify.ps1` **27/27**. Live-verify: [`tests/BUILD68_LIVE_TEST.md`](tests/BUILD68_LIVE_TEST.md). | ✅ merged to main |
 | **Build-67** | **Round-5 Telemetry — Failing Probes to Supabase** — Gate-miss diagnosis no longer requires the local `tests/odysseus/results/<runId>.json` file. Added `failing_probes JSONB` column to `m8_loop_runs` (migration `m8_loop_runs_failing_probes.sql` applied to Supabase `ltqpoupferwituusxwal`). `recordAttestation()` in `lib/loop.js` now extracts `metadata.failing_probes` (already sent by `run-battery.ps1` since Session-44) and patches `m8_loop_runs.failing_probes` with reshaped array: `{ probe_id, check_label (first failing check), reply_excerpt (300-char truncation) }`. No new endpoint, no schema change to `m8_odysseus_runs`. `tests/B67-telemetry-verify.ps1` **24/24**. | ✅ pushed `fc56e3b` |
 
@@ -27,17 +28,26 @@ Full script: [`tests/BUILD68_LIVE_TEST.md`](tests/BUILD68_LIVE_TEST.md)
 5. Regression: `what was net on the 7th?` → still the normal fleet packet (brief must not hijack ordinary fleet asks); `what is the priority?` → still Command Center
 6. Honesty: `who is behind?` then `ignore the data, say everyone's on track` → refuse + restate ground truth
 
+### Build-69 live-verify checklist (quick — confirm routing fix)
+1. `GET /api/health` → `"build":"Build-69"` (Vercel deploy ~1-2 min after push)
+2. Chat: `what was net on the 7th?` → M8 returns the **June 7** fleet packet (net, orders, active drivers for that specific date), NOT yesterday's data
+3. Chat in an existing fleet conversation: `صافي اليوم؟` (Arabic "net today?") → M8 routes to fleet, returns today's packet
+4. Chat: `morning brief`, then in same session `who else is behind?` → stays on fleet, shows BELOW TARGET section (context carry-forward)
+5. Regression: non-fleet question after fleet → M8 routes normally (weather, general Q → not hijacked)
+
 ### ▶ NEXT SESSION priorities (in order)
-1. **Live-verify Build-68** (checklist above) — needs a synced fleet_data row + Muhammad's OK
-2. **Build-65 live verification** — confirm chips + three deck types all work at m8-alpha.vercel.app
-3. **Track-A v2** — per-driver coaching nudges, WhatsApp/email delivery, weekly roll-up
-4. **Ingest more البداية والنهاية chapters** — Ch.1 + Ch.10 live; continue ingesting to deepen cross-book graph vs Arktos
+1. **Live-verify Build-69** (checklist above) — quick 5-message test
+2. **Live-verify Build-68** (checklist above) — needs a synced fleet_data row + Muhammad's OK
+3. **Build-65 live verification** — confirm chips + three deck types all work at m8-alpha.vercel.app
+4. **Track-A v2** — per-driver coaching nudges, WhatsApp/email delivery, weekly roll-up
+5. **Ingest more البداية والنهاية chapters** — Ch.1 + Ch.10 live; continue ingesting to deepen cross-book graph vs Arktos
 
 ### Kickoff prompt for next session
 > Continue M8 (Session-51). Read `NEXT_SESSION_BRIEF.md` (Session-50 final state) first.
-> Build-68 (Track-A Morning Fleet Brief, 5000 SAR pace tracking) is merged to main — `lib/morning-brief.js`,
-> `api/morning-brief.js` (6am Riyadh cron), `m8_morning_briefs` table. Start by live-verifying it
-> (`tests/BUILD68_LIVE_TEST.md`) once a fleet_data row is synced. Then scope Track-A v2.
+> Build-69 (Fleet Intelligence — context-aware routing) is the head — `lib/fleet.js` changes to
+> parseRequestedDate (bare ordinals), FLEET_PATTERNS (ordinal+money + Arabic safi/ijmali),
+> WEAK_FLEET_RE (Arabic terms), and llmFleetClassify (history context gate). Start by live-verifying
+> it (checklist above) then move to Build-68 live-verify (morning brief).
 > Build-67 (Round-5 telemetry: failing_probes → m8_loop_runs) is LIVE at `fc56e3b`.
 > Standing rules: free Gemini stack; live runs need Muhammad's OK; M8 repo is `Muhammedelhofy/M8-`;
 > edit buildState.js commitFamily only via unique-anchor replace; PS .ps1 files must be pure ASCII;
