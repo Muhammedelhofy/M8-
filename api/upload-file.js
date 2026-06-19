@@ -107,22 +107,41 @@ async function convertBuffer(buffer, mimeType, name, confirmed = false) {
     { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
   ];
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY not set");
-  const ai    = new GoogleGenAI({ apiKey });
+  const geminiKeys = [
+    process.env.GEMINI_API_KEY,
+    process.env.GEMINI_API_KEY_2,
+  ].filter(Boolean);
+  if (!geminiKeys.length) throw new Error("No Gemini API key configured");
   const model = process.env.GEMINI_MODEL || "gemini-1.5-flash";
 
+  // Returns true if the error is a quota/rate-limit that warrants trying the next key.
+  function isQuotaError(e) {
+    const msg = (e?.message || "").toLowerCase();
+    return e?.status === 429 || msg.includes("429") || msg.includes("quota") ||
+           msg.includes("resource_exhausted") || msg.includes("prepayment");
+  }
+
   if (fmt === "image") {
-    const base64 = buffer.toString("base64");
-    const result = await ai.models.generateContent({
-      model,
-      contents: [{ role: "user", parts: [
-        { inlineData: { mimeType, data: base64 } },
-        { text: "Extract all readable text from this image exactly as written. Output only the extracted text." },
-      ]}],
-      config: { maxOutputTokens: 8000, temperature: 0, safetySettings: SAFETY },
-    });
-    return { text: result.text || "", pages: 1, format: "image" };
+    let lastErr;
+    for (const apiKey of geminiKeys) {
+      try {
+        const ai     = new GoogleGenAI({ apiKey });
+        const base64 = buffer.toString("base64");
+        const result = await ai.models.generateContent({
+          model,
+          contents: [{ role: "user", parts: [
+            { inlineData: { mimeType, data: base64 } },
+            { text: "Extract all readable text from this image exactly as written. Output only the extracted text." },
+          ]}],
+          config: { maxOutputTokens: 8000, temperature: 0, safetySettings: SAFETY },
+        });
+        return { text: result.text || "", pages: 1, format: "image" };
+      } catch (e) {
+        if (!isQuotaError(e)) throw e;
+        lastErr = e;
+      }
+    }
+    throw lastErr;
   }
 
   // PDF — upload to Gemini Files API then extract in parallel batches.
@@ -148,22 +167,12 @@ async function convertBuffer(buffer, mimeType, name, confirmed = false) {
   }
   // ──────────────────────────────────────────────────────────────────────────
 
-  const blob    = new Blob([buffer], { type: "application/pdf" });
-  const upload  = await ai.files.upload({ file: blob, config: { mimeType: "application/pdf", displayName: name || "upload.pdf" } });
-  const fileUri = upload.uri || upload.file?.uri;
-  if (!fileUri) throw new Error("Gemini file upload returned no URI");
-
-  // Adaptive extraction: keep going until 2 consecutive all-empty rounds.
-  // PAGE_SAFETY_CAP is 2× the file-size estimate — enough buffer to cover
-  // the real content without running into Gemini hallucination territory.
   const CONCURRENCY     = 10;
   const EMPTY_ROUND_CAP = 2;
   const PAGE_SAFETY_CAP = Math.min(estimatedPages * 2, MAX_PDF_PAGES * 2);
 
-  // Regex to detect AI-generated continuation notes (not actual PDF text)
   const AI_NOTE_RE = /^\[(?:document continues|note:|remaining chapters|this is page|truncated|the pdf|pages \d)/i;
 
-  // Detect Gemini token loops: if any non-trivial line repeats 4+ consecutive times, truncate there.
   function removeTokenLoops(text) {
     if (!text || text.length < 300) return text;
     const lines = text.split("\n");
@@ -173,82 +182,90 @@ async function convertBuffer(buffer, mimeType, name, confirmed = false) {
     for (const line of lines) {
       const norm = line.trim();
       if (norm.length > 20) {
-        if (norm === prevLine) {
-          streak++;
-          if (streak >= 4) break;
-        } else {
-          streak = 0;
-          prevLine = norm;
-        }
+        if (norm === prevLine) { streak++; if (streak >= 4) break; }
+        else { streak = 0; prevLine = norm; }
       }
       out.push(line);
     }
     return out.join("\n");
   }
 
-  async function extractBatch(start, end) {
+  // Try each Gemini key in turn. The file upload and all batch extractions
+  // must use the SAME key (Files API URIs are scoped to the uploading project).
+  let lastPdfErr;
+  for (const apiKey of geminiKeys) {
     try {
-      const r = await ai.models.generateContent({
-        model,
-        contents: [{ role: "user", parts: [
-          { fileData: { mimeType: "application/pdf", fileUri } },
-          {
-            text:
-              `Extract the raw text from pages ${start} to ${end} of this PDF document.\n` +
-              `Rules (follow exactly):\n` +
-              `- Output ONLY the verbatim text as it appears on those pages.\n` +
-              `- Preserve chapter headings and paragraph breaks.\n` +
-              `- Do NOT add any notes, comments, summaries, or explanations.\n` +
-              `- Do NOT write things like "[Document continues]", "[End of extraction]", "[Note: ...]", or any brackets.\n` +
-              `- If a page has no readable text, output nothing for that page and move on.\n` +
-              `- Stop when you have extracted pages ${end}. Do not go beyond page ${end}.`,
-          },
-        ]}],
-        config: { maxOutputTokens: 8192, temperature: 0, safetySettings: SAFETY },
-      });
-      const raw = (r.text || "").trim();
-      if (AI_NOTE_RE.test(raw)) return { start, text: "" };
-      return { start, text: removeTokenLoops(raw) };
-    } catch {
-      return { start, text: "" };
+      const ai      = new GoogleGenAI({ apiKey });
+      const blob    = new Blob([buffer], { type: "application/pdf" });
+      const upload  = await ai.files.upload({ file: blob, config: { mimeType: "application/pdf", displayName: name || "upload.pdf" } });
+      const fileUri = upload.uri || upload.file?.uri;
+      if (!fileUri) throw new Error("Gemini file upload returned no URI");
+
+      async function extractBatch(start, end) {
+        try {
+          const r = await ai.models.generateContent({
+            model,
+            contents: [{ role: "user", parts: [
+              { fileData: { mimeType: "application/pdf", fileUri } },
+              {
+                text:
+                  `Extract the raw text from pages ${start} to ${end} of this PDF document.\n` +
+                  `Rules (follow exactly):\n` +
+                  `- Output ONLY the verbatim text as it appears on those pages.\n` +
+                  `- Preserve chapter headings and paragraph breaks.\n` +
+                  `- Do NOT add any notes, comments, summaries, or explanations.\n` +
+                  `- Do NOT write things like "[Document continues]", "[End of extraction]", "[Note: ...]", or any brackets.\n` +
+                  `- If a page has no readable text, output nothing for that page and move on.\n` +
+                  `- Stop when you have extracted pages ${end}. Do not go beyond page ${end}.`,
+              },
+            ]}],
+            config: { maxOutputTokens: 8192, temperature: 0, safetySettings: SAFETY },
+          });
+          const raw = (r.text || "").trim();
+          if (AI_NOTE_RE.test(raw)) return { start, text: "" };
+          return { start, text: removeTokenLoops(raw) };
+        } catch {
+          return { start, text: "" };
+        }
+      }
+
+      const batchResults = [];
+      let nextStart   = 1;
+      let emptyRounds = 0;
+
+      while (emptyRounds < EMPTY_ROUND_CAP && nextStart <= PAGE_SAFETY_CAP) {
+        const chunk = [];
+        for (let i = 0; i < CONCURRENCY && nextStart <= PAGE_SAFETY_CAP; i++) {
+          chunk.push({ start: nextStart, end: nextStart + PAGE_BATCH - 1 });
+          nextStart += PAGE_BATCH;
+        }
+        const results = await Promise.all(chunk.map(({ start, end }) => extractBatch(start, end)));
+        batchResults.push(...results);
+        const allEmpty = results.every(r => (r.text || "").length < 30);
+        emptyRounds = allEmpty ? emptyRounds + 1 : 0;
+      }
+
+      const totalPages = batchResults
+        .filter(r => (r.text || "").length >= 30)
+        .reduce((max, r) => Math.max(max, r.start + PAGE_BATCH - 1), 1);
+
+      const parts = batchResults
+        .sort((a, b) => a.start - b.start)
+        .map(r => r.text)
+        .filter(t => t.length > 10);
+
+      try {
+        const fname = fileUri.split("/files/")[1];
+        if (fname) await ai.files.delete({ name: `files/${fname}` });
+      } catch { /* non-fatal */ }
+
+      return { text: parts.join("\n\n"), pages: totalPages, format: "pdf" };
+    } catch (e) {
+      if (!isQuotaError(e)) throw e;
+      lastPdfErr = e;
     }
   }
-
-  // Adaptive extraction loop — runs rounds of CONCURRENCY batches until
-  // EMPTY_ROUND_CAP consecutive all-empty rounds (= past end of document)
-  const batchResults = [];
-  let nextStart  = 1;
-  let emptyRounds = 0;
-
-  while (emptyRounds < EMPTY_ROUND_CAP && nextStart <= PAGE_SAFETY_CAP) {
-    const chunk = [];
-    for (let i = 0; i < CONCURRENCY && nextStart <= PAGE_SAFETY_CAP; i++) {
-      chunk.push({ start: nextStart, end: nextStart + PAGE_BATCH - 1 });
-      nextStart += PAGE_BATCH;
-    }
-    const results = await Promise.all(chunk.map(({ start, end }) => extractBatch(start, end)));
-    batchResults.push(...results);
-    const allEmpty = results.every(r => (r.text || "").length < 30);
-    emptyRounds = allEmpty ? emptyRounds + 1 : 0;
-  }
-
-  // Derive actual page count from last batch that had real content
-  const totalPages = batchResults
-    .filter(r => (r.text || "").length >= 30)
-    .reduce((max, r) => Math.max(max, r.start + PAGE_BATCH - 1), 1);
-
-  const parts = batchResults
-    .sort((a, b) => a.start - b.start)
-    .map(r => r.text)
-    .filter(t => t.length > 10);
-
-  // Cleanup uploaded file
-  try {
-    const fname = fileUri.split("/files/")[1];
-    if (fname) await ai.files.delete({ name: `files/${fname}` });
-  } catch { /* non-fatal */ }
-
-  return { text: parts.join("\n\n"), pages: totalPages, format: "pdf" };
+  throw lastPdfErr;
 }
 
 module.exports = async (req, res) => {
