@@ -167,9 +167,13 @@ async function convertBuffer(buffer, mimeType, name, confirmed = false) {
   }
   // ──────────────────────────────────────────────────────────────────────────
 
-  const CONCURRENCY     = 10;
+  // Free Gemini tier is rate-limited (RPM + TPM). Firing many full-PDF OCR calls
+  // at once instantly trips 429. Keep concurrency low and back off on 429.
+  // Override with M8_OCR_CONCURRENCY if a paid key lifts the quota.
+  const CONCURRENCY     = Math.min(10, Math.max(1, parseInt(process.env.M8_OCR_CONCURRENCY, 10) || 3));
   const EMPTY_ROUND_CAP = 2;
   const PAGE_SAFETY_CAP = Math.min(estimatedPages * 2, MAX_PDF_PAGES * 2);
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   const AI_NOTE_RE = /^\[(?:document continues|note:|remaining chapters|this is page|truncated|the pdf|pages \d)/i;
 
@@ -221,35 +225,42 @@ async function convertBuffer(buffer, mimeType, name, confirmed = false) {
       // Surface per-batch failures instead of swallowing them, so an all-empty
       // OCR yields a real diagnostic (count + first error) rather than 0 text.
       let batchErrors = 0, firstBatchErr = "";
+      const BATCH_TRIES = 4;   // retry 429s with backoff before giving up on a batch
       async function extractBatch(start, end) {
-        try {
-          const r = await ai.models.generateContent({
-            model,
-            contents: [{ role: "user", parts: [
-              { fileData: { mimeType: "application/pdf", fileUri } },
-              {
-                text:
-                  `Extract the raw text from pages ${start} to ${end} of this PDF document.\n` +
-                  `Rules (follow exactly):\n` +
-                  `- Output ONLY the verbatim text as it appears on those pages.\n` +
-                  `- Preserve chapter headings and paragraph breaks.\n` +
-                  `- Do NOT add any notes, comments, summaries, or explanations.\n` +
-                  `- Do NOT write things like "[Document continues]", "[End of extraction]", "[Note: ...]", or any brackets.\n` +
-                  `- If a page has no readable text, output nothing for that page and move on.\n` +
-                  `- Stop when you have extracted pages ${end}. Do not go beyond page ${end}.`,
-              },
-            ]}],
-            config: { maxOutputTokens: 8192, temperature: 0, safetySettings: SAFETY },
-          });
-          const raw = (r.text || "").trim();
-          if (AI_NOTE_RE.test(raw)) return { start, text: "" };
-          return { start, text: removeTokenLoops(raw) };
-        } catch (e) {
-          batchErrors++;
-          if (!firstBatchErr) firstBatchErr = (e && e.message) ? e.message : String(e);
-          console.error(`[upload-file] OCR batch ${start}-${end} failed:`, (e && e.message) || e);
-          return { start, text: "" };
+        for (let attempt = 1; attempt <= BATCH_TRIES; attempt++) {
+          try {
+            const r = await ai.models.generateContent({
+              model,
+              contents: [{ role: "user", parts: [
+                { fileData: { mimeType: "application/pdf", fileUri } },
+                {
+                  text:
+                    `Extract the raw text from pages ${start} to ${end} of this PDF document.\n` +
+                    `Rules (follow exactly):\n` +
+                    `- Output ONLY the verbatim text as it appears on those pages.\n` +
+                    `- Preserve chapter headings and paragraph breaks.\n` +
+                    `- Do NOT add any notes, comments, summaries, or explanations.\n` +
+                    `- Do NOT write things like "[Document continues]", "[End of extraction]", "[Note: ...]", or any brackets.\n` +
+                    `- If a page has no readable text, output nothing for that page and move on.\n` +
+                    `- Stop when you have extracted pages ${end}. Do not go beyond page ${end}.`,
+                },
+              ]}],
+              config: { maxOutputTokens: 8192, temperature: 0, safetySettings: SAFETY },
+            });
+            const raw = (r.text || "").trim();
+            if (AI_NOTE_RE.test(raw)) return { start, text: "" };
+            return { start, text: removeTokenLoops(raw) };
+          } catch (e) {
+            const msg = (e && e.message) ? e.message : String(e);
+            const is429 = (e && e.status === 429) || /\b429\b|quota|rate.?limit|resource_exhausted/i.test(msg);
+            if (is429 && attempt < BATCH_TRIES) { await sleep(attempt * 6000); continue; }  // 6s,12s,18s
+            batchErrors++;
+            if (!firstBatchErr) firstBatchErr = msg;
+            console.error(`[upload-file] OCR batch ${start}-${end} failed (attempt ${attempt}):`, msg);
+            return { start, text: "" };
+          }
         }
+        return { start, text: "" };
       }
 
       const batchResults = [];
