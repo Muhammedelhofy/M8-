@@ -88,6 +88,32 @@ foreach ($m in $sneg) { Check ("NOT: '{0}'" -f $m) (-not (Detect-Strict $m)) }
 Check "loose 'why?' with fleet context -> TRUE"  ((Detect-Loose "why?" $true) -eq $true)
 Check "loose 'why?' no fleet context -> FALSE"   ((Detect-Loose "why?" $false) -eq $false)
 
+Write-Host "`n== Section D: change-analysis OWNS fleet context (guard-preserving overwrite) ==" -ForegroundColor Cyan
+# Mirrors the orchestrator fix: when change-analysis fires it OVERWRITES fleetCtx.text
+# (preserving an INTEGRITY/PRESENCE guard) instead of prepending, so a conflicting
+# base packet can't leak a second net figure (the 7,001-vs-4,901 fabrication bug).
+function ApplyChangeOverwrite($fleetText, $changeText) {
+    $hadGuard = ($fleetText -match '^(INTEGRITY ALERT|PRESENCE HONESTY)')
+    $guardPrefix = ""
+    if ($hadGuard) { $guardPrefix = (($fleetText -split "`n`n")[0]) + "`n`n" }
+    return $guardPrefix + $changeText
+}
+$basePacket   = "FLEET SNAPSHOT - last month net 22988 SAR; another day net 4901 SAR"
+$changePacket = "FLEET CHANGE ANALYSIS - June 18: net 7001 SAR, up 5% vs trailing avg"
+
+# No guard: result is ONLY the change packet; the conflicting 4901 is gone.
+$r1 = ApplyChangeOverwrite $basePacket $changePacket
+Check "overwrite drops the conflicting base figure (no 4901)" ($r1 -notmatch "4901")
+Check "overwrite keeps the authoritative change figure (7001)" ($r1 -match "7001")
+Check "overwrite result equals the change packet" ($r1 -eq $changePacket)
+
+# With an INTEGRITY guard present: the guard line is preserved, base body still dropped.
+$guarded = "INTEGRITY ALERT: do not fabricate`n`n" + $basePacket
+$r2 = ApplyChangeOverwrite $guarded $changePacket
+Check "guard prefix preserved on overwrite" ($r2 -match "^INTEGRITY ALERT")
+Check "guarded overwrite still drops 4901" ($r2 -notmatch "4901")
+Check "guarded overwrite keeps 7001" ($r2 -match "7001")
+
 Write-Host ""
 Write-Host ("RESULT: {0}/{1} passed, {2} failed" -f $global:pass, $global:tot, $global:fail) -ForegroundColor Yellow
 if ($global:fail -gt 0) { exit 1 }
