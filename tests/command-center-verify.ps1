@@ -160,7 +160,7 @@ function ClosureCount($tasks, $id) {
 }
 
 Write-Host ""
-Write-Host "=== Command Center v1 -- engine mirror verify ===" -ForegroundColor Cyan
+Write-Host "=== Command Center v1+v2 -- engine mirror verify ===" -ForegroundColor Cyan
 Write-Host ""
 
 # ============================================================================
@@ -274,6 +274,97 @@ Ok "no-route: fleet question"                 (-not (Detect "how much did the to
 Ok "no-route: plain doc ask"                  (-not (Detect "summarize this report for me"))
 Ok "no-route: small talk"                     (-not (Detect "what's the weather like today?"))
 Ok "no-route: ops question (tight branch)"    (-not (Detect "what should I do about the late driver?"))
+
+# ============================================================================
+# TEST 7 -- v2 human-in-the-loop scoring + approval (Build-74).
+# Mirrors detectScoreCommand parsing/validation, detectApproveCommand routing,
+# and approvalDrift -- using the EXACT JS regexes run by the .NET engine.
+# ============================================================================
+$SCORE_TRIGGER_RE = [regex]::new("\b(?:rate|score|re[\s-]?score|set|update)\b", [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+$TASK_ID_RE       = [regex]::new("(?:\btask\s*#?\s*|#)(\d+)", [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+$FIELD_PAIR_RE    = [regex]::new("\b(impact|urgency|urgent|risk|effort|strategic[_\s-]?value|strategic|value)\b\s*(?:to|=|:|at)?\s*(\d+)", [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+$APPROVE_RE       = [regex]::new("\b(?:approve|lock(?:\s+in)?|confirm|accept|sign[\s-]?off(?:\s+on)?)\b[^.?!\n]{0,40}\b(?:priorit\w*|ranking|the\s+order|command\s*center|ledger)\b", [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+$SCORE_FIELD_MAP  = @{ impact='impact'; urgency='urgency'; urgent='urgency'; risk='risk'; effort='effort'; strategic='strategic_value'; strategic_value='strategic_value'; value='strategic_value' }
+
+function Test-FieldOk($field, $val) {
+  if ($field -eq 'strategic_value') { return (@(1,3,5) -contains $val) }
+  return ($val -ge 1 -and $val -le 5)
+}
+function Parse-Score($m) {
+  if (-not $SCORE_TRIGGER_RE.IsMatch($m)) { return $null }
+  $idm = $TASK_ID_RE.Match($m)
+  if (-not $idm.Success) { return $null }
+  $id = [int]$idm.Groups[1].Value
+  $updates = @{}; $invalid = @()
+  foreach ($mm in $FIELD_PAIR_RE.Matches($m)) {
+    $raw = ($mm.Groups[1].Value.ToLower() -replace '[\s-]', '_')
+    if (-not $SCORE_FIELD_MAP.ContainsKey($raw)) { continue }
+    $field = $SCORE_FIELD_MAP[$raw]
+    $val = [int]$mm.Groups[2].Value
+    if (Test-FieldOk $field $val) { $updates[$field] = $val } else { $invalid += $field }
+  }
+  if ($updates.Count -eq 0 -and $invalid.Count -eq 0) { return $null }
+  return @{ id = $id; updates = $updates; invalid = $invalid }
+}
+function Approval-Drift($currentIds, $approvedOrder) {
+  $approvedSet = @{}; foreach ($i in $approvedOrder) { $approvedSet[[int]$i] = $true }
+  $cur = @(); foreach ($i in $currentIds) { if ($approvedSet.ContainsKey([int]$i)) { $cur += [int]$i } }
+  $curSet = @{}; foreach ($i in $cur) { $curSet[[int]$i] = $true }
+  $app = @(); foreach ($i in $approvedOrder) { if ($curSet.ContainsKey([int]$i)) { $app += [int]$i } }
+  return (($cur -join ',') -ne ($app -join ','))
+}
+
+# -- score command parsing --
+$s1 = Parse-Score "rate task #3 impact 5 urgency 4"
+Ok "score parse: id extracted (#3)"                ($s1.id -eq 3)
+Ok "score parse: impact=5 captured"                ($s1.updates['impact'] -eq 5)
+Ok "score parse: urgency=4 captured"               ($s1.updates['urgency'] -eq 4)
+Ok "score parse: no invalid fields"                ($s1.invalid.Count -eq 0)
+
+$s2 = Parse-Score "set #2 strategic 4"
+Ok "score parse: strategic 4 is INVALID (not 1/3/5)" ($s2.invalid -contains 'strategic_value')
+Ok "score parse: invalid leaves updates empty"     ($s2.updates.Count -eq 0)
+
+$s3 = Parse-Score "set #2 strategic 5"
+Ok "score parse: strategic 5 is VALID"             ($s3.updates['strategic_value'] -eq 5)
+$s3b = Parse-Score "rate #2 strategic value 3"
+Ok "score parse: 'strategic value 3' -> field+3"   ($s3b.updates['strategic_value'] -eq 3)
+
+$s4 = Parse-Score "update #7 impact 6"
+Ok "score parse: impact 6 out of range -> invalid" ($s4.invalid -contains 'impact')
+$s5 = Parse-Score "score #11 effort 1 risk 2"
+Ok "score parse: multi-field effort=1 risk=2"      ($s5.updates['effort'] -eq 1 -and $s5.updates['risk'] -eq 2)
+
+Ok "score parse: 'rate this highly' -> null (no id)" ($null -eq (Parse-Score "rate this highly"))
+Ok "score parse: 'what's the priority?' -> null"     ($null -eq (Parse-Score "what's the priority?"))
+
+# -- approve command routing --
+Ok "approve: 'approve the priority order'"   ($APPROVE_RE.IsMatch("approve the priority order"))
+Ok "approve: 'lock in the ranking'"          ($APPROVE_RE.IsMatch("lock in the ranking"))
+Ok "approve: 'confirm the command center order'" ($APPROVE_RE.IsMatch("confirm the command center order"))
+Ok "approve: 'accept the ledger priorities'" ($APPROVE_RE.IsMatch("accept the ledger priorities"))
+Ok "approve no-route: 'approve the deployment'" (-not $APPROVE_RE.IsMatch("approve the deployment"))
+Ok "approve no-route: 'lock the door'"          (-not $APPROVE_RE.IsMatch("lock the door"))
+Ok "approve no-route: 'what's the priority?'"   (-not $APPROVE_RE.IsMatch("what's the priority?"))
+
+# the approve verbs must NOT collide with the priority-query route (checked first in orchestrator anyway)
+Ok "approve text not caught by PRIORITY_RE"  (-not (Detect "approve the priority order"))
+
+# -- drift detection --
+Ok "drift: order [3,1,2] vs approved [1,2,3] -> drifted" (Approval-Drift @(3,1,2) @(1,2,3))
+Ok "drift: order [1,2,3] vs approved [1,2,3] -> stable"  (-not (Approval-Drift @(1,2,3) @(1,2,3)))
+Ok "drift: a NEW task (#9) doesn't count as drift"       (-not (Approval-Drift @(1,2,3,9) @(1,2,3)))
+Ok "drift: a removed task collapses order -> stable on shared set" (-not (Approval-Drift @(1,3) @(1,2,3)))
+Ok "drift: reordered shared set [2,1] vs [1,2,3] -> drifted" (Approval-Drift @(2,1) @(1,2,3))
+
+# -- re-rank effect: bumping a task's scores moves it up (what applyScoreCommand relies on) --
+$beforeT = @( (T 1 'planned' 3 3 1 3 1 @()), (T 2 'planned' 3 3 1 3 1 @()) )
+$pkBefore = Build-Ranked $beforeT
+$afterT  = @( (T 1 'planned' 3 3 1 3 1 @()), (T 2 'planned' 5 5 1 5 1 @()) )
+$pkAfter  = Build-Ranked $afterT
+$topAfter = ($pkAfter.rankable | Select-Object -First 1).id
+Ok "re-rank: bumping #2 to 5/5/5 makes it outrank #1" ($topAfter -eq 2)
+Ok "re-rank: #2 score strictly increased after bump" ((Row $pkAfter 2).score -gt (Row $pkBefore 2).score)
 
 # ============================================================================
 Write-Host ""

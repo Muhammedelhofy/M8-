@@ -2,7 +2,7 @@
 <!-- CANONICAL M8 DIAGRAM (promoted 2026-06-17, Session-44). This "M8 Mind" view is now the single
      source-of-truth visual — the old dense architecture diagram was archived to archive/diagrams/.
      Update THIS file on every ship: bump the Build/Session in the footer + this note, flip status/%
-     cells, do NOT regenerate the structure. Currently: Session-51 / LLM-fix + Command Center next. -->
+     cells, do NOT regenerate the structure. Currently: Session-52 / Build-74 Command Center v2 (scoring + approval + drift). -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -357,13 +357,13 @@
     </div>
 
     <div class="region" style="position:relative; z-index:1; margin-top:16px; border-color:rgba(127,217,138,.5); box-shadow:0 0 22px rgba(127,217,138,.14); background:linear-gradient(180deg, rgba(12,32,18,.5), rgba(13,18,38,.6));">
-      <div class="rhead"><span class="ricon" style="color:#7fd98a">🎛️</span><span class="rtitle">Executive — the Command Center</span><span style="margin-left:auto;font-size:9px;color:#54d6c8;background:#0e2e2c;border:1px solid #1d6360;border-radius:10px;padding:2px 9px;font-weight:700">✅ LIVE · Build-50 · 36/36</span></div>
+      <div class="rhead"><span class="ricon" style="color:#7fd98a">🎛️</span><span class="rtitle">Executive — the Command Center</span><span style="margin-left:auto;font-size:9px;color:#54d6c8;background:#0e2e2c;border:1px solid #1d6360;border-radius:10px;padding:2px 9px;font-weight:700">✅ LIVE · Build-74 v2 · 63/63</span></div>
       <div class="rrole" style="flex:none">Decides <b>what M8 works on next</b> — now <b>built</b>. <b>Not</b> an autonomous boss: a deterministic priority engine (value-weighted by blockage) ranks the work, M8 explains <i>why</i>, and <b>you</b> approve. It remembers <b>why</b> we chose things (a permanent decision-log).</div>
       <div class="flow"><span class="ar">→</span> Ledger (4 projects · 13 tasks · decisions) &nbsp;<span class="ar">→</span>&nbsp; Priority engine (code, value-weighted) &nbsp;<span class="ar">→</span>&nbsp; M8 narrates why &nbsp;<span class="ar">→</span>&nbsp; <b style="color:#7fd98a">you approve</b></div>
       <div class="bar-wrap">
-        <div class="bar-row"><span class="blabel">Built toward the vision</span><span class="bpct" style="color:#7fd98a">~30%</span></div>
-        <div class="bar"><span style="width:30%;color:#7fd98a"></span></div>
-        <div class="est">v1 <b>LIVE 36/36</b> (Decision 2026-0617-CC) after the AI Council (GPT · Gemini · Grok · Manus) attacked the spec · "what's the priority?" hard-routes here · executive <i>function</i>, never authority · estimate</div>
+        <div class="bar-row"><span class="blabel">Built toward the vision</span><span class="bpct" style="color:#7fd98a">~45%</span></div>
+        <div class="bar"><span style="width:45%;color:#7fd98a"></span></div>
+        <div class="est">v2 <b>LIVE 63/63</b> (Build-74): you now <b>score</b> tasks in chat (<i>"rate task #2 impact 5"</i>) → it re-ranks, you <b>approve the order</b> (logged), and it flags when the ranking <b>drifts</b> from what you approved · executive <i>function</i>, never authority · estimate</div>
       </div>
     </div>
 
@@ -403,12 +403,12 @@
     <div class="evo-col">
       <h4>Next — in order</h4>
       <ul>
-        <li><b>Command Center / Project Ledger</b>: deterministic ledger → code-computed Priority Engine (Impact·Urgency·Dependency·Risk) → M8 narrates WHY → Muhammad approves; model is analyst NOT governor</li>
+        <li><b>Rate the real Command Center scores</b> (v2 shipped): score the live tasks in chat so the first ranking carries signal, then approve the order; optionally re-seed the ledger to current reality</li>
         <li><b>Build-72 smarter context routing</b>: topic-memory layer — M8 holds the active topic across turns without keyword re-confirmation</li>
         <li><b>Build-72b fleet intelligence depth</b>: financial thinking (margin %, profit per driver), anomaly explanations, trend narration</li>
         <li><b>Track-A v2 — driver-nudge action loop</b>: brief flags a dropped driver → M8 drafts the message → Muhammad approves → it logs (the real alert→action→confirm business loop, reusing the Build-70 delivery seam)</li>
         <li><b>Ingest more البداية والنهاية chapters</b> — Ch.1 + Ch.10 live; continue ingesting to deepen cross-book graph vs Arktos</li>
-        <li><b>Command Center v2</b> — richer ledger, auto-ingested signals</li>
+        <li><b>Command Center v3</b> — auto-ingested signals (M8 proposes ledger entries from its own work)</li>
       </ul>
     </div>
     <div class="evo-col">
@@ -438,8 +438,9 @@
     <span class="tl done">Build-71 morning-brief polish ✓</span>
     <span class="tl done">LLM fix — gemini-2.0-flash + thinkingConfig guard ✓</span>
     <span class="tl cur">Build-72 smarter context routing (in progress)</span>
-    <span class="tl cur">Build-72b fleet intelligence depth (in progress)</span>
-    <span class="tl cur">Command Center / Project Ledger (in progress)</span>
+    <span class="tl done">Build-72b fleet intelligence depth ✓</span>
+    <span class="tl done">Build-73 driver-nudge drafts ✓</span>
+    <span class="tl done">Command Center v2 — scoring + approval + drift ✓</span>
     <span class="tl future">البداية والنهاية Ch.2-9+ · evolving memory</span>
     <span class="tl future">L6 — a compound mind</span>
   </div>

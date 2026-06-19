@@ -68,6 +68,23 @@
   .s-planned{background:rgba(138,154,196,.12);color:var(--mut);}
   .s-done   {background:rgba(110,231,183,.12);color:var(--green);}
   .s-blocked{background:rgba(255,138,138,.12);color:var(--red);}
+  /* approval banner (v2) */
+  .approval{display:none;align-items:center;gap:10px;margin-bottom:18px;padding:10px 14px;
+    border-radius:10px;font-size:12px;font-weight:600;}
+  .approval.show{display:flex;}
+  .approval.ok{background:rgba(110,231,183,.08);border:1px solid rgba(110,231,183,.3);color:var(--green);}
+  .approval.drift{background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.35);color:var(--gold);}
+  .approval.none{background:rgba(138,154,196,.07);border:1px solid var(--line);color:var(--mut);}
+  /* per-task score breakdown (v2) */
+  .scorebreak{font-size:10px;color:var(--mut);display:flex;flex-wrap:wrap;gap:6px;margin-top:5px;}
+  .sb{background:rgba(255,255,255,.04);border-radius:4px;padding:1px 6px;}
+  .sb b{color:#cdd8f2;font-weight:700;}
+  /* decision log (v2) */
+  .dlog-row{background:rgba(18,26,48,.6);border:1px solid var(--line);border-radius:9px;
+    padding:9px 13px;margin-bottom:6px;}
+  .dlog-title{font-size:12px;font-weight:700;color:#eaf1ff;}
+  .dlog-date{font-size:10px;color:var(--mut);}
+  .dlog-rat{font-size:10.5px;color:var(--mut);margin-top:3px;line-height:1.5;}
   /* honesty footer */
   .honesty{margin-top:28px;padding:12px 16px;background:rgba(148,163,184,.06);
     border:1px solid rgba(148,163,184,.15);border-radius:10px;font-size:11px;color:var(--mut);line-height:1.6;}
@@ -79,13 +96,16 @@
 
   <div class="head">
     <div>
-      <div class="kicker">M8 · Command Center v1</div>
+      <div class="kicker">M8 · Command Center v2</div>
       <h1>Priority Ledger</h1>
       <div class="upd" id="upd">loading snapshot…</div>
     </div>
     <div id="offlineBadge" class="offline-badge">⚠ OFFLINE — snapshot data (writes blocked)</div>
     <div id="staleBadge"   class="stale-badge">⚠ Ledger stale — priorities may be outdated</div>
   </div>
+
+  <!-- approval banner (v2) -->
+  <div id="approvalBanner" class="approval"></div>
 
   <!-- health strip -->
   <div class="health" id="healthStrip"></div>
@@ -101,6 +121,10 @@
   <!-- blocked -->
   <div class="sechead" id="blockedHead" style="display:none">Blocked (unmet dependencies)</div>
   <div id="blockedList"></div>
+
+  <!-- decision log (v2) -->
+  <div class="sechead" id="dlogHead" style="display:none">Decision Log</div>
+  <div id="dlogList"></div>
 
   <div class="honesty">
     <b>Honesty:</b> scores are code-computed from the ledger's explicit fields with fixed weights
@@ -207,10 +231,21 @@ function renderTaskRow(r,byId,cls){
     tags.push(tag('blocked by: '+names));
   }
   const proj=byId['p'+r.project_id]||null;
+  const sv=r.strategic_value;
+  const svLabel=sv>=5?'high':sv<=1?'low':'med';
+  const breakdown=`<div class="scorebreak">
+    <span class="sb">impact <b>${r.impact}</b></span>
+    <span class="sb">urgency <b>${r.urgency}</b></span>
+    <span class="sb">risk <b>${r.risk}</b></span>
+    <span class="sb">effort <b>${r.effort}</b></span>
+    <span class="sb">strategic <b>${svLabel}</b></span>
+    <span class="sb">blockage <b>${r.blockageScore}</b></span>
+  </div>`;
   return`<div class="task-row${cls?' '+cls:''}">
     <div class="task-main">
       <div class="task-title">#${r.id} ${esc(r.title)}</div>
       <div class="task-meta">${tags.join('')}<span>${why}</span>${proj?`<span>${esc(proj.title)}</span>`:''}</div>
+      ${breakdown}
     </div>
     <div class="score-pill">${r.score}</div>
   </div>`;
@@ -235,6 +270,31 @@ function renderBands(ranked,byId){
 
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
+function renderApproval(approval){
+  const el=document.getElementById('approvalBanner');
+  if(!approval||!approval.date){
+    el.className='approval show none';
+    el.innerHTML='📌 No approved order on record yet — in M8 chat, say "approve the priority order" to lock it.';
+    return;
+  }
+  if(approval.drifted){
+    el.className='approval show drift';
+    el.innerHTML='📌 Approved order ('+esc(approval.date)+') has DRIFTED — the computed ranking changed since you approved it. Re-approve in chat to re-lock.';
+  }else{
+    el.className='approval show ok';
+    el.innerHTML='✅ Current order matches the one you approved on '+esc(approval.date)+'.';
+  }
+}
+
+function renderDecisions(decisions){
+  if(!decisions||!decisions.length)return;
+  document.getElementById('dlogHead').style.display='';
+  document.getElementById('dlogList').innerHTML=decisions.map(d=>`<div class="dlog-row">
+    <div class="dlog-title">${esc(d.title)} <span class="dlog-date">· ${esc((d.decided_on||d.created_at||'').slice(0,10))}</span></div>
+    <div class="dlog-rat">${esc(d.rationale||d.resolution||'')}</div>
+  </div>`).join('');
+}
+
 async function loadAndRender(){
   let snap=null;
   // Try localStorage first (cached from last session), then fetch the committed JSON.
@@ -247,11 +307,12 @@ async function loadAndRender(){
   }
   if(!snap){document.getElementById('upd').textContent='No snapshot found — run M8 once to generate it.';return;}
 
-  const{projects=[],tasks=[],health={}}=snap;
+  const{projects=[],tasks=[],health={},approval=null,decisions=[]}=snap;
   const genDate=(snap.generated_at||'').slice(0,16).replace('T',' ')||'unknown';
   document.getElementById('upd').textContent='Snapshot: '+genDate+' UTC';
 
   if(health.stale)document.getElementById('staleBadge').classList.add('show');
+  renderApproval(approval);
 
   const ranked=buildRanked(tasks);
   const byId={};
@@ -266,6 +327,8 @@ async function loadAndRender(){
     document.getElementById('blockedHead').style.display='';
     document.getElementById('blockedList').innerHTML=ranked.blocked.map(r=>renderTaskRow(r,byId,'blocked-row')).join('');
   }
+
+  renderDecisions(decisions);
 }
 loadAndRender();
 </script>

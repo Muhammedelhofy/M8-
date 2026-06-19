@@ -1,7 +1,41 @@
 # M8 — Next Session Brief
-**Latest:** 2026-06-19 (Session-51) · **Branch:** main · **Head:** LLM-fix `d4c73b8`
+**Latest:** 2026-06-19 (Session-52) · **Branch:** main · **Head:** Build-74 Command Center v2 (this session) atop the parallel session's Build-72b/73/75 — shared tree, see "Note on the working tree" below
 **Canonical plan:** [`HONESTY_TRACK_PLAN.md`](HONESTY_TRACK_PLAN.md) ← the living backlog. Read it first.
-(Older Session-34/38/39/40/41/43/44/48/49 briefs preserved below for history.)
+(Older Session-34/38/39/40/41/43/44/48/49/51 briefs preserved below for history.)
+
+---
+
+## ★ SESSION-52 FINAL STATE — 2026-06-19 (read this first next session)
+
+### What shipped this session
+
+| Build | Summary | Status |
+|---|---|---|
+| **Build-74** | **Command Center v2 — human-in-the-loop scoring + approval.** The kickoff asked to "build the Command Center", but it already shipped as **Build-50 (v1)** and the repo had moved 22 builds past it — so this session *enhanced* it (Muhammad chose "Command Center v2"). v1 shipped with every task score at neutral 3/3/3/3/3, so the ranking carried no signal, and there was no way for Muhammad to **approve** the order (the Session-39 brief's "model is ANALYST, not governor"). v2 closes both: **(1) chat scoring** — `rate task #N impact 5 urgency 4 strategic 5` (also score/set/update) validates each field against the SQL ranges (impact/urgency/risk/effort 1-5, strategic_value 1/3/5), writes `m8_cc_tasks`, re-ranks, and narrates the rank move; out-of-range refused, never written. **(2) approval gesture** — `approve/lock the priority order` snapshots the computed order into an `m8_cc_decisions` row (the signed-off reference order). **(3) drift** — every priority packet now LEADS with "matches your approved order / has DRIFTED since `<date>` / none yet". All writes **fail SAFE** (degraded/missing-task/all-invalid → refuse). Orchestrator hard-route placed **before** `detectPriorityQuery`. `m8_command_center.html` → v2 (approval banner, Decision Log, per-task score breakdown; snapshot carries approval+decisions). **No migration** (reuses Build-50 `m8_cc_*`), no new endpoint. `tests/command-center-verify.ps1` **63/63** (36 v1 + 27 v2). HTML live-verified in preview (all 3 banner states, decision log, 9 breakdowns, no console errors). | ✅ code complete + offline-verified · ⏳ **not yet committed/pushed** (awaiting Muhammad's OK to deploy) |
+
+### ▶ NEXT SESSION priorities (in order)
+1. **Commit + push Build-74** if not already done (then `GET /api/health`, confirm Build-74 first in LIVE; live-test the chat flow below).
+2. **Live-verify Build-74** (needs Muhammad's OK — Gemini-free, but writes to the live `m8_cc_*` ledger):
+   - `what's the priority?` → packet leads with a drift/none line + per-band ranking
+   - `rate task #2 impact 5 urgency 5 strategic 5` → "moved UP from #N to #1", new score/band
+   - `set #2 strategic 4` → refused (allowed 1/3/5), no write
+   - `approve the priority order` → "Locked your approved priority order (date)" + ordered list
+   - then `what's the priority?` again → "matches your approved order"; re-score a task → "DRIFTED"
+   - open `m8_command_center.html` → approval banner + Decision Log + score breakdowns render
+3. **Rate the real task scores** so the first ranking carries signal (v1 seeded everything neutral). Optionally **re-seed** the `m8_cc_*` ledger to current reality through Build-74 (it's stale at the Build-50 seed).
+4. Build-72 smarter context routing (Muhammad asked) — owned by the fleet-routing lane; **don't collide** with `lib/fleet.js`, `lib/morning-brief.js`, `lib/notify.js`, `lib/nudges.js`.
+
+### Note on the working tree
+- Build-72b (`lib/fleet-analysis.js`) and Build-73 (`lib/nudges.js`) were committed by a **parallel session** during this one (`5bb9918`). This session built **only** the Command Center (`lib/command-center.js`, `lib/orchestrator.js` CC routes, `m8_command_center.html`, `data/command_center_snapshot.json`, `tests/command-center-verify.ps1`, `lib/buildState.js`). No overlap with the fleet/brief/notify/nudge lanes.
+- `.claude/serve-m8.ps1` + the `m8-static` launch config are local preview-only helpers (untracked, in `.claude/`).
+
+### Kickoff prompt for next session
+> Continue M8 (Session-53). Read `NEXT_SESSION_BRIEF.md` (Session-52 final state) first.
+> Build-74 (Command Center v2 — human scoring + approval + drift) is code-complete, `tests/command-center-verify.ps1` 63/63.
+> If still uncommitted, commit + push it, then live-verify the chat flow (checklist above) with Muhammad's OK.
+> Standing rules: free Gemini stack; live runs need Muhammad's OK; M8 repo is `Muhammedelhofy/M8-`;
+> edit buildState.js commitFamily only via unique-anchor replace; PS .ps1 files must be pure ASCII;
+> update BOTH `m8_mind_2026.html` AND `NEXT_SESSION_BRIEF.md` at session close.
 
 ---
 
