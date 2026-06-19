@@ -65,6 +65,15 @@ function getAI() {
   return new GoogleGenAI({ apiKey });
 }
 
+// Scan raw PDF bytes for text-show operators (Tj / TJ).
+// A scanned/image PDF has 0–2; a digital PDF has dozens to thousands.
+// Checks the first 200 KB only — enough to be representative.
+function detectsTextLayer(buffer) {
+  const sample = buffer.slice(0, Math.min(buffer.length, 200000)).toString("binary");
+  const hits = (sample.match(/\bTj\b|\bTJ\b/g) || []).length;
+  return hits >= 8;
+}
+
 // Upload the PDF buffer to Gemini Files API once; return the file URI.
 async function uploadPdf(ai, buffer, displayName) {
   const blob = new Blob([buffer], { type: "application/pdf" });
@@ -188,6 +197,18 @@ module.exports = async (req, res) => {
 
   if (pdfBuffer.length < 1000) {
     return res.status(400).json({ error: "Downloaded file is too small to be a valid PDF" });
+  }
+
+  // Reject image-based (scanned) PDFs before spending any Gemini credits.
+  // Digital PDFs have many Tj/TJ text-show operators in their content streams;
+  // scanned PDFs have almost none (just image streams).
+  if (!detectsTextLayer(pdfBuffer)) {
+    return res.status(400).json({
+      error: "image_based_pdf",
+      message: "This PDF appears to be image-based (scanned) and cannot be processed. " +
+               "Please convert it to DOCX first (open in Microsoft Word → Save As → .docx, " +
+               "or use an online converter), then upload the DOCX file instead.",
+    });
   }
 
   const ai = getAI();
