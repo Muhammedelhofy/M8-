@@ -135,13 +135,16 @@ async function convertBuffer(buffer, mimeType, name) {
   const fileUri = upload.uri || upload.file?.uri;
   if (!fileUri) throw new Error("Gemini file upload returned no URI");
 
-  // No page-count probe — Gemini's answer is unreliable for Arabic books with
-  // printed page numbers that differ from the PDF page count (e.g. returns 312
-  // for a 516-page file). Instead we extract adaptively: keep going until two
-  // consecutive rounds come back empty, meaning we've passed the last real page.
+  // Adaptive extraction with a file-size-derived page cap.
+  // Gemini's page-count probe is unreliable for Arabic books (printed page
+  // numbers differ from PDF page count). File size is a better estimate:
+  // Arabic scanned PDFs run ~80KB per page at typical scan quality.
+  // We use 2× the estimate as a hard ceiling so we never over-run on a slow
+  // Gemini hallucination, but always cover the real content.
   const CONCURRENCY     = 10;
-  const PAGE_SAFETY_CAP = 2000; // absolute ceiling
-  const EMPTY_ROUND_CAP = 2;    // stop after this many all-empty rounds in a row
+  const EMPTY_ROUND_CAP = 2; // stop after this many all-empty rounds in a row
+  const estimatedPages  = Math.max(Math.ceil(buffer.length / (80 * 1024)), 60);
+  const PAGE_SAFETY_CAP = Math.min(estimatedPages * 2, 1200);
 
   // Regex to detect AI-generated continuation notes (not actual PDF text)
   const AI_NOTE_RE = /^\[(?:document continues|note:|remaining chapters|this is page|truncated|the pdf|pages \d)/i;
