@@ -2,7 +2,7 @@
 <!-- CANONICAL M8 DIAGRAM (promoted 2026-06-17, Session-44). This "M8 Mind" view is now the single
      source-of-truth visual — the old dense architecture diagram was archived to archive/diagrams/.
      Update THIS file on every ship: bump the Build/Session in the footer + this note, flip status/%
-     cells, do NOT regenerate the structure. Currently: Session-50 / Build-69. -->
+     cells, do NOT regenerate the structure. Currently: Session-50 / Build-70. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -396,12 +396,13 @@
         <li><b>Cross-book keyword fallback</b>: entity names (e.g. Khosrow / كسرى) now found even when embedding search misses across languages; fixed misleading empty-graph message <span class="tg">✓ Build-66</span></li>
         <li><b>Round-5 telemetry — failing probes to Supabase</b>: gate-miss diagnosis now possible from Supabase alone; <code>failing_probes</code> JSONB column added to <code>m8_loop_runs</code>; <code>recordAttestation()</code> patches it with <code>{ probe_id, check_label, reply_excerpt }</code> per failed probe; 24/24 offline <span class="tg">✓ Build-67</span></li>
         <li><b>Track-A Morning Fleet Brief — 5000 SAR pace tracking</b>: deterministic daily brief in 3 sections (ON TRACK / BELOW TARGET / DROPPED YESTERDAY = on pace two days ago, behind now); projection = MTD net ÷ days-with-a-trip × 26 working days; on-demand in chat + proactive before-10am prepend + 6 AM Riyadh cron upserting <code>m8_morning_briefs</code>; 27/27 offline <span class="tg">✓ Build-68</span></li>
+        <li><b>Hands — delivery layer + morning-brief email</b>: first "Hands" muscle to reach Muhammad <i>outside</i> chat — reusable <code>lib/notify.js</code> <code>sendEmail()</code> (Resend, free); the cron emails the brief as HTML; inert until <code>RESEND_API_KEY</code> set; 3 cancel paths (unsubscribe link · "stop the morning email" · env off); 30/30 offline <span class="tg">✓ Build-70</span></li>
       </ul>
     </div>
     <div class="evo-col">
       <h4>Next — in order</h4>
       <ul>
-        <li><b>Track-A v2</b> — push the morning brief further: per-driver coaching nudges, WhatsApp/email delivery, weekly roll-up</li>
+        <li><b>Track-A v2 — driver-nudge action loop</b>: brief flags a dropped driver → M8 drafts the message → Muhammad approves → it logs (the real alert→action→confirm business loop, reusing the Build-70 delivery seam)</li>
         <li><b>Ingest more البداية والنهاية chapters</b> — Ch.1 + Ch.10 live; continue ingesting to deepen cross-book graph vs Arktos</li>
         <li><b>Command Center v2</b> — richer ledger, auto-ingested signals</li>
       </ul>
@@ -429,8 +430,9 @@
     <span class="tl done">Build-67 failing-probes telemetry ✓</span>
     <span class="tl done">Morning Fleet Brief — 5000 SAR pace tracking ✓</span>
     <span class="tl done">Build-69 fleet intelligence — context-aware routing ✓</span>
-    <span class="tl cur">Track-A daily-usefulness (next phase)</span>
-    <span class="tl future">البداية والنهاية Ch.2-9+ · Track-A v2</span>
+    <span class="tl done">Build-70 Hands — brief email delivery ✓</span>
+    <span class="tl cur">Track-A v2 — driver-nudge action loop</span>
+    <span class="tl future">البداية والنهاية Ch.2-9+ · evolving memory</span>
     <span class="tl future">L6 — a compound mind</span>
   </div>
 
@@ -462,7 +464,7 @@
 
   <div class="footer">
     Plain-language map of <b>The M8 Mind</b> · drawn from NORTH_STAR.md, the live build list & HONESTY_TRACK_PLAN.md ·
-    status as of <b>Session-50 · Build-69</b> (2026-06-19) · priorities set with the AI Council (GPT · Gemini · Grok · Manus).<br>
+    status as of <b>Session-50 · Build-70</b> (2026-06-19) · priorities set with the AI Council (GPT · Gemini · Grok · Manus).<br>
     The one claim we never make: that we’re already there.
   </div>
 

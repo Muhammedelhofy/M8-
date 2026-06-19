@@ -10,7 +10,8 @@
  * Fails SAFE: any error returns a JSON error, never throws to Vercel.
  */
 const { getFleetRecord, decodeHistory } = require("../lib/fleet");
-const { generateMorningBrief, saveBrief } = require("../lib/morning-brief");
+const { generateMorningBrief, saveBrief, formatBriefHTML } = require("../lib/morning-brief");
+const { isBriefEmailEnabled, ensureBriefPrefs, sendEmail, unsubscribeUrl } = require("../lib/notify");
 
 module.exports = async function handler(req, res) {
   // Optional protection: if CRON_SECRET is set, require it (Vercel cron sends it).
@@ -33,6 +34,24 @@ module.exports = async function handler(req, res) {
     // hiccup still returns the computed brief to the caller.
     await saveBrief(brief);
 
+    // ── DELIVERY (Build-70): email the brief — inert without RESEND_API_KEY,
+    // silenced by the env hard-off or the unsubscribe flag. Fails SAFE: an email
+    // problem never fails the cron (the brief is already stored).
+    let email = { skipped: true };
+    try {
+      if (await isBriefEmailEnabled()) {
+        const prefs = await ensureBriefPrefs();
+        const html = formatBriefHTML(brief, unsubscribeUrl(prefs.unsubscribe_token));
+        const subjBits = [`Fleet brief ${brief.asOfDate || brief.date}`];
+        if (brief.counts.dropped) subjBits.push(`⚠ ${brief.counts.dropped} dropped`);
+        subjBits.push(`${brief.counts.onTrack} on track / ${brief.counts.below} below`);
+        email = await sendEmail({ to: prefs.recipient, subject: subjBits.join(" · "), html });
+      }
+    } catch (mailErr) {
+      console.error("[M8 morning-brief] email error (non-fatal):", mailErr.message);
+      email = { ok: false, error: mailErr.message };
+    }
+
     return res.status(200).json({
       ok: true,
       date: brief.date,
@@ -40,6 +59,7 @@ module.exports = async function handler(req, res) {
       driversOnTrack: brief.counts.onTrack,
       driversBelow: brief.counts.below,
       droppedYesterday: brief.counts.dropped,
+      email,
     });
   } catch (e) {
     console.error("[M8 morning-brief] fatal (non-fatal to cron):", e.message);
