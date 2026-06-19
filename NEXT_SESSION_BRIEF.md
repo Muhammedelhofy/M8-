@@ -1,7 +1,41 @@
 # M8 — Next Session Brief
-**Latest:** 2026-06-19 (Session-48) · **Branch:** main · **Head:** `8008f6e`
+**Latest:** 2026-06-19 (Session-49) · **Branch:** main · **Head:** `b21ba15`
 **Canonical plan:** [`HONESTY_TRACK_PLAN.md`](HONESTY_TRACK_PLAN.md) ← the living backlog. Read it first.
-(Older Session-34/38/39/40/41/43/44 briefs preserved below for history.)
+(Older Session-34/38/39/40/41/43/44/48 briefs preserved below for history.)
+
+---
+
+## ★ SESSION-49 FINAL STATE — 2026-06-19 (read this first next session)
+
+### What shipped this session
+
+| Build | Summary | Status |
+|---|---|---|
+| **Build-65** | **Phase B2 — Parametric PPTX** — When Muhammad asks for a deck without specifying a type, M8 returns a chips clarification (Analysis / Board / Operational) instead of generating immediately. Three dedicated generators: `generateAnalysisPPTX` (7 slides: Title, Scorecard, Full Rankings, Pace, Trend, Anomalies, Findings), `generateBoardPPTX` (5 slides: original deck, refactored), `generateOperationalPPTX` (6 slides: Title, Call List, Chase, Flags, Status, Tomorrow). `deckTypeFromMessage()` detects keywords; `appendChipsMarker()` + `<!--M8-CHIPS:[...]-->` marker; `renderM8Chips()` in `js/chat.js`; `.m8-chip` pill CSS; `?type=` dispatch in `api/fleet-export.js`. `tests/B2-pptx-verify.ps1` **27/27**. | ✅ pushed `b21ba15` |
+
+### Live-verify checklist (needs Muhammad's OK to test at m8-alpha.vercel.app)
+1. `GET /api/health` → `"build":"Build-65"` (Vercel deploy may take 1-2 min)
+2. Type `make me a fleet deck` → chips appear (📊 Analysis · 🎯 Board · ⚙️ Operational), no download yet
+3. Click `📊 Analysis` → download button `Download Fleet Analysis Deck (PowerPoint)` · URL contains `?type=analysis`
+4. Type `give me an executive fleet deck` → NO chips, goes straight to Board deck
+5. Type `give me the excel report` → Excel button still works (regression check)
+6. Open the downloaded Analysis `.pptx` → verify 7 slides + trend table on slide 5
+
+Full test script: [`tests/BUILD65_LIVE_TEST.md`](tests/BUILD65_LIVE_TEST.md)
+
+### ▶ NEXT SESSION priorities (in order)
+1. **Ingest more البداية والنهاية chapters** — Ch.1 (201 nodes) live; upload Ch.2–Ch.N to deepen cross-book graph vs Arktos (ask M8: "ingest this as a book: title=البداية والنهاية Ch.2, author=Ibn Kathir, year=774 AH, source_class=established")
+2. **Scope Track-A daily-usefulness** — 10-15 min conversation: what does "daily useful" mean concretely? Fleet summaries? Alerts? Business loop?
+3. **Build-65 live verification** — confirm chips + three deck types all work
+
+### Kickoff prompt for next session
+> Continue M8 (Session-50). Read `NEXT_SESSION_BRIEF.md` (Session-49 final state) first.
+> Build-65 (Phase B2 parametric PPTX) is LIVE — chips clarification + 3 deck types (Analysis/Board/Operational). Head `b21ba15`.
+> Start by verifying Build-65 live (type "make me a fleet deck" at m8-alpha.vercel.app, confirm chips appear).
+> Then: ingest البداية والنهاية Ch.2 into the cross-book graph, and scope Track-A daily-usefulness.
+> Standing rules: free Gemini stack; live runs need Muhammad's OK; M8 repo is `Muhammedelhofy/M8-`;
+> edit buildState.js commitFamily only via unique-anchor replace; PS .ps1 files must be pure ASCII;
+> update BOTH `m8_mind_2026.html` AND `NEXT_SESSION_BRIEF.md` at session close.
 
 ---
 
