@@ -258,20 +258,19 @@ module.exports = async (req, res) => {
 
   let buffer;
 
+  let sbForCleanup = null;
   if (storagePath) {
     // File was uploaded directly to Supabase Storage — download it here
     const { createClient } = require("@supabase/supabase-js");
-    const sb = createClient(
+    sbForCleanup = createClient(
       process.env.SUPABASE_URL,
       process.env.SUPABASE_SERVICE_KEY,
       { auth: { persistSession: false } }
     );
-    const { data: blob, error } = await sb.storage.from("temp-uploads").download(storagePath);
+    const { data: blob, error } = await sbForCleanup.storage.from("temp-uploads").download(storagePath);
     if (error) return res.status(500).json({ error: `Storage download failed: ${error.message}` });
     const arrayBuf = await blob.arrayBuffer();
     buffer = Buffer.from(arrayBuf);
-    // Delete temp file — non-fatal if it fails
-    sb.storage.from("temp-uploads").remove([storagePath]).catch(() => {});
   } else if (data) {
     // Legacy small-file path: base64-encoded body (≤ 4.5 MB Vercel limit)
     try {
@@ -290,6 +289,9 @@ module.exports = async (req, res) => {
   try {
     const result = await convertBuffer(buffer, mimeType, name, !!confirmed);
     const word_count = result.text.trim().split(/\s+/).length;
+    if (sbForCleanup && storagePath) {
+      sbForCleanup.storage.from("temp-uploads").remove([storagePath]).catch(() => {});
+    }
     return res.status(200).json({
       text:       result.text,
       word_count,
@@ -299,12 +301,16 @@ module.exports = async (req, res) => {
   } catch (e) {
     // Confirmation gate: PDF too large — return special response so the frontend
     // can show the user an estimated cost and ask them to confirm.
+    // Do NOT clean up here — the file is needed for the confirmed re-POST.
     if (e.requiresConfirmation) {
       return res.status(200).json({
         requiresConfirmation: true,
         estimatedPages:       e.estimatedPages,
         estimatedCostUSD:     e.estimatedCostUSD,
       });
+    }
+    if (sbForCleanup && storagePath) {
+      sbForCleanup.storage.from("temp-uploads").remove([storagePath]).catch(() => {});
     }
     console.error("[upload-file]", e.message);
     return res.status(500).json({ error: e.message });
