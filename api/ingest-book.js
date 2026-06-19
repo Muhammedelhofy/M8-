@@ -94,6 +94,13 @@ function splitIntoChapters(fullText) {
   return chapters.length ? chapters : [{ title: "Full Text", text: fullText }];
 }
 
+// Vercel Pro max function duration is 60 s; each chapter takes ~5-10 s (Gemini
+// extraction). Stop processing new chapters if we are within TIMEOUT_GUARD_MS of
+// the limit so we can still send a partial-success response rather than a hard
+// timeout. Already-committed chapters are safe in the DB.
+const TIMEOUT_GUARD_MS = 8000;    // stop starting new chapters 8 s before deadline
+const VERCEL_MAX_MS    = parseInt(process.env.VERCEL_MAX_DURATION_MS, 10) || 55000;
+
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "POST only" });
@@ -117,16 +124,43 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: "text too short — paste the full book text" });
   }
 
+  // Idempotency: if a chapter row with the same book_title+chapter_title already
+  // exists in m8_knowledge_sources (via metadata), skip it rather than duplicating.
+  // This lets re-uploads after a partial timeout resume safely.
+  let existingTitles = new Set();
+  try {
+    const { createClient } = require("@supabase/supabase-js");
+    const db = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+    const { data: existing } = await db
+      .from("m8_knowledge_sources")
+      .select("title")
+      .like("title", `${title} — %`);
+    existingTitles = new Set((existing || []).map((r) => r.title));
+  } catch { /* non-fatal — skip the dedup check if DB is unavailable */ }
+
   const chapters = splitIntoChapters(text);
   const totalChapters = chapters.length;
 
   const results = [];
   let totalAdded   = 0;
   let totalPending = 0;
+  const startedAt = Date.now();
 
   for (let i = 0; i < chapters.length; i++) {
+    // Timeout guard: stop before Vercel kills the function mid-write.
+    if (Date.now() - startedAt > VERCEL_MAX_MS - TIMEOUT_GUARD_MS) {
+      results.push({ chapter: chapters[i].title, skipped: "timeout_guard", chapters_remaining: chapters.length - i });
+      break;
+    }
+
     const ch = chapters[i];
     const chapterTitle = `${title} — ${ch.title}`;
+
+    // Idempotency: skip chapters already committed in a previous upload.
+    if (existingTitles.has(chapterTitle)) {
+      results.push({ chapter: ch.title, skipped: "already_ingested" });
+      continue;
+    }
 
     let source_id;
     try {
