@@ -21,6 +21,11 @@ const UI = {
 // Text-like files pasted into the textarea are read client-side and sent as
 // {name, content} alongside the message; the orchestrator injects their text
 // into THIS turn's LLM context only (never into memory/classification).
+
+// Session-level cache: same file uploaded twice within a session costs zero.
+// Key: "<filename>_<bytes>", value: {text, word_count, pages, format}
+const _docConvertCache = new Map();
+
 const ATTACHMENT_TEXT_RE = /^(text\/|application\/json)/;
 const ATTACHMENT_EXT_RE = /\.(txt|csv|tsv|json|md|markdown|log|yaml|yml)$/i;
 const MAX_ATTACHMENTS = 3;
@@ -182,6 +187,22 @@ async function ingestFiles(fileList) {
 // Upload a document directly to Supabase Storage (bypasses Vercel body limit),
 // then ask the backend to convert from the storage path.
 async function convertDocumentAttachment(att) {
+  // ── Session cache: skip Gemini entirely if we've already converted this file ──
+  const cacheKey = `${att.name}_${att.size}`;
+  if (_docConvertCache.has(cacheKey)) {
+    const cached = _docConvertCache.get(cacheKey);
+    att.converting    = false;
+    att.convertedText = cached.text;
+    att.wordCount     = cached.word_count;
+    att.pages         = cached.pages;
+    renderAttachmentChips();
+    return;
+  }
+
+  // Estimate pages from file size so the chip can show it before extraction starts.
+  // Arabic scanned PDFs ≈ 80KB/page — same formula used server-side.
+  att.estimatedPages = Math.max(Math.ceil(att.size / (80 * 1024)), 1);
+
   try {
     // Step 1: get a presigned upload URL from the backend
     att.uploadStage = "uploading";
@@ -237,7 +258,14 @@ async function convertDocumentAttachment(att) {
     att.convertedText = json.text || null;
     att.wordCount     = json.word_count || 0;
     att.pages         = json.pages || null;
-    if (!json.text) att.error = json.error || "Conversion failed";
+    if (!json.text) {
+      att.error = json.error || "Conversion failed";
+    } else {
+      // Cache on success so re-uploads in this session are free
+      _docConvertCache.set(cacheKey, {
+        text: json.text, word_count: json.word_count, pages: json.pages,
+      });
+    }
   } catch (e) {
     att.converting  = false;
     att.uploadStage = null;
@@ -362,9 +390,10 @@ function renderAttachmentChips() {
         if (att.uploadStage === "uploading") {
           name.textContent = `📤 ${att.name} — uploading…`;
         } else if (att.uploadStage === "extracting") {
-          const elapsed = att.extractStart ? Math.floor((Date.now() - att.extractStart) / 1000) : 0;
-          const elapsedStr = elapsed > 0 ? ` (${elapsed}s…)` : "…";
-          name.textContent = `🔍 ${att.name} — extracting text${elapsedStr}`;
+          const elapsed   = att.extractStart ? Math.floor((Date.now() - att.extractStart) / 1000) : 0;
+          const estPages  = att.estimatedPages ? ` ~${att.estimatedPages}p` : "";
+          const elapsedStr = elapsed > 0 ? ` · ${elapsed}s` : "";
+          name.textContent = `🔍 ${att.name} — extracting${estPages}${elapsedStr}…`;
         } else {
           name.textContent = `⏳ ${att.name} — converting…`;
         }

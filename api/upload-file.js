@@ -127,24 +127,35 @@ async function convertBuffer(buffer, mimeType, name) {
 
   // PDF — upload to Gemini Files API then extract in parallel batches.
   // PAGE_BATCH = 8: 8 pages ≈ 2,500–3,500 words ≈ 3,500–5,000 tokens,
-  // well within the 8,192 output-token limit. 25 pages was too large —
-  // Gemini would truncate mid-sentence and emit an AI-generated summary note.
+  // well within the 8,192 output-token limit.
   const PAGE_BATCH = 8;
+
+  // ── COST GUARD ────────────────────────────────────────────────────────────
+  // Each Gemini batch call sends the full PDF as context — costs scale with
+  // pages. Hard-cap at 200 PDF pages (~$0.40 max per upload). Books larger
+  // than this must be split into chapters before uploading.
+  const MAX_PDF_PAGES  = 200;
+  const estimatedPages = Math.max(Math.ceil(buffer.length / (80 * 1024)), 10);
+  if (estimatedPages > MAX_PDF_PAGES) {
+    return res.status(400).json({
+      error: `PDF too large: estimated ${estimatedPages} pages — limit is ${MAX_PDF_PAGES} per upload to control Gemini costs. Split the file into chapters and upload each separately.`,
+      estimated_pages: estimatedPages,
+      limit: MAX_PDF_PAGES,
+    });
+  }
+  // ──────────────────────────────────────────────────────────────────────────
+
   const blob    = new Blob([buffer], { type: "application/pdf" });
   const upload  = await ai.files.upload({ file: blob, config: { mimeType: "application/pdf", displayName: name || "upload.pdf" } });
   const fileUri = upload.uri || upload.file?.uri;
   if (!fileUri) throw new Error("Gemini file upload returned no URI");
 
-  // Adaptive extraction with a file-size-derived page cap.
-  // Gemini's page-count probe is unreliable for Arabic books (printed page
-  // numbers differ from PDF page count). File size is a better estimate:
-  // Arabic scanned PDFs run ~80KB per page at typical scan quality.
-  // We use 2× the estimate as a hard ceiling so we never over-run on a slow
-  // Gemini hallucination, but always cover the real content.
+  // Adaptive extraction: keep going until 2 consecutive all-empty rounds.
+  // PAGE_SAFETY_CAP is 2× the file-size estimate — enough buffer to cover
+  // the real content without running into Gemini hallucination territory.
   const CONCURRENCY     = 10;
-  const EMPTY_ROUND_CAP = 2; // stop after this many all-empty rounds in a row
-  const estimatedPages  = Math.max(Math.ceil(buffer.length / (80 * 1024)), 60);
-  const PAGE_SAFETY_CAP = Math.min(estimatedPages * 2, 1200);
+  const EMPTY_ROUND_CAP = 2;
+  const PAGE_SAFETY_CAP = Math.min(estimatedPages * 2, MAX_PDF_PAGES * 2);
 
   // Regex to detect AI-generated continuation notes (not actual PDF text)
   const AI_NOTE_RE = /^\[(?:document continues|note:|remaining chapters|this is page|truncated|the pdf|pages \d)/i;
