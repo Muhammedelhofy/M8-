@@ -5,13 +5,58 @@
 
 ---
 
+## 🚦 LIVE SESSION BOARD — read + update this FIRST (parallel-session safety)
+
+> **Why this exists:** Muhammad runs up to TWO Claude sessions at the same time (Max plan).
+> They must never edit the same file, or git will fight. Rule of thumb: **different lanes = safe.**
+> Each running session claims a lane below by writing its line, and clears it when done.
+
+**Who is working right now** (each session edits ONLY its own row):
+
+| Slot | Status | Lane | Session / focus | Started |
+|---|---|---|---|---|
+| Session A | 🟢 idle | — | — | — |
+| Session B | 🟢 idle | — | — | — |
+
+**The 3 lanes (files never overlap):**
+
+- **Lane 1 — BUSINESS (Track A).** Fleet, money, daily-usefulness. Owns:
+  `lib/fleet.js`, `lib/fleet-analysis.js`, `lib/morning-brief.js`, `lib/notify.js`, `lib/nudges.js`,
+  `lib/alerting.js`, `lib/finance.js`, `lib/companies.js`, `lib/eosb.js`, `lib/playbooks.js`,
+  `lib/deckgen.js`, `lib/docgen.js`, `lib/command-center.js`;
+  `api/morning-brief.js`, `api/fleet-export.js`, `api/notify-prefs.js`, `api/deck.js`;
+  `m8_command_center.html`.
+- **Lane 2 — RESEARCH (Track B).** Math engine, Lean, autonomous loop, knowledge graph. Owns:
+  `lib/loop.js`, `lib/lemma-dag.js`, `lib/decomp-proposer.js`, `lib/discovery.js`,
+  `lib/collatz-probes.js`, `lib/lychrel-probes.js`, `lib/conjecture-gen.js`, `lib/kernel-conjecture.js`,
+  `lib/notebook.js`, `lib/memory-graph.js`, `lib/knowledge-intake.js`, `lib/lean.js`, `lib/leanClient.js`,
+  `lib/review-queue.js`, `lib/seed-pack.js`, `lib/engine-catalog.js`, `lib/sourceTrust.js`;
+  `api/cron-explore.js`, `api/cron-verify.js`, `api/cron-summarize.js`, `api/loop-attest.js`,
+  `api/ingest-book.js`, `api/knowledge-*.js`, `api/graph-relabel.js`, `api/seed-pack.js`,
+  `api/pdf-to-text.js`, `api/convert.js`, `api/presign.js`, `api/upload-file.js`;
+  `tests/odysseus/`, `lib/tools/`.
+- **Lane 3 — CLEANUP / QA.** Bug hunts, dead-code removal, the diagram, docs, test tidying. Owns:
+  `m8_mind_2026.html`, `NEXT_SESSION_BRIEF.md` (history), `HONESTY_TRACK_PLAN.md`, the `tests/*.ps1`
+  verify scripts, `*_SPEC.md` files. **May fix a bug in a Lane-1/Lane-2 file ONLY if that lane's slot
+  is 🟢 idle** (nobody else is in it) — otherwise note it as a pending item instead of editing.
+
+**⚠️ SHARED CORE — both tracks route through these. Announce on the board BEFORE touching, and never both at once:**
+`lib/orchestrator.js`, `lib/router.js`, `lib/intentClassifier.js`, `lib/slots.js`, `lib/llm.js`,
+`lib/memory.js`, `lib/stateEngine.js`, `lib/buildState.js`, `api/chat.js`, `api/chat-stream.js`, `api/health.js`.
+
+**Commit rule for parallel work:** each session commits ONLY its own lane's files (`git add` the specific
+paths, never `git add .`). Bump `lib/buildState.js` via the unique-anchor replace so two sessions can both
+append without clobbering. If a session needs a shared-core file the other is editing, wait — don't fork it.
+
+---
+
 ## ★ SESSION-52 FINAL STATE — 2026-06-19 (read this first next session)
 
 ### What shipped this session
 
 | Build | Summary | Status |
 |---|---|---|
-| **Build-74** | **Command Center v2 — human-in-the-loop scoring + approval.** The kickoff asked to "build the Command Center", but it already shipped as **Build-50 (v1)** and the repo had moved 22 builds past it — so this session *enhanced* it (Muhammad chose "Command Center v2"). v1 shipped with every task score at neutral 3/3/3/3/3, so the ranking carried no signal, and there was no way for Muhammad to **approve** the order (the Session-39 brief's "model is ANALYST, not governor"). v2 closes both: **(1) chat scoring** — `rate task #N impact 5 urgency 4 strategic 5` (also score/set/update) validates each field against the SQL ranges (impact/urgency/risk/effort 1-5, strategic_value 1/3/5), writes `m8_cc_tasks`, re-ranks, and narrates the rank move; out-of-range refused, never written. **(2) approval gesture** — `approve/lock the priority order` snapshots the computed order into an `m8_cc_decisions` row (the signed-off reference order). **(3) drift** — every priority packet now LEADS with "matches your approved order / has DRIFTED since `<date>` / none yet". All writes **fail SAFE** (degraded/missing-task/all-invalid → refuse). Orchestrator hard-route placed **before** `detectPriorityQuery`. `m8_command_center.html` → v2 (approval banner, Decision Log, per-task score breakdown; snapshot carries approval+decisions). **No migration** (reuses Build-50 `m8_cc_*`), no new endpoint. `tests/command-center-verify.ps1` **63/63** (36 v1 + 27 v2). HTML live-verified in preview (all 3 banner states, decision log, 9 breakdowns, no console errors). | ✅ code complete + offline-verified · ⏳ **not yet committed/pushed** (awaiting Muhammad's OK to deploy) |
+| **Build-74** | **Command Center v2 — human-in-the-loop scoring + approval.** The kickoff asked to "build the Command Center", but it already shipped as **Build-50 (v1)** and the repo had moved 22 builds past it — so this session *enhanced* it (Muhammad chose "Command Center v2"). v1 shipped with every task score at neutral 3/3/3/3/3, so the ranking carried no signal, and there was no way for Muhammad to **approve** the order (the Session-39 brief's "model is ANALYST, not governor"). v2 closes both: **(1) chat scoring** — `rate task #N impact 5 urgency 4 strategic 5` (also score/set/update) validates each field against the SQL ranges (impact/urgency/risk/effort 1-5, strategic_value 1/3/5), writes `m8_cc_tasks`, re-ranks, and narrates the rank move; out-of-range refused, never written. **(2) approval gesture** — `approve/lock the priority order` snapshots the computed order into an `m8_cc_decisions` row (the signed-off reference order). **(3) drift** — every priority packet now LEADS with "matches your approved order / has DRIFTED since `<date>` / none yet". All writes **fail SAFE** (degraded/missing-task/all-invalid → refuse). Orchestrator hard-route placed **before** `detectPriorityQuery`. `m8_command_center.html` → v2 (approval banner, Decision Log, per-task score breakdown; snapshot carries approval+decisions). **No migration** (reuses Build-50 `m8_cc_*`), no new endpoint. `tests/command-center-verify.ps1` **63/63** (36 v1 + 27 v2). **A stream-path fix shipped after first live-test** (`07d273d`): the score/approve hard-route lives in buffered `orchestrate()`, but `orchestrateStream()`'s `commandCenterMode` only excluded `detectPriorityQuery` — so `rate task #N ...` (fleet-ish word "rate") streamed past the handler and the LLM confabulated. Fix added `detectScoreCommand`+`detectApproveCommand` to `commandCenterMode`. | ✅ **LIVE-VERIFIED 2026-06-19** (SHA `07d273d`): scored #2→Active top, `set #2 strategic 4` refused, approve locked, "matches your approved order", re-score #13 flagged DRIFT inline. Pushed `365984f` + `07d273d`. |
 
 ### ▶ NEXT SESSION priorities (in order)
 1. **Commit + push Build-74** if not already done (then `GET /api/health`, confirm Build-74 first in LIVE; live-test the chat flow below).
