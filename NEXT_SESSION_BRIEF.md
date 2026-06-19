@@ -59,6 +59,33 @@ append without clobbering. If a session needs a shared-core file the other is ed
 
 ---
 
+## ★ SESSION-54 FINAL STATE — 2026-06-20 (read this first next session)
+
+### What shipped this session (all pushed to `Muhammedelhofy/M8-` main, head `8d450d4`)
+
+| Build | Summary | Status |
+|---|---|---|
+| **Build-79** | **Immediate fact extraction.** `_maybeExtractFact()` fires as fire-and-forget inside `saveMemory` after user turns — uses a tight system prompt to extract a single structured fact (key/statement/type/importance/entities) and calls `upsertFact`. Lowered `SUMMARY_ROW_THRESHOLD` 10→4 so sessions summarize faster. Tests: 22/22. | ✅ live |
+| **Build-80** | **Recall scope fix + memory-health endpoint.** Removed `.neq("session_id", currentSessionId)` from the Tier 1 canonical-facts query — facts written in the CURRENT session were invisible until the NEXT session. The Tier 2 pool (raw turns) keeps its exclusion. Added `GET /api/memory-health`: returns all canonical facts, last 10 summaries, total turn count, oldest/newest fact dates. Tests: 22/22. | ✅ live |
+| **Build-81** | **Semantic recall via pgvector + Gemini embeddings.** `generateEmbedding()` uses `text-embedding-004` (768 dims, free tier). `upsertFact` + `summarizeSession` now store embeddings on every write. `semanticRecall()` calls `match_memories` Supabase RPC (cosine similarity, threshold 0.70, HNSW index). `recallMemory` Tier 2: semantic-first (≥2 hits) with keyword fallback when embedding unavailable. Migration `B81_semantic_recall.sql` **APPLIED** to Supabase: pgvector extension, `embedding vector(768)` column, HNSW index, `match_memories` RPC. Tests: 32/32. | ✅ live + migration applied |
+
+**Bolt dashboard (separate repo `MHMBOLT/index.html`):** Fixed ambassador bad-row toast, added "to next tier" hint on monthly target bars, added fleet Bolt bonus table, restored sync time on page load, added mobile CSS. Pushed `8a1cf5b`.
+
+### ▶ NEXT SESSION priorities
+1. **Build-82 — smarter context routing** (Build-72 backlog): route ambiguous queries through a lightweight intent classifier before hitting the LLM, so "what's my fleet doing?" never reaches the math engine and "what's the Collatz status?" never hits the finance handler.
+2. **Verify embeddings are accumulating**: check `GET /api/memory-health` — should show facts with `embedding` values after a few turns.
+3. **Apply `m8_ocr_checkpoints` migration** (Build-78a, still pending) before the next book ingestion attempt.
+4. **Retry bn01.pdf ingest**: Gemini paid-tier propagation may have cleared — retry upload; if still `FreeTier` 429, fix key↔project mismatch.
+
+### Kickoff prompt for next session
+> Continue M8 (Session-55). Read `NEXT_SESSION_BRIEF.md` (Session-54 final state) first.
+> **Build-81 is live** (`8d450d4`): semantic recall via pgvector — every fact/summary now stores a Gemini embedding (768 dims); `recallMemory` uses cosine similarity with keyword fallback. Migration applied.
+> Builds 79/80 also live: immediate fact extraction + memory-health endpoint (`GET /api/memory-health`).
+> NEXT: Build-82 smarter context routing OR verify embeddings accumulating via memory-health. Also: apply `m8_ocr_checkpoints` migration and retry bn01.pdf ingest.
+> Standing rules: free Gemini stack by default; live runs need Muhammad's OK; repo `Muhammedelhofy/M8-`; edit buildState.js commitFamily only via unique-anchor replace; PS .ps1 files pure ASCII; update BOTH `m8_mind_2026.html` AND `NEXT_SESSION_BRIEF.md` at session close.
+
+---
+
 ## ★ SESSION-53 FINAL STATE — 2026-06-20 (read this first next session)
 
 ### What shipped this session (all pushed to `Muhammedelhofy/M8-` main, head `203096b`)
