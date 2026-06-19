@@ -2,7 +2,7 @@
 <!-- CANONICAL M8 DIAGRAM (promoted 2026-06-17, Session-44). This "M8 Mind" view is now the single
      source-of-truth visual — the old dense architecture diagram was archived to archive/diagrams/.
      Update THIS file on every ship: bump the Build/Session in the footer + this note, flip status/%
-     cells, do NOT regenerate the structure. Currently: Session-50 / Build-70. -->
+     cells, do NOT regenerate the structure. Currently: Session-50 / Build-71. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -397,6 +397,7 @@
         <li><b>Round-5 telemetry — failing probes to Supabase</b>: gate-miss diagnosis now possible from Supabase alone; <code>failing_probes</code> JSONB column added to <code>m8_loop_runs</code>; <code>recordAttestation()</code> patches it with <code>{ probe_id, check_label, reply_excerpt }</code> per failed probe; 24/24 offline <span class="tg">✓ Build-67</span></li>
         <li><b>Track-A Morning Fleet Brief — 5000 SAR pace tracking</b>: deterministic daily brief in 3 sections (ON TRACK / BELOW TARGET / DROPPED YESTERDAY = on pace two days ago, behind now); projection = MTD net ÷ days-with-a-trip × 26 working days; on-demand in chat + proactive before-10am prepend + 6 AM Riyadh cron upserting <code>m8_morning_briefs</code>; 27/27 offline <span class="tg">✓ Build-68</span></li>
         <li><b>Hands — delivery layer + morning-brief email</b>: first "Hands" muscle to reach Muhammad <i>outside</i> chat — reusable <code>lib/notify.js</code> <code>sendEmail()</code> (Resend, free); the cron emails the brief as HTML; inert until <code>RESEND_API_KEY</code> set; 3 cancel paths (unsubscribe link · "stop the morning email" · env off); 30/30 offline <span class="tg">✓ Build-70</span></li>
+        <li><b>Morning-brief polish</b>: min-days projection guard (under 3 active days → "too early to call", kills noisy projections); directive fix so M8 writes the full brief in its reply (never "you already have it above"); on-demand "send me the brief email now"; 31/31 + 38/38 offline <span class="tg">✓ Build-71</span></li>
       </ul>
     </div>
     <div class="evo-col">
@@ -464,7 +465,7 @@
 
   <div class="footer">
     Plain-language map of <b>The M8 Mind</b> · drawn from NORTH_STAR.md, the live build list & HONESTY_TRACK_PLAN.md ·
-    status as of <b>Session-50 · Build-70</b> (2026-06-19) · priorities set with the AI Council (GPT · Gemini · Grok · Manus).<br>
+    status as of <b>Session-50 · Build-71</b> (2026-06-19) · priorities set with the AI Council (GPT · Gemini · Grok · Manus).<br>
     The one claim we never make: that we’re already there.
   </div>
 

@@ -102,6 +102,34 @@ Check "HTML has BELOW TARGET section"    ($html -match 'BELOW TARGET')
 Check "HTML has DROPPED YESTERDAY"       ($html -match 'DROPPED YESTERDAY')
 Check "HTML has unsubscribe link"        ($html -match 'action=unsubscribe')
 
+Write-Host "`n== Section E: send-now detection (Build-71) ==" -ForegroundColor Cyan
+
+# Mirror of detectSendBriefEmailNow: needs an explicit email/inbox word so
+# "send me the morning brief" (show in chat) does NOT trip it; excludes toggles.
+function Detect-SendNow($msg) {
+    $hasEmail = $msg -imatch '\b(e-?mail|inbox)\b'
+    $hasBrief = $msg -imatch '\b(brief|morning|fleet|daily)\b'
+    $hasSend  = $msg -imatch '\b(send|deliver|email|mail|get|give\s+me|push)\b'
+    $isToggle = $msg -imatch '\b(stop|cancel|turn\s*off|disable|unsubscribe|mute|pause|resume|re-?enable|turn\s*on)\b'
+    return ($hasEmail -and $hasBrief -and $hasSend -and (-not $isToggle))
+}
+
+$sendPos = @(
+    "send me the brief email now",
+    "email me the morning brief",
+    "send the fleet brief to my email",
+    "push the daily brief to my inbox"
+)
+foreach ($m in $sendPos) { Check ("SEND-NOW: '{0}'" -f $m) ((Detect-SendNow $m) -eq $true) }
+
+$sendNeg = @(
+    "send me the morning brief",
+    "show me the morning brief",
+    "stop the morning email",
+    "who is behind"
+)
+foreach ($m in $sendNeg) { Check ("NOT-SEND: '{0}'" -f $m) ((Detect-SendNow $m) -eq $false) }
+
 Write-Host ""
 Write-Host ("RESULT: {0}/{1} passed, {2} failed" -f $global:pass, $global:tot, $global:fail) -ForegroundColor Yellow
 if ($global:fail -gt 0) { exit 1 }

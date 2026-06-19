@@ -89,6 +89,22 @@ $hNow  = Project-Driver 2100 8
 $hDropped = ($hPrev.onTrack -eq $true) -and ($hNow.onTrack -eq $false)
 Check "H: on track both -> NOT dropped" ($hDropped -eq $false)
 
+Write-Host "`n== Section B2: min-days projection guard (Build-71) ==" -ForegroundColor Cyan
+
+# Drivers with < MIN_PROJECT_DAYS active days must NOT get an on-track/behind
+# verdict (one big or tiny day swings the projection). They go to TOO EARLY.
+$MIN = 3
+# 1 big day (250 SAR) would falsely project 6500 = on track; must be too-early.
+$big1 = Project-Driver 250 1
+Check "1-day big earner -> TOO EARLY (not 'on track')"  ($big1.daysOnline -lt $MIN)
+# 1 tiny day (6 SAR) would project ~150 = falsely 'behind'; must be too-early.
+$tiny1 = Project-Driver 6 1
+Check "1-day tiny earner -> TOO EARLY (not 'behind')"   ($tiny1.daysOnline -lt $MIN)
+$two = Project-Driver 400 2
+Check "2-day driver -> TOO EARLY (under threshold)"     ($two.daysOnline -lt $MIN)
+$three = Project-Driver 600 3
+Check "3-day driver -> projected (meets threshold)"     ($three.daysOnline -ge $MIN)
+
 Write-Host "`n== Section C: detectMorningBriefQuery ==" -ForegroundColor Cyan
 
 # Mirror of BRIEF_QUERY_PATTERNS (PowerShell uses .NET regex, case-insensitive).
