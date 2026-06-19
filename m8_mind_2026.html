@@ -2,7 +2,7 @@
 <!-- CANONICAL M8 DIAGRAM (promoted 2026-06-17, Session-44). This "M8 Mind" view is now the single
      source-of-truth visual — the old dense architecture diagram was archived to archive/diagrams/.
      Update THIS file on every ship: bump the Build/Session in the footer + this note, flip status/%
-     cells, do NOT regenerate the structure. Currently: Session-47 / Build-64. -->
+     cells, do NOT regenerate the structure. Currently: Session-48 / Audit-Pass. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -388,15 +388,16 @@
         <li><b>Phase A — Fleet insight engine</b>: pace flags, dark drivers, inconsistency, concentration, recommended actions <span class="tg">✓ Build-59</span></li>
         <li><b>Phase B — File exports</b>: Excel (5 sheets) + PPTX fleet deck on demand; reply-to-message UX <span class="tg">✓ Build-60b/60c</span></li>
         <li><b>DOCX support</b>: Word files attachable in chat; Arabic chapter detection for book ingestion <span class="tg">✓ Build-61</span></li>
-        <li><b>Phase C — Cross-book knowledge graph</b>: Arktos ingested; convergences &amp; gaps across books detected <span class="tg">✓ Build-62</span></li>
-        <li><b>Adaptive PDF extraction</b>: no page-count probe, cost guard (≤200 pages), session cache, live timer, 4-min timeout <span class="tg">✓ Builds 63–64</span></li>
+        <li><b>Phase C — Cross-book knowledge graph</b>: Arktos + البداية والنهاية Ch.1 ingested; 201 nodes; convergence detection live <span class="tg">✓ Build-62</span></li>
+        <li><b>Adaptive PDF extraction</b>: no page-count probe, cost guard (confirmation gate, not hard block), session cache <span class="tg">✓ Builds 63–64</span></li>
+        <li><b>Full pillar audit</b>: 19 bugs fixed across Infra / Consciousness / Voice+UI / Senses / Hands — provider timeouts, Arabic TTS, false empty-graph, ingest idempotency, Gemini key fallback, export error UX <span class="tg">✓ Session-48</span></li>
       </ul>
     </div>
     <div class="evo-col">
       <h4>Next — in order</h4>
       <ul>
-        <li><b>Ingest البداية والنهاية</b> (Ibn Kathir) — Arabic book, ~8 volumes; test Arabic chapter detection; enrich cross-book graph</li>
-        <li><b>Phase B2 — Parametric PPTX types</b> — M8 asks intent (Analysis / Board / Operational) before generating; audience-aware layout. <span style="color:#fbbf24;font-size:10px;font-weight:700;">PLANNED</span></li>
+        <li><b>Phase B2 — Parametric PPTX types</b> — M8 asks intent (Analysis / Board / Operational) before generating; audience-aware layout. <span style="color:#fbbf24;font-size:10px;font-weight:700;">NEXT</span></li>
+        <li><b>Ingest more البداية والنهاية chapters</b> — Ch.1 live; continue ingesting to deepen cross-book graph vs Arktos</li>
         <li><b>Track-A daily-usefulness</b> — scope what "daily useful" means (fleet summaries? alerts? business loop?)</li>
         <li><b>Command Center v2</b> — richer ledger, auto-ingested signals</li>
       </ul>
@@ -418,7 +419,8 @@
     <span class="tl done">Knowledge ingestion ✓</span>
     <span class="tl done">Cross-book graph ✓</span>
     <span class="tl done">Fleet exports ✓</span>
-    <span class="tl cur">Arabic books + depth</span>
+    <span class="tl done">Arabic books Ch.1 ✓</span>
+    <span class="tl cur">Audit pass ✓ → Phase B2</span>
     <span class="tl future">L6 — a compound mind</span>
   </div>
 
@@ -450,7 +452,7 @@
 
   <div class="footer">
     Plain-language map of <b>The M8 Mind</b> · drawn from NORTH_STAR.md, the live build list & HONESTY_TRACK_PLAN.md ·
-    status as of <b>Session-47 · Build-64</b> (2026-06-19) · priorities set with the AI Council (GPT · Gemini · Grok · Manus).<br>
+    status as of <b>Session-48 · Audit-Pass</b> (2026-06-19) · priorities set with the AI Council (GPT · Gemini · Grok · Manus).<br>
     The one claim we never make: that we’re already there.
   </div>
 

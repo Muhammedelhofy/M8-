@@ -1,7 +1,75 @@
 # M8 — Next Session Brief
-**Latest:** 2026-06-19 (Session-47) · **Branch:** main · **Head:** `c00bdff`
+**Latest:** 2026-06-19 (Session-48) · **Branch:** main · **Head:** `8008f6e`
 **Canonical plan:** [`HONESTY_TRACK_PLAN.md`](HONESTY_TRACK_PLAN.md) ← the living backlog. Read it first.
 (Older Session-34/38/39/40/41/43/44 briefs preserved below for history.)
+
+---
+
+## ★ SESSION-48 FINAL STATE — 2026-06-19 (read this first next session)
+
+### What shipped this session
+
+| Area | Summary | Commit |
+|---|---|---|
+| **Mistral routing fix** | Added Mistral to all ROUTING orders (LIVE_DATA, LOOKUP) — was excluded, causing full FALLBACK when Gemini + Groq hit quota simultaneously | `3eaa7f4` |
+| **PDF cost guard** | Hard 200-page block → confirmation gate: chip shows "~N pages, est. $X — proceed?" with ✓ Proceed / ✗ Cancel. Re-POST with `confirmed:true` skips re-upload. | `5ecbf36` |
+| **Orchestrator 500 fix** | `logTrace` in fatal catch now wrapped in try/catch — Supabase failure no longer causes HTTP 500 from chat.js | `5ecbf36` |
+| **Gemini key fallback** | PDF/image OCR now tries `GEMINI_API_KEY` then `GEMINI_API_KEY_2` on 429/quota — both `upload-file.js` and `lib/converter.js` | `91c927a` |
+| **presign CORS + DELETE** | Added CORS headers, OPTIONS handler, and `DELETE /api/presign` to clean up orphaned Supabase files when user cancels large PDF | `606d8ae`, `d80c854` |
+| **Full pillar audit — 19 bugs** | Deep audit across all 5 pillars — see table below | multiple |
+
+### 19 bugs fixed in pillar audit
+
+| Pillar | Bug | Commit |
+|---|---|---|
+| **Infra** | Client disconnect falsely circuit-broke Gemini for 15s | `99fbe34` |
+| **Infra** | Buffered-fallback `onChunk` throw saved FALLBACK_RESPONSE to memory | `99fbe34` |
+| **Infra** | No timeout on 6 provider fetches — hung forever on stalled provider | `99fbe34` |
+| **Infra** | `res.end()` skipped if `res.write()` threw in SSE finally block | `72e7de0` |
+| **Consciousness** | `"this"` edge references silently dropped (case mismatch) | `77c6a4c` |
+| **Consciousness** | False "nothing recorded" packet on DB error — M8 lied about its knowledge | `77c6a4c` |
+| **Consciousness** | `graphMatch()` swallowed RPC errors, returned empty instead of throwing | `77c6a4c` |
+| **Consciousness** | Book ingest not idempotent; no Vercel timeout guard (partial ingest on timeout) | `77c6a4c` |
+| **Voice & UI** | Enter key bypassed `pendingConfirm` send guard | `72e7de0` |
+| **Voice & UI** | SSE reader never cancelled on failure — connection leaked | `72e7de0` |
+| **Voice & UI** | Arabic `،` missing from TTS sentence splitter — all Arabic prose = one utterance | `72e7de0` |
+| **Voice & UI** | Markdown spoken literally (`**bold**` → "asterisk asterisk bold") | `72e7de0` |
+| **Voice & UI** | In-flight fetch not aborted when chip removed mid-conversion | `72e7de0` |
+| **Senses** | Cancelled large PDF left file in Supabase storage forever | `d80c854` |
+| **Senses** | `att.rawFile` (tens of MB) not freed on `requiresConfirmation` early return | `d80c854` |
+| **Senses** | `att.rawFile` not freed in confirmed re-POST path | `d80c854` |
+| **Hands** | Export error silently saved as .xlsx — no user feedback | `8008f6e` |
+| **Hands** | No loading/disabled state during export generation | `8008f6e` |
+| **SSE** | `res.end()` skipped if `res.write()` threw in chat-stream.js finally | `99fbe34` |
+
+### Key outcomes
+- **البداية والنهاية Ch.1 ingested** — 201 nodes, Arabic chapter detection confirmed working
+- **Cross-book graph active** — Arktos + Ibn Kathir Ch.1 live; ask M8 to compare angelic hierarchies
+- **Cron jobs verified green** — `cron-summarize` (5:00 AM Riyadh / 2:00 AM UTC) unaffected by all fixes; `runGraphSweep` doesn't call `graphMatch` or `buildGraphContext`
+
+### ▶ NEXT SESSION priorities
+1. **Phase B2 — Parametric PPTX types** — M8 asks intent (Analysis / Board / Operational) before generating; audience-aware slide structure ← START HERE
+2. **Ingest more البداية والنهاية chapters** — Ch.1 live; upload Ch.2–Ch.N to deepen cross-book graph vs Arktos
+3. **Track-A daily-usefulness** — scope what "daily useful" means concretely (fleet summaries? alerts? business loop?)
+
+### Pending live tests (can't verify from sandbox — test manually)
+1. **Large PDF confirmation flow** — Upload a PDF >200 pages → confirm chip shows "~N pages, est. $X — proceed?" → click ✓ Proceed → extraction runs with `confirmed:true`
+2. **presign CORS fix** — Open M8 from a browser and upload any file → verify no 405 errors in browser DevTools Network tab on the `OPTIONS /api/presign` preflight
+3. **SSE error fallback** — Hard to trigger manually; watch for chat not falling back silently on stream failure
+4. **Gemini key fallback** — If `GEMINI_API_KEY` hits quota, upload a PDF → should succeed via `GEMINI_API_KEY_2` (check Vercel logs for which key was used)
+5. **Supabase download timeout** — Known gap: no server-side AbortSignal on storage download in `upload-file.js`; monitor Vercel function timeouts on large PDFs
+6. **Large fleet Excel size** — No guard on buffer size; could hit Vercel 4.5MB response limit for very large fleets
+
+### Kickoff prompt for next session
+> Continue M8 (Session-49). Read `NEXT_SESSION_BRIEF.md` (Session-48 final state) first.
+> Session-48 was a full audit pass — 19 bugs fixed across all 5 pillars. All fixes live on Vercel.
+> البداية والنهاية Ch.1 (201 nodes) is ingested alongside Arktos. Cross-book graph is active.
+> Cron jobs (4:00/4:15/5:00 AM Riyadh) are verified unaffected by all fixes.
+> START with Phase B2 (parametric PPTX): M8 asks intent before generating — Analysis / Board / Operational.
+> Then continue ingesting البداية والنهاية chapters and scope Track-A daily-usefulness.
+> Standing rules: free Gemini stack; live runs need Muhammad's OK; M8 repo is `Muhammedelhofy/M8-`;
+> edit buildState.js commitFamily only via unique-anchor replace; PS .ps1 files must be pure ASCII;
+> update BOTH `m8_mind_2026.html` AND `NEXT_SESSION_BRIEF.md` at session close.
 
 ---
 
