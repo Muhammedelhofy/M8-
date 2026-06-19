@@ -2,7 +2,7 @@
 <!-- CANONICAL M8 DIAGRAM (promoted 2026-06-17, Session-44). This "M8 Mind" view is now the single
      source-of-truth visual — the old dense architecture diagram was archived to archive/diagrams/.
      Update THIS file on every ship: bump the Build/Session in the footer + this note, flip status/%
-     cells, do NOT regenerate the structure. Currently: Session-49 / Build-66. -->
+     cells, do NOT regenerate the structure. Currently: Session-50 / Build-68. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -395,13 +395,14 @@
         <li><b>البداية والنهاية Ch.10 ingested</b>: 176 nodes — conquest of Persia, siege of Behrasir, fall of Al-Mada'in (Ctesiphon), flight of Yazdegerd III, 16 AH <span class="tg">✓ Session-49</span></li>
         <li><b>Cross-book keyword fallback</b>: entity names (e.g. Khosrow / كسرى) now found even when embedding search misses across languages; fixed misleading empty-graph message <span class="tg">✓ Build-66</span></li>
         <li><b>Round-5 telemetry — failing probes to Supabase</b>: gate-miss diagnosis now possible from Supabase alone; <code>failing_probes</code> JSONB column added to <code>m8_loop_runs</code>; <code>recordAttestation()</code> patches it with <code>{ probe_id, check_label, reply_excerpt }</code> per failed probe; 24/24 offline <span class="tg">✓ Build-67</span></li>
+        <li><b>Track-A Morning Fleet Brief — 5000 SAR pace tracking</b>: deterministic daily brief in 3 sections (ON TRACK / BELOW TARGET / DROPPED YESTERDAY = on pace two days ago, behind now); projection = MTD net ÷ days-with-a-trip × 26 working days; on-demand in chat + proactive before-10am prepend + 6 AM Riyadh cron upserting <code>m8_morning_briefs</code>; 27/27 offline <span class="tg">✓ Build-68</span></li>
       </ul>
     </div>
     <div class="evo-col">
       <h4>Next — in order</h4>
       <ul>
+        <li><b>Track-A v2</b> — push the morning brief further: per-driver coaching nudges, WhatsApp/email delivery, weekly roll-up</li>
         <li><b>Ingest more البداية والنهاية chapters</b> — Ch.1 + Ch.10 live; continue ingesting to deepen cross-book graph vs Arktos</li>
-        <li><b>Track-A Morning Brief</b> — 5000 SAR net pace tracking; on-track / below / dropped-yesterday sections; 6 AM Riyadh cron <span class="tg">▶ Build-68 in progress</span></li>
         <li><b>Command Center v2</b> — richer ledger, auto-ingested signals</li>
       </ul>
     </div>
@@ -426,8 +427,9 @@
     <span class="tl done">البداية والنهاية Ch.10 ✓</span>
     <span class="tl done">Cross-book keyword fallback ✓</span>
     <span class="tl done">Build-67 failing-probes telemetry ✓</span>
-    <span class="tl cur">Build-68 morning brief</span>
-    <span class="tl future">البداية والنهاية Ch.2-9+ · Track-A daily</span>
+    <span class="tl done">Morning Fleet Brief — 5000 SAR pace tracking ✓</span>
+    <span class="tl cur">Track-A daily-usefulness</span>
+    <span class="tl future">البداية والنهاية Ch.2-9+ · Track-A v2</span>
     <span class="tl future">L6 — a compound mind</span>
   </div>
 
@@ -459,7 +461,7 @@
 
   <div class="footer">
     Plain-language map of <b>The M8 Mind</b> · drawn from NORTH_STAR.md, the live build list & HONESTY_TRACK_PLAN.md ·
-    status as of <b>Session-49 · Build-66</b> (2026-06-19) · priorities set with the AI Council (GPT · Gemini · Grok · Manus).<br>
+    status as of <b>Session-50 · Build-68</b> (2026-06-19) · priorities set with the AI Council (GPT · Gemini · Grok · Manus).<br>
     The one claim we never make: that we’re already there.
   </div>
 

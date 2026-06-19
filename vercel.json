@@ -16,11 +16,13 @@
     "api/pdf-to-text.js": { "maxDuration": 300 },
     "api/convert.js":     { "maxDuration": 300 },
     "api/upload-file.js": { "maxDuration": 300 },
-    "api/presign.js":     { "maxDuration": 10 }
+    "api/presign.js":     { "maxDuration": 10 },
+    "api/morning-brief.js": { "maxDuration": 30 }
   },
   "crons": [
     { "path": "/api/cron-summarize", "schedule": "0 2 * * *" },
     { "path": "/api/cron-explore", "schedule": "0 1 * * *" },
-    { "path": "/api/cron-verify", "schedule": "15 1 * * *" }
+    { "path": "/api/cron-verify", "schedule": "15 1 * * *" },
+    { "path": "/api/morning-brief", "schedule": "0 3 * * *" }
   ]
 }
