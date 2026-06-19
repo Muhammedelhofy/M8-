@@ -135,37 +135,18 @@ async function convertBuffer(buffer, mimeType, name) {
   const fileUri = upload.uri || upload.file?.uri;
   if (!fileUri) throw new Error("Gemini file upload returned no URI");
 
-  // Probe page count — use 300 as fallback for large books
-  let totalPages = 300;
-  try {
-    const probe = await ai.models.generateContent({
-      model,
-      contents: [{ role: "user", parts: [
-        { fileData: { mimeType: "application/pdf", fileUri } },
-        { text: "How many total pages does this document have? Reply with ONLY the integer number, nothing else." },
-      ]}],
-      config: { maxOutputTokens: 10, temperature: 0, safetySettings: SAFETY },
-    });
-    const m = (probe.text || "").match(/\d+/);
-    if (m) {
-      const n = parseInt(m[0], 10);
-      if (n > 0 && n < 5000) totalPages = n;
-    }
-  } catch { /* use fallback */ }
-
-  // Build all batch requests and fire them in parallel.
-  // Concurrent Gemini calls are rate-limited to 10 at a time to avoid 429s.
-  const CONCURRENCY = 10;
-  const batches = [];
-  for (let start = 1; start <= totalPages; start += PAGE_BATCH) {
-    batches.push({ start, end: Math.min(start + PAGE_BATCH - 1, totalPages) });
-  }
+  // No page-count probe — Gemini's answer is unreliable for Arabic books with
+  // printed page numbers that differ from the PDF page count (e.g. returns 312
+  // for a 516-page file). Instead we extract adaptively: keep going until two
+  // consecutive rounds come back empty, meaning we've passed the last real page.
+  const CONCURRENCY     = 10;
+  const PAGE_SAFETY_CAP = 2000; // absolute ceiling
+  const EMPTY_ROUND_CAP = 2;    // stop after this many all-empty rounds in a row
 
   // Regex to detect AI-generated continuation notes (not actual PDF text)
   const AI_NOTE_RE = /^\[(?:document continues|note:|remaining chapters|this is page|truncated|the pdf|pages \d)/i;
 
   // Detect Gemini token loops: if any non-trivial line repeats 4+ consecutive times, truncate there.
-  // This catches the "sentence repeated 200 times" LLM generation failure.
   function removeTokenLoops(text) {
     if (!text || text.length < 300) return text;
     const lines = text.split("\n");
@@ -177,7 +158,7 @@ async function convertBuffer(buffer, mimeType, name) {
       if (norm.length > 20) {
         if (norm === prevLine) {
           streak++;
-          if (streak >= 4) break; // 5th identical non-trivial line → loop → truncate
+          if (streak >= 4) break;
         } else {
           streak = 0;
           prevLine = norm;
@@ -209,22 +190,35 @@ async function convertBuffer(buffer, mimeType, name) {
         config: { maxOutputTokens: 8192, temperature: 0, safetySettings: SAFETY },
       });
       const raw = (r.text || "").trim();
-      // Reject AI-generated notes masquerading as extracted text
       if (AI_NOTE_RE.test(raw)) return { start, text: "" };
-      // Remove any Gemini token loops before returning
       return { start, text: removeTokenLoops(raw) };
     } catch {
       return { start, text: "" };
     }
   }
 
-  // Process in chunks of CONCURRENCY to avoid rate limits
+  // Adaptive extraction loop — runs rounds of CONCURRENCY batches until
+  // EMPTY_ROUND_CAP consecutive all-empty rounds (= past end of document)
   const batchResults = [];
-  for (let i = 0; i < batches.length; i += CONCURRENCY) {
-    const chunk = batches.slice(i, i + CONCURRENCY);
+  let nextStart  = 1;
+  let emptyRounds = 0;
+
+  while (emptyRounds < EMPTY_ROUND_CAP && nextStart <= PAGE_SAFETY_CAP) {
+    const chunk = [];
+    for (let i = 0; i < CONCURRENCY && nextStart <= PAGE_SAFETY_CAP; i++) {
+      chunk.push({ start: nextStart, end: nextStart + PAGE_BATCH - 1 });
+      nextStart += PAGE_BATCH;
+    }
     const results = await Promise.all(chunk.map(({ start, end }) => extractBatch(start, end)));
     batchResults.push(...results);
+    const allEmpty = results.every(r => (r.text || "").length < 30);
+    emptyRounds = allEmpty ? emptyRounds + 1 : 0;
   }
+
+  // Derive actual page count from last batch that had real content
+  const totalPages = batchResults
+    .filter(r => (r.text || "").length >= 30)
+    .reduce((max, r) => Math.max(max, r.start + PAGE_BATCH - 1), 1);
 
   const parts = batchResults
     .sort((a, b) => a.start - b.start)
