@@ -84,6 +84,7 @@ function appendWithLeanBadges(bubble, text) {
 // displayed text and render a <canvas> Chart.js chart in its place.
 const M8_CHART_RE    = /<!--M8-CHART:(\{[\s\S]*?\})-->/;
 const M8_DOWNLOAD_RE = /<!--M8-DOWNLOAD:(\{[\s\S]*?\})-->/;
+const M8_CHIPS_RE    = /<!--M8-CHIPS:(\[[\s\S]*?\])-->/;
 
 // Renders a styled download button for fleet file exports (XLSX / PPTX).
 // spec = { url, filename, label, format } — all code-computed, never LLM.
@@ -151,6 +152,24 @@ function renderM8Download(bubble, spec) {
   bubble.appendChild(wrap);
 }
 
+// Renders quick-reply chip buttons below an assistant message.
+// chips = [{label, value}] where value is the message to send when clicked.
+// Calls the global sendMessage() defined in app.js.
+function renderM8Chips(bubble, chips) {
+  const wrap = document.createElement("div");
+  wrap.className = "m8-chips-wrap";
+  for (const chip of chips) {
+    const btn = document.createElement("button");
+    btn.className = "m8-chip";
+    btn.textContent = chip.label;
+    btn.addEventListener("click", () => {
+      if (typeof sendMessage === "function") sendMessage(chip.value);
+    });
+    wrap.appendChild(btn);
+  }
+  bubble.appendChild(wrap);
+}
+
 function _ensureChartJs() {
   if (window.Chart) return Promise.resolve();
   return new Promise((resolve, reject) => {
@@ -201,11 +220,12 @@ function renderM8Chart(bubble, spec) {
     });
 }
 
-// Strips M8 marker(s) from text, returns {cleanText, chartSpec, downloadSpec}.
+// Strips M8 marker(s) from text, returns {cleanText, chartSpec, downloadSpec, chipsSpec}.
 function _parseM8Markers(text) {
   let cleanText = text;
   let chartSpec = null;
   let downloadSpec = null;
+  let chipsSpec = null;
 
   const cm = M8_CHART_RE.exec(cleanText);
   if (cm) {
@@ -217,16 +237,22 @@ function _parseM8Markers(text) {
     cleanText = (cleanText.slice(0, dm.index) + cleanText.slice(dm.index + dm[0].length)).replace(/\s+$/, "");
     try { downloadSpec = JSON.parse(dm[1]); } catch (_) {}
   }
-  return { cleanText, chartSpec, downloadSpec };
+  const chipm = M8_CHIPS_RE.exec(cleanText);
+  if (chipm) {
+    cleanText = (cleanText.slice(0, chipm.index) + cleanText.slice(chipm.index + chipm[0].length)).replace(/\s+$/, "");
+    try { chipsSpec = JSON.parse(chipm[1]); } catch (_) {}
+  }
+  return { cleanText, chartSpec, downloadSpec, chipsSpec };
 }
 
-// Strips M8-CHART / M8-DOWNLOAD markers from `text`, renders the cleaned text
-// via appendWithLeanBadges, then renders chart and/or download button below.
+// Strips all M8 markers from `text`, renders the cleaned text via
+// appendWithLeanBadges, then renders chart / download / chips below.
 function appendWithCharts(bubble, text) {
-  const { cleanText, chartSpec, downloadSpec } = _parseM8Markers(text);
+  const { cleanText, chartSpec, downloadSpec, chipsSpec } = _parseM8Markers(text);
   appendWithLeanBadges(bubble, cleanText);
   if (chartSpec)    renderM8Chart(bubble, chartSpec);
   if (downloadSpec) renderM8Download(bubble, downloadSpec);
+  if (chipsSpec)    renderM8Chips(bubble, chipsSpec);
 }
 
 // For the copy-to-clipboard button: strip all M8 markers so raw JSON never
