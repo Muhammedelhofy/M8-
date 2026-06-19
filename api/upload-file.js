@@ -199,8 +199,28 @@ async function convertBuffer(buffer, mimeType, name, confirmed = false) {
       const blob    = new Blob([buffer], { type: "application/pdf" });
       const upload  = await ai.files.upload({ file: blob, config: { mimeType: "application/pdf", displayName: name || "upload.pdf" } });
       const fileUri = upload.uri || upload.file?.uri;
+      const fileName = upload.name || upload.file?.name ||
+        (fileUri && fileUri.includes("/files/") ? `files/${fileUri.split("/files/")[1]}` : null);
       if (!fileUri) throw new Error("Gemini file upload returned no URI");
 
+      // Wait for the uploaded PDF to reach ACTIVE state. Querying it while it is
+      // still PROCESSING makes EVERY page-batch fail (silently) and yields 0 text
+      // -- the "Conversion failed" with no logged error. Poll up to ~20s.
+      if (fileName) {
+        const deadline = Date.now() + 20000;
+        while (Date.now() < deadline) {
+          let st;
+          try { const meta = await ai.files.get({ name: fileName }); st = (meta && (meta.state || (meta.file && meta.file.state))); }
+          catch (e) { break; }   // get not supported / transient — proceed and let batches report
+          if (st === "ACTIVE") break;
+          if (st === "FAILED") throw new Error("Gemini failed to process the uploaded PDF (state FAILED)");
+          await new Promise((r) => setTimeout(r, 1000));
+        }
+      }
+
+      // Surface per-batch failures instead of swallowing them, so an all-empty
+      // OCR yields a real diagnostic (count + first error) rather than 0 text.
+      let batchErrors = 0, firstBatchErr = "";
       async function extractBatch(start, end) {
         try {
           const r = await ai.models.generateContent({
@@ -224,7 +244,10 @@ async function convertBuffer(buffer, mimeType, name, confirmed = false) {
           const raw = (r.text || "").trim();
           if (AI_NOTE_RE.test(raw)) return { start, text: "" };
           return { start, text: removeTokenLoops(raw) };
-        } catch {
+        } catch (e) {
+          batchErrors++;
+          if (!firstBatchErr) firstBatchErr = (e && e.message) ? e.message : String(e);
+          console.error(`[upload-file] OCR batch ${start}-${end} failed:`, (e && e.message) || e);
           return { start, text: "" };
         }
       }
@@ -258,6 +281,15 @@ async function convertBuffer(buffer, mimeType, name, confirmed = false) {
         const fname = fileUri.split("/files/")[1];
         if (fname) await ai.files.delete({ name: `files/${fname}` });
       } catch { /* non-fatal */ }
+
+      // 0 text extracted: report WHY (batch error count + first error) instead of
+      // returning empty text that the UI shows as a bare "Conversion failed".
+      if (!parts.length) {
+        const detail = batchErrors > 0
+          ? `${batchErrors} OCR batch error(s)${firstBatchErr ? `; first: ${firstBatchErr.slice(0, 200)}` : ""}`
+          : "the model returned no text for any page (the scan may be unreadable or blocked)";
+        throw new Error(`OCR produced no text from this PDF — ${detail}`);
+      }
 
       return { text: parts.join("\n\n"), pages: totalPages, format: "pdf" };
     } catch (e) {
