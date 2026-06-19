@@ -184,6 +184,8 @@ async function ingestFiles(fileList) {
 async function convertDocumentAttachment(att) {
   try {
     // Step 1: get a presigned upload URL from the backend
+    att.uploadStage = "uploading";
+    renderAttachmentChips();
     const presignResp = await fetch("/api/presign", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -203,7 +205,9 @@ async function convertDocumentAttachment(att) {
     });
     if (!uploadResp.ok) throw new Error(`Storage upload failed (${uploadResp.status})`);
 
-    // Step 3: ask the backend to convert from the storage path
+    // Step 3: ask the backend to extract text — slow for large PDFs (Gemini OCR)
+    att.uploadStage = "extracting";
+    renderAttachmentChips();
     const convertResp = await fetch("/api/upload-file", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -211,13 +215,15 @@ async function convertDocumentAttachment(att) {
     });
     const json = await convertResp.json();
     att.converting    = false;
+    att.uploadStage   = null;
     att.convertedText = json.text || null;
     att.wordCount     = json.word_count || 0;
     att.pages         = json.pages || null;
     if (!json.text) att.error = json.error || "Conversion failed";
   } catch (e) {
-    att.converting = false;
-    att.error      = e.message;
+    att.converting  = false;
+    att.uploadStage = null;
+    att.error       = e.message;
   }
   // Free the raw file reference — no longer needed
   att.rawFile = null;
@@ -335,13 +341,24 @@ function renderAttachmentChips() {
     name.className = "attachment-name";
     if (att.kind === "document") {
       if (att.converting) {
-        name.textContent = `⏳ ${att.name} — converting…`;
+        if (att.uploadStage === "uploading") {
+          name.textContent = `📤 ${att.name} — uploading…`;
+        } else if (att.uploadStage === "extracting") {
+          const isPdf = /\.pdf$/i.test(att.name);
+          name.textContent = `🔍 ${att.name} — extracting text${isPdf ? " (30–60s for large PDFs)" : "…"}`;
+        } else {
+          name.textContent = `⏳ ${att.name} — converting…`;
+        }
         chip.classList.add("converting");
       } else if (att.error) {
         name.textContent = `❌ ${att.name} — ${att.error}`;
         chip.classList.add("error");
       } else {
-        name.textContent = `📄 ${att.name} (${att.wordCount?.toLocaleString() || "?"} words)`;
+        const metaParts = [];
+        if (att.wordCount) metaParts.push(`${att.wordCount.toLocaleString()} words`);
+        if (att.pages)     metaParts.push(`${att.pages} pages`);
+        const meta = metaParts.length ? ` — ${metaParts.join(" · ")}` : "";
+        name.textContent = `📄 ${att.name}${meta}`;
         chip.classList.add("ready");
       }
     } else {
