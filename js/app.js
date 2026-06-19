@@ -205,17 +205,35 @@ async function convertDocumentAttachment(att) {
     });
     if (!uploadResp.ok) throw new Error(`Storage upload failed (${uploadResp.status})`);
 
-    // Step 3: ask the backend to extract text — slow for large PDFs (Gemini OCR)
-    att.uploadStage = "extracting";
+    // Step 3: ask the backend to extract text — slow for large PDFs (Gemini OCR).
+    // A 8MB Arabic book takes 60–120s: Gemini upload + batch OCR extraction.
+    att.uploadStage  = "extracting";
+    att.extractStart = Date.now();
     renderAttachmentChips();
-    const convertResp = await fetch("/api/upload-file", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ storagePath: path, name: att.name, mimeType: att.mimeType }),
-    });
-    const json = await convertResp.json();
+
+    // Tick the elapsed-time counter every 5s so Muhammad knows it's alive
+    const tickTimer = setInterval(() => renderAttachmentChips(), 5000);
+
+    // 4-minute client timeout — if the server hasn't replied, show a clear error
+    const abortCtrl = new AbortController();
+    const abortTimer = setTimeout(() => abortCtrl.abort(), 240000);
+
+    let json;
+    try {
+      const convertResp = await fetch("/api/upload-file", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ storagePath: path, name: att.name, mimeType: att.mimeType }),
+        signal: abortCtrl.signal,
+      });
+      json = await convertResp.json();
+    } finally {
+      clearInterval(tickTimer);
+      clearTimeout(abortTimer);
+    }
     att.converting    = false;
     att.uploadStage   = null;
+    att.extractStart  = null;
     att.convertedText = json.text || null;
     att.wordCount     = json.word_count || 0;
     att.pages         = json.pages || null;
@@ -344,8 +362,9 @@ function renderAttachmentChips() {
         if (att.uploadStage === "uploading") {
           name.textContent = `📤 ${att.name} — uploading…`;
         } else if (att.uploadStage === "extracting") {
-          const isPdf = /\.pdf$/i.test(att.name);
-          name.textContent = `🔍 ${att.name} — extracting text${isPdf ? " (30–60s for large PDFs)" : "…"}`;
+          const elapsed = att.extractStart ? Math.floor((Date.now() - att.extractStart) / 1000) : 0;
+          const elapsedStr = elapsed > 0 ? ` (${elapsed}s…)` : "…";
+          name.textContent = `🔍 ${att.name} — extracting text${elapsedStr}`;
         } else {
           name.textContent = `⏳ ${att.name} — converting…`;
         }
