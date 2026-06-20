@@ -71,17 +71,29 @@ append without clobbering. If a session needs a shared-core file the other is ed
 
 **Bolt dashboard (separate repo `MHMBOLT/index.html`):** Fixed ambassador bad-row toast, added "to next tier" hint on monthly target bars, added fleet Bolt bonus table, restored sync time on page load, added mobile CSS. Pushed `8a1cf5b`.
 
+| Build | Summary | Status |
+|---|---|---|
+| **Build-82a** | Reject image-based (scanned) PDFs before any Gemini call — detect via Tj/TJ operator count in first 200KB. Returns 400 with DOCX conversion instructions. Zero API cost on rejection. | ✅ live |
+| **Build-82** | Knowledge graph context injection — `searchKnowledgeGraph()` keyword search on `m8_graph_nodes`; injects top 6 nodes as `KNOWLEDGE GRAPH` block in system instruction when `action=answer` and not fleet/finance/compute. **Live-verified**: M8 cited Ibn Kathir correctly in English + Arabic. | ✅ live + verified |
+| **Build-83c** | Entity memory — `lib/entity-graph.js`: extracts named entities (person/book/problem/company/place/concept) from every user turn (fire-and-forget); upserts into `m8_entities` with merged attributes + mention_count; `recallEntities()` injects matching entities as `KNOWN ENTITIES` block. Migration `B83c_entity_graph.sql` applied. Tests 36/36. | ✅ live |
+
+**Book ingestion:** bn01 (البداية والنهاية vol1) ingested — 201 nodes. `m8_ocr_checkpoints` migration applied. Scanned PDFs now rejected (use DOCX instead). `GEMINI_MODEL=gemini-2.5-flash` updated in Vercel.
+
+**Parallel sessions running (B + D):**
+- **Session B** (Option B): Semantic KG Q&A — upgrading `searchKnowledgeGraph()` with pgvector embeddings on `m8_graph_nodes`. Touches `lib/knowledge-intake.js` only.
+- **Session D** (Option D): M4 proposer feedback loop — verified Lean leaves feed back into conjecture generator. Touches `lib/conjecture-gen.js`, `lib/decomp-proposer.js`.
+
 ### ▶ NEXT SESSION priorities
-1. **Build-82 — smarter context routing** (Build-72 backlog): route ambiguous queries through a lightweight intent classifier before hitting the LLM, so "what's my fleet doing?" never reaches the math engine and "what's the Collatz status?" never hits the finance handler.
-2. **Verify embeddings are accumulating**: check `GET /api/memory-health` — should show facts with `embedding` values after a few turns.
-3. **Apply `m8_ocr_checkpoints` migration** (Build-78a, still pending) before the next book ingestion attempt.
-4. **Retry bn01.pdf ingest**: Gemini paid-tier propagation may have cleared — retry upload; if still `FreeTier` 429, fix key↔project mismatch.
+1. **Reconcile parallel sessions B + D** — merge their commits, check for conflicts, run their verify scripts.
+2. **Build-83 morning brief P&L** — wire `lib/finance.js` (Build P1/P2) into the daily email: per-driver profit, fleet P&L, tier hits.
+3. **Ingest more Ibn Kathir volumes** — convert DOCX → TXT in Word, upload with ingest command. 19 volumes remaining.
+4. **Entity memory live-test** — after a few turns, check `m8_entities` table in Supabase to confirm entities are accumulating.
 
 ### Kickoff prompt for next session
-> Continue M8 (Session-55). Read `NEXT_SESSION_BRIEF.md` (Session-54 final state) first.
-> **Build-81 is live** (`8d450d4`): semantic recall via pgvector — every fact/summary now stores a Gemini embedding (768 dims); `recallMemory` uses cosine similarity with keyword fallback. Migration applied.
-> Builds 79/80 also live: immediate fact extraction + memory-health endpoint (`GET /api/memory-health`).
-> NEXT: Build-82 smarter context routing OR verify embeddings accumulating via memory-health. Also: apply `m8_ocr_checkpoints` migration and retry bn01.pdf ingest.
+> Continue M8 (Session-55). Read `NEXT_SESSION_BRIEF.md` (Session-54 final state) first. Head `52c7748`.
+> **Builds 79/80/81/82a/82/83c all live.** Entity memory, semantic recall, knowledge graph injection, scanned PDF rejection — all shipped and migration-applied.
+> Parallel sessions B (KG semantic search) + D (proposer feedback) were running — reconcile their commits first.
+> NEXT: morning brief P&L (Build-83), more Ibn Kathir ingestion, entity memory live-test.
 > Standing rules: free Gemini stack by default; live runs need Muhammad's OK; repo `Muhammedelhofy/M8-`; edit buildState.js commitFamily only via unique-anchor replace; PS .ps1 files pure ASCII; update BOTH `m8_mind_2026.html` AND `NEXT_SESSION_BRIEF.md` at session close.
 
 ---
