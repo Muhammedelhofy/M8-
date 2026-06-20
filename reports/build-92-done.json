@@ -1,0 +1,10 @@
+{
+  "build": "Build-92",
+  "status": "done",
+  "committed_sha": "63ca9dbb1baa70ca4ae7f171ef3bac48caa8b04c",
+  "files_changed": ["lib/conjecture-memory.js", "lib/conjecture-gen.js", "lib/loop.js", "migrations/B92_conjecture_outcomes.sql", "tests/B92-feedback-verify.ps1"],
+  "test_result": "4/4 passed",
+  "migration_needed": true,
+  "migration_file": "migrations/B92_conjecture_outcomes.sql",
+  "notes": "Learning loop closed in code (HEAD 63ca9db). Apply B92 migration in Supabase or the table stays dormant. problemId='collatz' is shared by the loop.js write and conjecture-gen.js read; tags come from a 2s-capped Gemini call (non-fatal, stay null on timeout); honesty enforced (no 'proven' in tags/logs). Node is absent on this host so the test is a PS 5.1 mirror (4/4 core + 35 wiring source-binding checks). Parallel session shipped Build-91 and has uncommitted Build-93/Track-A files in the tree; I staged only my 5 files."
+}
