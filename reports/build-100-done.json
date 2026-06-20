@@ -1,0 +1,19 @@
+{
+  "build": 100,
+  "status": "done",
+  "tests": "78/78",
+  "files": [
+    "lib/cost-profiles.js",
+    "lib/intentClassifier.js",
+    "lib/orchestrator.js",
+    "tests/B100-driver-profile-verify.ps1"
+  ],
+  "commit": "2f822d304a9fc06312fc082455032c304b849b3a",
+  "summary": "Chat-driven CRUD over driver_cost_profiles so real per-driver cost data can be seeded by typing, unblocking B95 fleet reports + B96 nudge context (previously stalled on the lone 'Driver Name' placeholder row). cost-profiles.js: new upsertCostProfile() does an ilike existence check then PATCHES only the provided fields or inserts a fresh row, and ALWAYS deletes the placeholder (driver_name ILIKE 'driver name') before returning; fails safe ({ok:false,error}). intentClassifier.js: new DRIVER_PROFILE intent + classifyDriverProfile() returns {intent,op,driverName,field,amount} for op upsert|list|delete (field map rental->rental_amount/salary->salary_amount/fuel->fuel_estimate/other->other_costs; amount strips SAR + commas; apostrophe class built via String.fromCharCode(0x2019) so source stays pure ASCII and curly apostrophes still parse). orchestrator.js: deterministic handleDriverProfileCommand() + formatDriverProfileTable() wired into BOTH the buffered (orchestrate, _dp) and streaming (orchestrateStream, _dpS) paths right after the PPTX-clarify early-return, so 'set X's rental to Y' / 'show driver profiles' / 'delete driver X' are answered with a code-computed string (no LLM) and never get grabbed by the finance/fleet lane. All source ASCII-clean.",
+  "notes": "Validated offline via the PS 5.1 mirror (tests/B100-driver-profile-verify.ps1, 78/78) -- Node is absent on the host so the JS was not executed; LIVE-VERIFY PENDING (type the commands in real chat to confirm routing + actual Supabase writes). The B87 migration already exists so the table is present; the upsert auto-clears the 'Driver Name' placeholder on the first successful write. Delete is implemented inside the orchestrator (inline Supabase client) rather than cost-profiles.js, to honor the spec constraint that cost-profiles.js gains ONLY upsertCostProfile. No new migration. No shared parallel-session files touched (only the 4 listed).",
+  "gaps": [
+    "LIVE-VERIFY PENDING: host has no Node, so behavior is proven only by the PS mirror (78/78), not by executing the JS. Next session should type 'set Ahmad's rental to 1800', 'show driver profiles', 'delete driver Ahmad' in live chat and confirm the DB row + the placeholder removal.",
+    "add-driver name capture is greedy: 'add driver Ahmad' -> name 'Ahmad' (correct), but 'add driver Ahmad to the fleet' would store the whole trailing phrase as the name. The command is intended for bare-name seeding by a power user; tighten the capture later if natural-language tails show up.",
+    "Requires SUPABASE_URL + SUPABASE_SERVICE_KEY at runtime (same as the rest of cost-profiles.js). Without them upsert returns {ok:false} and the handler replies with a plain 'couldn't reach the database' sentence rather than writing."
+  ]
+}
