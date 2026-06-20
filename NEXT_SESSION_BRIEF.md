@@ -90,11 +90,22 @@ append without clobbering. If a session needs a shared-core file the other is ed
 4. **Entity memory live-test** — after a few turns, check `m8_entities` table in Supabase to confirm entities are accumulating.
 
 ### Kickoff prompt for next session
-> Continue M8 (Session-55). Read `NEXT_SESSION_BRIEF.md` (Session-54 final state) first. Head `52c7748`.
-> **Builds 79/80/81/82a/82/83c all live.** Entity memory, semantic recall, knowledge graph injection, scanned PDF rejection — all shipped and migration-applied.
-> Parallel sessions B (KG semantic search) + D (proposer feedback) were running — reconcile their commits first.
-> NEXT: morning brief P&L (Build-83), more Ibn Kathir ingestion, entity memory live-test.
-> Standing rules: free Gemini stack by default; live runs need Muhammad's OK; repo `Muhammedelhofy/M8-`; edit buildState.js commitFamily only via unique-anchor replace; PS .ps1 files pure ASCII; update BOTH `m8_mind_2026.html` AND `NEXT_SESSION_BRIEF.md` at session close.
+> Continue M8 (Session-55). Read `NEXT_SESSION_BRIEF.md` (Session-54 final state) first. Head `192bf7e`.
+>
+> **STANDING DEFAULTS — never ask Muhammad about these:**
+> - Model: **Sonnet** always unless the task needs deep architectural reasoning (then say why)
+> - Effort: **Medium** (1-2 hours) for implementation builds — state it upfront, don't ask
+> - Session close: **always** update `m8_mind_2026.html` + `NEXT_SESSION_BRIEF.md` + push — without being asked, before the final summary
+> - Parallel session prompts: include model + effort in the prompt header automatically
+>
+> **Where we are:** Builds 79–83d all live. Entity memory, semantic recall, KG injection, KG semantic search (83b), proposer feedback loop (83d), scanned PDF rejection — all shipped + migrations applied. Diagram updated (192bf7e).
+>
+> **NEXT priorities:**
+> 1. Morning brief P&L — wire `lib/finance.js` (Build P1/P2) into daily email: per-driver profit, fleet P&L, tier hits
+> 2. Ingest bn02–bn20 (convert DOCX → TXT in Word, upload with ingest command)
+> 3. Entity memory live-test — check `m8_entities` table in Supabase after a few turns
+>
+> Standing rules: free Gemini stack by default; live runs need Muhammad's OK; repo `Muhammedelhofy/M8-`; edit buildState.js via unique-anchor replace only; PS .ps1 files pure ASCII.
 
 ---
 
