@@ -1,0 +1,16 @@
+{
+  "build": 95,
+  "status": "done",
+  "commit": "76d896ad5a8c7a6203d153dfeccecd1960e5d780",
+  "tests": "51/51 passed",
+  "files": [
+    "lib/fleet-report.js",
+    "lib/orchestrator.js",
+    "tests/B95-fleet-report-verify.ps1",
+    "tests/B95_LIVE_TEST.md"
+  ],
+  "gaps": [
+    "live-verify pending: Node is absent on this host so only the PS-5.1 mirror + static wiring ran (51/51). Needs a live chat pass per tests/B95_LIVE_TEST.md once deployed (requires driver_cost_profiles rows + a synced fleet blob)."
+  ],
+  "notes": "New lib/fleet-report.js: buildFleetReport(fleetData, costProfiles) + formatFleetReport(). Company P&L view = rental income + 50% projected Bolt-bonus share - (salary+fuel+other); driver net is the bonus-tier INPUT only (uses lib/pnl-engine.js as the single source of truth, not re-hardcoded). onTrackFor5000 projects (driverNet/daysElapsed)*30. Recommended actions: offline-streak (call) > unprofitable > below-4000-floor > on-pace (encourage). Wired into BOTH orchestrate() (SLOT 3e) and orchestrateStream(), ceding precedence to the Track-A morning brief and Build-72b change analysis; gated on cost profiles existing AND fleet data present; fails safe. No migration (existing tables). Committed only Build-95 files; left a parallel session's uncommitted conjecture-gen/conjecture-memory/lemma-dag/loop edits untouched."
+}
