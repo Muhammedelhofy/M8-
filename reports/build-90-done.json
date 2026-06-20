@@ -1,0 +1,15 @@
+{
+    "build":  "Build-90",
+    "status":  "done",
+    "committed_sha":  "4ffb576725329db7c4bed2e23c1f903a72e7d7e8",
+    "files_changed":  [
+                          "lib/entity-slug.js",
+                          "lib/entity-graph.js",
+                          "migrations/B90_entity_slug.sql",
+                          "tests/B90-entity-slug-verify.ps1"
+                      ],
+    "test_result":  "39/39 passed",
+    "migration_needed":  true,
+    "migration_file":  "migrations/B90_entity_slug.sql",
+    "notes":  "Build-90 was already committed AND pushed to origin/main (4ffb576) by a parallel builder session; I verified it end-to-end (mirror+static test 39/39, all 6 must-match and 2 must-not-match cases pass) rather than duplicating. Kickoff said lib/entities.js but the real file is lib/entity-graph.js (holds upsertEntity + the m8_entities table). RECOMMEND applying migrations/B90_entity_slug.sql before/with the next deploy: the committed entity-graph.js sends slug on writes without a retry-without-slug fallback, so new-entity inserts will error until the column exists (the slug resolution itself is wrapped in try/catch and entity extraction is fire-and-forget, so it is non-fatal)."
+}
