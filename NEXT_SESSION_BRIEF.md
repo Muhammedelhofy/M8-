@@ -1,4 +1,4 @@
-# M8 Next Session Brief — Session-57 Close
+﻿# M8 Next Session Brief — Session-57 Close
 
 **Head commit:** c140547 — Build-103 (2026-06-20)
 **Vercel:** auto-deployed on every push to main (m8-alpha.vercel.app)
@@ -17,10 +17,10 @@
 | 99 | Outcome-biased proposer: AVOID (failed sketches) + VERIFIED blocks in conjecture gen | 36611a3 |
 | 103 | Provider health: GET /api/health (6 providers), graceful degradation on quota | c140547 |
 
-**Parallel builds in progress (launched this session, not yet landed):**
-- B100: Driver Profile Manager — set/list/delete via chat
-- B101: Ingest audit + atomic /api/ingest-full + re-extract existing sources
-- B102: Knowledge re-ingestion + re-extract chat command (depends on B101)
+**Parallel builds status:**
+- B100: Driver Profile Manager — DONE `2f822d3` 78/78 — set/list/delete via chat; auto-clears placeholder row
+- B101: Ingest audit + atomic ingest pipeline — DONE `68317db` 45/45 — /api/ingest-full + /api/ingest-extract-existing; 0 books confirmed
+- B102: Knowledge re-ingestion — IN PROGRESS (depends on B101, may have merge conflict on intentClassifier.js/orchestrator.js)
 
 ---
 
