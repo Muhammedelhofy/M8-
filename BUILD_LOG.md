@@ -48,11 +48,10 @@ One row per build. Updated immediately when a build lands or is live-verified.
 
 | Item | Owner | Blocker |
 |------|-------|---------|
-| Enter real driver profiles (rental/salary/fuel per driver) | Muhammad | B100 live — type in M8 chat |
-| Apply B92 migration (B92_conjecture_outcomes.sql) | Master session | Run in Supabase SQL editor |
-| Fix orchestrator.js P&L overlay (~lines 1030-1039) | Next build | Rewire to pnl-engine.js |
-| Book ingestion: bn01.pdf → M8 chat | Muhammad | Quota reset (try tomorrow morning) |
+| Enter real driver profiles (rental/salary/fuel per driver) | Muhammad | B100 live — type in M8 chat when ready |
+| Book ingestion: bn01.txt → M8 chat | Muhammad | Quota reset — try tomorrow morning |
 | Live-test B95 fleet report with real driver data | Muhammad | After driver profiles entered |
+| B102 push | B102 session | Waiting to finish building — then git pull + push |
 
 ---
 
