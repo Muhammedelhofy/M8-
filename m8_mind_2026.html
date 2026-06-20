@@ -1,8 +1,8 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <!-- CANONICAL M8 DIAGRAM (promoted 2026-06-17, Session-44). This "M8 Mind" view is now the single
      source-of-truth visual — the old dense architecture diagram was archived to archive/diagrams/.
      Update THIS file on every ship: bump the Build/Session in the footer + this note, flip status/%
-     cells, do NOT regenerate the structure. Currently: Session-55 (Build-84 multi-source answer engine: intent classifier + selective fetch + KG/entity merge & citations). — Builds 79/80/81 (memory: fact extraction + recall fix + pgvector semantic search) + Build-82a (scanned PDF rejection) + Build-82 (knowledge graph injection, verified with Ibn Kathir) + Build-83b (KG semantic search) + Build-83c (entity memory) + Build-83d (M4 proposer feedback). bn01 ingested 201 nodes. All migrations applied. -->
+     cells, do NOT regenerate the structure. Currently: Session-55 (Build-85d multi-hop reasoning chain: complex why/how/compare questions decompose into 2-4 sub-questions, answer each on already-fetched context, synthesize a visible step-by-step chain; 8s budget, fleet/finance/compute hard-gated; 53/53 offline). Prior: Build-84 multi-source answer engine + Build-85a/b. — Builds 79/80/81 (memory: fact extraction + recall fix + pgvector semantic search) + Build-82a (scanned PDF rejection) + Build-82 (knowledge graph injection, verified with Ibn Kathir) + Build-83b (KG semantic search) + Build-83c (entity memory) + Build-83d (M4 proposer feedback). bn01 ingested 201 nodes. All migrations applied. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -453,6 +453,7 @@
     <span class="tl done">&#x627;&#x644;&#x628;&#x62F;&#x627;&#x64A;&#x629; &#x648;&#x627;&#x644;&#x646;&#x647;&#x627;&#x64A;&#x629; vol1 ingested &#8212; 201 nodes in graph, KG Q&amp;A live-verified &#10003;</span>
     <span class="tl done">Build-84 multi-source answer engine &#8212; intent classifier routes context (fleet/finance/knowledge/math), KG+entity merged &amp; cited, deduped by Jaccard (55/55) &#10003;</span>
     <span class="tl done">Build-85b entity timeline &#8212; session arc + getEntityCard + Gemini summarizer (42/42) &#10003;</span>
+    <span class="tl done">Build-85c self-reflection loop &#8212; gemini-2.5-flash second pass scores relevance/overclaim/missed-source; rewrites weak answers, flags overclaims [unverified], notes missed sources; general+knowledge lanes only, fleet/finance/compute gated out (72/72) &#10003;</span>
     <span class="tl cur">Morning brief P&amp;L &#8212; wire finance engine into daily email; ingest bn02&#8211;bn20</span>
     <span class="tl future">evolving memory · driver cost profiles → real P&amp;L</span>
     <span class="tl future">L6 — a compound mind</span>
@@ -486,7 +487,7 @@
 
   <div class="footer">
     Plain-language map of <b>The M8 Mind</b> · drawn from NORTH_STAR.md, the live build list & HONESTY_TRACK_PLAN.md ·
-    status as of <b>Session-55 · Build-85b: entity timeline &#8212; session arc + getEntityCard + Gemini summarizer (42/42 live)</b> (2026-06-20) · priorities set with the AI Council (GPT · Gemini · Grok · Manus).<br>
+    status as of <b>Session-55 · Build-85c: self-reflection loop &#8212; M8 scores &amp; improves its own answer before you see it (72/72 offline)</b> (2026-06-20) · priorities set with the AI Council (GPT · Gemini · Grok · Manus).<br>
     The one claim we never make: that we’re already there.
   </div>
 
