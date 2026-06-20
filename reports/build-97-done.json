@@ -1,0 +1,17 @@
+{
+  "build": 97,
+  "status": "done",
+  "commit": "c9044df50d17e0c8d694471fc85de43981701168",
+  "tests": "18/18 passed",
+  "files": [
+    "lib/platform-schemas.js",
+    "lib/platform-merge.js",
+    "api/platform-sync.js",
+    "tests/B97-uber-csv-verify.ps1"
+  ],
+  "gaps": [
+    "Uber column aliases are researched defaults, not yet confirmed against one of Muhammad's real Uber exports; the preview rowCount from /api/platform-sync is the verification gate (rowCount 0 = headers did not map).",
+    "Parse/preview only (no Supabase persistence yet) -- consistent with Build-93's deliberate read-only design.",
+    "B93 regression re-run: 5/5 still passing after the shared normalizeRow null-guard change."
+  ]
+}
