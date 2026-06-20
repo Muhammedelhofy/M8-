@@ -383,45 +383,44 @@
   <!-- TASKS / PROJECTS / EVOLUTION -->
   <div class="evo">
     <div class="evo-col">
-      <h4>Recently shipped ✓</h4>
+      <h4>Recently shipped &#10003;</h4>
       <ul>
-        <li><b>Phase A — Fleet insight engine</b>: pace flags, dark drivers, inconsistency, concentration, recommended actions <span class="tg">✓ Build-59</span></li>
-        <li><b>Phase B — File exports</b>: Excel (5 sheets) + PPTX fleet deck on demand; reply-to-message UX <span class="tg">✓ Build-60b/60c</span></li>
-        <li><b>DOCX support</b>: Word files attachable in chat; Arabic chapter detection for book ingestion <span class="tg">✓ Build-61</span></li>
-        <li><b>Phase C — Cross-book knowledge graph</b>: pipeline code shipped (Build-62); <b style="color:#e55">&#9888; data not in DB</b> — books never persisted (confirmed Session-57). Re-ingest pending.</li>
-        <li><b>Adaptive PDF extraction</b>: no page-count probe, cost guard (confirmation gate, not hard block), session cache <span class="tg">✓ Builds 63–64</span></li>
-        <li><b>Full pillar audit</b>: 19 bugs fixed across Infra / Consciousness / Voice+UI / Senses / Hands — provider timeouts, Arabic TTS, false empty-graph, ingest idempotency, Gemini key fallback, export error UX <span class="tg">✓ Session-48</span></li>
-        <li><b>Phase B2 — Parametric PPTX</b>: chips clarification (Analysis / Board / Operational) before generating; 3 deck generators (7/5/6 slides); type-aware download URL <span class="tg">✓ Build-65</span></li>
-        <li><b>البداية والنهاية Ch.10</b>: <b style="color:#e55">&#9888; 0 nodes in DB</b>; was claimed 176 nodes &#8212; data not in DB (Session-57 B101 audit)</li>
-        <li><b>Cross-book keyword fallback</b>: entity names (e.g. Khosrow / كسرى) now found even when embedding search misses across languages; fixed misleading empty-graph message <span class="tg">✓ Build-66</span></li>
-        <li><b>Round-5 telemetry — failing probes to Supabase</b>: gate-miss diagnosis now possible from Supabase alone; <code>failing_probes</code> JSONB column added to <code>m8_loop_runs</code>; <code>recordAttestation()</code> patches it with <code>{ probe_id, check_label, reply_excerpt }</code> per failed probe; 24/24 offline <span class="tg">✓ Build-67</span></li>
-        <li><b>Track-A Morning Fleet Brief — 5000 SAR pace tracking</b>: deterministic daily brief in 3 sections (ON TRACK / BELOW TARGET / DROPPED YESTERDAY = on pace two days ago, behind now); projection = MTD net ÷ days-with-a-trip × 26 working days; on-demand in chat + proactive before-10am prepend + 6 AM Riyadh cron upserting <code>m8_morning_briefs</code>; 27/27 offline <span class="tg">✓ Build-68</span></li>
-        <li><b>Hands — delivery layer + morning-brief email</b>: first "Hands" muscle to reach Muhammad <i>outside</i> chat — reusable <code>lib/notify.js</code> <code>sendEmail()</code> (Resend, free); the cron emails the brief as HTML; inert until <code>RESEND_API_KEY</code> set; 3 cancel paths (unsubscribe link · "stop the morning email" · env off); 30/30 offline <span class="tg">✓ Build-70</span></li>
-        <li><b>Morning-brief polish</b>: min-days projection guard (under 3 active days → "too early to call", kills noisy projections); directive fix so M8 writes the full brief in its reply (never "you already have it above"); on-demand "send me the brief email now"; 31/31 + 38/38 offline <span class="tg">✓ Build-71</span></li>
+        <li><b>Command Center v2</b>: human-in-the-loop scoring, approval + drift; 63/63 <span class="tg">&#10003; Build-74</span></li>
+        <li><b>Longitudinal intelligence</b>: recurring topics + trending entities in context <span class="tg">&#10003; Build-86</span></li>
+        <li><b>Driver cost profiles</b>: rental/salary/fuel/other per driver; canonical company P&amp;L <span class="tg">&#10003; Build-87</span></li>
+        <li><b>Proactive follow-up chips</b>: M8 suggests next 3 questions after knowledge/general turns <span class="tg">&#10003; Build-88</span></li>
+        <li><b>Entity slug</b>: Arabic/Latin dedup (Mohammed == Muhammad); 39/39 <span class="tg">&#10003; Build-90</span></li>
+        <li><b>P&amp;L engine</b>: rental + 50% Bolt bonus = company revenue; driver net is driver money <span class="tg">&#10003; Build-91</span></li>
+        <li><b>Conjecture learning loop</b>: verified Lean leaves feed back into proposer <span class="tg">&#10003; Build-92</span></li>
+        <li><b>Fleet intelligence report</b>: per-driver company P&amp;L + who needs attention; 51/51 <span class="tg">&#10003; Build-95</span></li>
+        <li><b>Driver nudge logging</b>: every Arabic nudge logged to m8_nudge_log <span class="tg">&#10003; Build-96</span></li>
+        <li><b>Uber CSV passive</b>: schema + cross-platform merge via entity slug <span class="tg">&#10003; Build-97</span></li>
+        <li><b>Outcome-biased proposer</b>: AVOID + VERIFIED blocks bias conjecture gen <span class="tg">&#10003; Build-99</span></li>
+        <li><b>Atomic ingest pipeline</b>: /api/ingest-full (store+extract) + /api/ingest-extract-existing; 45/45 <span class="tg">&#10003; Build-101</span></li>
+        <li><b>Provider health</b>: GET /api/health &#8212; 8 providers + Supabase; graceful quota degradation <span class="tg">&#10003; Build-103</span></li>
       </ul>
     </div>
     <div class="evo-col">
-      <h4>Next — in order</h4>
+      <h4>Next &#8212; in order</h4>
       <ul>
-        <li><b>Rate the real Command Center scores</b> (v2 shipped): score the live tasks in chat so the first ranking carries signal, then approve the order; optionally re-seed the ledger to current reality</li>
-        <li><b>Build-72 smarter context routing</b>: topic-memory layer — M8 holds the active topic across turns without keyword re-confirmation</li>
-        <li><b>Build-72b fleet intelligence depth</b>: financial thinking (margin %, profit per driver), anomaly explanations, trend narration</li>
-        <li><b>Track-A v2 — driver-nudge action loop</b>: brief flags a dropped driver → M8 drafts the message → Muhammad approves → it logs (the real alert→action→confirm business loop, reusing the Build-70 delivery seam)</li>
-        <li><b>Ingest more البداية والنهاية chapters</b> — Ch.1 + Ch.10 live; continue ingesting to deepen cross-book graph vs Arktos</li>
-        <li><b>Command Center v3</b> — auto-ingested signals (M8 proposes ledger entries from its own work)</li>
+        <li><b>B100 Driver Profile Manager</b> (landing): chat sets rental/salary/fuel per driver &#8212; unblocks real fleet P&amp;L + nudge context</li>
+        <li><b>B102 Knowledge re-ingestion</b> (landing): re-extract source 6, then re-ingest real books via /api/ingest-full</li>
+        <li><b>Enter real driver profiles</b>: type driver costs in M8 chat to make B95 fleet report real</li>
+        <li><b>Ingest &#x627;&#x644;&#x628;&#x62F;&#x627;&#x64A;&#x629; (bn01+)</b>: attach PDF + ingest command &#8212; pipeline now atomic, Gemini quota reset (6 providers healthy)</li>
+        <li><b>Islamic Geometry domain</b>: Girih tiling identities as formal conjectures (Track B)</li>
       </ul>
     </div>
     <div class="evo-col">
       <h4>Backlog (honest pending)</h4>
       <ul>
-        <li><b>Re-ingest البداية والنهاية (bn01–bn20)</b> — the persistence fix <b>shipped</b> (Build-77/78: resumable, idempotent, checkpointed ingest + resumable OCR + chat wiring so an uploaded book reaches the resilient engine; <code>tests</code> 80/80). Live re-ingest is now blocked ONLY on <b>Gemini paid-tier propagation</b> (free-tier OCR quota 429); once a paid key from the billed project is active, attach each PDF + "ingest this as a book…", verify via <code>/api/knowledge-inventory</code> <span class="tg">✓ Build-77/78 · live pending quota</span></li>
-        <li>Observability dashboard + resilience playbook (incl. nightly quota/backoff)</li>
-        <li>P&amp;L analysis — requires driver cost profiles (salary/fleet-cut/rent) to be configured in the fleet dashboard first</li>
-        <li>Memory that <b>evolves</b> — learn from past failures (a later compounding win)</li>
+        <li><b style="color:#e55">driver_cost_profiles: 1 placeholder row</b> &#8212; B100 chat commands unblock real P&amp;L</li>
+        <li><b style="color:#e55">Book nodes: 0 in DB</b> &#8212; B101 confirmed; pipeline rebuilt; re-ingest needed</li>
+        <li><b style="color:#e55">Conjecture outcomes: 0 rows</b> &#8212; B92/B99 wired but not yet run with real data</li>
+        <li><b style="color:#e55">Nudge log: 0 rows</b> &#8212; B96 wired, no live nudges fired yet</li>
+        <li><b style="color:#e55">P&amp;L overlay in orchestrator</b> &#8212; lines ~1030-1039 still old gross-minus-costs model; needs rewiring to pnl-engine.js</li>
       </ul>
     </div>
-  </div>
-  <div class="timeline">
+  </div>  <div class="timeline">
     <span class="tl done">Breadth D→B→A→C ✓</span>
     <span class="tl done">2/2 Lean leaves ✓</span>
     <span class="tl done">Command Center v1 ✓</span>
@@ -457,6 +456,18 @@
     <span class="tl done">Build-85c self-reflection loop — gemini-2.5-flash second pass scores relevance/overclaim/missed-source; rewrites weak answers, flags overclaims [unverified]; general+knowledge lanes only (72/72) ✓</span>
     <span class="tl done">Build-85d multi-hop reasoning chain — complex why/how/compare questions decompose into 2–4 sub-questions, answer each, synthesize visible step-by-step chain; 8s budget, fleet/finance/compute gated (53/53) ✓</span>
     <span class="tl done">Build-85e memory consolidation &#8212; soft-merges near-duplicate facts (Jaccard &#8805; 0.6) into a canonical row via merged_into, flags contradictions with gemini-2.5-flash; recall skips merged dupes; new /api/memory-consolidate (43/43) &#10003;</span>
+    <span class="tl done">Build-86 longitudinal intelligence &#8212; recurring memory_key topics + trending entities injected into context packet each turn &#10003;</span>
+    <span class="tl done">Build-87 driver cost profiles &#8212; driver_cost_profiles table (rental/salary/fuel/other); real company P&amp;L overlay on finance context &#10003;</span>
+    <span class="tl done">Build-88 proactive follow-up chips &#8212; suggestFollowUps() fires after reflector on knowledge+general turns (M8-CHIPS) &#10003;</span>
+    <span class="tl done">Build-90 entity slug &#8212; Arabic/Latin transliteration + consonant skeleton; Mohammed==Muhammad==Arabic form; 39/39 &#10003;</span>
+    <span class="tl done">Build-91 P&amp;L engine &#8212; canonical lib/pnl-engine.js; rental income + 50% Bolt tier bonus = company revenue; driver net is driver money &#10003;</span>
+    <span class="tl done">Build-92 conjecture learning loop &#8212; verified leaf outcomes record to m8_conjecture_outcomes; feed AVOID/VERIFIED back into proposer &#10003;</span>
+    <span class="tl done">Build-95 fleet intelligence report &#8212; lib/fleet-report.js per-driver P&amp;L + recommended actions; 51/51 &#10003;</span>
+    <span class="tl done">Build-96 driver nudge logging &#8212; lib/nudge-logger.js logs every Arabic nudge + tone + driver to m8_nudge_log &#10003;</span>
+    <span class="tl done">Build-97 Uber CSV passive &#8212; platform-schemas.js + platform-merge.js cross-platform driver dedup via entity slug; 18/18 &#10003;</span>
+    <span class="tl done">Build-99 outcome-biased proposer &#8212; runConjectureGenWithFeedback() injects AVOID (failed sketches) + VERIFIED blocks into M4 packet &#10003;</span>
+    <span class="tl done">Build-101 atomic ingest pipeline &#8212; /api/ingest-full (store+extract one call) + /api/ingest-extract-existing (repair unextracted); 45/45; audit: 0 books ever persisted &#10003;</span>
+    <span class="tl done">Build-103 provider health &#8212; GET /api/health shows 8 providers + Supabase; graceful degradation returns provider detail on quota fail &#10003;</span>
     <span class="tl cur">Morning brief P&amp;L &#8212; wire finance engine into daily email; ingest bn02&#8211;bn20</span>
     <span class="tl future">evolving memory · driver cost profiles → real P&amp;L</span>
     <span class="tl future">L6 — a compound mind</span>
