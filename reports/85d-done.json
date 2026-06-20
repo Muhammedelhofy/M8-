@@ -1,0 +1,1 @@
+{"build":"85d","tests":"53/53","branch":"build-85d","migration":"pending","issues":"parallel-session race — uncommitted Build-85c reflector files got swept into first commit; amended to drop them, HEAD now Build-85d only (zero 85c markers), their work left untracked intact"}
