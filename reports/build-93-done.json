@@ -1,0 +1,16 @@
+{
+  "build": "Build-93",
+  "status": "done",
+  "committed_sha": "1cfa03926f1e9daf25408a68ebb64ab164bb4d85",
+  "files_changed": [
+    "lib/platform-schemas.js",
+    "lib/platform-ingest.js",
+    "lib/morning-brief.js",
+    "api/platform-sync.js",
+    "tests/B93-platform-ingest-verify.ps1"
+  ],
+  "test_result": "5/5 passed",
+  "migration_needed": false,
+  "migration_file": null,
+  "notes": "Parse/preview layer only — no Supabase writes yet. Only Bolt's columns are confirmed; every TODO below is marked '// TODO: verify with Muhammad' in lib/platform-schemas.js and uses best-guess aliases until a real export is seen. TODO COLUMNS NEEDING MUHAMMAD'S VERIFICATION: (1) bolt: date column header (guessed Date/Day; name/earnings/trips/hours confirmed). (2) uber: ALL columns unconfirmed — driverName(Partner Name/driver_name), grossEarnings(Gross Fares/gross_fare), trips, hoursOnline, date. (3) hungerstation: likely Arabic headers, ALL unconfirmed — driverName(اسم السائق), grossEarnings(إجمالي الأرباح), trips=orders(عدد الطلبات), hoursOnline(ساعات العمل), date(التاريخ). (4) keeta: assumed similar to HungerStation (Arabic delivery export), ALL unconfirmed. (5) noon: ENTIRELY UNKNOWN — pure stub with empty column maps; normalizeRow returns a blank-name row (dropped by parseCSV) until a real Noon export is supplied. Auth: POST /api/platform-sync requires x-m8-token === M8_CRON_SECRET (env var must be set in Vercel before the endpoint is usable). RECOVERY NOTE: a parallel Build-92 session reset shared local main to origin/main and orphaned this commit once; recovered by fast-forward push of 1cfa039 to origin/main (parent was origin/main), then ff-only merge locally."
+}
