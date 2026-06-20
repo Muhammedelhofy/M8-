@@ -10,7 +10,7 @@
  * Fails SAFE: any error returns a JSON error, never throws to Vercel.
  */
 const { getFleetRecord, decodeHistory } = require("../lib/fleet");
-const { generateMorningBrief, saveBrief, formatBriefHTML } = require("../lib/morning-brief");
+const { generateMorningBrief, saveBrief, formatBriefHTML, attachNudgeActivity } = require("../lib/morning-brief");
 const { isBriefEmailEnabled, ensureBriefPrefs, sendEmail, unsubscribeUrl } = require("../lib/notify");
 
 module.exports = async function handler(req, res) {
@@ -29,6 +29,7 @@ module.exports = async function handler(req, res) {
     }
     const entries = decodeHistory(record);
     const brief = generateMorningBrief(entries);
+    await attachNudgeActivity(brief).catch(() => {}); // Build-96: weekly nudge line in cron email
 
     // Persist (one row per date). saveBrief fails SAFE (null), so a Supabase
     // hiccup still returns the computed brief to the caller.
