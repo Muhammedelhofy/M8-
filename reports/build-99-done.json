@@ -1,0 +1,19 @@
+{
+  "build": 99,
+  "status": "done",
+  "commit": "36611a3a1636691adf51c40843af42b0a5af9394",
+  "tests": "37/37 passed (B99: 6 core + 31 wiring); regression B92 39/39 + B83d 68/68 still green",
+  "files": [
+    "lib/conjecture-memory.js",
+    "lib/conjecture-gen.js",
+    "lib/loop.js",
+    "lib/lemma-dag.js",
+    "tests/B99-proposer-feedback-verify.ps1"
+  ],
+  "summary": "Adds the AVOID side of the conjecture-outcome learning loop. conjecture-memory.js: getFailedApproaches (failed = Lean sketch null or contains 'sorry') + buildAvoidBlock (deduped failed structural-tag list + 'STRUCTURALLY DIFFERENT / prefer VERIFIED APPROACHES') + isFailedOutcome; getSuccessPatterns now drops failed rows so the verified block stays clean. conjecture-gen.js runConjectureGenWithFeedback prepends the AVOID block below the verified block. lemma-dag.js recheckScaffold surfaces freshly-sorry leaves; loop.js records them fire-and-forget on the M4 path. No migration (reuses B92 m8_conjecture_outcomes).",
+  "gaps": [
+    "READ-SIDE DORMANT: orchestrator.js calls the SYNC runConjectureGen (~line 1318), not the async runConjectureGenWithFeedback wrapper that holds the B92 verified + B99 avoid blocks. So neither block reaches the live m3 narration yet. PRE-EXISTING B83d/B92 gap. NOT fixed here because orchestrator.js was being actively edited by the parallel Build-95/97 session (commit-race). FOLLOW-UP: switch that call to `await runConjectureGenWithFeedback(m3Probe)` (import already adjacent) once orchestrator.js is free — lights up B83d + B92 + B99 read-side at once. Fail-safe (returns plain result on any error/missing creds).",
+    "MIGRATION NOT APPLIED: B92 migration migrations/B92_conjecture_outcomes.sql is still unapplied in Supabase (per team memory). Until run, the m8_conjecture_outcomes table is absent, so recordOutcome inserts fail (swallowed) and getFailedApproaches/getSuccessPatterns return []. B99 adds NO new migration (reuses B92 table) but inherits this dependency — apply B92's SQL to activate the whole loop.",
+    "BIAS REACHES NARRATION, NOT THE DETERMINISTIC MINER: the M3-lite generator is template-based and does not read the packet text; the avoid/verified blocks bias the LLM narration (and would bias an LLM proposer like decomp-proposer only if wired there too). Inherent to the B92 design; noted for transparency."
+  ]
+}
