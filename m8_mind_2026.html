@@ -309,7 +309,7 @@
           <div class="bar-row"><span class="blabel">Built toward the vision</span><span class="bpct">~45%</span></div>
           <div class="bar"><span style="width:40%"></span></div>
           <div class="est">it stores & recalls well; truly self-improving memory is almost all ahead · estimate</div>
-          <div class="foot">internally: provenance + trust tiers on every memory (Builds 38–39); shared by business &amp; research. <b>Ingestion LIVE</b> (Builds 58/62/66/81/82/83b): semantic recall (pgvector, cosine 0.70), entity memory (83c), knowledge graph (82/83b). bn01 (البداية والنهاية ch1) ingested: 201 graph nodes live. Cross-book analysis awaiting bn02–bn20 ingestion.</div>
+          <div class="foot">internally: provenance + trust tiers on every memory (Builds 38–39); shared by business &amp; research. <b>Ingestion LIVE</b> (Builds 58/62/66/81/82/83b): semantic recall (pgvector, cosine 0.70), entity memory (83c), knowledge graph (82/83b). <b style="color:#e55">&#9888; Books: 0 nodes in DB (Session-57 B101 audit).</b> Re-ingest needed. Pipeline rebuilt (B101). Was: "201 nodes" &#8212; data lost. Awaiting bn02–bn20 ingestion.</div>
         </div>
       </div>
 
@@ -388,11 +388,11 @@
         <li><b>Phase A — Fleet insight engine</b>: pace flags, dark drivers, inconsistency, concentration, recommended actions <span class="tg">✓ Build-59</span></li>
         <li><b>Phase B — File exports</b>: Excel (5 sheets) + PPTX fleet deck on demand; reply-to-message UX <span class="tg">✓ Build-60b/60c</span></li>
         <li><b>DOCX support</b>: Word files attachable in chat; Arabic chapter detection for book ingestion <span class="tg">✓ Build-61</span></li>
-        <li><b>Phase C — Cross-book knowledge graph</b>: Arktos + البداية والنهاية Ch.1 ingested; 201 nodes; convergence detection live <span class="tg">✓ Build-62</span></li>
+        <li><b>Phase C — Cross-book knowledge graph</b>: pipeline code shipped (Build-62); <b style="color:#e55">&#9888; data not in DB</b> — books never persisted (confirmed Session-57). Re-ingest pending.</li>
         <li><b>Adaptive PDF extraction</b>: no page-count probe, cost guard (confirmation gate, not hard block), session cache <span class="tg">✓ Builds 63–64</span></li>
         <li><b>Full pillar audit</b>: 19 bugs fixed across Infra / Consciousness / Voice+UI / Senses / Hands — provider timeouts, Arabic TTS, false empty-graph, ingest idempotency, Gemini key fallback, export error UX <span class="tg">✓ Session-48</span></li>
         <li><b>Phase B2 — Parametric PPTX</b>: chips clarification (Analysis / Board / Operational) before generating; 3 deck generators (7/5/6 slides); type-aware download URL <span class="tg">✓ Build-65</span></li>
-        <li><b>البداية والنهاية Ch.10 ingested</b>: 176 nodes — conquest of Persia, siege of Behrasir, fall of Al-Mada'in (Ctesiphon), flight of Yazdegerd III, 16 AH <span class="tg">✓ Session-49</span></li>
+        <li><b>البداية والنهاية Ch.10</b>: <b style="color:#e55">&#9888; 0 nodes in DB</b>; was claimed 176 nodes &#8212; data not in DB (Session-57 B101 audit)</li>
         <li><b>Cross-book keyword fallback</b>: entity names (e.g. Khosrow / كسرى) now found even when embedding search misses across languages; fixed misleading empty-graph message <span class="tg">✓ Build-66</span></li>
         <li><b>Round-5 telemetry — failing probes to Supabase</b>: gate-miss diagnosis now possible from Supabase alone; <code>failing_probes</code> JSONB column added to <code>m8_loop_runs</code>; <code>recordAttestation()</code> patches it with <code>{ probe_id, check_label, reply_excerpt }</code> per failed probe; 24/24 offline <span class="tg">✓ Build-67</span></li>
         <li><b>Track-A Morning Fleet Brief — 5000 SAR pace tracking</b>: deterministic daily brief in 3 sections (ON TRACK / BELOW TARGET / DROPPED YESTERDAY = on pace two days ago, behind now); projection = MTD net ÷ days-with-a-trip × 26 working days; on-demand in chat + proactive before-10am prepend + 6 AM Riyadh cron upserting <code>m8_morning_briefs</code>; 27/27 offline <span class="tg">✓ Build-68</span></li>
@@ -426,9 +426,9 @@
     <span class="tl done">2/2 Lean leaves ✓</span>
     <span class="tl done">Command Center v1 ✓</span>
     <span class="tl done">Knowledge ingestion ✓</span>
-    <span class="tl done">Cross-book graph ✓</span>
+    <span class="tl" style="color:#e55">Cross-book graph &#9888; data lost</span>
     <span class="tl done">Fleet exports ✓</span>
-    <span class="tl done">Arabic books Ch.1 ✓</span>
+    <span class="tl" style="color:#e55">Arabic books &#9888; re-ingest needed</span>
     <span class="tl done">Phase B2 PPTX types ✓</span>
     <span class="tl done">البداية والنهاية Ch.10 ✓</span>
     <span class="tl done">Cross-book keyword fallback ✓</span>
@@ -450,7 +450,7 @@
     <span class="tl done">Build-83c entity memory &#8212; m8_entities cross-session tracking person/book/problem/company (36/36) &#10003;</span>
     <span class="tl done">Build-83d M4 proposer feedback &#8212; verified leaves feed conjecture gen, skip proven sub-goals (68/68) &#10003;</span>
     <span class="tl done">Build-85a Morning Brief P&amp;L &#8212; weekly snapshot + bonus tiers + needs-attention in email (38/38) &#10003;</span>
-    <span class="tl done">&#x627;&#x644;&#x628;&#x62F;&#x627;&#x64A;&#x629; &#x648;&#x627;&#x644;&#x646;&#x647;&#x627;&#x64A;&#x629; vol1 ingested &#8212; 201 nodes in graph, KG Q&amp;A live-verified &#10003;</span>
+    <span class="tl" style="color:#e55">&#x627;&#x644;&#x628;&#x62F;&#x627;&#x64A;&#x629; &#x648;&#x627;&#x644;&#x646;&#x647;&#x627;&#x64A;&#x629; vol1 &#9888; 0 nodes in DB (was: 201) &#8212; data lost, re-ingest pending</span>
     <span class="tl done">Build-84 multi-source answer engine &#8212; intent classifier routes context (fleet/finance/knowledge/math), KG+entity merged &amp; cited, deduped by Jaccard (55/55) &#10003;</span>
     <span class="tl done">Build-85b entity timeline &#8212; session arc + getEntityCard + Gemini summarizer (42/42) &#10003;</span>
     <span class="tl done">Build-85c self-reflection loop &#8212; gemini-2.5-flash second pass scores relevance/overclaim/missed-source; rewrites weak answers, flags overclaims [unverified], notes missed sources; general+knowledge lanes only, fleet/finance/compute gated out (72/72) &#10003;</span>
