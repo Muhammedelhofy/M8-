@@ -396,7 +396,7 @@
         <li><b>Driver nudge logging</b>: every Arabic nudge logged to m8_nudge_log <span class="tg">&#10003; Build-96</span></li>
         <li><b>Uber CSV passive</b>: schema + cross-platform merge via entity slug <span class="tg">&#10003; Build-97</span></li>
         <li><b>Outcome-biased proposer</b>: AVOID + VERIFIED blocks bias conjecture gen <span class="tg">&#10003; Build-99</span></li>
-        <li><b>Driver Profile Manager</b>: "set Ahmad rental 1800 SAR" writes to DB; list/delete via chat; unblocks B95+B96; 78/78 <span class="tg">&#10003; Build-100</span></li>
+        <li><b>Driver Profile Manager</b>: "set Ahmad rental 1800 SAR" writes to DB; list/delete via chat; unblocks B95+B96; 78/78 + LIVE-VERIFIED <span class="tg">&#10003; Build-100</span></li>
         <li><b>Atomic ingest pipeline</b>: /api/ingest-full (store+extract) + /api/ingest-extract-existing; 45/45 <span class="tg">&#10003; Build-101</span></li>
         <li><b>Provider health</b>: GET /api/health &#8212; 8 providers + Supabase; graceful quota degradation <span class="tg">&#10003; Build-103</span></li>
       </ul>
@@ -467,7 +467,7 @@
     <span class="tl done">Build-96 driver nudge logging &#8212; lib/nudge-logger.js logs every Arabic nudge + tone + driver to m8_nudge_log &#10003;</span>
     <span class="tl done">Build-97 Uber CSV passive &#8212; platform-schemas.js + platform-merge.js cross-platform driver dedup via entity slug; 18/18 &#10003;</span>
     <span class="tl done">Build-99 outcome-biased proposer &#8212; runConjectureGenWithFeedback() injects AVOID (failed sketches) + VERIFIED blocks into M4 packet &#10003;</span>
-    <span class="tl done">Build-100 driver profile manager &#8212; chat CRUD over driver_cost_profiles (upsert/list/delete); auto-clears placeholder row; 78/78 &#10003;</span>
+    <span class="tl done">Build-100 driver profile manager &#8212; chat CRUD over driver_cost_profiles (upsert/list/delete); auto-clears placeholder row; 78/78 + LIVE-VERIFIED &#10003;</span>
     <span class="tl done">Build-101 atomic ingest pipeline &#8212; /api/ingest-full (store+extract one call) + /api/ingest-extract-existing (repair unextracted); 45/45; audit: 0 books ever persisted &#10003;</span>
     <span class="tl done">Build-103 provider health &#8212; GET /api/health shows 8 providers + Supabase; graceful degradation returns provider detail on quota fail &#10003;</span>
     <span class="tl cur">Morning brief P&amp;L &#8212; wire finance engine into daily email; ingest bn02&#8211;bn20</span>

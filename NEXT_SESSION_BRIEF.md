@@ -18,7 +18,7 @@
 | 103 | Provider health: GET /api/health (6 providers), graceful degradation on quota | c140547 |
 
 **Parallel builds status:**
-- B100: Driver Profile Manager — DONE `2f822d3` 78/78 — set/list/delete via chat; auto-clears placeholder row
+- B100: Driver Profile Manager — DONE + LIVE-VERIFIED `2f822d3` 78/78 — "set Ahmad rental 1800 SAR" confirmed DB write 2026-06-20
 - B101: Ingest audit + atomic ingest pipeline — DONE `68317db` 45/45 — /api/ingest-full + /api/ingest-extract-existing; 0 books confirmed
 - B102: Knowledge re-ingestion — IN PROGRESS (depends on B101, may have merge conflict on intentClassifier.js/orchestrator.js)
 
