@@ -13,6 +13,8 @@
     "api/cron-verify.js": { "maxDuration": 150 },
     "api/loop-attest.js": { "maxDuration": 30 },
     "api/ingest-book.js": { "maxDuration": 300 },
+    "api/ingest-full.js": { "maxDuration": 180 },
+    "api/ingest-extract-existing.js": { "maxDuration": 180 },
     "api/pdf-to-text.js": { "maxDuration": 300 },
     "api/convert.js":     { "maxDuration": 300 },
     "api/upload-file.js": { "maxDuration": 300 },
