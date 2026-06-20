@@ -1,0 +1,25 @@
+{
+  "build": 96,
+  "status": "done",
+  "commit": "3d589e5",
+  "tests": "69/69 passed",
+  "files": [
+    "lib/nudge-logger.js",
+    "lib/nudges.js",
+    "lib/morning-brief.js",
+    "api/nudge-history.js",
+    "migrations/B96_nudge_log.sql",
+    "tests/B96-nudge-log-verify.ps1"
+  ],
+  "migration_applied": true,
+  "notes": [
+    "m8_nudge_log table verified live in Supabase (7 cols, 2 indexes).",
+    "Real tone buckets logged: welcome|urgent|awareness|keepItUp|appreciation|reEngage (spec's warn/push/encourage were illustrative). trigger_reason derived deterministically per bucket.",
+    "logNudge(db,...) takes an optional {sbFetch} seam; defaults to the module's env-based Supabase REST (same pattern as morning-brief.js/notify.js). nudges.js calls logNudge(null,...) and awaits Promise.allSettled so inserts complete on serverless; fully SAFE (never throws/blocks the drafts).",
+    "Nudge activity line attached via computeLiveBrief() -> covers the chat morning brief + on-demand email."
+  ],
+  "gaps": [
+    "6 AM cron email (api/morning-brief.js) calls generateMorningBrief() directly, not computeLiveBrief(), so the weekly Nudge Activity line is NOT in the scheduled email yet. api/morning-brief.js was outside this build's file scope. One-line follow-up: `await attachNudgeActivity(brief)` before saveBrief() in api/morning-brief.js.",
+    "SECURITY: m8_nudge_log has RLS disabled (consistent with the project's other tables — driver_cost_profiles, m8_conjecture_outcomes, m8_morning_briefs — which rely on the service key, not RLS). Not auto-fixed; surfaced to Muhammad."
+  ]
+}
