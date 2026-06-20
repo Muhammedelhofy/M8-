@@ -1,0 +1,10 @@
+{
+  "build": "Build-91",
+  "status": "done",
+  "committed_sha": "da56dba5280a8608a61661d0b26f5b327cce62a8",
+  "files_changed": ["lib/pnl-engine.js", "lib/cost-profiles.js", "lib/finance.js", "tests/B91-pnl-verify.ps1"],
+  "test_result": "6/6 passed",
+  "migration_needed": false,
+  "migration_file": null,
+  "notes": "Old model booked the driver's net as company revenue and rental as a cost (cost-profiles.computeRealPnl: gross - rental - salary - fuel - other); corrected so company revenue = rental income + 50% Bolt tier bonus and driver net is only the bonus-tier input. GAP FOR MASTER: finance.js's core R-model/bonus correction was ALREADY shipped (P1/P2/P3a, modelAwarePnL=true) so I sourced its bonus schedule from the new pnl-engine rather than regress it; the LIVE driver_cost_profiles overlay in orchestrator.js lines ~1030-1039 still inlines the old 'gross - monthly_costs' model (rental as a cost) and must be rewired to computeRealPnl/pnl-engine by the orchestrator-owning session to take user-facing effect."
+}
