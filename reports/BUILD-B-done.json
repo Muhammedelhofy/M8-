@@ -1,0 +1,22 @@
+{
+  "build": "Build-B Lean lane (Build-111)",
+  "branch": "feat/lean-lane",
+  "summary": "Un-starve the M4 Lean verify lane so it produces verified leaves again. AI Council 4/4 verdict (A->B->C); Gemini's 'harden the M4 error-repair loop'.",
+  "root_cause": "Since 06-19 m4_attempted=false / m4_target_id=null: (a) the GCP Lean checker is cold some nights (lean_ready=false -> M4 skipped), and (b) the verify phase only RE-CHECKS lean_pending/lean_error leaves, never the lean_rejected graveyard (id=1/2/4) which the existing dischargeLeaf repair loop could fix. No new human-approved targets since 06-16.",
+  "changes": {
+    "B1_warm_checker": "lib/loop.js step 0 — ping leanHealth up to LEAN_WARM_TRIES (default 3) with LEAN_WARM_WAIT_MS waits, returning the moment it is ready. Bounded; kill via LEAN_WARM_TRIES=1.",
+    "B2_second_chance_repair": "lib/lemma-dag.js fetchRepairableScaffold + repairScaffold: re-draft a lean_rejected leaf via the existing dischargeLeaf (Build-55) repair loop. lib/loop.js wires it into the 'no pending target' branch (warm-only, 1 leaf/run). On a newly-verified leaf it recordOutcome()s (feeds the conjecture learning loop)."
+  },
+  "safety": [
+    "Kill switch: M4_REPAIR_DISABLED=1 (or M4_MAX_SECOND_CHANCES=0).",
+    "Bounded: 1 leaf/run; retried at most M4_MAX_SECOND_CHANCES (default 2), counter PERSISTED in the leaf (upsertScaffoldRow rebuilds leaves, so second_chance is a first-class field).",
+    "Time-guarded: M4_REPAIR_BUDGET_MS (default 60s) deadline; never interrupts a /check; persist is atomic at the end so a hard timeout corrupts nothing.",
+    "NEVER downgrades a stored leaf — only accepts an improvement (verified/stated).",
+    "Honesty unchanged: a repaired leaf is still only 'leaf verified'; the target stays an OPEN CONJECTURE (status never 'proven'); the gate belt still runs."
+  ],
+  "human_in_the_loop": "Does NOT auto-create new decomposition targets (that stays human-gated via 'approve decomposition #N'). It only works repairable leaves WITHIN already-approved scaffolds.",
+  "not_touched": "lib/conjecture-memory.js / the recordOutcome write itself (Brain-CPR owns that) — Build-B only CALLS recordOutcome. No safePersist anywhere here. Zero overlap with the parallel CPR session.",
+  "tests_passed": "PS mirror BUILD-B-verify.ps1: 22/22.",
+  "deployed": false,
+  "verify_after_deploy": "See BUILD-B_LIVE_TEST.md — watch the next nightly cron-verify (01:15 UTC): lean_ready should be true on a cold night (B1), and m4_attempted=true with a repair attempt on a graveyard leaf (B2); a successful repair flips a lean_rejected leaf to lean_verified."
+}
