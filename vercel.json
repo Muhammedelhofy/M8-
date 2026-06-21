@@ -1,26 +1,30 @@
 {
   "rewrites": [
+    { "source": "/api/ingest-full",             "destination": "/api/knowledge?fn=ingest-full" },
+    { "source": "/api/ingest-extract-existing", "destination": "/api/knowledge?fn=extract-existing" },
+    { "source": "/api/knowledge-inventory",     "destination": "/api/knowledge?fn=inventory" },
+    { "source": "/api/memory-consolidate",      "destination": "/api/knowledge?fn=memory-consolidate" },
+    { "source": "/api/platform-sync",           "destination": "/api/knowledge?fn=platform-sync" },
+    { "source": "/api/presign",                 "destination": "/api/files?fn=presign" },
+    { "source": "/api/upload-file",             "destination": "/api/files?fn=upload" },
+    { "source": "/api/deck",                    "destination": "/api/export?fn=deck" },
+    { "source": "/api/fleet-export",            "destination": "/api/export?fn=fleet" },
+    { "source": "/api/health",                  "destination": "/api/ops?fn=health" },
+    { "source": "/api/loop-attest",             "destination": "/api/ops?fn=loop-attest" },
+    { "source": "/api/notify-prefs",            "destination": "/api/ops?fn=notify-prefs" },
     { "source": "/api/(.*)", "destination": "/api/$1" }
   ],
   "functions": {
     "api/chat.js": { "maxDuration": 180 },
     "api/chat-stream.js": { "maxDuration": 180 },
-    "api/deck.js": { "maxDuration": 30 },
     "api/cron-summarize.js": { "maxDuration": 60 },
-    "api/seed-pack.js": { "maxDuration": 60 },
-    "api/graph-relabel.js": { "maxDuration": 60 },
     "api/cron-explore.js": { "maxDuration": 120 },
     "api/cron-verify.js": { "maxDuration": 150 },
-    "api/loop-attest.js": { "maxDuration": 30 },
-    "api/ingest-book.js": { "maxDuration": 300 },
-    "api/ingest-full.js": { "maxDuration": 180 },
-    "api/ingest-extract-existing.js": { "maxDuration": 180 },
-    "api/pdf-to-text.js": { "maxDuration": 300 },
-    "api/convert.js":     { "maxDuration": 300 },
-    "api/upload-file.js": { "maxDuration": 300 },
-    "api/presign.js":     { "maxDuration": 10 },
     "api/morning-brief.js": { "maxDuration": 30 },
-    "api/notify-prefs.js":  { "maxDuration": 10 }
+    "api/knowledge.js": { "maxDuration": 180 },
+    "api/files.js": { "maxDuration": 300 },
+    "api/export.js": { "maxDuration": 30 },
+    "api/ops.js": { "maxDuration": 30 }
   },
   "crons": [
     { "path": "/api/cron-summarize", "schedule": "0 2 * * *" },
