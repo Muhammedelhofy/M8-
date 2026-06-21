@@ -95,10 +95,10 @@ Check "no bare un-awaited .then write remains" `
 Write-Host "`nlib/memory.js  (m8_entities / m8_entity_mentions)"
 $mem = Read-Text 'lib\memory.js'
 Check "requires ./persistence"                 (Has $mem 'require("./persistence")')
-Check "entity extraction wrapped in safePersist entity" `
+Check "entity extraction wrapped in safePersist entity (best-effort, non-blocking)" `
       (Has $mem 'safePersist(require("./entity-graph")._maybeExtractEntities(sessionId, userMessage), "entity")')
-Check "entity write is AWAITED (bounded race so it lands before freeze)" `
-      (Has $mem 'await Promise.race([_entityWrite')
+Check "entity NOTE points to the cron-summarize move (correct fix)" `
+      (Has $mem 'cron-summarize')
 Check "no bare fire-and-forget .catch on extractor remains" `
       (Lacks $mem '_maybeExtractEntities(sessionId, userMessage).catch(() => {})')
 Check "TODO notes council follow-up (cron-summarize)" `
