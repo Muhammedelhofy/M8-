@@ -59,8 +59,21 @@ The original identity catch-all `/api/(.*) → /api/$1` is kept last. `functions
 - **PowerShell mirror** (`tests/consolidate-functions-verify.ps1`): **126 passed / 0 failed** — 10 functions, dead files gone, 12 handlers relocated + export a function + no stale `../lib/` require, every router dispatches every `fn`, vercel.json valid + references only real files + 12 rewrites + 4 crons, frontend call sites resolve. (Host has no Node — PS mirror + the Vercel preview build are the test stack.)
 - **Static review:** no runtime file calls a deleted endpoint; all relocated requires resolve to existing `lib/` modules.
 
-## Vercel PREVIEW build — _PENDING (filled after branch push)_
-> The preview is an isolated deployment (own URL; does **not** touch production or run crons). A green build proves ≤12 functions + no import errors. Smoke tests to run on the preview URL: `chat`, `/api/health`, a knowledge route, and the two rewritten back-door URLs (`POST /api/loop-attest`, `GET /api/notify-prefs`) — these confirm the rewrite query-param dispatch works.
+## Vercel PREVIEW build — ✅ GREEN
+Deployment `dpl_YRCny4PkvyQkLqFcJfHBYhwr1TCj` (commit `b69ba61`, **target: preview**, isolated — did NOT touch production or run crons). State **READY**, `lambdaRuntimeStats: {"nodejs":10}` → **exactly 10 functions**. That alone proves ≤12 + no import errors (all relocated requires resolved, all 4 routers bundled). By contrast the three B109 production attempts (30 functions) are all `state: ERROR` — confirming the function count was the blocker.
+
+### Smoke tests on the preview URL (all non-destructive)
+| Endpoint (GET) | Status | Result — proves |
+|---|---|---|
+| `/api/health` | **200** | `{"ok":true,…,"sha":"b69ba61…"}`, Supabase OK, 6 LLM providers — **ops router + rewrite + ?fn= query dispatch + DB connectivity** |
+| `/api/notify-prefs?action=unsubscribe&token=__invalid__` | **400** | exact "Link not recognised" HTML, *nothing changed* — **email back-door URL + query passthrough + anti-tamper** |
+| `/api/loop-attest` | **405** | `{"ok":false,"error":"POST only"}` — **grader back-door URL resolves** (handler's own method guard, not a 404) |
+| `/api/knowledge-inventory` | **200** | real Supabase data (5 sources, 0 books) — **knowledge router + rewrite** |
+| `/api/presign` | **405** | `{"error":"POST or DELETE only"}` + CORS — **files router + rewrite** |
+| `/api/deck` | **405** | `{"ok":false,"error":"Method not allowed"}` + CORS — **export router + rewrite** |
+| `/api/chat` | **405** | `{"error":"Method not allowed"}` — **kept file resolves** |
+
+All 4 routers, both externally-fixed back-door URLs, and the rewrite query-param dispatch are confirmed working on the live preview. `/api/health` returning the new commit SHA proves the dispatch end-to-end.
 
 ## Go / No-Go deploy checklist (production = merge → `main`)
 - [ ] Preview build is **green** (proves ≤12 + imports OK).
