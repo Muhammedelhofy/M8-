@@ -1,0 +1,48 @@
+{
+  "build": "Build-110",
+  "name": "Brain CPR — fix fire-and-forget DB writes dropped by the Vercel freeze",
+  "branch": "fix/brain-cpr",
+  "base": "main@5f03187",
+  "deployed": false,
+  "files": [
+    "lib/persistence.js (new — safePersist(promise,label) via @vercel/functions waitUntil + await fallback)",
+    "lib/reflector.js (logReflection -> safePersist(..., 'reflect'))",
+    "lib/reasoning-chain.js (logChain -> safePersist(..., 'chain'))",
+    "lib/memory.js (entity extraction call:336 -> safePersist(..., 'entity') + cron-summarize TODO)",
+    "lib/conjecture-memory.js (recordOutcome now returns an awaitable, never-rejecting promise + logs +1)",
+    "lib/loop.js (both cron recordOutcome calls AWAITED; comment: outcomes stay near-0 until Lean leaves = Build B)",
+    "package.json (+ @vercel/functions ^3.7.2)",
+    "tests/BRAINCPR-verify.ps1 (new — 38/38 static mirror)",
+    "tests/BRAINCPR_LIVE_TEST.md (new — post-deploy chat tests + Supabase row-count checks)",
+    "reports/BRAINCPR-done.json (this file)"
+  ],
+  "the_dead_four": {
+    "m8_reflections": "reflector.js logReflection -> waitUntil (was un-awaited Promise.resolve)",
+    "m8_reasoning_chains": "reasoning-chain.js logChain -> waitUntil (was un-awaited .then())",
+    "m8_entities + m8_entity_mentions": "memory.js:336 _maybeExtractEntities -> waitUntil (was fire-and-forget .catch). Core insert+mention covered; the optional summary UPDATE stays best-effort (council follow-up = move heavy extract to cron-summarize)",
+    "m8_conjecture_outcomes": "loop.js recordOutcome x2 -> await (cron, latency-insensitive). Stays near-0 until the Lean/M4 lane produces verified/sorry leaves (Build B)."
+  },
+  "design": {
+    "in_chat_writes": "Vercel waitUntil — response returns immediately (no 2-4s TTFB hit to the voice-first UX), lambda stays alive to flush.",
+    "cron_writes": "plain await — latency-insensitive, handler awaited by Vercel, guarantees flush.",
+    "safety": "safePersist never throws; wrapped promise never rejects; degrades to await if @vercel/functions absent or no request context.",
+    "instrumentation": "each insert resolve logs '[persist:<label>] +1'; Supabase {error} logged on failure.",
+    "reflector_scope": "UNCHANGED + verified: orchestrator reflectEligible already gates the reflector to general+knowledge lanes (excludes compute/lean/lemmaDag/fleet/finance/eosb/state/company/notebook/graph/loop/research/image). It does NOT gate or rewrite engine/compute/fleet turns. Asserted by the PS mirror."
+  },
+  "tests_passed": "38/38 (tests/BRAINCPR-verify.ps1, PowerShell static mirror — host has no Node)",
+  "verification": {
+    "ps_mirror": "38/38 green",
+    "static_review": "all 4 write sites + scope guard reviewed; no bare fire-and-forget remains; no other write path to the 4 tables (grep-confirmed)",
+    "preview_build": "PENDING — pushing the branch triggers a Vercel PREVIEW build; proves it still bundles at 10 functions (no api/ function added) and @vercel/functions imports cleanly"
+  },
+  "not_touched": "Bolt fleet sync (separate MHMBOLT repo), morning brief (morning-brief.js/notify.js/nudges.js/fleet*.js), memory-summarize cron behavior, the 4 cron schedules. No api/ function added (stays under the 12-fn Hobby cap). Parallel fun-session files (BUILD_LOG.md, NEXT_SESSION_BRIEF.md, m8_records.html, TEAM_*) NOT staged.",
+  "deploy_checklist": [
+    "1. Confirm green Vercel PREVIEW build on branch fix/brain-cpr (10 functions, no @vercel/functions import error).",
+    "2. Muhammad says 'deploy' -> merge fix/brain-cpr to main (or promote the preview).",
+    "3. Run tests/BRAINCPR_LIVE_TEST.md sections 1-3 in live chat; confirm m8_reflections / m8_reasoning_chains / m8_entity_mentions go 0 -> >0.",
+    "4. Grep Vercel runtime logs for [persist:reflect|chain|entity] +1.",
+    "5. m8_conjecture_outcomes stays near-0 until Build B (Lean leaves) — that's expected; just confirm the +1 log fires after a qualifying cron-verify.",
+    "6. If +1 logs appear but rows don't: verify Fluid Compute is ON and the table migrations are applied (esp. B92_conjecture_outcomes.sql)."
+  ],
+  "next": "Build B — make the Lean/M4 lane actually produce verified/sorry leaves so m8_conjecture_outcomes climbs; then the council follow-up to move heavy Gemini entity extraction into cron-summarize."
+}
