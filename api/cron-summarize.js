@@ -9,7 +9,7 @@
  * this function on purpose — Vercel Hobby's 12-function cap stays respected.
  * The graph sweep is fail-safe and NEVER affects the summary sweep result.
  */
-const { sweepStuckSessions } = require("../lib/memory");
+const { sweepStuckSessions, sweepEntityExtraction } = require("../lib/memory");
 
 module.exports = async function handler(req, res) {
   // Optional protection: if CRON_SECRET is set, require it (Vercel cron sends it).
@@ -34,7 +34,18 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    res.status(200).json({ ok: true, ...result, graph });
+    // Build-110 (item 2): nightly entity-extraction sweep — own try/catch so a
+    // failure can neither crash this function nor mask the summary/graph sweeps.
+    let entities = null;
+    if (process.env.ENTITY_SWEEP_DISABLED !== "1") {
+      try {
+        entities = await sweepEntityExtraction();
+      } catch (eErr) {
+        entities = { error: eErr.message };
+      }
+    }
+
+    res.status(200).json({ ok: true, ...result, graph, entities });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }

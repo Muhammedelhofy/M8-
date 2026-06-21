@@ -91,20 +91,26 @@ Check "runChain() AWAITS logChain (lands before freeze)" `
 Check "no bare un-awaited .then write remains" `
       (Lacks $chain '.then(({ error }) => { if (error) console.error("[M8] logChain insert error')
 
-# -- 2c. Entity store (m8_entities / m8_entity_mentions) ----------------------
-Write-Host "`nlib/memory.js  (m8_entities / m8_entity_mentions)"
+# -- 2c. Entity store (m8_entities / m8_entity_mentions) — MOVED to nightly cron ---
+Write-Host "`nlib/memory.js + api/cron-summarize.js  (entity store, cron-extracted)"
 $mem = Read-Text 'lib\memory.js'
-Check "requires ./persistence"                 (Has $mem 'require("./persistence")')
-Check "entity extraction wrapped in safePersist entity" `
-      (Has $mem 'safePersist(require("./entity-graph")._maybeExtractEntities(sessionId, userMessage), "entity")')
-Check "entity write is AWAITED (bounded 6s race so it lands before freeze)" `
-      (Has $mem 'await Promise.race([_ent')
-Check "no bare fire-and-forget .catch on extractor remains" `
-      (Lacks $mem '_maybeExtractEntities(sessionId, userMessage).catch(() => {})')
 Check "entity extractor routed through llm.js generate (not dead direct Gemini)" `
       (Has (Read-Text 'lib\entity-graph.js') 'providerOrder: ENTITY_ORDER')
-Check "TODO notes council follow-up (cron-summarize)" `
-      (Has $mem 'cron-summarize')
+Check "saveMemory NO LONGER extracts entities inline (zero per-turn latency)" `
+      (Lacks $mem 'safePersist(require("./entity-graph")._maybeExtractEntities')
+Check "sweepEntityExtraction() defined" `
+      (Has $mem 'async function sweepEntityExtraction')
+Check "sweepEntityExtraction uses a watermark (m8_entity_cron_state)" `
+      (Has $mem 'm8_entity_cron_state')
+Check "sweep AWAITS the per-message extraction (cron handler is awaited)" `
+      (Has $mem 'await _maybeExtractEntities(m.session_id')
+Check "sweepEntityExtraction exported" `
+      (Has $mem 'sweepEntityExtraction,')
+$cron = Read-Text 'api\cron-summarize.js'
+Check "cron-summarize calls the entity sweep" `
+      (Has $cron 'await sweepEntityExtraction()')
+Check "entity sweep is fail-safe + kill-switchable (ENTITY_SWEEP_DISABLED)" `
+      (Has $cron 'ENTITY_SWEEP_DISABLED')
 
 # -- 2d. Conjecture loop (m8_conjecture_outcomes) -----------------------------
 Write-Host "`nlib/conjecture-memory.js + lib/loop.js  (m8_conjecture_outcomes)"
