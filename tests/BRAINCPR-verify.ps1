@@ -69,6 +69,10 @@ $refl = Read-Text 'lib\reflector.js'
 Check "requires ./persistence"                 (Has $refl 'require("./persistence")')
 Check "logReflection routes through safePersist reflect" `
       (Has $refl 'safePersist(db.from("m8_reflections").insert(row), "reflect")')
+Check "logReflection RETURNS the safePersist promise (awaitable)" `
+      (Has $refl 'return safePersist(db.from("m8_reflections")')
+Check "reflect() AWAITS logReflection (lands before freeze)" `
+      (Has $refl 'await logReflection(')
 Check "no bare fire-and-forget Promise.resolve insert remains" `
       (Lacks $refl 'Promise.resolve(db.from("m8_reflections").insert(row))')
 
@@ -80,6 +84,10 @@ Check "logChain calls safePersist"             (Has $chain 'safePersist(')
 Check "logChain uses the chain label"          (Has $chain '"chain"')
 Check "safePersist wraps the m8_reasoning_chains insert" `
       (Has $chain '.from("m8_reasoning_chains")')
+Check "logChain RETURNS the safePersist promise (awaitable)" `
+      (Has $chain 'return safePersist(')
+Check "runChain() AWAITS logChain (lands before freeze)" `
+      (Has $chain 'await logChain(')
 Check "no bare un-awaited .then write remains" `
       (Lacks $chain '.then(({ error }) => { if (error) console.error("[M8] logChain insert error')
 
@@ -89,6 +97,8 @@ $mem = Read-Text 'lib\memory.js'
 Check "requires ./persistence"                 (Has $mem 'require("./persistence")')
 Check "entity extraction wrapped in safePersist entity" `
       (Has $mem 'safePersist(require("./entity-graph")._maybeExtractEntities(sessionId, userMessage), "entity")')
+Check "entity write is AWAITED (bounded race so it lands before freeze)" `
+      (Has $mem 'await Promise.race([_entityWrite')
 Check "no bare fire-and-forget .catch on extractor remains" `
       (Lacks $mem '_maybeExtractEntities(sessionId, userMessage).catch(() => {})')
 Check "TODO notes council follow-up (cron-summarize)" `
@@ -105,7 +115,9 @@ Check "recordOutcome still never rejects (.catch on chain)"    (Has $cmem '.catc
 $loop = Read-Text 'lib\loop.js'
 $awaited = CountOf $loop 'await recordOutcome(getClient()'
 $total   = CountOf $loop 'recordOutcome(getClient()'
-Check "loop.js: both recordOutcome cron writes are awaited (2/2)" ($awaited -eq 2)
+# >=2 (Brain CPR added 2; a parallel Build-B repair path may add more) — the
+# load-bearing invariant is that EVERY recordOutcome cron write is awaited.
+Check "loop.js: recordOutcome cron writes are awaited (>=2)"      ($awaited -ge 2)
 Check "loop.js: NO un-awaited recordOutcome(getClient() remains"  ($total -eq $awaited)
 Check "loop.js: comment notes outcomes stay near-0 until leaves"  (Has $loop 'stays near-0 until')
 
