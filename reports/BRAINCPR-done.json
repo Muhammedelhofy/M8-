@@ -33,7 +33,7 @@
   "verification": {
     "ps_mirror": "38/38 green",
     "static_review": "all 4 write sites + scope guard reviewed; no bare fire-and-forget remains; no other write path to the 4 tables (grep-confirmed)",
-    "preview_build": "PENDING — pushing the branch triggers a Vercel PREVIEW build; proves it still bundles at 10 functions (no api/ function added) and @vercel/functions imports cleanly"
+    "preview_build": "GREEN — dpl_4cJTHdgkfX5tLS4Dpv1Biqm6RAyj (commit 5ad959e, branch fix/brain-cpr) state=READY, built ~41s, lambdaRuntimeStats nodejs:10 (still exactly 10 functions, no api/ function added), @vercel/functions imported cleanly. target=null (PREVIEW only, NOT production)."
   },
   "not_touched": "Bolt fleet sync (separate MHMBOLT repo), morning brief (morning-brief.js/notify.js/nudges.js/fleet*.js), memory-summarize cron behavior, the 4 cron schedules. No api/ function added (stays under the 12-fn Hobby cap). Parallel fun-session files (BUILD_LOG.md, NEXT_SESSION_BRIEF.md, m8_records.html, TEAM_*) NOT staged.",
   "deploy_checklist": [
