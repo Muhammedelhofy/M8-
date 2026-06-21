@@ -1,4 +1,5 @@
 {
+  "fluid": true,
   "rewrites": [
     { "source": "/api/ingest-full",             "destination": "/api/knowledge?fn=ingest-full" },
     { "source": "/api/ingest-extract-existing", "destination": "/api/knowledge?fn=extract-existing" },

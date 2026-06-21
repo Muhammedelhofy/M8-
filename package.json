@@ -5,6 +5,7 @@
   "dependencies": {
     "@google/genai": "^1.0.0",
     "@supabase/supabase-js": "^2.39.0",
+    "@vercel/functions": "^3.7.2",
     "exceljs": "^4.4.0",
     "mammoth": "^1.8.0",
     "pptxgenjs": "^3.12.0"
