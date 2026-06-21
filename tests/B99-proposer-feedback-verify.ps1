@@ -233,7 +233,7 @@ Assert-True 'sorry block calls recordOutcome'      ($lpB99 -match "recordOutcome
 Assert-True 'sorry block passes a sorry sketch'    ($lpB99 -match "leanProofSketch: sketch")
 Assert-True 'sorry block uses COLLATZ_PROBLEM_ID'  ($lpB99 -match "COLLATZ_PROBLEM_ID")
 Assert-True 'sorry block guards on /sorry/ token'  ($lpB99 -match "sorry")
-Assert-True 'recordOutcome on sorry is NOT awaited' ($lp -notmatch "await[^\r\n]*recordOutcome")
+Assert-True 'recordOutcome on sorry IS awaited (Build-110 durability)' ($lpB99 -match "await[^\r\n]*recordOutcome")
 
 # ============================================================================
 # SOURCE BINDING -- lemma-dag.js surfaces the sorry leaves to the loop

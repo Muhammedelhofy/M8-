@@ -1,0 +1,34 @@
+{
+  "task": "Fix m8_conjecture_outcomes staying at 0 rows despite Lean-verified leaves",
+  "build": "Build-111",
+  "branch": "fix/conjecture-outcomes",
+  "base": "origin/main",
+  "root_cause": "recordOutcome only fires on the per-run `newlyVerified` TRANSITION edge (the single run a leaf first verifies). Those historical writes were the pre-Build-110 un-awaited detached promises Vercel dropped on lambda freeze (the same bug class Build-110 documented for the brain tables). Once a scaffold's leaf verifies it flips to status='leaves_done' with lean_status='lean_verified', which permanently excludes it from fetchPendingScaffold (filters status='open') AND from recheckScaffold (RECHECKABLE={lean_pending,lean_error} only) — so `newlyVerified` can NEVER re-fire for it, leaving the success stranded out of the table forever. Build-110's await-fix (now on main) prevents FUTURE loss but cannot recover the already-verified leaves because the trigger condition can never recur. Live DB confirmed: 2 verified scaffolds (id=3 '2*sum=n(n+1)', id=6 'product of two odd is odd', 5 verified leaves total) all status='leaves_done', yet m8_conjecture_outcomes=0. Schema (B92) and the repair-path recordOutcome call were both fine — NOT the cause.",
+  "fix": "Added an idempotent, durable reconciliation pass (reconcileOutcomes -> fetchVerifiedScaffolds + reconcileVerifiedOutcomes) called before BOTH returns in runVerifyPhase. It is pure-DB (no Lean), so it runs on every cron-verify warm AND cold; it ensures every currently Lean-verified scaffold (leaves_verified>0) has exactly one VERIFIED success row, keyed insert-if-absent on (problem_id, normalized conjecture_text) among non-failed rows. This backfills the stranded leaves AND self-heals any future missed transition write. The existing inline awaited transition writes (recheck + repair + sorry) are left UNTOUCHED (Build-110 invariant + BRAINCPR test preserved); the reconcile pass is idempotent so it never double-writes what they recorded.",
+  "files": [
+    "lib/loop.js (+reconcileOutcomes helper, +2 calls in runVerifyPhase, +outcomesReconciled in both returns; inline writes untouched)",
+    "lib/lemma-dag.js (+fetchVerifiedScaffolds, exported; optional injected-db param for tests)",
+    "lib/conjecture-memory.js (+reconcileVerifiedOutcomes, exported)",
+    "tests/B111-reconcile-verify.ps1 (NEW PS-5.1 mirror, 21/21)",
+    "tests/B92-feedback-verify.ps1 (fixed pre-existing stale assertion: recordOutcome is now AWAITED per Build-110; +reconcile-pass wiring check)",
+    "tests/B99-proposer-feedback-verify.ps1 (fixed pre-existing stale assertion: sorry write is now AWAITED)",
+    "tests/B111_LIVE_TEST.md (NEW post-deploy 0->2 verification steps)"
+  ],
+  "tests": {
+    "B111-reconcile-verify.ps1": "21/21 PASS (backfill, idempotent re-run, flip-flop/dup safe, sorry-row coexists, sketch shaping excludes sibling sorry, blanks skipped, classification table)",
+    "B92-feedback-verify.ps1": "40/40 PASS",
+    "B99-proposer-feedback-verify.ps1": "37/37 PASS",
+    "BRAINCPR-verify.ps1": "46/46 PASS (sibling Build-110 invariant intact: >=2 awaited recordOutcome cron writes, none un-awaited)",
+    "BUILD-B-verify.ps1": "22/22 PASS (Lean-lane repair wiring; loop.js still has no safePersist)",
+    "node": "absent on host -> PS-5.1 mirror per repo convention",
+    "live_dry_run": "read-only Supabase query proved reconcile WOULD insert exactly 2 rows now (id=3,id=6), 0 -> 2, no writes performed"
+  },
+  "constraints_respected": {
+    "forbidden_files_untouched": true,
+    "kill_switches_untouched": "L5_LOOP_DISABLED / M4_REPAIR_DISABLED unchanged",
+    "worktree": ".wt-conjecture (isolated; did not disturb sibling's shared checkout on fix/brain-cpr)",
+    "git_add": "only my own files"
+  },
+  "deployed": false,
+  "notes": "Code-complete + offline-verified + live dry-run proven. NOT deployed (awaiting Muhammad's explicit 'deploy'). After deploy: trigger /api/cron-verify (CRON_SECRET bearer) and confirm m8_conjecture_outcomes goes 0 -> 2, both is_success=true, then re-run to confirm idempotent (stays 2). Minor known residue (pre-existing, not regressed): a hypothetical flip-flopping leaf that re-enters the recheck pool after already being recorded could write a duplicate via the inline transition path; recheckScaffold never downgrades a verified leaf, so this does not occur in the normal flow, and the reconcile pass itself is dup-free."
+}

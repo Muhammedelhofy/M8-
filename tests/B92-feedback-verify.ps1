@@ -171,14 +171,18 @@ Assert-True 'wrapper returns successPatterns'      ($cgWrap -match "successPatte
 Assert-True 'wrapper fail-safe catch'              ($cgWrap -match "catch \(e\)")
 
 # ============================================================================
-# SOURCE BINDING -- loop.js wires the write side (fire-and-forget)
+# SOURCE BINDING -- loop.js wires the write side
+# Build-110 made recordOutcome AWAITED (the write lands before the Vercel freeze instead
+# of being dropped); Build-111 adds the idempotent, durable reconcileOutcomes() backfill
+# pass ALONGSIDE the inline per-run transition writes.
 # ============================================================================
 Write-Host "`n-- loop.js wiring --"
 Assert-True 'loop requires conjecture-memory'      ($lp -match "conjecture-memory")
 Assert-True 'loop calls recordOutcome'             ($lp -match "recordOutcome\(")
 Assert-True 'recordOutcome guarded by newlyVerified' ($lp -match "newlyVerified > 0")
 Assert-True 'loop uses COLLATZ_PROBLEM_ID'          ($lp -match "COLLATZ_PROBLEM_ID")
-Assert-True 'recordOutcome is NOT awaited'          ($lp -notmatch "await[^\r\n]*recordOutcome")
+Assert-True 'recordOutcome IS awaited (Build-110 durability)' ($lp -match "await[^\r\n]*recordOutcome")
+Assert-True 'durable reconcile backfill pass wired (Build-111)' ($lp -match "reconcileOutcomes\(")
 
 # ============================================================================
 # SOURCE BINDING -- migration
