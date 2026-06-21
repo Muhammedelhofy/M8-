@@ -1,52 +1,36 @@
 {
   "build": "Build-110",
-  "name": "Brain CPR — make the 4 dead brain DB writes persist",
-  "branch": "fix/brain-cpr (merged to main; deployed to production)",
-  "base": "main@5f03187",
+  "name": "Brain CPR — revive the 4 dead brain features",
+  "branch": "merged to main; deployed to production",
+  "production_sha": "b559468",
   "deployed": true,
-  "production_sha": "268c0f9",
-  "status": "DEPLOYED but live row-proof NOT achieved — see live_verification. The write-mechanism fix is correct; rows still 0 because the brain FEATURES are not reaching their writes (a deeper cause the original task did not account for).",
-  "files": [
-    "lib/persistence.js (new — safePersist(promise,label): waitUntil + never-throw + await fallback + [persist:<label>] +1 logging)",
-    "lib/reflector.js (logReflection RETURNS safePersist promise; reflect() AWAITS it)",
-    "lib/reasoning-chain.js (logChain RETURNS safePersist promise; runChain() AWAITS it)",
-    "lib/memory.js (entity extraction: best-effort non-blocking safePersist; cron-summarize move documented as the correct fix)",
-    "lib/conjecture-memory.js (recordOutcome returns an awaitable, never-rejecting promise + logs +1)",
-    "lib/loop.js (cron recordOutcome calls AWAITED; parallel Build-B added a 3rd, also awaited)",
-    "vercel.json (+ fluid:true — Vercel Fluid Compute)",
-    "package.json (+ @vercel/functions ^3.7.2)",
-    "tests/BRAINCPR-verify.ps1 (43/43 static mirror)",
-    "tests/BRAINCPR_LIVE_TEST.md (post-deploy chat tests + Supabase row-count checks)",
-    "reports/BRAINCPR-done.json (this file)"
-  ],
-  "what_shipped": {
-    "fix1_waitUntil": "safePersist via @vercel/functions waitUntil (the AI Council's low-TTFB design).",
-    "fix1b_fluid": "vercel.json fluid:true — to give waitUntil a live instance to flush into.",
-    "fix2_await": "Switched the in-chat writes to AWAIT through the already-awaited call chain (reflector + chain inserts are ~100ms each). safePersist still wraps with waitUntil as belt-and-suspenders.",
-    "cron_writes": "loop.js recordOutcome AWAITED (latency-insensitive cron).",
-    "reflector_scope": "UNCHANGED + verified: orchestrator reflectEligible gates the reflector to general/knowledge lanes; never engine/compute/fleet."
+  "status": "DONE — all 4 brain tables go 0 -> >0, live-verified in production. FREE fix (Groq), no Gemini credits.",
+  "result_live": {
+    "m8_reflections": "0 -> 5 (scored, overclaim-flagged, answers rewritten)",
+    "m8_reasoning_chains": "0 -> 2 (decompose into 4 steps -> synthesized 'Therefore:' conclusion)",
+    "m8_entities": "0 -> 3 (Atomic Habits[book], James Clear[person], Meditations[book])",
+    "m8_entity_mentions": "0 -> 3"
   },
-  "live_verification": {
-    "tested_against": "production m8-alpha.vercel.app (sha 268c0f9), Supabase BOLT ltqpoupferwituusxwal",
-    "baseline": "m8_reflections / m8_reasoning_chains / m8_entities / m8_entity_mentions ALL 0 (matches the brief).",
-    "result": "STILL 0 after multiple live chat turns — across waitUntil-only, waitUntil+Fluid, AND awaited builds.",
-    "what_DOES_work": "m8_conversations (the AWAITED write) lands every turn — proves the DB connection + saveMemory path are fine.",
-    "root_causes_found": [
-      "(1) waitUntil does NOT flush from M8's legacy (req,res) Node handlers — the deferred promise never gets a request context and dies on the freeze. Fluid Compute did NOT change this. (Fixed by switching to await.)",
-      "(2) DEEPER, and the reason rows are STILL 0: the brain features are not REACHING their write calls. request_traces shows my test turns classified as RESEARCH/compute/search — for which the reflector + reasoning-chain are CORRECTLY gated OFF (scope guard working). On a confirmed intent=general turn (braincpr-gen-1), the reflector ran but produced no row and NO [persist:reflect] marker appeared in the logs.",
-      "(3) Slow free-Gemini in this environment (llm_ms 13-19s in request_traces) blows the features' tight internal budgets: reflector scoring budget = 2s (M8_REFLECT_BUDGET_MS), reasoning-chain total budget = 8s (BUDGET_MS). They time out and bail BEFORE the write. So the await fix has nothing to persist.",
-      "(4) Entity extraction runs on every turn but m8_entities has never had a row — extractor returns [] or its Gemini call exceeds the turn. (My interim 5s inline-await was reverted: it added per-turn latency without reliably landing.)"
-    ],
-    "conclusion": "The original 'fire-and-forget freeze' hypothesis is REAL but only PART of the story. Build-110 correctly fixes the write mechanism, but it is NECESSARY-NOT-SUFFICIENT: rows cannot appear until the features actually reach their writes."
-  },
-  "recommended_next_fork_for_muhammad": [
-    "A. Raise the brain-feature Gemini budgets to match slow free-Gemini: M8_REFLECT_BUDGET_MS ~2s->8-10s (env var, no code) and the reasoning-chain BUDGET_MS 8s->20s (code). TRADE-OFF: turns get slower WHEN the reflector/chain run (general lane only). Cheapest path to first rows.",
-    "B. Move entity extraction into the nightly cron-summarize (council's documented follow-up). The cron handler is fully awaited, so inserts land with ZERO chat latency. Best long-term home for the heavy Gemini extraction.",
-    "C. Use a faster/paid Gemini tier (or a faster provider) for the reflector/chain scoring calls so they fit the existing budgets. Costs money; fixes latency at the root.",
-    "D. Re-run tests/BRAINCPR_LIVE_TEST.md with GENUINELY general-lane prompts (no math, no lookup) once A or C is in — that is how to actually see m8_reflections / m8_reasoning_chains go 0->>0."
+  "root_cause_was_a_stack_of_bugs": [
+    "1. The 4 writes were un-awaited fire-and-forget — dropped by the Vercel freeze (waitUntil does NOT flush from M8's legacy (req,res) handlers, even with Fluid Compute). FIX: await the writes.",
+    "2. The features never REACHED their writes: their scoring/decompose/extract ran on gemini-2.5-flash, a THINKING model whose hidden thinking ate the tiny output budget -> reply truncated BEFORE the JSON -> parseScore null / decompose n=1. FIX: non-thinking path.",
+    "3. The obvious swap gemini-2.0-flash(-lite) is RETIRED (404), and the backup Gemini key is quota-capped (429). FIX: route the secondary calls to GROQ (free, fast, non-thinking Llama, SEPARATE quota from the main Gemini answer), cerebras fallback, gemini-2.5-flash-lite last.",
+    "The brief's 'un-awaited writes' was real but only bug #1 of 3."
   ],
-  "tests_passed": "43/43 (tests/BRAINCPR-verify.ps1, PowerShell static mirror — host has no Node)",
-  "production_build": "GREEN — dpl_BvNMiLwFmprLckML8cpp3za7kKjC (sha 268c0f9) READY, nodejs:10 (still 10 functions), @vercel/functions imports cleanly, integrated cleanly with parallel Build-B.",
-  "not_touched": "Bolt fleet sync (separate MHMBOLT repo), morning brief, the 4 cron schedules. No api/ function added. Parallel fun-session files NOT staged. Parallel Build-B (lean lane) integrated via rebase, not clobbered.",
-  "honest_bottom_line": "Deployed and correct, but it does NOT by itself make the brain tables fill. Pick A/B/C above to actually get rows; D is how to verify."
+  "how_it_was_found": "Vercel's log tool collapses to ~1 line/request (blind to console.log), so a TEMPORARY m8_brain_debug table + instrumentation recorded the reflector/chain decision path to a queryable table. That revealed gate_eligible->enter->score_null and the raw truncated reply 'The answer fails' (16 chars). Diagnostics + table have been REMOVED.",
+  "the_fix_files": [
+    "lib/persistence.js (safePersist — waitUntil + never-throw, kept as belt-and-suspenders)",
+    "lib/reflector.js (await logReflection; REFLECT_ORDER=groq,cerebras,gemini; REFLECT_MODEL=gemini-2.5-flash-lite; budget 8s)",
+    "lib/reasoning-chain.js (await logChain; CHAIN_ORDER=groq,cerebras,gemini; CHAIN_MODEL=gemini-2.5-flash-lite; budget 18s)",
+    "lib/entity-graph.js (extractor routed through llm.js on Groq; was a dead direct gemini-2.0-flash-lite call)",
+    "lib/memory.js (await the entity extraction, bounded 6s race — Groq ~1s)",
+    "lib/loop.js + lib/conjecture-memory.js (cron recordOutcome awaited — m8_conjecture_outcomes still needs the Lean lane / Build-B to produce leaves)",
+    "vercel.json (fluid:true), package.json (@vercel/functions)"
+  ],
+  "cost": "$0 — all on the free providers (Groq/Cerebras). Gemini credits untouched. Turns are also FASTER (no thinking overhead, fast Groq).",
+  "env_overrides_for_ops": ["M8_REFLECT_ORDER","M8_REFLECT_MODEL","M8_REFLECT_BUDGET_MS","M8_CHAIN_ORDER","M8_CHAIN_MODEL","M8_CHAIN_BUDGET_MS","M8_ENTITY_ORDER","M8_ENTITY_MODEL"],
+  "tests": "tests/BRAINCPR-verify.ps1 44/44 (PS static mirror; host has no Node). Live-verified in production.",
+  "reflector_scope": "UNCHANGED + verified: orchestrator gates the reflector to general/knowledge lanes only (never engine/compute/fleet). The narrow gate (also excludes compound + tutor) is WHY it runs only on single general questions — by design.",
+  "remaining": "m8_conjecture_outcomes stays near-0 until the Lean/M4 lane (Build-B, parallel session) produces verified/sorry leaves — Build-110 fixed that WRITE (awaited), not the leaf production. Optional future: move entity extraction to the nightly cron to drop the ~1s/turn cost.",
+  "not_touched": "Bolt fleet sync (separate repo), morning brief, the 4 cron schedules. Parallel Build-B (lean lane) integrated via rebase, not clobbered."
 }
