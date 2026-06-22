@@ -1,0 +1,55 @@
+{
+  "task": "Close the learn->generate loop (Track-B keystone): make M8's nightly generator LEARN from recorded outcomes",
+  "build": "Build-112",
+  "branch": "feat/learn-loop",
+  "base": "origin/main (a4034c6)",
+  "model_effort": "Claude Opus 4.8 / MAX",
+  "gap_verified_before_change": "Confirmed the wiring before touching anything: lib/loop.js imported PLAIN runConjectureGen (line 32) and runObservePhase called it (line 315) — so the nightly observe phase MINED + falsified but NEVER read m8_conjecture_outcomes. The feedback machinery (getSuccessPatterns/getFailedApproaches/buildFeedbackBlock/buildAvoidBlock from Build-92/99, and runConjectureGenWithFeedback) already existed and was wired into the CHAT path (orchestrator.js:1531), but the autonomous loop bypassed it. Net: outcomes were RECORDED (Build-111 live: 2 verified rows) but never LEARNED FROM. That is the wire this build closes.",
+  "build_summary": [
+    "1) Routed observe-phase generation through runConjectureGenWithFeedback (was plain runConjectureGen) so the nightly run READS recorded outcomes and the PREFER (verified) + AVOID (sorry) blocks steer the packet. The loop still invokes NO LLM — every feedback read is pure Supabase; the only LLM (structural-tag extraction) lives on the WRITE side (recordOutcome, verify phase), unchanged.",
+    "2) Grok's N-verifs gate: a structural pattern (technique TAG) earns learning weight — i.e. is allowed into the PREFER/buildFeedbackBlock block — only after it appears in >= M8_LEARN_MIN_VERIFS (default 3) DISTINCT verified outcomes. New pure fns countTagVerifications/earnedTags/gateByVerifCount + the fail-safe getEarnedSuccessPatterns (wider EARN_WINDOW fetch -> drop failed -> gate -> cap PATTERN_LIMIT). PREFER now steers on the GATED set; the ungated recent list (successPatterns) is still read/returned for telemetry only.",
+    "3) Stamped gen_version (+ novelty_version + learn{min_verifs, success/earned/failed pattern counts}) onto each m8_loop_runs row via the EXISTING metadata JSONB column. NO schema change — see schema_decision."
+  ],
+  "n_verifs_gate_design": "Counting is by TAG (technique), NOT by conjecture_text. reconcileVerifiedOutcomes (Build-111) dedups outcomes on (problem_id, normalized conjecture_text), so a given conjecture caps at ONE verified row — conjecture-grouped counts could never reach N=3, making the gate permanently inert. Only a recurring TECHNIQUE can accumulate evidence across distinct verified conjectures, which is precisely what 'a structural pattern' means. With today's live data (2 rows: [induction,sum] + [definition,...], every tag count = 1) nothing is earned -> the PREFER block stays SILENT. That is correct, conservative behaviour: the wire is CLOSED (generation now reads outcomes + computes the gate + stamps telemetry) but it will not STEER until a technique genuinely verifies 3x. This is the flip-flop absorption Grok asked for. AVOID side left ungated by design (the gate is about 'earning learning weight' = the PREFER/success side; a 'sorry' is already conservative and not subject to verify/reject flip-flop the same way).",
+  "schema_decision": "The brief said 'Stamp gen_version on each m8_loop_runs row' AND 'any DB schema change (e.g. a gen_version column) -> STOP and ask Muhammad first'. Resolved WITHOUT a schema change: m8_loop_runs already has a metadata JSONB column whose own migration comment reads 'loop/gen/novelty versions, per-leg timings, leg errors' (migrations/m8_loop_runs.sql:47) — i.e. gen_version belongs in metadata by design. Stamped row.metadata.gen_version (+ novelty_version + learn{}). No migration, no new column, so no STOP-and-ask was triggered.",
+  "honesty_invariants_held": [
+    "Outcomes STEER generation; they never assert truth. No code path writes 'proven'; the parseTags filter still drops any proven/proved tag; survivors keep their 'machine-generated, tested to N' framing.",
+    "loop.js 'invokes NO LLM' honesty story preserved — the new reads are pure DB.",
+    "Additive + fail-safe everywhere: empty/unreachable table -> getEarnedSuccessPatterns returns [] -> PREFER silent -> generation byte-identical to a no-memory run. runConjectureGenWithFeedback already degrades to a plain run when SUPABASE creds are absent / GRAPH_DISABLED=1.",
+    "No machine-minted theorem; the verify phase (Build-B/110/111) is UNTOUCHED."
+  ],
+  "files": [
+    "lib/conjecture-memory.js (+learnMinVerifs, +countTagVerifications, +earnedTags, +gateByVerifCount [all pure], +getEarnedSuccessPatterns [fail-safe], +LEARN_MIN_VERIFS_DEFAULT=3/EARN_WINDOW=50, exports updated)",
+    "lib/conjecture-gen.js (runConjectureGenWithFeedback: PREFER block now built from earnedPatterns [gated]; getEarnedSuccessPatterns read added; successPatterns/getFailedApproaches/getSuccessPatterns calls KEPT for AVOID + telemetry + regressions; earnedPatterns returned; early-return shape fixed)",
+    "lib/loop.js (runObservePhase ONLY: import + awaited call to runConjectureGenWithFeedback; gen_version/novelty_version/learn{} stamped into row.metadata; header step-2 comment updated. runVerifyPhase NOT touched.)",
+    "tests/learn-loop-verify.ps1 (NEW PS-5.1 mirror, 44/44 = 5/5 core + 39 wiring)",
+    "reports/learn-loop-done.json (this file)"
+  ],
+  "files_NOT_touched": [
+    "lib/proposer-feedback.js (owned but no change needed — graph-side feedback already wired)",
+    "lib/loop.js runVerifyPhase (Build-B's lane), lib/entity-graph.js, lib/memory-graph.js, lib/orchestrator.js, lib/knowledge-intake.js",
+    "shared docs (BUILD_LOG.md, NEXT_SESSION_BRIEF.md, .claude/)"
+  ],
+  "tests": {
+    "learn-loop-verify.ps1": "44/44 PASS (5/5 core: tag counting+case-fold+intra-row dedup, earnedTags threshold, gateByVerifCount keep/drop, live 2-row flip-flop -> [], learnMinVerifs env/default; + 39 wiring incl. observe routes through WithFeedback, gen_version stamped into metadata JSONB, verify phase intact)",
+    "B92-feedback-verify.ps1": "40/40 PASS (regression — wrapper still calls getSuccessPatterns/buildFeedbackBlock, result.packet=block)",
+    "B99-proposer-feedback-verify.ps1": "37/37 PASS (regression — AVOID block intact)",
+    "B83d-proposer-feedback-verify.ps1": "68/68 PASS (regression — graph feedback + runConjectureGenWithFeedback shape)",
+    "B111-reconcile-verify.ps1": "21/21 PASS (regression — durable reconcile untouched)",
+    "node": "absent on host -> PS-5.1 mirror + static review per repo convention; integrated regions of all 3 lib files statically reviewed"
+  },
+  "constraints_respected": {
+    "worktree": "../m8-learnloop (isolated; off origin/main; did not disturb sibling checkouts .wt-conjecture / fix/brain-cpr)",
+    "git_add": "only owned files (lib/conjecture-memory.js, lib/conjecture-gen.js, lib/loop.js, tests/learn-loop-verify.ps1, reports/learn-loop-done.json)",
+    "branch_only_push": "feat/learn-loop (NOT main, NOT merged)",
+    "schema_change": "NONE (stamped into existing metadata JSONB) — STOP-and-ask not triggered",
+    "kill_switches_untouched": "L5_LOOP_DISABLED / M4_REPAIR_DISABLED / GRAPH_DISABLED unchanged"
+  },
+  "deployed": false,
+  "ops_notes": {
+    "new_env": "M8_LEARN_MIN_VERIFS (optional, default 3, must be >=1) — raises/lowers the N-verifs gate threshold; no redeploy needed to change once live.",
+    "kill_path": "GRAPH_DISABLED=1 reverts generation to no-feedback (plain) behaviour; absent table -> [] -> silent.",
+    "post_deploy_verify": "After Muhammad deploys: trigger /api/cron-explore (CRON_SECRET bearer); confirm the new m8_loop_runs row has metadata.gen_version=2 and metadata.learn{} populated (success_patterns/earned_patterns/failed_patterns counts). With current data earned_patterns will be 0 (correct — nothing has verified 3x yet); it becomes non-zero once a technique recurs across >= M8_LEARN_MIN_VERIFS verified outcomes, at which point the VERIFIED CONJECTURE PATTERNS block appears in the packet."
+  },
+  "done_criteria": "Generator provably READS recorded outcomes (observe phase routes through runConjectureGenWithFeedback -> getEarnedSuccessPatterns/getFailedApproaches; reads stamped into m8_loop_runs.metadata.learn) + N-verifs gate in place (M8_LEARN_MIN_VERIFS default 3, by-tag recurrence). On branch feat/learn-loop, NOT deployed. Vercel PREVIEW build expected green (pure JS, no new deps, no schema change)."
+}
