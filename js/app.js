@@ -647,6 +647,10 @@ function init() {
   voice.onResult = (transcript) => {
     UI.textInput.value = transcript;
     voice.muted = false; // spoken turn → M8 replies out loud
+    // Reply in the language we just heard (transcription is auto-detected). Sets
+    // only the TTS reply voice — the عر/EN toggle stays the manual override and
+    // the UI direction doesn't flip on every utterance.
+    voice.setLanguage(/[؀-ۿ]/.test(transcript) ? "ar" : "en");
     sendMessage(transcript);
   };
 

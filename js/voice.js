@@ -109,7 +109,10 @@ class VoiceManager {
       const resp = await fetch("/api/transcribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ audio, mime: this._recMime, lang: this.currentLang.split("-")[0] }),
+        // Always auto-detect the spoken language (api/transcribe skips the Whisper
+        // `language` param when "auto"), so EN and AR both transcribe without the
+        // toggle. The عر/EN toggle now only steers the spoken REPLY voice.
+        body: JSON.stringify({ audio, mime: this._recMime, lang: "auto" }),
       });
       const data = await resp.json().catch(() => ({}));
       if (this.onStatusChange) this.onStatusChange("idle");
