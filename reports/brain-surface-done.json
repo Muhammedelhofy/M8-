@@ -1,0 +1,64 @@
+{
+  "build": "Session-2 brain-surface",
+  "name": "Surface the live brain in chat — entity recall + entity<->graph bridge",
+  "branch": "feat/brain-surface",
+  "off_of": "origin/main 9320d51 (PRs #1-3 merged: learn-loop, rag-content, upload-size)",
+  "deployed": false,
+  "deploy_note": "Branch only. Muhammad deploys. No prod write happens until deploy AND (for the bridge write-back) M8_ENTITY_GRAPH_BRIDGE_WRITE=1.",
+  "status": "DONE (code-complete, 48/48 static mirror green). Entity recall surfaced in context on BOTH chat paths; entity<->graph bridge wired read-only by default with an opt-in write-back. Live chat verify pending Muhammad's preview deploy (tests/BRAIN-SURFACE_LIVE_TEST.md).",
+
+  "what_was_built": [
+    "1. STREAM-PATH GAP-FILL: orchestrateStream() never injected entity context (the buffered orchestrate() did). Mirrored recallEntities + the bridge into the stream compose, gated to turns no deterministic packet owns (fleet/finance/eosb/company/state/notebook/graph keep their ground truth). So voice/conversational turns naming a known person/company now get cross-session entity context.",
+    "2. ENTITY <-> GRAPH BRIDGE (the headline): bridgeEntitiesToGraph() cross-references the entity store (m8_entities person/company) with the research memory graph (m8_graph_nodes). When a tracked person/company is also a graph node, its 1-hop connections are injected as an 'ENTITY <-> GRAPH LINKS' block so M8 can reason over relationships. Read-only by default.",
+    "3. OPT-IN CONVERGENCE: bridgeEntityNode() (env M8_ENTITY_GRAPH_BRIDGE_WRITE=1, OFF by default) seeds a TYPED person/company graph node from a recalled entity, so the two stores converge over time. Awaited (per Build-110 un-awaited-write lesson); embed:false to stay off the embedding budget; upsertNode dedups by (kind, norm_label) so it merges, never duplicates."
+  ],
+
+  "files_owned_and_changed": {
+    "lib/memory-graph.js": "+ ENTITY_KIND_BRIDGE map, graphNodeForEntity (1 indexed lookup, no embedding), graphRelationsForEntity (entity->graph 1-hop relations line, skips research_thread anchors), bridgeEntityNode (opt-in write-back). Exported all. renderGraphPacket / buildGraphContext NOT touched (honesty-critical graph render left intact).",
+    "lib/entity-graph.js": "Refactor: extracted _matchEntities (shared matcher) so recallEntities' formatted output is byte-identical; added bridgeEntitiesToGraph (person/company only, kill switch ENTITY_GRAPH_BRIDGE_DISABLED, lazy-requires memory-graph, awaits the opt-in write-back). Exported _matchEntities + bridgeEntitiesToGraph. Build-110's extractor (Groq) + the cron-moved extraction NOT touched.",
+    "lib/orchestrator.js": "Two additive systemInstruction injections in the recall/context-assembly region only: (a) buffered path after the existing entity injection, gated == Longitudinal gate, logs entity_graph_bridge; (b) stream path after graphCtx, the gap-fill roster + bridge. Reflector block, reasoning-chain gate (entityCtxForChain), saveMemory call, and intent routing all UNTOUCHED.",
+    "tests/brain-surface-verify.ps1": "48/48 PS static mirror (host has no Node).",
+    "tests/BRAIN-SURFACE_LIVE_TEST.md": "Live chat script for the preview deploy."
+  },
+
+  "live_data_findings_2026-06-22_readonly": {
+    "project": "Bolt Supabase ltqpoupferwituusxwal",
+    "m8_entities": "6 rows: Terras[person], Collatz Conjecture/Bugs/Riemann Hypothesis[problem], scaffold-1/Lean[concept]. 0 company entities. (Atomic Habits/James Clear from the Build-110 report were cleaned up.)",
+    "m8_graph_nodes_person_company": "ZERO. People currently live under the legacy generic 'entity' kind (e.g. 'Lagarias', 'number theorists'); B109 added person/company kinds to the constraint but extraction hasn't produced any yet.",
+    "implication": "The read-only bridge has NO entity<->graph overlap to surface today (simulated lookup for 'Terras' returned 0 rows). This is correct and honest: the bridge is wired and fail-safe; it lights up as data converges. Two design responses below.",
+    "design_response_1": "ENTITY_KIND_BRIDGE matches the legacy 'entity' kind too (person->[person,entity], company->[company,entity]) so a tracked person/company can bridge against existing legacy nodes TODAY; the write-back still creates clean TYPED nodes (kinds[0]).",
+    "design_response_2": "The opt-in write-back is the convergence mechanism — enabling it seeds Terras as a typed person node, after which the bridge and the graph hard-route both reflect it (see live test Part C)."
+  },
+
+  "core_deliverable_met": "YES. 'Entity recall live in context' is satisfied today by the roster (recallEntities) — now injected on BOTH paths (was buffered-only). The bridge is the enrichment on top; it is correctly wired and fail-safe, and converges as entities flow into the graph.",
+
+  "design_decisions": [
+    "Read-only by default; the only writer (bridgeEntityNode) is OFF unless M8_ENTITY_GRAPH_BRIDGE_WRITE=1 — so deploying this branch changes ZERO writes by default. Safe to ship, opt-in to converge.",
+    "No DB schema change (person/company/entity kinds + related_to/belongs_to edges already in NODE_KINDS/EDGE_RELS via B109). STOP-and-ask gate not triggered.",
+    "Did NOT touch renderGraphPacket/buildGraphContext (honesty-critical graph narration) — bidirectional reinforcement is achieved via the write-back (entities -> typed graph nodes) which the existing graph render then surfaces, rather than by annotating the render path.",
+    "recallEntities output kept byte-identical (extracted _matchEntities) so the 3 existing callers + Build-85d reasoning chain are unaffected.",
+    "Reflections-as-quality-signal: DEFERRED on purpose. The brief marked it optional, and the Build-110 reflector block is explicitly off-limits this session; the reflector is post-answer and general/knowledge-only, so using it as a PRE-answer signal is a separate feature. Noted, not built."
+  ],
+
+  "not_touched": [
+    "lib/loop.js, lib/conjecture-*.js, lib/knowledge-intake.js (Sessions 1/3 own these)",
+    "Build-110 reflector block, reasoning-chain gate, the saveMemory call, intent routing",
+    "renderGraphPacket / buildGraphContext, the graph hard-route",
+    "Shared docs (BUILD_LOG.md, NEXT_SESSION_BRIEF.md, .claude/)",
+    "No deploy, no merge to main, no push to main"
+  ],
+
+  "tests": "tests/brain-surface-verify.ps1 — 48/48 (PS static mirror; host has no Node). Live: tests/BRAIN-SURFACE_LIVE_TEST.md (pending preview deploy).",
+  "kill_switches": ["ENTITY_GRAPH_BRIDGE_DISABLED=1 (whole bridge off)", "M8_ENTITY_GRAPH_BRIDGE_WRITE unset/!=1 (read-only, the default)"],
+  "remaining_next": [
+    "Live-verify on a preview deploy (BRAIN-SURFACE_LIVE_TEST.md).",
+    "Optional: enable M8_ENTITY_GRAPH_BRIDGE_WRITE=1 to start entity->graph convergence, then watch person/company nodes accrue edges.",
+    "Future: reflections-as-quality-signal (deferred); a graph->entity annotation in renderGraphPacket if desired (deliberately skipped for honesty-render safety)."
+  ],
+
+  "git": {
+    "added_only": ["lib/entity-graph.js", "lib/memory-graph.js", "lib/orchestrator.js", "tests/brain-surface-verify.ps1", "tests/BRAIN-SURFACE_LIVE_TEST.md", "reports/brain-surface-done.json"],
+    "never": "git add -A / git add .  — owned files only",
+    "push": "feat/brain-surface (branch only; do NOT push main, do NOT merge)"
+  }
+}
