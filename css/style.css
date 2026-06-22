@@ -1002,3 +1002,30 @@ body {
 .btn-icon:hover { background: rgba(45,226,230,.18) !important;
   filter: drop-shadow(0 0 10px rgba(45,226,230,.7)) !important; }
 .btn-icon svg { width: 15px; height: 15px; }
+
+/* ── Tasks panel (reuses .diag-panel slide-in) ── */
+.tasks-add { display: flex; gap: 8px; align-items: center; padding: 14px 18px 8px; }
+.task-input { flex: 1; min-width: 0; background: rgba(120,160,255,.06); border: 1px solid rgba(120,170,255,.24);
+  color: var(--ink); border-radius: 12px; padding: 10px 13px; font-size: 14.5px; font-family: 'Rajdhani', sans-serif; outline: none; }
+.task-input::placeholder { color: var(--mut); }
+.task-input:focus { border-color: var(--cy); box-shadow: 0 0 12px rgba(45,226,230,.2); }
+.task-due { width: 116px; flex-shrink: 0; background: rgba(120,160,255,.06); border: 1px solid rgba(120,170,255,.24);
+  color: var(--mut); border-radius: 12px; padding: 9px 8px; font-size: 12px; font-family: 'Rajdhani', sans-serif; outline: none; color-scheme: dark; }
+.task-add-btn { width: 42px; height: 42px; flex-shrink: 0; border: none; border-radius: 50%; cursor: pointer; color: #03161d;
+  background: radial-gradient(circle at 40% 32%, #c9fbff, #2de2e6 60%, #11aebf);
+  display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 10px rgba(45,226,230,.6)); }
+.task-add-btn svg { width: 20px; height: 20px; }
+.tasks-list { padding: 8px 16px 24px; overflow-y: auto; flex: 1; }
+.tasks-empty { text-align: center; color: var(--mut); font-size: 14px; padding: 32px 0; }
+.task-row { display: flex; align-items: center; gap: 11px; padding: 12px 4px; border-bottom: 1px solid rgba(120,170,255,.1); }
+.task-check { width: 26px; height: 26px; flex-shrink: 0; border: none; background: none; color: var(--cy); cursor: pointer; padding: 0; }
+.task-check svg { width: 22px; height: 22px; }
+.task-title { flex: 1; font-size: 15px; color: var(--ink); word-break: break-word; }
+.task-row.done .task-title { color: var(--mut); text-decoration: line-through; }
+.task-row.done .task-check { color: #46e6b0; }
+.task-due-tag { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--cy);
+  border: 1px solid rgba(45,226,230,.3); border-radius: 7px; padding: 2px 7px; flex-shrink: 0; }
+.task-due-tag.overdue { color: #ff8a80; border-color: rgba(244,67,54,.4); }
+.task-del { width: 24px; height: 24px; flex-shrink: 0; border: none; background: none; color: var(--mut); cursor: pointer; padding: 0; opacity: .6; }
+.task-del:hover { color: #ff8a80; opacity: 1; }
+.task-del svg { width: 16px; height: 16px; }

@@ -42,6 +42,13 @@
       </div>
     </div>
     <div class="header-right">
+      <button id="tasks-btn" class="btn-set" aria-label="Tasks" title="Tasks">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 6h9"/><path d="M4 12h9"/><path d="M4 18h6"/>
+          <path d="M16.5 5.6l1.6 1.6 3.4-3.4"/>
+        </svg>
+      </button>
       <button id="settings-btn" class="btn-set" aria-label="Diagnostics and settings" title="Diagnostics">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
              stroke-linecap="round" stroke-linejoin="round">
@@ -134,6 +141,22 @@
     </div>
   </div>
 
+  <!-- Tasks slide-in panel -->
+  <div id="tasks-panel" class="diag-panel tasks-panel" aria-hidden="true">
+    <div class="diag-head">
+      <button id="tasks-back" class="diag-back" aria-label="Back to chat">&#8249;</button>
+      <span class="diag-title">TASKS</span>
+    </div>
+    <div class="tasks-add">
+      <input id="task-input" class="task-input" type="text" placeholder="Add a task…" autocomplete="off" />
+      <input id="task-due" class="task-due" type="date" aria-label="Due date" />
+      <button id="task-add" class="task-add-btn" aria-label="Add task">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </div>
+    <div id="tasks-list" class="tasks-list"></div>
+  </div>
+
   <!-- Install-as-app button (appears only when Chrome says it's installable) -->
   <button id="install-btn" class="install-btn" style="display:none" aria-label="Install M8 as an app">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -146,6 +169,7 @@
   <script src="js/voice.js"></script>
   <script src="js/chat.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/tasks.js"></script>
   <script>
   (function(){
     if('serviceWorker' in navigator){ window.addEventListener('load',function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}); }); }
