@@ -42,6 +42,7 @@
     "lib/knowledge-intake.js — ingestBookText(): new extraction_mode param; derives mode once via deriveExtractionMode(cls, extraction_mode) and threads it to every chapter's extractConceptsWithStatus call",
     "lib/knowledge-intake.js — parseBookIngestMessage(): parses optional `extraction_mode=math` / `mode=math` (comma-delimited; existing grab() lookahead already delimits, so the key list was left untouched to avoid an edge-case title-swallow), returns extraction_mode",
     "lib/knowledge-intake.js — module.exports: added the 5 new pure helpers for testability",
+    "lib/orchestrator.js:1436 — forwards `extraction_mode: meta.extraction_mode` into ingestBookText() so the chat math override flows end-to-end (added on explicit instruction)",
     "tests/B-gen-extract-verify.ps1 — NEW PS 5.1 mirror, 66 checks across all 7 spec criteria"
   ],
   "spec_deviations_and_why": [
@@ -50,14 +51,14 @@
     "Spec referenced parseBookIngestCommand()/handleBookIngestCommand(); actual names are parseBookIngestMessage() (in knowledge-intake.js) and inline handling in orchestrator.js. Implemented against the real names.",
     "extractConcepts default mode is 'general' per spec. This also routes the existing document paths (converter.js, lib/handlers/ingest-full.js, lib/handlers/ingest-extract-existing.js, orchestrator re-extract) through general extraction — exactly the goal (uploaded/established docs now extract). Those candidates still carry extraction_confidence/node_type, so those call sites work unchanged. Forbidden files were NOT edited."
   ],
-  "known_wiring_gap": {
-    "what": "The chat `extraction_mode=math` override is parsed by parseBookIngestMessage and accepted by ingestBookText, but orchestrator.js:1434 builds the ingestBookText() args explicitly and does not forward meta.extraction_mode.",
-    "impact": "NONE for the primary goal — book ingest with source_class=established derives 'general' from cls, so Islamic-history books extract real nodes without any orchestrator change. The explicit math override simply won't flow through chat until one line is added.",
-    "why_not_fixed": "orchestrator.js is on the spec's do-NOT-touch list.",
-    "one_line_hookup_when_authorized": "lib/orchestrator.js ~1434: add `extraction_mode: meta.extraction_mode` to the ingestBookText({...}) call."
+  "wiring": {
+    "status": "COMPLETE — extraction_mode now flows end-to-end through chat.",
+    "what": "lib/orchestrator.js:1436 forwards `extraction_mode: meta.extraction_mode` into the ingestBookText({...}) call. Added on Muhammad's explicit instruction, overriding the spec's do-not-touch list for this one line.",
+    "default_safe": "meta.extraction_mode is 'general' unless the user types extraction_mode=math / mode=math. cls in this path is only established|speculative (normalizeSourceClass never yields 'mathematical'), so forwarding the 'general' default produces the same mode the cls-derivation would — zero behavior change for existing book ingests; it only adds the math-override capability.",
+    "regression_check": "B102 stayed 48/6 (byte-identical pre/post edit; the 6 fails are the pre-existing missing-api/-file ones), B78b 18/0, B-gen-extract 66/0."
   },
-  "files_owned": ["lib/knowledge-intake.js", "tests/B-gen-extract-verify.ps1", "reports/gen-extract-done.json"],
-  "files_not_touched": ["orchestrator.js", "loop.js", "entity-graph.js", "memory-graph.js", "conjecture-*.js", "lib/handlers/ingest-full.js", "lib/handlers/ingest-extract-existing.js", "lib/handlers/knowledge-inventory.js", "lib/handlers/upload-file.js", "api/knowledge.js", "converter.js"],
+  "files_changed": ["lib/knowledge-intake.js", "lib/orchestrator.js (1-line extraction_mode forward, per explicit instruction)", "tests/B-gen-extract-verify.ps1", "reports/gen-extract-done.json"],
+  "files_not_touched": ["loop.js", "entity-graph.js", "memory-graph.js", "conjecture-*.js", "lib/handlers/ingest-full.js", "lib/handlers/ingest-extract-existing.js", "lib/handlers/knowledge-inventory.js", "lib/handlers/upload-file.js", "api/knowledge.js", "converter.js"],
   "live_verify_pending": true,
   "live_verify_procedure": "After Muhammad's explicit deploy: in M8 chat, `ingest this as a book: title=Test Book, source_class=established` with a small (<500-word) non-math excerpt attached. Expect chapters>0 AND nodes>0. Confirm via GET /api/knowledge?fn=inventory (nodes_in_books>0) and ?fn=status. Paid GEMINI_API_KEY confirmed working 2026-06-22 per spec.",
   "deploy": "NOT deployed. Branch-only push to origin/feat/general-extraction. Awaiting Muhammad's explicit 'deploy it'."
