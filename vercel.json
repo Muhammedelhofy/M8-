@@ -13,6 +13,7 @@
     { "source": "/api/health",                  "destination": "/api/ops?fn=health" },
     { "source": "/api/loop-attest",             "destination": "/api/ops?fn=loop-attest" },
     { "source": "/api/notify-prefs",            "destination": "/api/ops?fn=notify-prefs" },
+    { "source": "/api/wallet",                  "destination": "/api/ops?fn=wallet" },
     { "source": "/api/(.*)", "destination": "/api/$1" }
   ],
   "functions": {

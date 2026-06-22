@@ -185,25 +185,44 @@
     body.appendChild(foot);
   }
 
-  var inFlight = false;
-  function load() {
-    if (inFlight) return;
-    inFlight = true;
-    setState(loadingState());
-    fetch("/api/wallet", { headers: { Accept: "application/json" } })
-      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+  // Money is gated (not world-readable): we send a pre-shared key the owner
+  // enters once (stored locally), matched server-side against M8_WALLET_KEY.
+  function walletKey() { try { return localStorage.getItem("m8_wallet_key") || ""; } catch (e) { return ""; } }
+  function promptKey() {
+    var k = window.prompt("Enter your M8 wallet key (the value you set as M8_WALLET_KEY in Vercel):", "");
+    if (k != null && k.trim()) { try { localStorage.setItem("m8_wallet_key", k.trim()); } catch (e) {} return true; }
+    return false;
+  }
+  function lockedState(msg, canUnlock) {
+    var w = el("div", "money-state");
+    w.appendChild(el("div", "money-state-icon", "🔒"));
+    w.appendChild(el("div", "money-state-text", msg));
+    if (canUnlock) {
+      var b = el("button", "money-retry", "Enter key");
+      b.addEventListener("click", function () { if (promptKey()) load(); });
+      w.appendChild(b);
+    }
+    return w;
+  }
+
+  var busy = false;
+  function load() { if (busy) return; busy = true; setState(loadingState()); attempt(false); }
+  function attempt(isRetry) {
+    fetch("/api/wallet", { headers: { Accept: "application/json", "x-m8-key": walletKey() } })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { status: r.status, ok: r.ok, j: j }; }); })
       .then(function (res) {
-        if (!res.ok || !res.j || res.j.error) {
-          var msg = res.j && res.j.error === "wallet not configured"
-            ? "Wallet not connected yet (env vars not set)."
-            : "Couldn't reach your wallet right now.";
-          setState(errorState(msg));
-        } else {
-          render(res.j);
+        if (res.ok && res.j && !res.j.error) { busy = false; render(res.j); return; }
+        if (res.status === 401 && !isRetry && promptKey()) { attempt(true); return; } // stay busy across the retry
+        busy = false;
+        if (res.status === 401) { setState(lockedState("Locked — enter the correct key to unlock.", true)); return; }
+        if (res.status === 503) {
+          var lk = res.j && res.j.error === "wallet locked";
+          setState(lockedState(lk ? "Money is locked — set M8_WALLET_KEY in Vercel, then enter it here." : "Wallet not connected yet (env vars not set).", lk));
+          return;
         }
+        setState(errorState("Couldn't reach your wallet right now."));
       })
-      .catch(function () { setState(errorState("Couldn't reach your wallet right now.")); })
-      .finally(function () { inFlight = false; });
+      .catch(function () { busy = false; setState(errorState("Couldn't reach your wallet right now.")); });
   }
 
   if (openBtn) openBtn.addEventListener("click", function () {
