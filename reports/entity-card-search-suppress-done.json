@@ -1,0 +1,27 @@
+{
+  "build": "Session-2 follow-up: entity-card search suppression",
+  "branch": "feat/entity-card-search-suppress",
+  "off_of": "origin/main 9a52193 (includes brain-surface PR#4 + gen-extract)",
+  "deployed": false,
+  "problem": "A 'who is X / tell me about X' turn for a TRACKED entity still ran a web search and padded the answer with irrelevant same-named results (the 'who is Terras?' -> rooftop bar / Terras.co / Cambridge Dictionary noise), even though M8 had a strong tracked entity card.",
+  "fix": "Fetch the entity card ONCE up front (only for card-shaped turns), and when it exists suppress the web search so the turn answers from the card + the model's own knowledge of that specific entity.",
+  "changes_orchestrator_only": [
+    "Hoisted ENTITY_CARD_QUERY_RE to module scope + added entityCardNameFrom() helper, so the search-decision layer can detect a tracked-entity bio ask BEFORE deciding to search (and compose reuses the same match).",
+    "Early in orchestrate(): fetch entityCard via getEntityCard(entityCardName) (only when the regex matches), set entityCardSuppressSearch = !!entityCard, log entity_card_search_suppressed.",
+    "Added '&& !entityCardSuppressSearch' to the 3 search-decision gates: the NONE-intent router gate, the clarification gate, and the regex-search gate. (Compound gate left alone — a namesake bio ask never matches a compound conversion.)",
+    "Compose-time entity-card block now REUSES the early-fetched entityCard (removed the duplicate local const + second getEntityCard call), and when suppressed appends a directive: answer from the card, do NOT list unrelated same-named people/companies/places, do NOT cite unconsulted web sources."
+  ],
+  "safety": [
+    "Fail-OPEN: no tracked card -> entityCardSuppressSearch=false -> the turn searches exactly as before. Zero behavior change for untracked entities.",
+    "Narrow: ENTITY_CARD_QUERY_RE matches identity asks only ('who is', 'tell me about', 'what do you know about', 'background on'), never 'latest news on X' -> live-info turns are never suppressed.",
+    "Honesty-positive: the tracked card is Muhammad's own curated data; answering from it beats web namesakes. The empty-search honesty guard (else-if trace.searchExecuted) is untouched, and we never claim a search we didn't run.",
+    "No second DB call: the card fetched up front is reused at compose (net same getEntityCard count as before, just earlier).",
+    "Stream path needs no change: 'who is X' is RESEARCH/NONE -> not streamable -> delegates to the buffered orchestrate() where this lives."
+  ],
+  "tests": "tests/entity-card-search-suppress-verify.ps1 21/21 (PS static mirror; host has no Node). Live: tests/ENTITY-CARD-SUPPRESS_LIVE_TEST.md.",
+  "not_touched": "intent classification itself, search.js, fleet/finance/compute/notebook/graph hard-routes, the reflector/reasoning-chain, saveMemory. Only orchestrator.js search-decision + compose regions.",
+  "git": {
+    "added_only": ["lib/orchestrator.js", "tests/entity-card-search-suppress-verify.ps1", "tests/ENTITY-CARD-SUPPRESS_LIVE_TEST.md", "reports/entity-card-search-suppress-done.json"],
+    "push": "feat/entity-card-search-suppress (branch only; Muhammad merges)"
+  }
+}
