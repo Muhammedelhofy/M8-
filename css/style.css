@@ -979,3 +979,16 @@ body {
   .orb.speaking, .orb.listening, .orb.thinking::before,
   .boot-orb, .boot-orb::before, .boot-name, .boot-line { animation: none !important; }
 }
+
+/* ── "Install M8" button (shows only when Chrome reports installable) ── */
+.install-btn { position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(var(--footer-h) + 16px); z-index: 250;
+  display: flex; align-items: center; gap: 8px; padding: 11px 20px;
+  border: 1px solid var(--cy); border-radius: 24px; cursor: pointer;
+  background: rgba(45,226,230,.14); color: var(--cy);
+  font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 14.5px; letter-spacing: .5px;
+  box-shadow: 0 0 22px rgba(45,226,230,.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  animation: ib-pulse 2.2s ease-in-out infinite; }
+.install-btn svg { width: 18px; height: 18px; }
+@keyframes ib-pulse { 0%,100% { box-shadow: 0 0 18px rgba(45,226,230,.32); } 50% { box-shadow: 0 0 30px rgba(45,226,230,.6); } }
+@media (prefers-reduced-motion: reduce) { .install-btn { animation: none !important; } }

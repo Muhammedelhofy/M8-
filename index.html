@@ -131,6 +131,14 @@
     </div>
   </div>
 
+  <!-- Install-as-app button (appears only when Chrome says it's installable) -->
+  <button id="install-btn" class="install-btn" style="display:none" aria-label="Install M8 as an app">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/>
+    </svg>
+    <span>Install M8</span>
+  </button>
+
   <!-- ── SCRIPTS ────────────────────────────── -->
   <script src="js/voice.js"></script>
   <script src="js/chat.js"></script>
@@ -138,6 +146,16 @@
   <script>
   (function(){
     if('serviceWorker' in navigator){ window.addEventListener('load',function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}); }); }
+    var deferredPrompt=null, ibtn=document.getElementById('install-btn');
+    var standalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+    window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferredPrompt=e; if(ibtn && !standalone) ibtn.style.display='flex'; });
+    if(ibtn) ibtn.addEventListener('click', function(){
+      if(!deferredPrompt) return;
+      ibtn.style.display='none';
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function(){ deferredPrompt=null; });
+    });
+    window.addEventListener('appinstalled', function(){ if(ibtn) ibtn.style.display='none'; });
     var boot=document.getElementById('boot');
     if(boot){ setTimeout(function(){ boot.classList.add('boot--hide'); setTimeout(function(){ if(boot.parentNode) boot.parentNode.removeChild(boot); }, 700); }, 1300); }
     function buzz(ms){ if(navigator.vibrate){ try { navigator.vibrate(ms); } catch(_){} } }
