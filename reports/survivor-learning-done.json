@@ -26,7 +26,7 @@
     "lib/conjecture-gen.js (runConjectureGenWithFeedback: reads getSurvivorTemplateStats; prepends buildSurvivorBlock(survivorTemplates) BELOW the Lean-proven block + ABOVE avoid; returns survivorTemplates; early-return carries survivorTemplates: []; B112/B99/B92 calls all KEPT so regressions stay green; leading comment updated to VERIFIED / COMPUTATIONAL EVIDENCE / AVOID order)",
     "lib/loop.js (runObservePhase ONLY: stamps learn.survivor_templates/survivor_min_count/survivor_template_tags into row.metadata; l5_m3 log adds survivorTplEarned; step-2 header comment updated. runVerifyPhase UNTOUCHED.)",
     "tests/survivor-learning-verify.ps1 (NEW PS-5.1 mirror, 50/50 = 8/8 core + 42 wiring/honesty)",
-    "tests/B113_LIVE_TEST.md (NEW live-verify doc + live data snapshot)",
+    "tests/SURVIVOR-LEARNING_LIVE_TEST.md (NEW live-verify doc + live data snapshot; renamed from B113_LIVE_TEST.md to avoid a filename collision with the parallel B113 branch)",
     "reports/survivor-learning-done.json (this file)"
   ],
   "files_NOT_touched": [
@@ -42,6 +42,7 @@
     "B83d-proposer-feedback-verify.ps1": "68/68 PASS (regression)",
     "node": "absent on host -> PS-5.1 mirror + static review per repo convention; the integrated regions of all 3 lib files were statically reviewed for syntax."
   },
-  "live_verify_pending": "After Muhammad merges + deploys: trigger /api/cron-explore, then check m8_loop_runs newest row metadata.learn.survivor_templates (expect ~5) + survivor_template_tags, and confirm the generator packet shows the COMPUTATIONAL EVIDENCE block labeled evidence-not-proof and SEPARATE from the Lean VERIFIED block. Full steps in tests/B113_LIVE_TEST.md.",
+  "live_verify_pending": "After Muhammad merges + deploys: trigger /api/cron-explore, then check m8_loop_runs newest row metadata.learn.survivor_templates (expect ~5) + survivor_template_tags, and confirm the generator packet shows the COMPUTATIONAL EVIDENCE block labeled evidence-not-proof and SEPARATE from the Lean VERIFIED block. Full steps in tests/SURVIVOR-LEARNING_LIVE_TEST.md.",
+  "parallel_build_collision": "HEADS-UP for the merge: a PARALLEL session shipped a DIFFERENT 'Build-113' on branch feat/b113-outcome-aware-gen (commit e3ecbf0, report reports/build-113-done.json). The two are COMPLEMENTARY, not duplicates: theirs steers the PURE mined cohort by down-weighting template regions that already carry an earned-verified/sorry Lean OUTCOME (and bumps GEN_VERSION 2->3); mine adds a SEPARATE free survivor-EVIDENCE PREFER block from m8_research_notes (no Lean, no GEN_VERSION change). MERGE-WATCH: both edit runConjectureGenWithFeedback (conjecture-gen.js) and runObservePhase telemetry (loop.js) -> expect a textual conflict; resolve by KEEPING BOTH (build their feedbackProfile AND read survivor stats + prepend the evidence block; merge both metadata.learn stamps). Filename collision already avoided: my live-test doc was renamed B113_LIVE_TEST.md -> SURVIVOR-LEARNING_LIVE_TEST.md; my report is survivor-learning-done.json (theirs is build-113-done.json). Suggest renumbering one to B114 when merging to disambiguate.",
   "deploy": "NOT deployed. Branch feat/survivor-learning pushed. Muhammad merges (he deploys). Kill/tune via env M8_SURVIVOR_MIN_COUNT (no redeploy needed)."
 }
