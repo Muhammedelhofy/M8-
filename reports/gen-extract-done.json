@@ -1,65 +1,32 @@
 {
   "build": "gen-extract",
   "branch": "feat/general-extraction",
-  "worktree": "m8-gen-extract",
-  "based_on": "origin/main (9320d51) — the branch that actually carries the Build-RAG base (extractConceptsWithStatus, m8_ingest_checkpoints). Local `main` (268c0f9) is behind origin and lacks them.",
   "date": "2026-06-22",
-  "model": "Opus 4.8 (spec header said Sonnet 4.6; built under Muhammad's direct instruction)",
-  "status": "code-complete / branch-only / NOT deployed",
+  "model": "Opus 4.8",
+  "status": "DEPLOYED + LIVE-VERIFIED (general AND religious/classical content). 100% free stack.",
+  "prod": { "url": "m8-alpha.vercel.app", "main_sha": "b3cb084", "deploy_path": "fast-forward to main -> Vercel auto-build" },
   "test_results": {
-    "new_gate": { "file": "tests/B-gen-extract-verify.ps1", "pass": 66, "fail": 0 },
-    "required_regression": { "file": "tests/B-rag-content-verify.ps1", "pass": 52, "fail": 0, "note": "stayed 52/52 as required" },
-    "other_regressions_green": [
-      "tests/B78b-book-ingest-wiring-verify.ps1 18/0 (parseBookIngestMessage — file I edited)",
-      "tests/B77-ingest-resume-verify.ps1 33/0",
-      "tests/kernel-leap-verify.ps1 exit0",
-      "tests/knowledge-verify.ps1 exit0",
-      "tests/epistemic-axis-verify.ps1 exit0",
-      "tests/B83b-kg-semantic-verify.ps1 exit0"
-    ],
-    "pre_existing_failures_NOT_caused_by_this_build": {
-      "files": ["tests/B101-ingest-audit-verify.ps1 (14/31)", "tests/B102-reingest-verify.ps1 (48/6)"],
-      "root_cause": "Both tests read api/ingest-full.js and api/ingest-extract-existing.js, which no longer exist on origin/main — the handlers were refactored to lib/handlers/ingest-full.js and lib/handlers/ingest-extract-existing.js, and these two tests were never re-pathed.",
-      "proof": "Re-ran both with my lib/knowledge-intake.js edit git-stashed (pristine origin/main): identical 14/31 and 48/6. Neither test reads lib/knowledge-intake.js, so this build cannot affect them.",
-      "suggested_followup": "Re-path B101/B102 from api/ to lib/handlers/ (separate cleanup; out of scope here)."
-    }
-  },
-  "schema_check": {
-    "ran_sql": true,
-    "project": "BOLT (ltqpoupferwituusxwal)",
-    "spec_named_table_m8_knowledge_nodes": "DOES NOT EXIST (empty information_schema result)",
-    "real_write_target": "m8_graph_nodes — has `kind` (claim|entity via JS VALID_KIND), `metadata` jsonb, `extraction_confidence`; NO `type`/`node_type` column",
-    "kind_check_constraint_allows": ["claim","entity","fact","concept","person","..."],
-    "decision": "schema-free. General `type` (fact|event|person|concept|place|date|ruling) is used ONLY to derive the JS-valid kind (person|place|concept -> entity; everything else -> claim), then dropped. No migration.",
-    "baseline_counts": { "total_nodes": 161, "nodes_from_sources": 20, "sources": 23, "distinct_book_titles": 3, "real_books": 0 }
+    "gate": { "file": "tests/B-gen-extract-verify.ps1", "pass": 80, "fail": 0 },
+    "required_regression": { "file": "tests/B-rag-content-verify.ps1", "pass": 52, "fail": 0 }
   },
   "schema_change": false,
-  "changes": [
-    "lib/knowledge-intake.js — added GENERAL_EXTRACTION_SYSTEM prompt (facts/events/people/places/dates/rulings/concepts; Islamic/historical priority)",
-    "lib/knowledge-intake.js — added pure helpers: selectExtractionSystem(mode), buildGeneralExtractionPrompt(), generalTypeToKind(type), deriveExtractionMode(cls, explicitMode)",
-    "lib/knowledge-intake.js — parseExtractionOutput(raw, source_class, source_doc_id, mode='math'): NEW 'general' branch normalizes {label,content,type?} into the SAME candidate shape the math path emits (node_type in claim|entity, confidence defaults 'high'); math branch byte-unchanged",
-    "lib/knowledge-intake.js — extractConcepts(source_id, mode='general') + extractConceptsWithStatus(source_id, mode='general'): select system prompt + user prompt + parser by mode",
-    "lib/knowledge-intake.js — ingestBookText(): new extraction_mode param; derives mode once via deriveExtractionMode(cls, extraction_mode) and threads it to every chapter's extractConceptsWithStatus call",
-    "lib/knowledge-intake.js — parseBookIngestMessage(): parses optional `extraction_mode=math` / `mode=math` (comma-delimited; existing grab() lookahead already delimits, so the key list was left untouched to avoid an edge-case title-swallow), returns extraction_mode",
-    "lib/knowledge-intake.js — module.exports: added the 5 new pure helpers for testability",
-    "lib/orchestrator.js:1436 — forwards `extraction_mode: meta.extraction_mode` into ingestBookText() so the chat math override flows end-to-end (added on explicit instruction)",
-    "tests/B-gen-extract-verify.ps1 — NEW PS 5.1 mirror, 66 checks across all 7 spec criteria"
+  "what_shipped": [
+    "1. General extraction mode: GENERAL_EXTRACTION_SYSTEM prompt + mode routing (selectExtractionSystem/deriveExtractionMode); default flipped math->general, math opt-in via extraction_mode=math / cls=mathematical.",
+    "2. parseExtractionOutput general branch normalizes {label,content,type} into the math candidate shape (type->kind, confidence default high). Schema-free (m8_graph_nodes has no type column).",
+    "3. extraction_mode wired end-to-end incl. orchestrator.js:1436 (per explicit instruction).",
+    "4. FIX (silent 0-extraction): parseJsonArrayLoose salvages prose-wrapped/fenced JSON arrays that a strict JSON.parse was discarding; extractConceptsWithStatus returns a debug reason; buildKnowledgeIngestContext surfaces it; maxOutputTokens 1200->2048.",
+    "5. OPTION 3 (religious/classical reliability): EXTRACT_PROVIDER_ORDER = groq,cerebras,gemini,gemini2,openrouter,mistral (env M8_EXTRACT_PROVIDER_ORDER override, NO paid providers) passed as providerOrder to extraction. Gemini RECITATION-blocks famous religious text, so extraction now tries groq/cerebras FIRST."
   ],
-  "spec_deviations_and_why": [
-    "Spec said the math parser 'only returns {label, content}else' — WRONG: it requires {node_type in claim|entity, label, content, confidence in high|medium|low}. The general prompt emits NEITHER node_type NOR confidence, so the existing strict parser would have silently dropped every general item. Fix: the general branch synthesizes node_type (from type) and confidence (default high) so nodes actually reach m8_graph_nodes — this is the real unblock the spec was reaching for.",
-    "Spec named table m8_knowledge_nodes; it does not exist. Real table m8_graph_nodes has no type column. Followed the spec's 'no column -> drop the field' branch.",
-    "Spec referenced parseBookIngestCommand()/handleBookIngestCommand(); actual names are parseBookIngestMessage() (in knowledge-intake.js) and inline handling in orchestrator.js. Implemented against the real names.",
-    "extractConcepts default mode is 'general' per spec. This also routes the existing document paths (converter.js, lib/handlers/ingest-full.js, lib/handlers/ingest-extract-existing.js, orchestrator re-extract) through general extraction — exactly the goal (uploaded/established docs now extract). Those candidates still carry extraction_confidence/node_type, so those call sites work unchanged. Forbidden files were NOT edited."
-  ],
-  "wiring": {
-    "status": "COMPLETE — extraction_mode now flows end-to-end through chat.",
-    "what": "lib/orchestrator.js:1436 forwards `extraction_mode: meta.extraction_mode` into the ingestBookText({...}) call. Added on Muhammad's explicit instruction, overriding the spec's do-not-touch list for this one line.",
-    "default_safe": "meta.extraction_mode is 'general' unless the user types extraction_mode=math / mode=math. cls in this path is only established|speculative (normalizeSourceClass never yields 'mathematical'), so forwarding the 'general' default produces the same mode the cls-derivation would — zero behavior change for existing book ingests; it only adds the math-override capability.",
-    "regression_check": "B102 stayed 48/6 (byte-identical pre/post edit; the 6 fails are the pre-existing missing-api/-file ones), B78b 18/0, B-gen-extract 66/0."
+  "live_verification": {
+    "general_english": "Treaty of Westphalia paragraph -> 5 nodes",
+    "general_arabic": "original made-up Arabic (company/Riyadh) -> 4 nodes",
+    "religious_classical": "user's البداية والنهاية paste (source_id 25): 0 (pre-option-3) -> 10 real nodes (post-option-3): Quranic verse, Heraclius<->Abu Sufyan, Prophet's names, al-Bayhaqi, lineage عبد الله/عبد المطلب, al-Zuhri",
+    "diagnosis_note": "0-extractions were (a) strict JSON.parse discarding fallback-provider output [fixed by #4], and (b) Gemini RECITATION on famous religious text + rate-limited free fallbacks [fixed by #5]. Vercel logs are blind to extraction internals; the debug field is the visibility channel."
   },
-  "files_changed": ["lib/knowledge-intake.js", "lib/orchestrator.js (1-line extraction_mode forward, per explicit instruction)", "tests/B-gen-extract-verify.ps1", "reports/gen-extract-done.json"],
-  "files_not_touched": ["loop.js", "entity-graph.js", "memory-graph.js", "conjecture-*.js", "lib/handlers/ingest-full.js", "lib/handlers/ingest-extract-existing.js", "lib/handlers/knowledge-inventory.js", "lib/handlers/upload-file.js", "api/knowledge.js", "converter.js"],
-  "live_verify_pending": true,
-  "live_verify_procedure": "After Muhammad's explicit deploy: in M8 chat, `ingest this as a book: title=Test Book, source_class=established` with a small (<500-word) non-math excerpt attached. Expect chapters>0 AND nodes>0. Confirm via GET /api/knowledge?fn=inventory (nodes_in_books>0) and ?fn=status. Paid GEMINI_API_KEY confirmed working 2026-06-22 per spec.",
-  "deploy": "NOT deployed. Branch-only push to origin/feat/general-extraction. Awaiting Muhammad's explicit 'deploy it'."
+  "live_verify_pending": false,
+  "deploy": "DEPLOYED to production (main b3cb084). All on the free stack.",
+  "known_followups_minor": [
+    "Chat narration: an Arabic-ONLY ingest paste can make the model ignore the packet directive and reply oddly even though nodes ARE created. Cosmetic; did not affect real usage. Robust fix = deterministic hard-return for ingest (sacrifices model narration of the clarification summary) — deliberately NOT done.",
+    "Free-provider per-minute rate limits: ingest a book at a time, not many in 2 minutes. Book path is chapter-paced + resumable."
+  ]
 }
