@@ -17,6 +17,7 @@ const extractExisting   = require("../lib/handlers/ingest-extract-existing");
 const inventory         = require("../lib/handlers/knowledge-inventory");
 const memoryConsolidate = require("../lib/handlers/memory-consolidate");
 const platformSync      = require("../lib/handlers/platform-sync");
+const { getInventoryStatus } = require("../lib/knowledge-intake");
 
 module.exports = async (req, res) => {
   const fn = String((req.query && req.query.fn) || "").toLowerCase();
@@ -26,6 +27,17 @@ module.exports = async (req, res) => {
     case "inventory":          return inventory(req, res);
     case "memory-consolidate": return memoryConsolidate(req, res);
     case "platform-sync":      return platformSync(req, res);
+    // Build-RAG: polished status — books, nodes, NotebookLM tip, test-DOCX reminder.
+    case "status": {
+      if (req.method !== "GET") return res.status(405).json({ error: "GET only" });
+      try {
+        const status = await getInventoryStatus();
+        return res.status(200).json({ ok: true, ...status });
+      } catch (e) {
+        console.error("[knowledge/status]", e.message);
+        return res.status(500).json({ ok: false, error: e.message });
+      }
+    }
     default:
       return res.status(404).json({ error: `unknown knowledge fn: '${fn}'` });
   }
