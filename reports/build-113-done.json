@@ -1,0 +1,33 @@
+{
+  "task": "Build-113 — Close the Record→Generate wire: make the nightly conjecture generator OUTCOME-AWARE so past verified/sorry Lean outcomes measurably steer the next generation (not just the narration packet).",
+  "branch": "feat/b113-outcome-aware-gen",
+  "base": "origin/main (a210222)",
+  "approach": "The wire was open even on origin/main: Build-112 routed the observe phase through runConjectureGenWithFeedback, but that wrapper only appended PREFER/AVOID text to result.packet — generateMinedCohort/makeCandidate were feedback-blind. Build-113 makes the mined cohort itself outcome-aware: (1) pure classifier maps each recorded conjecture_text (a free-form Lean scaffold target) to M3 template regions via Collatz feature vocabulary (detectGenFeatures → classifyConjectureTemplates, all-features-present rule); (2) buildGenFeedbackProfile unions the EARNED-verified regions (reusing Build-112's N-verifs gate getEarnedSuccessPatterns — Grok's flip-flop absorber) + the sorry regions into a down-weight set; (3) buildTemplateSchedule soft-down-weights those regions in generateMinedCohort's round-robin (explored region gets 1 draw per cycle vs 4 for unexplored; never fully excluded so the 120-cohort still fills); (4) runConjectureGenWithFeedback now fetches the snapshot FIRST, builds the profile, and passes it INTO runConjectureGen. The matched random baseline is rebuilt from the (biased) mined composition, so the Wilson/Newcombe gate stays unbiased. GEN_VERSION bumped 2→3 (output now depends on (seed, snapshot)); empty/unclassifiable snapshot ⇒ mined cohort byte-identical to v2 (only the stamp + m3_feedback metadata differ). Telemetry (gen_steered, down_weighted) rides the existing m8_loop_runs.metadata JSONB — no schema change.",
+  "files": [
+    "lib/conjecture-gen.js — GEN_VERSION 2→3; new pure GEN_FEATURE_SIGNATURE + detectGenFeatures + classifyConjectureTemplates + buildGenFeedbackProfile + buildTemplateSchedule + GEN_SCHEDULE_BASE; generateMinedCohort(+downWeight) iterates the schedule; runConjectureGen(+feedbackProfile) steers the cohort + stamps m3_feedback + returns feedback; runConjectureGenWithFeedback restructured to fetch→profile→steer→decorate; M8_GEN_STEER_DISABLED kill switch; exports updated",
+    "lib/loop.js — observe-phase header + step-2 comments updated (cohort now steered, not just packet); learn telemetry adds gen_steered + down_weighted",
+    "tests/B113-outcome-aware-gen-verify.ps1 — NEW PS-5.1 mirror, 49/49 (14/14 core incl. the required acceptance test: same schedule empty vs mock down-weight → cohort composition diverges 12→4 while empty stays byte-identical)",
+    "tests/B113_LIVE_TEST.md — NEW live-verification doc (chat command + Supabase metadata checks + kill switches)"
+  ],
+  "tests": {
+    "B113-outcome-aware-gen-verify.ps1": "49/49 PASS (14/14 core + 35 wiring)",
+    "learn-loop-verify.ps1 (B112)": "44/44 PASS — invariants preserved",
+    "m3-conjecture-verify.ps1": "53/53 PASS — GEN_VERSION bump + signature change safe",
+    "B92-feedback-verify.ps1": "40/40 PASS",
+    "B99-proposer-feedback-verify.ps1": "37/37 PASS",
+    "node": "ABSENT on host — PS-5.1 mirror per repo convention; acceptance test ports buildTemplateSchedule + generateMinedCohort control flow with a stub makeCandidate"
+  },
+  "invariants_preserved": [
+    "Honesty contract: survivors stay machine-generated/tested-to-N; steering NEVER calls a region solved/proven/true",
+    "Wilson/Newcombe gate measures GENERATION QUALITY only; baseline rebuilt from biased mined composition → like-with-like",
+    "Micro-prover + vacuity floor + baseline-matching untouched",
+    "Grok N-verifs promotion gate reused (verified side steers only via earnedPatterns)",
+    "Empty/disabled snapshot ⇒ byte-identical v2 cohort (proven in the acceptance test)"
+  ],
+  "kill_switches": {
+    "M8_GEN_STEER_DISABLED=1": "revert generation to unsteered v2 (keep narration)",
+    "GRAPH_DISABLED=1": "disable the whole feedback path"
+  },
+  "deployed": false,
+  "notes": "NO deploy — awaiting Muhammad's explicit 'deploy'. Live effect is correctly SILENT today: the N-verifs gate (default 3) means nothing has earned steering weight with the current ~2 outcome rows; the wire is closed end-to-end but its visible effect scales with the Lean lane's output. Granularity is TEMPLATE/feature-region (v1); slot-level (specific mod/residue/k) down-weighting is a documented future tightening. No schema change, no paid APIs."
+}
