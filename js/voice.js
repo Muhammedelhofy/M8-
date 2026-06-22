@@ -1,6 +1,5 @@
 class VoiceManager {
   constructor() {
-    this.recognition = null;
     this.synthesis = window.speechSynthesis;
     this.isListening = false;
     this.isSpeaking = false;
@@ -9,48 +8,127 @@ class VoiceManager {
     this.onStatusChange = null;
     this.voicesLoaded = false;
 
-    this._initRecognition();
+    // INPUT: record mic audio -> Groq Whisper (/api/transcribe). Uses
+    // getUserMedia + MediaRecorder, which WORK inside installed PWAs — unlike
+    // the browser Web Speech API (webkitSpeechRecognition), which silently fails
+    // in standalone mode and is flaky in the tab too.
+    this._stream = null;
+    this._recorder = null;
+    this._chunks = [];
+    this._recMime = "audio/webm";
+
     this._loadVoices();
   }
 
-  _initRecognition() {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      console.warn("Speech recognition not supported in this browser.");
-      return;
-    }
-
-    this.recognition = new SpeechRecognition();
-    this.recognition.continuous = false;
-    this.recognition.interimResults = false;
-    this.recognition.maxAlternatives = 1;
-    this.recognition.lang = this.currentLang;
-
-    this.recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      if (this.onResult) this.onResult(transcript);
-    };
-
-    this.recognition.onstart = () => {
-      this.isListening = true;
-      if (this.onStatusChange) this.onStatusChange("listening");
-    };
-
-    this.recognition.onend = () => {
-      this.isListening = false;
-      if (!this.isSpeaking && this.onStatusChange) this.onStatusChange("idle");
-    };
-
-    this.recognition.onerror = (event) => {
-      this.isListening = false;
-      if (event.error !== "no-speech") {
-        console.error("STT error:", event.error);
-      }
-      if (!this.isSpeaking && this.onStatusChange) this.onStatusChange("idle");
-    };
+  setLanguage(lang) {
+    this.currentLang = lang === "ar" ? "ar-SA" : "en-US";
   }
 
+  // ── INPUT: mic -> Groq Whisper ─────────────────────────────────────────────
+  isSupported() {
+    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+  }
+
+  async startListening() {
+    if (this.isListening) return;
+    if (!this.isSupported()) {
+      alert("Voice input needs a modern browser with microphone access.");
+      return;
+    }
+    this.stopSpeaking();
+    this.isListening = true; // set early so a quick second tap routes to stop
+    try {
+      this._stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (e) {
+      this.isListening = false;
+      console.error("Mic permission denied:", e);
+      if (this.onStatusChange) this.onStatusChange("idle");
+      alert("Microphone is blocked. Allow mic access for M8 in your browser/app settings, then try again.");
+      return;
+    }
+    // pick a container the device supports (Chrome -> webm, Safari/iOS -> mp4)
+    let mime = "";
+    if (window.MediaRecorder && MediaRecorder.isTypeSupported) {
+      if (MediaRecorder.isTypeSupported("audio/webm")) mime = "audio/webm";
+      else if (MediaRecorder.isTypeSupported("audio/mp4")) mime = "audio/mp4";
+    }
+    try {
+      this._recorder = mime
+        ? new MediaRecorder(this._stream, { mimeType: mime })
+        : new MediaRecorder(this._stream);
+    } catch (e) {
+      this._recorder = new MediaRecorder(this._stream);
+    }
+    this._recMime = this._recorder.mimeType || mime || "audio/webm";
+    this._chunks = [];
+    this._recorder.ondataavailable = (ev) => {
+      if (ev.data && ev.data.size) this._chunks.push(ev.data);
+    };
+    this._recorder.onstop = () => this._transcribe();
+    this._recorder.start();
+    if (this.onStatusChange) this.onStatusChange("listening");
+  }
+
+  stopListening() {
+    if (!this.isListening) return;
+    this.isListening = false;
+    if (this.onStatusChange) this.onStatusChange("thinking"); // transcribing
+    if (this._recorder && this._recorder.state !== "inactive") {
+      try {
+        this._recorder.stop();
+      } catch (e) {
+        this._cleanupStream();
+        if (this.onStatusChange) this.onStatusChange("idle");
+      }
+    } else {
+      this._cleanupStream();
+      if (this.onStatusChange) this.onStatusChange("idle");
+    }
+  }
+
+  _cleanupStream() {
+    if (this._stream) {
+      this._stream.getTracks().forEach((t) => t.stop());
+      this._stream = null;
+    }
+  }
+
+  async _transcribe() {
+    this._cleanupStream();
+    const blob = new Blob(this._chunks, { type: this._recMime });
+    this._chunks = [];
+    if (!blob.size) {
+      if (this.onStatusChange) this.onStatusChange("idle");
+      return;
+    }
+    try {
+      const audio = await this._blobToBase64(blob);
+      const resp = await fetch("/api/transcribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ audio, mime: this._recMime, lang: this.currentLang.split("-")[0] }),
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (this.onStatusChange) this.onStatusChange("idle");
+      const text = ((data && (data.text || data.transcript)) || "").trim();
+      if (text && this.onResult) this.onResult(text);
+      else console.warn("Empty transcription:", data);
+    } catch (e) {
+      console.error("Transcription failed:", e);
+      if (this.onStatusChange) this.onStatusChange("idle");
+    }
+  }
+
+  _blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onloadend = () => resolve(String(r.result).split(",")[1] || "");
+      r.onerror = reject;
+      r.readAsDataURL(blob);
+    });
+  }
+
+  // ── OUTPUT: text-to-speech (unchanged) ─────────────────────────────────────
   _loadVoices() {
     // Voices load asynchronously in some browsers
     if (this.synthesis.getVoices().length > 0) {
@@ -70,32 +148,6 @@ class VoiceManager {
       voices.find((v) => v.lang.startsWith(langCode.split("-")[0])) ||
       null
     );
-  }
-
-  setLanguage(lang) {
-    this.currentLang = lang === "ar" ? "ar-SA" : "en-US";
-    if (this.recognition) this.recognition.lang = this.currentLang;
-  }
-
-  startListening() {
-    if (!this.recognition) {
-      alert("Voice input is not supported in this browser. Please use Chrome.");
-      return;
-    }
-    if (this.isListening) return;
-    this.stopSpeaking();
-    this.recognition.lang = this.currentLang;
-    try {
-      this.recognition.start();
-    } catch (e) {
-      console.error("Could not start recognition:", e);
-    }
-  }
-
-  stopListening() {
-    if (this.recognition && this.isListening) {
-      this.recognition.stop();
-    }
   }
 
   speak(text, onEnd) {
@@ -209,9 +261,5 @@ class VoiceManager {
       }
     };
     this.synthesis.speak(u);
-  }
-
-  isSupported() {
-    return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
   }
 }
