@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>M8 · Math Records — Hall of Fame</title>
+<style>
+  :root{
+    --teal:#54d6c8;--blue:#5ea8ff;--gold:#ffd166;--red:#ff8a8a;--green:#6ee7b7;
+    --core:#93b6ff;--mut:#8a9ac4;--line:#243154;--txt:#e6ecf5;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--txt);
+    background:radial-gradient(900px 500px at 50% -8%,rgba(79,106,245,.18),transparent 70%),
+               radial-gradient(700px 500px at 12% 30%,rgba(206,147,216,.07),transparent 70%),
+               #06080f;min-height:100vh;}
+  .wrap{max-width:1040px;margin:0 auto;padding:26px 20px 60px;}
+  /* header */
+  .head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;
+    border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:20px;}
+  .kicker{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--mut);}
+  h1{font-size:25px;font-weight:800;color:#fff;margin:4px 0 0;text-shadow:0 0 20px rgba(120,150,255,.5);}
+  .sub{font-size:12px;color:var(--mut);margin-top:5px;max-width:560px;line-height:1.5;}
+  .trophy{font-size:40px;line-height:1;filter:drop-shadow(0 0 14px rgba(255,209,102,.45));}
+  /* controls */
+  .controls{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px;background:rgba(18,26,48,.6);
+    border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:18px;}
+  .ctl{display:flex;flex-direction:column;gap:4px;}
+  .ctl label{font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut);}
+  .ctl input{background:#0b1020;border:1px solid var(--line);border-radius:8px;color:var(--txt);
+    padding:7px 9px;font-size:13px;width:130px;font-variant-numeric:tabular-nums;}
+  .ctl input:focus{outline:none;border-color:var(--blue);}
+  .grow{flex:1 1 auto;}
+  button.run{background:linear-gradient(180deg,#3a63d8,#2b49a8);border:1px solid #4f6af5;color:#fff;
+    font-weight:700;font-size:13.5px;letter-spacing:.3px;padding:10px 22px;border-radius:9px;cursor:pointer;
+    box-shadow:0 0 18px rgba(79,106,245,.35);transition:transform .08s,box-shadow .2s;}
+  button.run:hover{box-shadow:0 0 26px rgba(79,106,245,.55);}
+  button.run:active{transform:translateY(1px);}
+  button.run:disabled{opacity:.55;cursor:wait;box-shadow:none;}
+  .reset{background:none;border:none;color:var(--mut);font-size:11px;cursor:pointer;text-decoration:underline;
+    text-underline-offset:3px;padding:6px 2px;}
+  .reset:hover{color:var(--red);}
+  /* progress */
+  .progress{height:6px;background:#0b1020;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-bottom:8px;}
+  .bar{height:100%;width:0%;background:linear-gradient(90deg,var(--blue),var(--teal));transition:width .15s;}
+  .status{font-size:11.5px;color:var(--mut);min-height:16px;margin-bottom:22px;font-variant-numeric:tabular-nums;}
+  .status b{color:var(--teal);font-weight:700;}
+  /* stat strip */
+  .strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:26px;}
+  .stat{background:rgba(18,26,48,.7);border:1px solid var(--line);border-radius:10px;padding:13px 14px;}
+  .stat .sk{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut);}
+  .stat .sv{font-size:22px;font-weight:800;color:#eaf1ff;margin-top:3px;font-variant-numeric:tabular-nums;
+    text-shadow:0 0 14px rgba(120,150,255,.25);}
+  .stat .ss{font-size:10px;color:var(--mut);margin-top:2px;}
+  /* sections */
+  .sechead{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--mut);
+    margin:26px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;}
+  .sechead span.tag{letter-spacing:.5px;text-transform:none;color:var(--green);font-size:10.5px;}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  .grid2{grid-template-columns:repeat(2,1fr);}
+  .rec{position:relative;background:rgba(18,26,48,.8);border:1px solid var(--line);border-radius:12px;
+    padding:15px 16px;overflow:hidden;}
+  .rec.gold{border-color:rgba(255,209,102,.4);}
+  .rec .glow{position:absolute;inset:0;background:radial-gradient(220px 90px at 80% 0,rgba(255,209,102,.10),transparent 70%);pointer-events:none;}
+  .rec .rk{font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut);display:flex;align-items:center;gap:6px;}
+  .rec .rv{font-size:26px;font-weight:800;color:var(--gold);margin:8px 0 2px;font-variant-numeric:tabular-nums;
+    text-shadow:0 0 16px rgba(255,209,102,.3);word-break:break-all;line-height:1.05;}
+  .rec .rn{font-size:12px;color:var(--txt);}
+  .rec .rn b{color:var(--teal);font-variant-numeric:tabular-nums;}
+  .rec .at{font-size:10.5px;color:var(--mut);margin-top:9px;padding-top:8px;border-top:1px dashed var(--line);
+    font-variant-numeric:tabular-nums;}
+  .rec .newflag{display:none;font-size:9px;font-weight:800;letter-spacing:1px;color:#06080f;background:var(--gold);
+    border-radius:4px;padding:1px 6px;}
+  .rec.isnew .newflag{display:inline-block;animation:pop .5s ease;}
+  .rec.isnew{border-color:var(--gold);box-shadow:0 0 24px rgba(255,209,102,.25);}
+  @keyframes pop{0%{transform:scale(.6);opacity:0;}60%{transform:scale(1.15);}100%{transform:scale(1);opacity:1;}}
+  /* lychrel most-wanted */
+  .wanted{background:rgba(18,26,48,.8);border:1px solid var(--line);border-radius:12px;padding:15px 16px;}
+  .wanted .rk{font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut);margin-bottom:10px;}
+  .seeds{display:flex;flex-wrap:wrap;gap:7px;}
+  .seed{background:rgba(255,138,138,.08);border:1px solid rgba(255,138,138,.3);border-radius:7px;
+    padding:5px 10px;font-size:13px;font-weight:700;color:#ffb3b3;font-variant-numeric:tabular-nums;}
+  .seed.first{background:rgba(255,138,138,.18);box-shadow:0 0 14px rgba(255,138,138,.25);}
+  .wanted .note{font-size:11px;color:var(--mut);margin-top:11px;line-height:1.5;}
+  /* goldbach comet */
+  .comet{background:rgba(18,26,48,.8);border:1px solid var(--line);border-radius:12px;padding:14px 14px 10px;margin-top:12px;}
+  .comet canvas{width:100%;height:auto;display:block;border-radius:6px;}
+  .cometcap{font-size:10.5px;color:var(--mut);margin-top:9px;line-height:1.5;}
+  .cometcap b{color:var(--gold);font-weight:700;}
+  /* footer */
+  .foot{margin-top:32px;padding-top:16px;border-top:1px solid var(--line);font-size:11px;color:var(--mut);line-height:1.6;}
+  .foot b{color:var(--txt);}
+  .pill{display:inline-block;background:rgba(110,231,183,.1);border:1px solid rgba(110,231,183,.3);
+    color:var(--green);border-radius:6px;padding:2px 9px;font-size:10px;font-weight:700;letter-spacing:.5px;margin-right:6px;}
+  @media(max-width:720px){.strip{grid-template-columns:repeat(2,1fr);}.grid{grid-template-columns:1fr;}.grid2{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="head">
+    <div>
+      <div class="kicker">M8 · Unsolved-Problem Engine</div>
+      <h1>Math Records — Hall&nbsp;of&nbsp;Fame</h1>
+      <div class="sub">Live, deterministic number-crunching — <b>no AI</b>, runs entirely in your browser.
+        Every figure is "observed up to N", never "proven". Beat a record and it's saved forever (in this browser).</div>
+    </div>
+    <div class="trophy">🏆</div>
+  </div>
+
+  <div class="controls">
+    <div class="ctl">
+      <label>Collatz — scan up to</label>
+      <input id="cBound" type="number" value="100000" min="1000" max="1000000" step="1000" />
+    </div>
+    <div class="ctl">
+      <label>Lychrel — scan up to</label>
+      <input id="lBound" type="number" value="10000" min="100" max="50000" step="100" />
+    </div>
+    <div class="ctl">
+      <label>Lychrel — step cap</label>
+      <input id="lSteps" type="number" value="500" min="30" max="1000" step="10" />
+    </div>
+    <div class="ctl">
+      <label>Goldbach — scan up to</label>
+      <input id="gBound" type="number" value="30000" min="1000" max="120000" step="1000" />
+    </div>
+    <div class="grow"></div>
+    <button class="run" id="runBtn">▶  Run the night</button>
+    <button class="reset" id="resetBtn" title="Wipe all-time records in this browser">reset hall of fame</button>
+  </div>
+
+  <div class="progress"><div class="bar" id="bar"></div></div>
+  <div class="status" id="status">Ready. Press <b>Run the night</b> to crunch the numbers.</div>
+
+  <div class="strip">
+    <div class="stat"><div class="sk">Numbers crunched · this run</div><div class="sv" id="sRun">0</div><div class="ss" id="sRunSub">—</div></div>
+    <div class="stat"><div class="sk">Numbers crunched · all time</div><div class="sv" id="sAll">0</div><div class="ss">since you first opened this</div></div>
+    <div class="stat"><div class="sk">Nights run</div><div class="sv" id="sRuns">0</div><div class="ss">scoreboard sessions</div></div>
+    <div class="stat"><div class="sk">Records broken</div><div class="sv" id="sBroke">0</div><div class="ss">all-time bests beaten</div></div>
+  </div>
+
+  <div class="sechead">Collatz · 3n+1 <span class="tag">every number tested has reached 1 — but no one can prove they all do</span></div>
+  <div class="grid">
+    <div class="rec gold" id="recClimb">
+      <div class="glow"></div>
+      <div class="rk">🪜 Longest climb to 1 <span class="newflag">NEW RECORD</span></div>
+      <div class="rv" id="climbV">—</div>
+      <div class="rn">steps for <b id="climbN">—</b></div>
+      <div class="at" id="climbAt">all-time best: —</div>
+    </div>
+    <div class="rec gold" id="recPeak">
+      <div class="glow"></div>
+      <div class="rk">🚀 Highest peak reached <span class="newflag">NEW RECORD</span></div>
+      <div class="rv" id="peakV">—</div>
+      <div class="rn">on the journey of <b id="peakN">—</b></div>
+      <div class="at" id="peakAt">all-time best: —</div>
+    </div>
+    <div class="rec gold" id="recStop">
+      <div class="glow"></div>
+      <div class="rk">⏱️ Longest stopping time <span class="newflag">NEW RECORD</span></div>
+      <div class="rv" id="stopV">—</div>
+      <div class="rn">steps to first dip below <b id="stopN">—</b></div>
+      <div class="at" id="stopAt">all-time best: —</div>
+    </div>
+  </div>
+
+  <div class="sechead">Lychrel · reverse-and-add <span class="tag">most numbers hit a palindrome fast — a stubborn few (like 196) never have</span></div>
+  <div class="grid grid2">
+    <div class="rec gold" id="recDelay">
+      <div class="glow"></div>
+      <div class="rk">🐌 Most-delayed palindrome <span class="newflag">NEW RECORD</span></div>
+      <div class="rv" id="delayV">—</div>
+      <div class="rn">reverse-and-adds for <b id="delayN">—</b></div>
+      <div class="at" id="delayAt">all-time best: —</div>
+    </div>
+    <div class="wanted" id="recWanted">
+      <div class="rk">🔴 Most Wanted — suspected Lychrel seeds (OPEN)</div>
+      <div class="seeds" id="seeds"><span style="color:var(--mut);font-size:12px">run a scan to reveal them…</span></div>
+      <div class="note" id="wantedNote"></div>
+    </div>
+  </div>
+
+  <div class="sechead">Goldbach · p + q <span class="tag">every even &gt; 2 we test splits into two primes — never proven for all</span></div>
+  <div class="grid grid2">
+    <div class="rec gold" id="recGways">
+      <div class="glow"></div>
+      <div class="rk">🔱 Most ways to split <span class="newflag">NEW RECORD</span></div>
+      <div class="rv" id="gwaysV">—</div>
+      <div class="rn">prime pairs summing to <b id="gwaysN">—</b></div>
+      <div class="at" id="gwaysAt">all-time best: —</div>
+    </div>
+    <div class="rec gold" id="recGver">
+      <div class="glow"></div>
+      <div class="rk">✅ Goldbach verified <span class="newflag">NEW RECORD</span></div>
+      <div class="rv" id="gverV">—</div>
+      <div class="rn" id="gverN">—</div>
+      <div class="at" id="gverAt">deepest verified: —</div>
+    </div>
+  </div>
+  <div class="comet">
+    <canvas id="comet" width="1000" height="300"></canvas>
+    <div class="cometcap">The <b>Goldbach comet</b> — each dot is an even number; its height = how many prime pairs add up to it.
+      Gold dots are multiples of 6 (the dense upper ray); blue are the rest. Run a scan to plot it.</div>
+  </div>
+
+  <div class="foot">
+    <div style="margin-bottom:8px"><span class="pill">NO AI</span><span class="pill">DETERMINISTIC</span><span class="pill">FREE · IN-BROWSER</span></div>
+    <b>How to read this:</b> these are the most extreme numbers found while scanning. They're honest observations
+    "up to N" — Collatz, Lychrel, and Goldbach are all <b>unsolved</b>, so nothing here is a proof (Goldbach is
+    "checked, never failed", not "proven").
+    Raise the bounds above and re-run to hunt bigger records. Your all-time hall of fame lives in this browser only —
+    it never leaves your machine.
+  </div>
+
+</div>
+
+<script>
+"use strict";
+// ───────────────────────────────────────────────────────────────────────────
+// Math mirrors lib/collatz-probes.js (computeCensus) and lib/lychrel-probes.js.
+// Same definitions: σ = stopping time (first dip below n), σ∞ = total steps to 1,
+// peak = highest value on the trajectory, reverse-and-add for Lychrel (BigInt).
+// All compute is chunked so the page never freezes. No network, no AI.
+// ───────────────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const fmt = x => Number(x).toLocaleString("en-US");
+const OVERFLOW_GUARD = 4.5e15;        // keep Collatz peaks inside 2^53 (engine's guard)
+const HOF_KEY = "m8_math_hall_of_fame_v1";
+
+// ── persistent hall of fame (localStorage) ──────────────────────────────────
+function loadHOF(){
+  try { return JSON.parse(localStorage.getItem(HOF_KEY)) || {}; } catch(_){ return {}; }
+}
+function saveHOF(h){ try { localStorage.setItem(HOF_KEY, JSON.stringify(h)); } catch(_){} }
+let HOF = loadHOF();
+HOF.crunched = HOF.crunched || 0;
+HOF.runs     = HOF.runs     || 0;
+HOF.broken   = HOF.broken   || 0;
+
+// ── animated odometer ───────────────────────────────────────────────────────
+function odometer(el, to){
+  const from = Number(String(el.textContent).replace(/[^0-9.]/g,"")) || 0;
+  const t0 = performance.now(), dur = 650;
+  function tick(t){
+    const p = Math.min(1,(t-t0)/dur), e = 1-Math.pow(1-p,3);
+    el.textContent = fmt(Math.round(from + (to-from)*e));
+    if(p<1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+// ── COLLATZ census (chunked, memoized — mirrors computeCensus) ───────────────
+function runCollatz(N, onProgress){
+  return new Promise(resolve=>{
+    const totals = new Float64Array(N+1);   // σ∞(i)
+    const peaks  = new Float64Array(N+1);   // max excursion of i
+    totals[1]=0; peaks[1]=1;
+    let sigmaMax=0, sigmaArg=2, totalMax=0, totalArg=1, peakMax=1, peakArg=1;
+    let n=2, done=0;
+    const CHUNK=25000;
+    function step(){
+      const end=Math.min(N, n+CHUNK-1);
+      for(; n<=end; n++){
+        let v=n, steps=0, peak=n, sigma=0;
+        while(true){
+          v = (v%2===0) ? v/2 : 3*v+1;
+          steps++;
+          if(v>peak) peak=v;
+          if(v>OVERFLOW_GUARD){ resolve(finish(end)); return; } // honest stop on overflow
+          if(v<n){ sigma=steps; steps+=totals[v]; if(peaks[v]>peak) peak=peaks[v]; break; }
+        }
+        totals[n]=steps; peaks[n]=peak;
+        if(sigma>sigmaMax){ sigmaMax=sigma; sigmaArg=n; }
+        if(steps>totalMax){ totalMax=steps; totalArg=n; }
+        if(peak>peakMax){ peakMax=peak; peakArg=n; }
+      }
+      done=end;
+      onProgress(done);
+      if(done<N) setTimeout(step,0); else resolve(finish(N));
+    }
+    function finish(upto){
+      return { upto, climb:{n:totalArg,val:totalMax}, peak:{n:peakArg,val:peakMax}, stop:{n:sigmaArg,val:sigmaMax} };
+    }
+    step();
+  });
+}
+
+// ── LYCHREL reverse-and-add (BigInt, chunked — mirrors lychrel-probes) ───────
+function revBig(v){ return BigInt(String(v).split("").reverse().join("")); }
+function isPalBig(v){ const s=String(v); return s===s.split("").reverse().join(""); }
+function stepsToPal(n,K){
+  let v=BigInt(n);
+  if(isPalBig(v)) return 0;
+  for(let k=1;k<=K;k++){ v=v+revBig(v); if(isPalBig(v)) return k; }
+  return null; // suspected Lychrel within this cap
+}
+function runLychrel(N, K, onProgress){
+  return new Promise(resolve=>{
+    let stepMax=0, stepArg=1, n=1, done=0;
+    const suspects=[]; const SUSPECT_CAP=40;
+    const CHUNK=2000;
+    function step(){
+      const end=Math.min(N, n+CHUNK-1);
+      for(; n<=end; n++){
+        const k=stepsToPal(n, K);
+        if(k===null){ if(suspects.length<SUSPECT_CAP) suspects.push(n); continue; }
+        if(k>stepMax){ stepMax=k; stepArg=n; }
+      }
+      done=end; onProgress(done);
+      if(done<N) setTimeout(step,0);
+      else resolve({ upto:N, K, delay:{n:stepArg,val:stepMax}, suspects });
+    }
+    step();
+  });
+}
+
+// ── GOLDBACH (sieve + count prime pairs per even; chunked) ───────────────────
+// g[s] = # of unordered prime pairs p<=q with p+q=s. We count by walking prime
+// pairs (each counted once), then read records over EVEN s>=4. Pure, no AI.
+function runGoldbach(N, onProgress){
+  return new Promise(resolve=>{
+    const isP = new Uint8Array(N+1); isP.fill(1); isP[0]=0; if(N>=1) isP[1]=0;
+    for(let i=2;i*i<=N;i++){ if(isP[i]){ for(let j=i*i;j<=N;j+=i) isP[j]=0; } }
+    const primes=[]; for(let i=2;i<=N;i++) if(isP[i]) primes.push(i);
+    const g = new Int32Array(N+1);
+    let i=0; const CHUNK=200;
+    function step(){
+      const end=Math.min(primes.length, i+CHUNK);
+      for(; i<end; i++){
+        const p=primes[i];
+        if(2*p>N){ i=primes.length; break; }       // smallest pair p+p already over N
+        for(let j=i;j<primes.length;j++){ const s=p+primes[j]; if(s>N) break; g[s]++; }
+      }
+      onProgress(Math.floor((i/Math.max(1,primes.length))*N));
+      if(i<primes.length) setTimeout(step,0); else finish();
+    }
+    function finish(){
+      let maxG=0, maxN=4, holds=true, firstGap=0;
+      for(let n=4;n<=N;n+=2){
+        const gg=g[n];
+        if(gg>maxG){ maxG=gg; maxN=n; }
+        if(gg===0 && holds){ holds=false; firstGap=n; }
+      }
+      resolve({ N, gArr:g, maxRep:{n:maxN,val:maxG}, holds, firstGap, primeCount:primes.length });
+    }
+    step();
+  });
+}
+
+// draw the Goldbach comet: x = even n, y = # prime pairs. Gold = multiples of 6.
+function drawComet(g, N, maxG){
+  const cv=$("comet"); if(!cv) return;
+  const W=cv.width, H=cv.height, ctx=cv.getContext("2d");
+  ctx.clearRect(0,0,W,H);
+  const padL=40, padB=20, padT=10, padR=10, plotW=W-padL-padR, plotH=H-padT-padB;
+  ctx.strokeStyle="rgba(94,123,170,.5)"; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,padT+plotH); ctx.lineTo(padL+plotW,padT+plotH); ctx.stroke();
+  const my=maxG||1;
+  for(let n=4;n<=N;n+=2){
+    const gg=g[n]; if(gg<=0) continue;
+    const x=padL + (n-4)/(N-4||1)*plotW;
+    const y=padT + plotH - (gg/my)*plotH;
+    ctx.fillStyle = (n%6===0) ? "rgba(255,209,102,.6)" : "rgba(94,168,255,.42)";
+    ctx.fillRect(x,y,1.5,1.5);
+  }
+  ctx.fillStyle="#8a9ac4"; ctx.font="10px -apple-system,'Segoe UI',sans-serif";
+  ctx.fillText(fmt(maxG), 6, padT+9);
+  ctx.fillText("0", 28, padT+plotH);
+  ctx.fillText("ways ↑", 6, padT+plotH/2);
+  ctx.fillText("even n →  "+fmt(N), padL+plotW-104, padT+plotH+15);
+}
+
+// ── record card update + all-time merge ──────────────────────────────────────
+function paintRecord(prefix, cur, hofKey, unit, valFmt){
+  $(prefix+"V").textContent = valFmt ? valFmt(cur.val) : fmt(cur.val);
+  $(prefix+"N").textContent = fmt(cur.n);
+  const card = $("rec"+prefix.charAt(0).toUpperCase()+prefix.slice(1));
+  const best = HOF[hofKey];
+  let isNew=false;
+  if(!best || cur.val>best.val){ HOF[hofKey]={n:cur.n,val:cur.val}; isNew = !!best; }
+  const b=HOF[hofKey];
+  $(prefix+"At").textContent = "all-time best: " + (valFmt?valFmt(b.val):fmt(b.val)) + " " + unit + " (n = " + fmt(b.n) + ")";
+  card.classList.toggle("isnew", isNew);
+  return isNew;
+}
+
+// ── the run ───────────────────────────────────────────────────────────────────
+let running=false;
+async function run(){
+  if(running) return; running=true;
+  const btn=$("runBtn"); btn.disabled=true; const oldLabel=btn.textContent; btn.textContent="⏳ Crunching…";
+  document.querySelectorAll(".rec").forEach(r=>r.classList.remove("isnew"));
+
+  const cN = Math.max(1000, Math.min(1000000, parseInt($("cBound").value)||100000));
+  const lN = Math.max(100, Math.min(50000, parseInt($("lBound").value)||10000));
+  const lK = Math.max(30, Math.min(1000, parseInt($("lSteps").value)||500));
+  const gN = Math.max(1000, Math.min(120000, parseInt($("gBound").value)||30000));
+  const totalWork = cN + lN + gN;
+  let broke=0;
+
+  const setBar=p=>{ $("bar").style.width=(p*100).toFixed(1)+"%"; };
+  $("status").innerHTML = "Scanning Collatz trajectories for every number up to <b>"+fmt(cN)+"</b>…";
+
+  const c = await runCollatz(cN, d=>{
+    setBar(d/totalWork);
+    $("sRun").textContent = fmt(d);
+    if(d%100000===0) $("status").innerHTML="Collatz: <b>"+fmt(d)+"</b> / "+fmt(cN)+" trajectories…";
+  });
+  if(c.upto<cN) $("status").innerHTML="⚠ Collatz peaks exceeded safe range past n="+fmt(c.upto)+" — recorded honestly up to there.";
+
+  $("status").innerHTML = "Scanning reverse-and-add for every number up to <b>"+fmt(lN)+"</b> (BigInt — digits explode)…";
+  const l = await runLychrel(lN, lK, d=>{
+    setBar((cN+d)/totalWork);
+    $("sRun").textContent = fmt(c.upto + d);
+  });
+
+  $("status").innerHTML = "Sieving primes and counting Goldbach prime-pairs up to <b>"+fmt(gN)+"</b>…";
+  const G = await runGoldbach(gN, gd=>{
+    setBar((cN+lN+gd)/totalWork);
+    $("sRun").textContent = fmt(c.upto + l.upto + gd);
+  });
+  setBar(1);
+
+  // paint Collatz records
+  if(paintRecord("climb", c.climb, "climb", "steps")) broke++;
+  if(paintRecord("peak",  c.peak,  "peak",  "")) broke++;
+  if(paintRecord("stop",  c.stop,  "stop",  "steps")) broke++;
+  // paint Lychrel record
+  if(paintRecord("delay", l.delay, "delay", "steps")) broke++;
+
+  // Lychrel most-wanted
+  const seedsEl=$("seeds"); seedsEl.innerHTML="";
+  if(l.suspects.length===0){
+    seedsEl.innerHTML='<span style="color:var(--green);font-size:12px">none found below '+fmt(lN)+' within '+lK+' steps</span>';
+    $("wantedNote").textContent="";
+  } else {
+    l.suspects.slice(0,24).forEach((s,i)=>{
+      const sp=document.createElement("span"); sp.className="seed"+(i===0?" first":""); sp.textContent=fmt(s);
+      seedsEl.appendChild(sp);
+    });
+    const extra = l.suspects.length>24 ? " (+ more)" : "";
+    $("wantedNote").innerHTML = "These reached no palindrome within <b>"+lK+"</b> reverse-and-adds, scanning up to "+fmt(lN)+
+      ". The smallest, <b>196</b>, has resisted hundreds of millions of steps — still OPEN."+extra;
+  }
+
+  // paint Goldbach records + draw the comet
+  if(paintRecord("gways", G.maxRep, "gways", "ways")) broke++;
+  $("gverV").textContent = G.holds ? "✓ holds" : "✗ gap";
+  $("gverV").style.color = G.holds ? "var(--green)" : "var(--red)";
+  $("gverN").innerHTML = G.holds ? ("every even ≤ <b>"+fmt(G.N)+"</b> = p + q") : ("first even with no pair: <b>"+fmt(G.firstGap)+"</b>");
+  { const prev=HOF.gverified||0; let gNew=false;
+    if(G.holds && G.N>prev){ HOF.gverified=G.N; gNew = prev>0; }
+    $("gverAt").textContent = "deepest verified: "+fmt(HOF.gverified||0);
+    $("recGver").classList.toggle("isnew", gNew); if(gNew) broke++; }
+  drawComet(G.gArr, G.N, G.maxRep.val);
+
+  // totals + persist
+  const crunchedThisRun = c.upto + l.upto + G.N;
+  HOF.crunched += crunchedThisRun;
+  HOF.runs     += 1;
+  HOF.broken   += broke;
+  saveHOF(HOF);
+
+  $("sRunSub").textContent = "Collatz "+fmt(c.upto)+" · Lychrel "+fmt(l.upto)+" · Goldbach "+fmt(G.N);
+  odometer($("sAll"), HOF.crunched);
+  odometer($("sRuns"), HOF.runs);
+  odometer($("sBroke"), HOF.broken);
+
+  $("status").innerHTML = broke>0
+    ? "✅ Done — <b>"+broke+" all-time record"+(broke>1?"s":"")+" broken!</b> Raise the bounds and run again to hunt bigger."
+    : "✅ Done — no all-time records beaten this run. Raise the bounds above to push further.";
+  btn.disabled=false; btn.textContent=oldLabel; running=false;
+}
+
+// ── boot: show existing hall of fame before any run ──────────────────────────
+function showStored(prefix,hofKey,unit){
+  const b=HOF[hofKey]; if(!b) return;
+  $(prefix+"At").textContent="all-time best: "+fmt(b.val)+" "+unit+" (n = "+fmt(b.n)+")";
+}
+showStored("climb","climb","steps"); showStored("peak","peak","");
+showStored("stop","stop","steps");   showStored("delay","delay","steps");
+showStored("gways","gways","ways");
+if(HOF.gverified){ $("gverAt").textContent="deepest verified: "+fmt(HOF.gverified); }
+$("sAll").textContent=fmt(HOF.crunched);
+$("sRuns").textContent=fmt(HOF.runs);
+$("sBroke").textContent=fmt(HOF.broken);
+
+$("runBtn").addEventListener("click", run);
+$("resetBtn").addEventListener("click", ()=>{
+  if(!confirm("Wipe your all-time hall of fame in this browser?")) return;
+  HOF={crunched:0,runs:0,broken:0}; saveHOF(HOF);
+  ["climb","peak","stop","delay","gways"].forEach(p=>{ $(p+"At").textContent="all-time best: —"; $(p+"V").textContent="—"; $(p+"N").textContent="—"; });
+  $("gverV").textContent="—"; $("gverV").style.color=""; $("gverN").textContent="—"; $("gverAt").textContent="deepest verified: —";
+  const cm=$("comet"); if(cm){ cm.getContext("2d").clearRect(0,0,cm.width,cm.height); }
+  $("sAll").textContent="0"; $("sRuns").textContent="0"; $("sBroke").textContent="0"; $("sRun").textContent="0"; $("sRunSub").textContent="—";
+  $("seeds").innerHTML='<span style="color:var(--mut);font-size:12px">run a scan to reveal them…</span>';
+  $("status").innerHTML="Hall of fame wiped. Press <b>Run the night</b> to start fresh.";
+  document.querySelectorAll(".rec").forEach(r=>r.classList.remove("isnew"));
+});
+</script>
+</body>
+</html>

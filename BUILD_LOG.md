@@ -7,8 +7,15 @@ One row per build. Updated immediately when a build lands or is live-verified.
 
 ## Active builds
 
+None.
+
+---
+
+## Shipped — Session 58 (2026-06-20)
+
 | Build | What | Status | Tests | Commit | Date | Notes |
 |-------|------|--------|-------|--------|------|-------|
+| 104 | Auto Bolt fleet cron: daily server-side sync → Supabase fleet_data (no manual CSV) | 🟡 DONE | — | e061395 | 2026-06-20 | vercel.json: cron 21:00 UTC (midnight Riyadh). Needs SUPABASE_URL + SUPABASE_SERVICE_KEY in dashboard Vercel. No tests (no Bolt API in CI). |
 | 102 | "re-extract knowledge" chat command + /api/ingest-extract-existing wiring | 🟡 DONE | 54/54 | 17197e7 | 2026-06-20 | Books never at Step 1 — command is plumbing for future repairs. Source 6 (team brief junk) NOT extracted intentionally. |
 
 ---
@@ -48,10 +55,10 @@ One row per build. Updated immediately when a build lands or is live-verified.
 
 | Item | Owner | Blocker |
 |------|-------|---------|
+| Add SUPABASE_URL + SUPABASE_SERVICE_KEY to **dashboard** Vercel env | Muhammad | Go to vercel.com → mhmbolt project → Settings → Environment Variables |
 | Enter real driver profiles (rental/salary/fuel per driver) | Muhammad | B100 live — type in M8 chat when ready |
 | Book ingestion: bn01.txt → M8 chat | Muhammad | Quota reset — try tomorrow morning |
 | Live-test B95 fleet report with real driver data | Muhammad | After driver profiles entered |
-| Book ingestion: ingest bn01–bn20.pdf via M8 chat | Muhammad | Tomorrow morning (quota reset) — attach PDF + "ingest this as a book: title=البداية والنهاية, source_class=established" |
 
 ---
 

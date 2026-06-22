@@ -1,11 +1,11 @@
-﻿# M8 Next Session Brief — Session-57 Close
+﻿# M8 Next Session Brief — Session-58 Close
 
-**Head commit:** c140547 — Build-103 (2026-06-20)
+**Head commit:** e061395 — Build-104 (2026-06-20)
 **Vercel:** auto-deployed on every push to main (m8-alpha.vercel.app)
 
 ---
 
-## What shipped this session (Builds 90–103)
+## What shipped this session (Builds 90–104)
 
 | Build | What | Commit |
 |-------|------|--------|
@@ -16,11 +16,12 @@
 | 97 | Uber CSV (passive): parser + cross-platform merge; 18/18 PS | c9044df |
 | 99 | Outcome-biased proposer: AVOID (failed sketches) + VERIFIED blocks in conjecture gen | 36611a3 |
 | 103 | Provider health: GET /api/health (6 providers), graceful degradation on quota | c140547 |
+| 104 | Auto Bolt fleet cron: daily sync to Supabase fleet_data via server-side API call | e061395 |
 
 **Parallel builds status:**
 - B100: Driver Profile Manager — DONE + LIVE-VERIFIED `2f822d3` 78/78 — "set Ahmad rental 1800 SAR" confirmed DB write 2026-06-20
 - B101: Ingest audit + atomic ingest pipeline — DONE `68317db` 45/45 — /api/ingest-full + /api/ingest-extract-existing; 0 books confirmed
-- B102: Knowledge re-ingestion — IN PROGRESS (depends on B101, may have merge conflict on intentClassifier.js/orchestrator.js)
+- B102: Knowledge re-ingestion — DONE `17197e7` 54/54 — "re-extract knowledge" chat command wired
 
 ---
 
