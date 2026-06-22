@@ -25,3 +25,9 @@ Passive first (small): due-today tasks appended to the existing 7am brief email 
 
 ## Nav
 Tasks + Diagnostics + (soon) Money are slide-in panels off header glyphs. Decide later whether to promote to a real bottom nav (Chat | Tasks | Money | Home) per the image-5 model — only when it earns it; keep low-noise.
+
+## FINAL NOTES (2026-06-23)
+- **Existing M8 money-notes are NOT auto-migrated + must NOT be lost.** M8 already holds a few money mentions in memory (e.g. "30 SAR Omar lunch"). They are not wallet transactions. On wallet go-live, M8 should OFFER to add any held money-notes to the wallet (confirm-gated, one at a time), or Muhammad re-states them. Don't silently drop them.
+- **JWT minting:** mint an HS256 JWT `{ role:"m8_wallet" }` (+ short exp ~60s) signed with `WALLET_JWT_SECRET`. Check `package.json` for `jsonwebtoken`; if absent, hand-roll with Node `crypto` HMAC-SHA256 (base64url header.payload.sig) — don't add a dep if avoidable.
+- **Post-build AUDIT (Muhammad values this — do it before saying done):** round-trip test — add a test expense via M8 → confirm it lands in the wallet WITH the "[M8]" note marker → confirm a row appeared in `m8_wallet_writes` → remove the test row. Re-confirm as `m8_wallet`: DELETE still denied, balances/loans/cards untouched. Report the trail.
+- **Privacy re-check:** grep the new wallet code — no `console.log`/prompt string should ever contain a transaction's note/category/amount/counterparty. Code computes; templates render.
