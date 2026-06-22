@@ -812,7 +812,7 @@ html, body {
    then upgrades the hero elements (orb, header, bubbles, input,
    HUD frame, neural backdrop, hex icons, diagnostics slide).
    ════════════════════════════════════════════════════════════════ */
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&family=Tajawal:wght@400;500;700&display=swap');
 
 :root {
   --bg-primary:   #060912;
@@ -831,7 +831,7 @@ html, body {
 }
 
 body {
-  font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-family: 'Rajdhani', 'Tajawal', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   background:
     radial-gradient(132% 74% at 72% -8%, #16407f 0%, rgba(11,28,68,.55) 34%, rgba(7,13,32,0) 72%),
     radial-gradient(90% 55% at 8% 6%, rgba(45,226,230,.10), transparent 60%),
@@ -941,3 +941,41 @@ body {
   border-bottom:1px solid rgba(120,170,255,.12); font-size:15px; color: var(--text-primary); }
 .diag-row b { font-family:'Share Tech Mono',monospace; font-weight:400; color: var(--cy); }
 .diag-row b.ok { color:#46e6b0; }
+
+/* ── living orb: clean state motion over the arc-reactor ── */
+.orb.thinking  { animation: none !important; }
+.orb.thinking::before { animation-duration: .85s !important; }
+.orb.speaking  { animation: orb-fx-pulse .5s ease-in-out infinite !important; }
+.orb.listening { animation: orb-fx-pulse 1s  ease-in-out infinite !important; }
+@keyframes orb-fx-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.13); } }
+
+/* ── glowing typing dots ── */
+.typing-bubble span { background: var(--cy) !important; box-shadow: 0 0 8px var(--cy); }
+
+/* ── boot splash (powers up, then fades to the app) ── */
+.boot { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 18px; transition: opacity .6s ease;
+  background: radial-gradient(130% 76% at 50% 32%, #0b1c44 0%, #070d20 55%, #05070f 100%); }
+.boot--hide { opacity: 0; pointer-events: none; }
+.boot-orb { position: relative; width: 72px; height: 72px; border-radius: 50%;
+  background: radial-gradient(circle at 36% 30%, #f2feff, #2de2e6 36%, #5b8cff 68%, #162670);
+  box-shadow: 0 0 30px rgba(45,226,230,.9), 0 0 72px rgba(91,140,255,.6);
+  animation: boot-ignite 1s ease both; }
+.boot-orb::before { content:''; position:absolute; inset:-7px; border-radius:50%;
+  background: conic-gradient(from 0deg, transparent, rgba(45,226,230,.95), transparent 44%);
+  -webkit-mask: radial-gradient(farthest-side, transparent 72%, #000 74%);
+  mask: radial-gradient(farthest-side, transparent 72%, #000 74%);
+  animation: orb-ring 2s linear infinite; }
+@keyframes boot-ignite { 0% { transform: scale(.2); opacity: 0; } 60% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); } }
+.boot-name { font-family:'Orbitron',sans-serif; font-weight:800; font-size:34px; letter-spacing:6px;
+  color:#fff; text-shadow: 0 0 18px rgba(45,226,230,.8); opacity:0; animation: boot-fade .6s ease .5s both; }
+.boot-line { font-family:'Share Tech Mono',monospace; font-size:12px; letter-spacing:4px; color: var(--cy);
+  opacity:0; animation: boot-fade .6s ease .8s both; }
+@keyframes boot-fade { to { opacity: 1; } }
+
+/* ── respect reduced-motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .fx__scan, .fx__net .nd, .orb::before, .orb::after,
+  .orb.speaking, .orb.listening, .orb.thinking::before,
+  .boot-orb, .boot-orb::before, .boot-name, .boot-line { animation: none !important; }
+}
