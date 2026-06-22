@@ -1,0 +1,64 @@
+{
+  "build": "gen-extract",
+  "branch": "feat/general-extraction",
+  "worktree": "m8-gen-extract",
+  "based_on": "origin/main (9320d51) — the branch that actually carries the Build-RAG base (extractConceptsWithStatus, m8_ingest_checkpoints). Local `main` (268c0f9) is behind origin and lacks them.",
+  "date": "2026-06-22",
+  "model": "Opus 4.8 (spec header said Sonnet 4.6; built under Muhammad's direct instruction)",
+  "status": "code-complete / branch-only / NOT deployed",
+  "test_results": {
+    "new_gate": { "file": "tests/B-gen-extract-verify.ps1", "pass": 66, "fail": 0 },
+    "required_regression": { "file": "tests/B-rag-content-verify.ps1", "pass": 52, "fail": 0, "note": "stayed 52/52 as required" },
+    "other_regressions_green": [
+      "tests/B78b-book-ingest-wiring-verify.ps1 18/0 (parseBookIngestMessage — file I edited)",
+      "tests/B77-ingest-resume-verify.ps1 33/0",
+      "tests/kernel-leap-verify.ps1 exit0",
+      "tests/knowledge-verify.ps1 exit0",
+      "tests/epistemic-axis-verify.ps1 exit0",
+      "tests/B83b-kg-semantic-verify.ps1 exit0"
+    ],
+    "pre_existing_failures_NOT_caused_by_this_build": {
+      "files": ["tests/B101-ingest-audit-verify.ps1 (14/31)", "tests/B102-reingest-verify.ps1 (48/6)"],
+      "root_cause": "Both tests read api/ingest-full.js and api/ingest-extract-existing.js, which no longer exist on origin/main — the handlers were refactored to lib/handlers/ingest-full.js and lib/handlers/ingest-extract-existing.js, and these two tests were never re-pathed.",
+      "proof": "Re-ran both with my lib/knowledge-intake.js edit git-stashed (pristine origin/main): identical 14/31 and 48/6. Neither test reads lib/knowledge-intake.js, so this build cannot affect them.",
+      "suggested_followup": "Re-path B101/B102 from api/ to lib/handlers/ (separate cleanup; out of scope here)."
+    }
+  },
+  "schema_check": {
+    "ran_sql": true,
+    "project": "BOLT (ltqpoupferwituusxwal)",
+    "spec_named_table_m8_knowledge_nodes": "DOES NOT EXIST (empty information_schema result)",
+    "real_write_target": "m8_graph_nodes — has `kind` (claim|entity via JS VALID_KIND), `metadata` jsonb, `extraction_confidence`; NO `type`/`node_type` column",
+    "kind_check_constraint_allows": ["claim","entity","fact","concept","person","..."],
+    "decision": "schema-free. General `type` (fact|event|person|concept|place|date|ruling) is used ONLY to derive the JS-valid kind (person|place|concept -> entity; everything else -> claim), then dropped. No migration.",
+    "baseline_counts": { "total_nodes": 161, "nodes_from_sources": 20, "sources": 23, "distinct_book_titles": 3, "real_books": 0 }
+  },
+  "schema_change": false,
+  "changes": [
+    "lib/knowledge-intake.js — added GENERAL_EXTRACTION_SYSTEM prompt (facts/events/people/places/dates/rulings/concepts; Islamic/historical priority)",
+    "lib/knowledge-intake.js — added pure helpers: selectExtractionSystem(mode), buildGeneralExtractionPrompt(), generalTypeToKind(type), deriveExtractionMode(cls, explicitMode)",
+    "lib/knowledge-intake.js — parseExtractionOutput(raw, source_class, source_doc_id, mode='math'): NEW 'general' branch normalizes {label,content,type?} into the SAME candidate shape the math path emits (node_type in claim|entity, confidence defaults 'high'); math branch byte-unchanged",
+    "lib/knowledge-intake.js — extractConcepts(source_id, mode='general') + extractConceptsWithStatus(source_id, mode='general'): select system prompt + user prompt + parser by mode",
+    "lib/knowledge-intake.js — ingestBookText(): new extraction_mode param; derives mode once via deriveExtractionMode(cls, extraction_mode) and threads it to every chapter's extractConceptsWithStatus call",
+    "lib/knowledge-intake.js — parseBookIngestMessage(): parses optional `extraction_mode=math` / `mode=math` (comma-delimited; existing grab() lookahead already delimits, so the key list was left untouched to avoid an edge-case title-swallow), returns extraction_mode",
+    "lib/knowledge-intake.js — module.exports: added the 5 new pure helpers for testability",
+    "tests/B-gen-extract-verify.ps1 — NEW PS 5.1 mirror, 66 checks across all 7 spec criteria"
+  ],
+  "spec_deviations_and_why": [
+    "Spec said the math parser 'only returns {label, content}else' — WRONG: it requires {node_type in claim|entity, label, content, confidence in high|medium|low}. The general prompt emits NEITHER node_type NOR confidence, so the existing strict parser would have silently dropped every general item. Fix: the general branch synthesizes node_type (from type) and confidence (default high) so nodes actually reach m8_graph_nodes — this is the real unblock the spec was reaching for.",
+    "Spec named table m8_knowledge_nodes; it does not exist. Real table m8_graph_nodes has no type column. Followed the spec's 'no column -> drop the field' branch.",
+    "Spec referenced parseBookIngestCommand()/handleBookIngestCommand(); actual names are parseBookIngestMessage() (in knowledge-intake.js) and inline handling in orchestrator.js. Implemented against the real names.",
+    "extractConcepts default mode is 'general' per spec. This also routes the existing document paths (converter.js, lib/handlers/ingest-full.js, lib/handlers/ingest-extract-existing.js, orchestrator re-extract) through general extraction — exactly the goal (uploaded/established docs now extract). Those candidates still carry extraction_confidence/node_type, so those call sites work unchanged. Forbidden files were NOT edited."
+  ],
+  "known_wiring_gap": {
+    "what": "The chat `extraction_mode=math` override is parsed by parseBookIngestMessage and accepted by ingestBookText, but orchestrator.js:1434 builds the ingestBookText() args explicitly and does not forward meta.extraction_mode.",
+    "impact": "NONE for the primary goal — book ingest with source_class=established derives 'general' from cls, so Islamic-history books extract real nodes without any orchestrator change. The explicit math override simply won't flow through chat until one line is added.",
+    "why_not_fixed": "orchestrator.js is on the spec's do-NOT-touch list.",
+    "one_line_hookup_when_authorized": "lib/orchestrator.js ~1434: add `extraction_mode: meta.extraction_mode` to the ingestBookText({...}) call."
+  },
+  "files_owned": ["lib/knowledge-intake.js", "tests/B-gen-extract-verify.ps1", "reports/gen-extract-done.json"],
+  "files_not_touched": ["orchestrator.js", "loop.js", "entity-graph.js", "memory-graph.js", "conjecture-*.js", "lib/handlers/ingest-full.js", "lib/handlers/ingest-extract-existing.js", "lib/handlers/knowledge-inventory.js", "lib/handlers/upload-file.js", "api/knowledge.js", "converter.js"],
+  "live_verify_pending": true,
+  "live_verify_procedure": "After Muhammad's explicit deploy: in M8 chat, `ingest this as a book: title=Test Book, source_class=established` with a small (<500-word) non-math excerpt attached. Expect chapters>0 AND nodes>0. Confirm via GET /api/knowledge?fn=inventory (nodes_in_books>0) and ?fn=status. Paid GEMINI_API_KEY confirmed working 2026-06-22 per spec.",
+  "deploy": "NOT deployed. Branch-only push to origin/feat/general-extraction. Awaiting Muhammad's explicit 'deploy it'."
+}
