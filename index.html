@@ -3,10 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#0d0f1a" />
+  <meta name="theme-color" content="#060912" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="M8" />
   <title>M8 — Personal AI Agent</title>
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" href="/icons/icon-192.png" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -143,6 +147,7 @@
   <script src="js/app.js"></script>
   <script>
   (function(){
+    if('serviceWorker' in navigator){ window.addEventListener('load',function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}); }); }
     var p=document.getElementById('diag-panel'),o=document.getElementById('settings-btn'),b=document.getElementById('diag-back'),loaded=false;
     function set(id,v){var e=document.getElementById(id);if(e&&v!=null)e.textContent=v;}
     function load(){if(loaded)return;loaded=true;
