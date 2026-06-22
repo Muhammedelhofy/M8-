@@ -322,6 +322,24 @@ CheckEq "book cls=speculative -> general extraction" "general" (Derive-Extractio
 CheckEq "book cls=mathematical -> math extraction"   "math"    (Derive-ExtractionMode "mathematical" $null)
 CheckEq "book explicit extraction_mode=math wins"    "math"    (Derive-ExtractionMode "established" "math")
 
+# ============================================================================
+# 8. option 3: extraction provider order (free, recitation-free first)
+# ============================================================================
+# Mirror of the JS default EXTRACT_PROVIDER_ORDER. Religious/classical text makes
+# Gemini RECITATION-fail, so extraction tries the free non-Gemini providers first;
+# Gemini stays only as a fallback. No paid providers (openai/grok) in the default.
+Write-Host "`n-- 8. EXTRACT_PROVIDER_ORDER: free non-Gemini first, no paid keys --" -ForegroundColor Cyan
+$order = "groq,cerebras,gemini,gemini2,openrouter,mistral"
+$arr = $order.Split(",")
+function IndexOfP([string[]]$a, [string]$x) { return [array]::IndexOf($a, $x) }
+CheckTrue  "groq present"                     ((IndexOfP $arr "groq") -ge 0)
+CheckTrue  "cerebras present"                 ((IndexOfP $arr "cerebras") -ge 0)
+CheckTrue  "gemini still present (fallback)"  ((IndexOfP $arr "gemini") -ge 0)
+CheckTrue  "groq before gemini"               ((IndexOfP $arr "groq") -lt (IndexOfP $arr "gemini"))
+CheckTrue  "cerebras before gemini"           ((IndexOfP $arr "cerebras") -lt (IndexOfP $arr "gemini"))
+CheckFalse "no paid openai in default order"  ($arr -contains "openai")
+CheckFalse "no paid grok in default order"    ($arr -contains "grok")
+
 Write-Host "`n================ B-GEN-EXTRACT RESULT ================" -ForegroundColor Cyan
 Write-Host ("  PASS: " + $pass) -ForegroundColor Green
 Write-Host ("  FAIL: " + $fail) -ForegroundColor Red
