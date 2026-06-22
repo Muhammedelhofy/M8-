@@ -1,0 +1,82 @@
+{
+  "build": "RAG-content (Session 3)",
+  "branch": "feat/rag-content",
+  "date": "2026-06-22",
+  "status": "code-complete / branch-only / NOT deployed",
+
+  "supabase_audit": {
+    "project": "ltqpoupferwituusxwal (BOLT)",
+    "sources_total": 5,
+    "source_ids": [1, 2, 3, 4, 6],
+    "source_descriptions": "All are small Collatz math snippets (46-65 words each). Source 6 = junk accidental team-brief ingest (0 nodes).",
+    "books_ingested": 0,
+    "total_graph_nodes": 161,
+    "nodes_in_books": 0,
+    "m8_ingest_checkpoints": "EXISTS but EMPTY — no book ingest has ever completed",
+    "m8_ocr_checkpoints": "EXISTS (Build-78a migration applied)",
+    "verdict": "0 books in graph — confirmed. The ingest PIPELINE exists and is checkpointed; the gap is Gemini quota on the free tier blocking the extraction step."
+  },
+
+  "ingest_attempt": {
+    "status": "deferred_to_live_test",
+    "reason": "Host has no Node runtime; ingest requires calling the Vercel serverless function. Branch not yet deployed (NO deploy without Muhammad's OK per session brief).",
+    "test_file_ready": "C:\\Users\\m7ofy\\OneDrive\\Desktop\\books\\m8_test_book.docx (2 chapters, DOCX, no OCR needed — confirmed to exist)",
+    "pdf_files_ready": "bn01.pdf through bn20.pdf on Desktop/books (20 Arabic PDFs, need Gemini OCR)",
+    "last_known_failure_cause": "Gemini 429 — free-tier daily quota exhausted. Paid billing was set up ($10 / M8 Agent project) but retries still showed FreeTier in Vercel logs, suggesting GEMINI_API_KEY in Vercel belongs to a DIFFERENT project than the billed one.",
+    "live_test_procedure": [
+      "1. Muhammad deploys preview from branch feat/rag-content",
+      "2. Attach m8_test_book.docx in M8 chat",
+      "3. Say: 'ingest this as a book: title=Test Book, source_class=established'",
+      "4. If Gemini quota OK: M8 replies with chapter count + nodes extracted; verify at GET /api/knowledge?fn=inventory",
+      "5. If Gemini quota hit: M8 now replies with NotebookLM handoff message (not silent 0 nodes)",
+      "6. Check GET /api/knowledge?fn=status for polished summary"
+    ]
+  },
+
+  "changes": {
+    "lib/knowledge-intake.js": [
+      "isGeminiQuotaError(err) — pure quota-detection helper (PS-mirrored)",
+      "buildNotebookLMHandoff({ source_id, title, source_class }) — formats actionable handoff message with 3 options (wait/NotebookLM/fix key)",
+      "extractConceptsWithStatus(source_id) — like extractConcepts but returns { candidates, quota_exhausted }; breaks on first quota hit instead of silently skipping all chunks",
+      "buildKnowledgeIngestContext() — now uses extractConceptsWithStatus; returns NotebookLM handoff text (not 0-node dead-end) when quota is exhausted",
+      "ingestBookText() — per-chapter extraction now uses extractConceptsWithStatus; breaks the chapter loop on quota hit + sets timedOut=true + adds quota_exhausted + notebooklm_handoff to return value",
+      "getInventoryStatus() — wraps getIngestionInventory with plain-English summary, status field, how_to_ingest steps, notebooklm_tip, and test_docx_ready reminder"
+    ],
+    "api/knowledge.js": [
+      "Added require('../lib/knowledge-intake') for getInventoryStatus",
+      "New case 'status': -> GET /api/knowledge?fn=status returns polished status + NotebookLM tip"
+    ]
+  },
+
+  "files_added_to_git": [
+    "lib/knowledge-intake.js",
+    "api/knowledge.js",
+    "tests/B-rag-content-verify.ps1",
+    "reports/rag-content-done.json"
+  ],
+
+  "test_results": {
+    "file": "tests/B-rag-content-verify.ps1",
+    "pass": 52,
+    "fail": 0,
+    "result": "ALL GREEN"
+  },
+
+  "existing_callers_unchanged": {
+    "note": "extractConcepts() (old function) is UNCHANGED — ingest-full.js and ingest-extract-existing.js still call it and keep working. The new extractConceptsWithStatus() is an additive parallel path used only by the chat functions.",
+    "handlers_not_touched": ["lib/handlers/ingest-full.js", "lib/handlers/ingest-extract-existing.js", "lib/handlers/knowledge-inventory.js"]
+  },
+
+  "notebooklm_recommendation": {
+    "for": "bn01.pdf through bn20.pdf (البداية والنهاية, 20 Arabic scanned PDFs)",
+    "why": "Gemini OCR + extraction on 20 Arabic PDFs will drain the free quota repeatedly. NotebookLM handles OCR + retrieval + citations for free at notebooklm.google.com.",
+    "m8_role": "Use M8 for research notes, fleet data, text snippets, Collatz corpus. Use NotebookLM for heavy scanned books. They complement each other.",
+    "no_embed_api": "NotebookLM has no public embed API (as of 2026) — use it standalone, not embedded in M8."
+  },
+
+  "key_fix_for_gemini_paid_tier": {
+    "symptom": "Retries after billing setup still show FreeTier in Vercel runtime logs",
+    "root_cause": "GEMINI_API_KEY in Vercel env likely belongs to the DEFAULT project (free tier), not the 'M8 Agent' project where $10 was deposited",
+    "fix": "AI Studio → project selector (top-left) → M8 Agent → API Keys → generate new key → paste into Vercel GEMINI_API_KEY env var (and redeploy)"
+  }
+}
