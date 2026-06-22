@@ -11,6 +11,33 @@
 </head>
 <body>
 
+  <!-- sci-fi backdrop: neural net + HUD frame + scanline -->
+  <div class="fx" aria-hidden="true">
+    <svg class="fx__net" viewBox="0 0 420 880" preserveAspectRatio="xMidYMid slice">
+      <g stroke="rgba(45,226,230,.30)" stroke-width="1" fill="none">
+        <line x1="40" y1="90" x2="150" y2="60"/><line x1="150" y1="60" x2="250" y2="110"/><line x1="250" y1="110" x2="360" y2="70"/>
+        <line x1="40" y1="90" x2="90" y2="200"/><line x1="150" y1="60" x2="210" y2="180"/><line x1="250" y1="110" x2="210" y2="180"/>
+        <line x1="360" y1="70" x2="330" y2="210"/><line x1="90" y1="200" x2="170" y2="310"/><line x1="210" y1="180" x2="170" y2="310"/>
+        <line x1="330" y1="210" x2="290" y2="330"/><line x1="50" y1="330" x2="170" y2="310"/><line x1="290" y1="330" x2="380" y2="300"/>
+        <line x1="170" y1="310" x2="110" y2="450"/><line x1="290" y1="330" x2="240" y2="470"/><line x1="380" y1="300" x2="350" y2="460"/>
+        <line x1="110" y1="450" x2="240" y2="470"/><line x1="240" y1="470" x2="350" y2="460"/><line x1="110" y1="450" x2="190" y2="620"/>
+        <line x1="240" y1="470" x2="190" y2="620"/><line x1="350" y1="460" x2="310" y2="600"/><line x1="50" y1="600" x2="190" y2="620"/>
+        <line x1="310" y1="600" x2="190" y2="620"/><line x1="190" y1="620" x2="130" y2="760"/><line x1="310" y1="600" x2="280" y2="770"/>
+      </g>
+      <g fill="#2de2e6">
+        <circle class="nd" cx="40" cy="90" r="3"/><circle class="nd" cx="150" cy="60" r="3.5"/><circle class="nd" cx="250" cy="110" r="3"/>
+        <circle class="nd" cx="360" cy="70" r="2.5"/><circle class="nd" cx="90" cy="200" r="3"/><circle class="nd" cx="210" cy="180" r="4"/>
+        <circle class="nd" cx="330" cy="210" r="3"/><circle class="nd" cx="50" cy="330" r="2.5"/><circle class="nd" cx="170" cy="310" r="4"/>
+        <circle class="nd" cx="290" cy="330" r="3.5"/><circle class="nd" cx="380" cy="300" r="3"/><circle class="nd" cx="110" cy="450" r="3.5"/>
+        <circle class="nd" cx="240" cy="470" r="4"/><circle class="nd" cx="350" cy="460" r="3"/><circle class="nd" cx="50" cy="600" r="3"/>
+        <circle class="nd" cx="190" cy="620" r="4"/><circle class="nd" cx="310" cy="600" r="3.5"/><circle class="nd" cx="130" cy="760" r="3"/>
+        <circle class="nd" cx="280" cy="770" r="3.5"/>
+      </g>
+    </svg>
+    <div class="fx__scan"></div>
+    <span class="fx__hud tl"></span><span class="fx__hud tr"></span><span class="fx__hud bl"></span><span class="fx__hud br"></span>
+  </div>
+
   <!-- ── HEADER ────────────────────────────── -->
   <header class="header">
     <div class="header-left">
@@ -21,6 +48,15 @@
       </div>
     </div>
     <div class="header-right">
+      <button id="settings-btn" class="btn-set" aria-label="Diagnostics and settings" title="Diagnostics">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2.2 L20.5 7 V17 L12 21.8 L3.5 17 V7 Z"/>
+          <circle cx="12" cy="12" r="2.1" fill="currentColor" stroke="none"/>
+          <circle cx="12" cy="6.6" r="1"/><circle cx="16.8" cy="14.6" r="1"/><circle cx="7.2" cy="14.6" r="1"/>
+          <line x1="12" y1="12" x2="12" y2="6.6"/><line x1="12" y1="12" x2="16.8" y2="14.6"/><line x1="12" y1="12" x2="7.2" y2="14.6"/>
+        </svg>
+      </button>
       <button id="stop-btn" class="btn-icon" title="Stop speaking">
         &#9646;&#9646;
       </button>
@@ -85,10 +121,45 @@
     </button>
   </footer>
 
+  <!-- Diagnostics slide-in tab (opens from the settings glyph) -->
+  <div id="diag-panel" class="diag-panel" aria-hidden="true">
+    <div class="diag-head">
+      <button id="diag-back" class="diag-back" aria-label="Back to chat">&#8249;</button>
+      <span class="diag-title">DIAGNOSTICS</span>
+    </div>
+    <div class="diag-body">
+      <div class="diag-row"><span>Knowledge nodes</span><b id="diag-nodes">&mdash;</b></div>
+      <div class="diag-row"><span>Graph status</span><b id="diag-graph" class="ok">&mdash;</b></div>
+      <div class="diag-row"><span>Extractor</span><b>Groq &middot; free</b></div>
+      <div class="diag-row"><span>Embeddings</span><b>Gemini</b></div>
+      <div class="diag-row"><span>Uplink</span><b id="diag-up" class="ok">&mdash;</b></div>
+      <div class="diag-row"><span>Build</span><b id="diag-build">&mdash;</b></div>
+    </div>
+  </div>
+
   <!-- ── SCRIPTS ────────────────────────────── -->
   <script src="js/voice.js"></script>
   <script src="js/chat.js"></script>
   <script src="js/app.js"></script>
+  <script>
+  (function(){
+    var p=document.getElementById('diag-panel'),o=document.getElementById('settings-btn'),b=document.getElementById('diag-back'),loaded=false;
+    function set(id,v){var e=document.getElementById(id);if(e&&v!=null)e.textContent=v;}
+    function load(){if(loaded)return;loaded=true;
+      fetch('/api/health').then(function(r){return r.json();}).then(function(d){
+        set('diag-up', d&&d.ok?'100%':'degraded');
+        set('diag-graph', d&&d.supabase&&d.supabase.ok?'synced':'offline');
+        if(d&&d.sha) set('diag-build', String(d.sha).slice(0,7));
+      }).catch(function(){});
+      fetch('/api/knowledge?fn=status').then(function(r){return r.json();}).then(function(d){
+        var n=d&&(d.total_all_nodes!=null?d.total_all_nodes:d.total_nodes_in_books);
+        if(n!=null) set('diag-nodes', Number(n).toLocaleString());
+      }).catch(function(){});
+    }
+    if(o) o.addEventListener('click',function(){p.classList.add('open');p.setAttribute('aria-hidden','false');load();});
+    if(b) b.addEventListener('click',function(){p.classList.remove('open');p.setAttribute('aria-hidden','true');});
+  })();
+  </script>
 
 </body>
 </html>
