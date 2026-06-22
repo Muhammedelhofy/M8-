@@ -7,6 +7,9 @@ class VoiceManager {
     this.onResult = null;
     this.onStatusChange = null;
     this.voicesLoaded = false;
+    // muted = no text-to-speech. Set true for TYPED turns, false for SPOKEN turns,
+    // so M8 replies in text when you type and out loud when you talk.
+    this.muted = false;
 
     // INPUT: record mic audio -> Groq Whisper (/api/transcribe). Uses
     // getUserMedia + MediaRecorder, which WORK inside installed PWAs — unlike
@@ -151,7 +154,7 @@ class VoiceManager {
   }
 
   speak(text, onEnd) {
-    if (!text) return;
+    if (!text || this.muted) { if (onEnd) onEnd(); return; }
     this.synthesis.cancel();
 
     // Small delay to ensure cancellation takes effect
@@ -237,7 +240,7 @@ class VoiceManager {
 
   // Queue an utterance WITHOUT cancelling the ones already speaking/queued.
   _enqueueUtterance(text) {
-    if (!text) return;
+    if (!text || this.muted) return;
     const u = new SpeechSynthesisUtterance(text);
     u.lang = this.currentLang;
     u.rate = 1.0; u.pitch = 1.0; u.volume = 1.0;

@@ -646,6 +646,7 @@ function init() {
   // Voice callbacks
   voice.onResult = (transcript) => {
     UI.textInput.value = transcript;
+    voice.muted = false; // spoken turn → M8 replies out loud
     sendMessage(transcript);
   };
 
@@ -710,7 +711,7 @@ function init() {
 function showWelcome() {
   const msg = LABELS[currentLang].welcome;
   chat.addMessage("assistant", msg);
-  voice.speak(msg);
+  // no voice on open — the greeting is text only (M8 speaks only on spoken turns)
 }
 
 function handleSend() {
@@ -723,6 +724,7 @@ function handleSend() {
     // Capture and clear reply state before send
     const replyQuote = (typeof _replyState !== "undefined" && _replyState.active) ? _replyState.quote : "";
     if (replyQuote && typeof clearReply === "function") clearReply();
+    voice.muted = true; // typed turn → M8 replies in text only
     sendMessage(text, replyQuote);
   }
 }
@@ -831,7 +833,7 @@ async function streamMessage(text, pastHistory, attachments) {
       return;
     }
     if (obj.delta) {
-      if (!got) { chat.hideTyping(); setStatus("speaking"); msg = chat.addStreamingMessage(); got = true; }
+      if (!got) { chat.hideTyping(); setStatus(voice.muted ? "thinking" : "speaking"); msg = chat.addStreamingMessage(); got = true; }
       chat.appendToStreaming(msg, obj.delta);
       voice.feedStream(obj.delta);
     }
@@ -860,6 +862,7 @@ async function streamMessage(text, pastHistory, attachments) {
     return false;   // no content or error event → fall back
   }
   voice.endStream();
+  if (voice.muted) setStatus("idle"); // typed turn: no speech to end on, so settle the orb now
   return true;
 }
 
@@ -904,6 +907,7 @@ async function bufferedMessage(text, pastHistory, attachments) {
   chat.hideTyping();
   chat.addMessage("assistant", data.response);
   voice.speak(data.response);
+  if (voice.muted) setStatus("idle"); // typed turn: settle the orb (speak() is a no-op when muted)
 }
 
 function toggleMic() {
