@@ -57,16 +57,29 @@ function General-TypeToKind($type) {
   return "claim"
 }
 
+# ==== mirror: parseJsonArrayLoose(raw) =======================================
+# Tolerant array extraction: strips ```json fences, accepts a clean array, else
+# salvages the first [ ... ] block out of surrounding prose. Returns the array
+# text (or $null). Mirrors the JS fix for silent 0-extractions.
+function Extract-ArrayText([string]$raw) {
+  $s = ([string]$raw).Trim()
+  if ([string]::IsNullOrEmpty($s)) { return $null }
+  $m = [regex]::Match($s, '(?is)```(?:json)?\s*(.*?)```')
+  if ($m.Success) { $s = $m.Groups[1].Value.Trim() }
+  if ($s.StartsWith("[") -and $s.EndsWith("]")) { return $s }
+  $start = $s.IndexOf("["); $end = $s.LastIndexOf("]")
+  if ($start -ge 0 -and $end -gt $start) { return $s.Substring($start, $end - $start + 1) }
+  return $null
+}
+
 # ==== mirror: parseExtractionOutput(raw, source_class, source_doc_id, mode) ===
 # Emits one pscustomobject per accepted item. Callers wrap with @() for a
 # reliable .Count (PS unrolls collections on output).
 function Parse-ExtractionOutput([string]$raw, [string]$sourceClass, $sourceDocId, [string]$mode) {
-  if ([string]::IsNullOrEmpty($raw)) { return }
-  $trimmed = $raw.Trim()
-  # Mirror JS `if (!Array.isArray(arr)) return []` -- top level must be a JSON array.
-  if (-not $trimmed.StartsWith("[")) { return }
+  $arrText = Extract-ArrayText $raw
+  if ($null -eq $arrText) { return }
   $arr = $null
-  try { $arr = $trimmed | ConvertFrom-Json } catch { return }
+  try { $arr = $arrText | ConvertFrom-Json } catch { return }
   if ($null -eq $arr) { return }
   foreach ($item in @($arr)) {
     if ($null -eq $item) { continue }
@@ -221,6 +234,25 @@ $n2 = @(Parse-ExtractionOutput "" "established" 1 "general")
 CheckEq "empty raw -> 0" 0 $n2.Count
 $n3 = @(Parse-ExtractionOutput "not json at all" "established" 1 "general")
 CheckEq "garbage -> 0"   0 $n3.Count
+
+# ============================================================================
+# 4d. THE FIX: tolerant parsing of prose-wrapped / fenced LLM output
+# ============================================================================
+Write-Host "`n-- 4d. parseJsonArrayLoose: wrapped/fenced output now parses --" -ForegroundColor Cyan
+# Array wrapped in stray prose (a provider ignoring 'JSON only') used to yield 0.
+$w1 = @(Parse-ExtractionOutput 'Here are the items you asked for: [{"label":"a","content":"x","type":"fact"}] Hope this helps!' "established" 1 "general")
+CheckEq "prose-wrapped array now parses (was 0)" 1 $w1.Count
+CheckEq "wrapped item maps correctly" "claim" $w1[0].node_type
+# Fenced block (single-quoted to keep the backticks literal -- no PS escaping)
+$w2 = @(Parse-ExtractionOutput '```json[{"label":"b","content":"y","type":"person"}]```' "established" 1 "general")
+CheckEq "fenced array parses"     1 $w2.Count
+CheckEq "fenced person -> entity" "entity" $w2[0].node_type
+# Two items wrapped in prose, math mode (strict shape) still salvaged from prose
+$w3 = @(Parse-ExtractionOutput 'Sure: [{"node_type":"claim","label":"c","content":"z","confidence":"high"},{"node_type":"entity","label":"d","content":"w","confidence":"medium"}]' "established" 1 "math")
+CheckEq "wrapped math array salvaged (2 items)" 2 $w3.Count
+# Extract-ArrayText edge cases
+CheckEq "clean array passes through" '[{"label":"a"}]' (Extract-ArrayText '[{"label":"a"}]')
+CheckTrue "no-bracket text -> null" ($null -eq (Extract-ArrayText "no brackets here"))
 
 # ============================================================================
 # 5. extraction_mode override in the book command parser
