@@ -91,7 +91,9 @@ Check "bridge filters to BRIDGE_TYPES"        (Has $eg 'BRIDGE_TYPES.has(e.entit
 Check "bridge has a kill switch"              (Has $eg 'ENTITY_GRAPH_BRIDGE_DISABLED')
 Check "bridge lazy-requires memory-graph"     (Has $eg 'require("./memory-graph")')
 Check "bridge calls graphRelationsForEntity"  (Has $eg 'await graphRelationsForEntity(e.name, e.entity_type)')
-Check "bridge AWAITS the write-back"          (Has $eg 'await bridgeEntityNode(e.name, e.entity_type, e.summary)')
+# Session-2 follow-up "light up the bridge": write-back now reached via
+# ensureEntityGraphNode (find-or-seed); node then gets edges via anchorEntityNode.
+Check "bridge ensures graph node (find-or-seed)" (Has $eg 'await ensureEntityGraphNode(e.name, e.entity_type, e.summary)')
 Check "exports bridgeEntitiesToGraph"         (Has $eg 'bridgeEntitiesToGraph')
 Check "exports _matchEntities"                (Has $eg '_matchEntities,')
 

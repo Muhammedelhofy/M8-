@@ -1,0 +1,27 @@
+{
+  "build": "Session-2 follow-up: light up the bridge",
+  "branch": "feat/bridge-edges",
+  "off_of": "origin/main 40483c6 (brain-surface + entity-card-suppress + gen-extract all merged)",
+  "deployed": false,
+  "problem": "The entity<->graph bridge seeded a person/company node (proven live: Terras = node 199), but the node was ISOLATED — no edges — so graphRelationsForEntity returned nothing and the ENTITY <-> GRAPH LINKS block never appeared in chat. The bridge was wired but invisible.",
+  "fix": "Give a bridged node EDGES: anchor it (related_to) to the research nodes it is semantically closest to, so the links become real and visible. Track-B-oriented: links people/companies INTO the research graph (e.g. Terras -> related_to -> Collatz nodes).",
+  "changes": {
+    "lib/memory-graph.js": "Added ensureEntityGraphNode(name,type,summary) (find-or-seed) and anchorEntityNode(node,queryText). anchorEntityNode: gated on M8_ENTITY_GRAPH_BRIDGE_WRITE=1; SKIPS the embedding/match entirely once the node already has >= M8_ANCHOR_SKIP_EDGES (default 2) edges; else graphMatch(queryText, k6, minSim M8_ANCHOR_MIN_SIM default 0.45) -> addEdge related_to to the top <= M8_ANCHOR_MAX_EDGES (default 2) substantive matches (excludes self + research_thread), tagged metadata.bridged_anchor. Exported both.",
+    "lib/entity-graph.js": "bridgeEntitiesToGraph reworked to a clean 3-step loop per bridgeable entity: (1) ensureEntityGraphNode -> (2) anchorEntityNode(name+summary) -> (3) graphRelationsForEntity for the link line. No longer calls bridgeEntityNode directly (now via ensureEntityGraphNode).",
+    "tests/brain-surface-verify.ps1": "Updated 1 stale assertion (write-back now reached via ensureEntityGraphNode). Still 48/48.",
+    "tests/bridge-edges-verify.ps1": "New 25/25 PS mirror for the anchoring."
+  },
+  "honesty_safety": [
+    "Edges are `related_to` ONLY — a NON-evidence, non-proof relation. The Build-41 schema edge-ban restricts supports/formalizes; related_to is explicitly allowed. So anchoring can NEVER fabricate evidence/proof structure (test asserts no rel:'supports').",
+    "OPT-IN: anchoring (like seeding) is a no-op unless M8_ENTITY_GRAPH_BRIDGE_WRITE=1. Default deploy = read-only, zero new edges.",
+    "Bounded/cheap: skips the embedding call once a node has >= 2 edges, so the graphMatch cost is paid at most the first turn or two per entity; <= 2 new edges per call; min-similarity gated; addEdge dedups (src,dst,rel).",
+    "Fail-safe: every helper try/catches to 0/null; a graphMatch/embedding failure just skips (retries next turn). renderGraphPacket / the graph hard-route untouched."
+  ],
+  "tests": "tests/bridge-edges-verify.ps1 25/25 + tests/brain-surface-verify.ps1 48/48 regression (PS static mirror; host has no Node). Live: tests/BRIDGE-EDGES_LIVE_TEST.md.",
+  "live_verify_plan": "After deploy, with the flag already ON: ask 'what did Terras prove?' -> Terras node 199 gets related_to edges to Collatz nodes (verify in m8_graph_edges, metadata bridged_anchor) -> a later Terras turn shows the ENTITY <-> GRAPH LINKS block. Claude can run the verification SQL on request.",
+  "track_b_note": "Per Muhammad 2026-06-22: M8 focus shifts to Track B (the unsolved-problem engine); Bolt / Track-A parked for now. This build is the bridge piece that makes the research brain's people<->problems relationships visible.",
+  "git": {
+    "added_only": ["lib/memory-graph.js", "lib/entity-graph.js", "tests/brain-surface-verify.ps1", "tests/bridge-edges-verify.ps1", "tests/BRIDGE-EDGES_LIVE_TEST.md", "reports/bridge-edges-done.json"],
+    "push": "feat/bridge-edges (branch only; Muhammad merges)"
+  }
+}
