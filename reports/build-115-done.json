@@ -1,0 +1,20 @@
+{
+  "task": "Build-115: Engine Learn Status -- deterministic read-only chat command that surfaces survivor productivity leaderboard + generation-steering state",
+  "branch": "feat/b115-learn-status",
+  "base": "origin/main (0dff782)",
+  "approach": "Direct-return deterministic route (no LLM). Detect phrases like 'what has the engine learned' / 'show survivor productivity' / 'loop learn status'. Reads m8_research_notes (parses template names + bounds from collatz-m3 survivor notes) and m8_loop_runs.metadata (gen_version + learn.earned/success/failed_patterns). Packet IS the answer -- same pattern as engine-catalog and lychrel lanes.",
+  "files": [
+    "lib/learn-status.js   -- new: detectLearnStatus RE + fetchLearnStatus(db) + buildLearnStatusPacket(data) + pure helpers parseTemplate/parseBound",
+    "lib/orchestrator.js   -- wired: Build-115 block inserted after engine-catalog (~line 1633), before command-center; gated on !imgTurn !explicitLean !m1Mode !m3Mode !lemmaDagMode !knowledgeIngestMode",
+    "tests/B115-learn-status-verify.ps1  -- new: 49/49 PASS (sections: parseTemplate 5, parseBound 5, empty state 7, survivors-only 10, gen_v2 9, gen_v3-earned0 8, gen_v3-earned2 5, source-binding 8)",
+    "reports/build-115-done.json         -- this file"
+  ],
+  "tests": "49/49 PASS (PS 5.1 ASCII mirror, pure-logic + source-binding asserts)",
+  "deployed": false,
+  "notes": [
+    "getSurvivorTemplateStats does not exist in conjecture-memory.js (parallel session owns it); equivalent logic implemented directly in learn-status.js by querying m8_research_notes and parsing template names from note content.",
+    "Live data confirmed via Supabase query: 395 survivor notes in collatz-m3, all tested to 100,000. Latest m8_loop_runs row (2026-06-22) has gen_version:2 and learn.earned_patterns:0 -- B113 cron run pending.",
+    "Honesty invariants: survivors are computational evidence, NOT proven/novel/established. Gate measures GENERATION QUALITY, not truth. No table writes anywhere.",
+    "Worktree: C:/Users/m7ofy/OneDrive/Documents/Claude/Projects/Bolt/m8-learn-status"
+  ]
+}

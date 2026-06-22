@@ -249,7 +249,7 @@ Assert-Core 'unclassifiable verified row -> empty down-weight -> schedule == TEM
 # SOURCE BINDING -- conjecture-gen.js (the wire lives here)
 # ============================================================================
 Write-Host "`n-- conjecture-gen.js source --"
-Assert-True 'GEN_VERSION bumped to 3 (feedback-conditioned)'   ($cg -match "GEN_VERSION\s*=\s*3;")
+Assert-True 'GEN_VERSION bumped to 4 (B116 survivor-steered; was 3 at B113)' ($cg -match "GEN_VERSION\s*=\s*4;")
 Assert-True 'exports detectGenFeatures'                         ($cg -match "detectGenFeatures")
 Assert-True 'exports classifyConjectureTemplates'              ($cg -match "classifyConjectureTemplates")
 Assert-True 'exports buildGenFeedbackProfile'                  ($cg -match "buildGenFeedbackProfile")
@@ -298,7 +298,7 @@ $obsSeg = ($obsSeg -split "async function runVerifyPhase")[0]
 Assert-True 'observe still routes through runConjectureGenWithFeedback' ($obsSeg -match "await runConjectureGenWithFeedback")
 Assert-True 'learn telemetry stamps gen_steered'            ($obsSeg -match "gen_steered:")
 Assert-True 'learn telemetry stamps down_weighted regions'  ($obsSeg -match "down_weighted:")
-Assert-True 'still stamps gen_version (now 3 via GEN_VERSION)' ($obsSeg -match "row\.metadata\.gen_version = m3\.genVersion")
+Assert-True 'still stamps gen_version (now 4 via GEN_VERSION)' ($obsSeg -match "row\.metadata\.gen_version = m3\.genVersion")
 Assert-True 'observe still NO LLM'                          ($obsSeg -match "NO LLM")
 
 # ============================================================================
