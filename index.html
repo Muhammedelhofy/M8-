@@ -49,6 +49,14 @@
           <path d="M16.5 5.6l1.6 1.6 3.4-3.4"/>
         </svg>
       </button>
+      <button id="money-btn" class="btn-set" aria-label="Money" title="Money">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H18a2 2 0 0 1 2 2v1"/>
+          <path d="M3 7.5V17a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3"/>
+          <path d="M21 11h-4a2 2 0 0 0 0 4h4a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1z"/>
+        </svg>
+      </button>
       <button id="settings-btn" class="btn-set" aria-label="Diagnostics and settings" title="Diagnostics">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
              stroke-linecap="round" stroke-linejoin="round">
@@ -157,6 +165,20 @@
     <div id="tasks-list" class="tasks-list"></div>
   </div>
 
+  <!-- Money slide-in panel (privacy-walled read-only summary of Family Wallet) -->
+  <div id="money-panel" class="diag-panel money-panel" aria-hidden="true">
+    <div class="diag-head">
+      <button id="money-back" class="diag-back" aria-label="Back to chat">&#8249;</button>
+      <span class="diag-title">MONEY</span>
+      <button id="money-refresh" class="money-refresh" aria-label="Refresh">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v4h-4"/>
+        </svg>
+      </button>
+    </div>
+    <div id="money-body" class="money-body"></div>
+  </div>
+
   <!-- Install-as-app button (appears only when Chrome says it's installable) -->
   <button id="install-btn" class="install-btn" style="display:none" aria-label="Install M8 as an app">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -170,6 +192,7 @@
   <script src="js/chat.js"></script>
   <script src="js/app.js"></script>
   <script src="js/tasks.js"></script>
+  <script src="js/money.js"></script>
   <script>
   (function(){
     if('serviceWorker' in navigator){ window.addEventListener('load',function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}); }); }
