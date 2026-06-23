@@ -7,8 +7,10 @@ NEVER add `api/*.js` — fold via `?fn=` (handler in `lib/handlers/` + a case in
 + a `vercel.json` rewrite). `ls api/*.js | wc -l` must stay ≤ 12.
 
 ## ✅ DONE this session — the assistant architecture, all 4 builds — DEPLOYED to prod ✅
-**LIVE on `m8-alpha.vercel.app`** — `main` = `origin/main` = **8509dfb** (12/12 functions, `/api/health`
-ok). All 4 builds deployed. **Web Push ACTIVATED + verified end-to-end on Muhammad's Android**
+**LIVE on `m8-alpha.vercel.app`** — `main` = `origin/main` = **98dcd54** (12/12 functions, `/api/health`
+ok). All 4 builds + **batch 2** (Notes tab · tap-to-edit + P/W toggle · snooze · recurring tasks ·
+edit-expense) deployed. **Edit-expense verified live** — the wallet UPDATE grant works (add 5 → edit 7
+SAR, no 403), so M8 can now edit existing wallet transactions, not just add. **Web Push ACTIVATED + verified end-to-end on Muhammad's Android**
 (VAPID env set; PWA installed; 🔔 → FCM subscription saved; "remind me to test push today" → ran
 `/api/push-cron` → notification delivered, tap opened M8, `reminded_at` stamped). `fun/scifi-ui`
 tracks `main`.
@@ -38,7 +40,9 @@ the cron delivered a real notification. Cron = **daily 7am KSA** (Hobby once/day
 ## ⬜ OPTIONAL — leftover items (Muhammad's call)
 - **Migrate the Omar money-note:** say "migrate my money notes" → "yes" to add Omar lunch 30 SAR to
   the wallet (real write; round-trip-audit the `[M8]` tag). Not yet run.
-- Clear the throwaway **`test push`** task from the Tasks tab if you like.
+- **Cleanup:** delete the throwaway "audit test" (7 SAR) txn in Family Wallet + the "test push" task.
+- Product stance: the assistant loop is complete (tasks/notes/money, chat+tabs, reminders, edit).
+  Recommend USING it before adding more; nothing pending. Future ideas only if real friction shows up.
 
 ## Privacy wall (hold it)
 Wallet text NEVER enters an LLM prompt/log. Money replies carry `MONEY_SENTINEL` (stripped from
