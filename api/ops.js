@@ -23,6 +23,7 @@ const notifyPrefs  = require("../lib/handlers/notify-prefs");
 const wallet       = require("../lib/handlers/wallet");
 const pushSubscribe = require("../lib/handlers/push-subscribe");
 const pushCron      = require("../lib/handlers/push-cron");
+const notesApi      = require("../lib/handlers/notes-api");
 
 module.exports = async (req, res) => {
   const fn = String((req.query && req.query.fn) || "").toLowerCase();
@@ -33,6 +34,7 @@ module.exports = async (req, res) => {
     case "wallet":         return wallet(req, res);
     case "push-subscribe": return pushSubscribe(req, res);
     case "push-cron":      return pushCron(req, res);
+    case "notes":          return notesApi(req, res);
     default:
       return res.status(404).json({ error: `unknown ops fn: '${fn}'` });
   }

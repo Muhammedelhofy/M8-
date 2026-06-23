@@ -46,6 +46,7 @@
         '<button class="task-check" aria-label="mark done" title="Mark done">' + (t.done ? SVG_CHECK : SVG_CIRCLE) + "</button>" +
         '<span class="task-title" title="Tap to edit">' + esc(t.title) + "</span>" +
         (t.category === "work" ? WORK_TAG : "") +
+        (t.recur ? '<span class="task-recur" title="repeats ' + esc(t.recur) + '">&#128257;</span>' : "") +
         (t.done ? "" : dueLabel(t.due_at)) +
         '<button class="task-del" aria-label="delete">' + SVG_X + "</button>" +
         "</div>";

@@ -16,6 +16,7 @@
     { "source": "/api/wallet",                  "destination": "/api/ops?fn=wallet" },
     { "source": "/api/push-subscribe",          "destination": "/api/ops?fn=push-subscribe" },
     { "source": "/api/push-cron",               "destination": "/api/ops?fn=push-cron" },
+    { "source": "/api/notes",                   "destination": "/api/ops?fn=notes" },
     { "source": "/api/(.*)", "destination": "/api/$1" }
   ],
   "functions": {

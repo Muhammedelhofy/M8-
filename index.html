@@ -66,6 +66,13 @@
             </svg>
             <span>Tasks</span>
           </button>
+          <button id="notes-btn" class="launcher-item" aria-label="Notes">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 3h11l3 3v15H5z"/><path d="M8 8h8"/><path d="M8 12h8"/><path d="M8 16h5"/>
+            </svg>
+            <span>Notes</span>
+          </button>
           <button id="money-btn" class="launcher-item" aria-label="Money">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
                  stroke-linecap="round" stroke-linejoin="round">
@@ -187,6 +194,15 @@
     <div id="tasks-list" class="tasks-list"></div>
   </div>
 
+  <!-- Notes slide-in panel (browse + delete; capture/recall via chat: "note: …") -->
+  <div id="notes-panel" class="diag-panel notes-panel" aria-hidden="true">
+    <div class="diag-head">
+      <button id="notes-back" class="diag-back" aria-label="Back to chat">&#8249;</button>
+      <span class="diag-title">NOTES</span>
+    </div>
+    <div id="notes-list" class="tasks-list"></div>
+  </div>
+
   <!-- Money slide-in panel (privacy-walled read-only summary of Family Wallet) -->
   <div id="money-panel" class="diag-panel money-panel" aria-hidden="true">
     <div class="diag-head">
@@ -214,6 +230,7 @@
   <script src="js/chat.js"></script>
   <script src="js/app.js"></script>
   <script src="js/tasks.js"></script>
+  <script src="js/notes.js"></script>
   <script src="js/money.js"></script>
   <script>
   (function(){
