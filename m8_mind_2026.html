@@ -1,8 +1,8 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <!-- CANONICAL M8 DIAGRAM (promoted 2026-06-17, Session-44). This "M8 Mind" view is now the single
      source-of-truth visual — the old dense architecture diagram was archived to archive/diagrams/.
      Update THIS file on every ship: bump the Build/Session in the footer + this note, flip status/%
-     cells, do NOT regenerate the structure. Currently: Session-55 (Build-85d multi-hop reasoning chain: complex why/how/compare questions decompose into 2-4 sub-questions, answer each on already-fetched context, synthesize a visible step-by-step chain; 8s budget, fleet/finance/compute hard-gated; 53/53 offline). Prior: Build-84 multi-source answer engine + Build-85a/b. — Builds 79/80/81 (memory: fact extraction + recall fix + pgvector semantic search) + Build-82a (scanned PDF rejection) + Build-82 (knowledge graph injection, verified with Ibn Kathir) + Build-83b (KG semantic search) + Build-83c (entity memory) + Build-83d (M4 proposer feedback). bn01 ingested 201 nodes. All migrations applied. -->
+     cells, do NOT regenerate the structure. Currently: Session-59 (Build-116 learn->generate loop LIVE on nightly cron; prior: Build-85d multi-hop reasoning chain: complex why/how/compare questions decompose into 2-4 sub-questions, answer each on already-fetched context, synthesize a visible step-by-step chain; 8s budget, fleet/finance/compute hard-gated; 53/53 offline). Prior: Build-84 multi-source answer engine + Build-85a/b. — Builds 79/80/81 (memory: fact extraction + recall fix + pgvector semantic search) + Build-82a (scanned PDF rejection) + Build-82 (knowledge graph injection, verified with Ibn Kathir) + Build-83b (KG semantic search) + Build-83c (entity memory) + Build-83d (M4 proposer feedback). bn01 ingested 201 nodes. All migrations applied. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -309,7 +309,7 @@
           <div class="bar-row"><span class="blabel">Built toward the vision</span><span class="bpct">~45%</span></div>
           <div class="bar"><span style="width:40%"></span></div>
           <div class="est">it stores & recalls well; truly self-improving memory is almost all ahead · estimate</div>
-          <div class="foot">internally: provenance + trust tiers on every memory (Builds 38–39); shared by business &amp; research. <b>Ingestion LIVE</b> (Builds 58/62/66/81/82/83b): semantic recall (pgvector, cosine 0.70), entity memory (83c), knowledge graph (82/83b). <b style="color:#e55">&#9888; Books: 0 nodes in DB (Session-57 B101 audit).</b> Re-ingest needed. Pipeline rebuilt (B101). Was: "201 nodes" &#8212; data lost. Awaiting bn02–bn20 ingestion.</div>
+          <div class="foot">internally: provenance + trust tiers on every memory (Builds 38–39); shared by business &amp; research. <b>Ingestion LIVE</b> (Builds 58/62/66/81/82/83b): semantic recall (pgvector, cosine 0.70), entity memory (83c), knowledge graph (82/83b). <b>Books INGESTED 2026-06-22: The New World Order (~15 chunks) + Ibn Kathir (Arabic); 25 sources / 182 nodes.</b> Pipeline B101 hardened. Free-tier throttles whole-book bulk (NotebookLM for those). Older history: bn02–bn20 ingestion.</div>
         </div>
       </div>
 
@@ -503,7 +503,7 @@
 
   <div class="footer">
     Plain-language map of <b>The M8 Mind</b> · drawn from NORTH_STAR.md, the live build list & HONESTY_TRACK_PLAN.md ·
-    status as of <b>Session-57 · Build-103: provider health + graceful quota degradation &#8212; Builds 90&#8211;103 live (entity slug, conjecture learning loop, fleet P&amp;L report, nudge logger, Uber CSV, outcome-biased proposer, /api/health); B100/B101/B102 in progress (driver profiles, ingest pipeline fix, re-ingestion)</b> (2026-06-20) · priorities set with the AI Council (GPT · Gemini · Grok · Manus).<br>
+    status as of <b>Session-59 · Build-116: the learn&#8594;generate loop is LIVE on the nightly cron (gen_version=4, survivor_steered=true, 5 over-mined templates down-weighted) &#8212; Builds 90&#8211;116 + M3.1 survivor clustering all shipped &amp; deployed; Family Wallet bridge + sci-fi PWA live on Track A</b> (2026-06-23) · priorities set with the AI Council (GPT · Gemini · Grok · Manus).<br>
     The one claim we never make: that we’re already there.
   </div>
 

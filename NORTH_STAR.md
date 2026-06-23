@@ -176,11 +176,13 @@ if M8 treats *verified-to-N* as *proof* — the North Star collapses.
 | L1 Chatbot | ✅ complete |
 | L2 Grounded assistant | ✅ complete |
 | L3 Proactive ops | 🟢 ~85% |
-| L4 Verified tools | 🟢 ~85% ← current (M4-manual §0.4 gate PASSED live 2026-06-14) |
-| L5 Autonomous loop | ⚪ ~60% (M1 + M3-lite + M2/novelty + M3-full + M3.1 + M4-manual+gate shipped) |
+| L4 Verified tools | 🟢 ~85% (M4-manual §0.4 gate PASSED live 2026-06-14) |
+| L5 Autonomous loop | 🟢 ~70% ← current (M1 + M3-lite + M2/novelty + M3-full + M3.1 + M4-manual+gate + the **learn→generate loop B110–B116** shipped; the nightly cron now RUNS unattended and STEERS generation — live-verified 2026-06-23: run produced `gen_version=4` + `survivor_steered=true`, 5 over-mined templates down-weighted) |
 | L6 Compound | ⚪ the destination |
 
 ---
 
-*Canonical as of Session-23 / Build-18.1 (2026-06-14) — M4-manual §0.4 gate passed live.
+*Canonical as of Session-59 / Build-116 (2026-06-23) — the learn→generate loop (B110–B116)
++ M3.1 survivor clustering are SHIPPED and LIVE-VERIFIED on the nightly cron (gen_version=4,
+survivor_steered=true). Track A also gained the live Family Wallet bridge + sci-fi PWA.
 Edit deliberately; do not regenerate from scratch.*
