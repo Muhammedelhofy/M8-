@@ -1,49 +1,60 @@
 # M8 app — next-session build brief
 
-**Model/effort:** Opus + MAX (orchestrator + a money DB + the live 7am brief).
-**Branch:** worktree `m8-scifi` on `fun/scifi-ui`. Pushing `main` AUTO-DEPLOYS prod
-`m8-alpha.vercel.app` — **never deploy without Muhammad's OK.** Repo `Muhammedelhofy/M8-`.
-**⛔ HARD RULE:** Vercel Hobby caps at **12 serverless functions**. NEVER add a new
-`api/*.js`. Fold endpoints via the `?fn=` rewrite (handler body in `lib/handlers/`,
-a `case` in `api/ops.js`, a `vercel.json` rewrite). Check `ls api/*.js | wc -l` ≤ 12.
+**Model/effort:** Opus + MAX. **Branch:** worktree `m8-scifi` on `fun/scifi-ui`.
+Pushing `main` AUTO-DEPLOYS prod `m8-alpha.vercel.app` — **never deploy without Muhammad's OK.**
+**⛔ HARD RULE:** Vercel Hobby caps at **12 serverless functions** (currently AT 12).
+NEVER add `api/*.js` — fold via `?fn=` (handler in `lib/handlers/` + a case in `api/ops.js`
++ a `vercel.json` rewrite). `ls api/*.js | wc -l` must stay ≤ 12.
 
-## LIVE on prod (origin/main = d2f7854) — all shipped + verified
-- Deploy-fix (wallet folded into `ops`, 12 funcs) + `/api/wallet` GATE (`x-m8-key` ==
-  env `M8_WALLET_KEY`, fail-closed). Open Money → enter the key once (stored on device).
-- Read-only Money view (ring + In/Out + insight cards) + "Open Family Wallet" button.
-- Tasks v2 chat lane + passive due-task reminders in the 7am brief.
-- Voice auto-detect (`lang:"auto"`; toggle steers only the reply voice).
-- UI low-noise pass (calm cyan orb no rings, one "•••" menu launcher, stop-only-while-
-  speaking, aligned input bar).
-- **Money chat + ADD-EXPENSE — WORKING + round-trip verified.** "add 30 sar lunch" →
-  confirm → `yes` → inserts (tagged `[M8]`, audited to `m8_wallet_writes`); "how much
-  did I spend"/"groceries this month" → code-computed totals. Privacy: money replies
-  are stripped from LLM history (amounts never reach a model prompt).
+## ✅ DONE this session — the assistant architecture (on branch, VERIFIED, NOT deployed)
+`origin/main` = d2f7854. Branch HEAD = **3c620d5** (docs + 3 builds ahead).
+The DB changes are ALREADY LIVE on the BOLT Supabase (additive/safe — old prod code ignores them).
 
-## ★ Wallet REST auth — both env vars matter (cost a debug cycle, now fixed)
-- `WALLET_SUPABASE_URL`, `WALLET_JWT_SECRET` (the JWT **Secret** — a plain string, NOT a
-  key `eyJ…`), **`WALLET_SUPABASE_ANON_KEY`** (the wallet's PUBLIC anon key — required as
-  the gateway `apikey`; the minted custom-role JWT is NOT accepted as apikey). All set.
-  `lib/wallet.js` logs the Supabase body on 401/403 only (auth msgs, never rows) for future debugging.
+1. **Tasks work/personal category** (63bcf24) — `m8_tasks.category` (default 'personal',
+   backfilled, CHECK) · `api/tasks.js` validates + `?category` filter · chat parses
+   "work/personal task" (EN+AR) · Tasks tab ALL/WORK/PERSONAL filter (doubles as the
+   add-target) + amber WORK row tag. Verified 10/10 parser + UI screenshot.
+2. **Task/Note/Money front door** (ba701c0) — new `m8_notes` store + `lib/notes.js`. Early
+   lane `handleNotesCommand` (mirrored in both paths): explicit note capture ("note:" /
+   "remember …" / AR) + code-templated recall ("my notes" / "notes about X") + confirm-gated
+   free-form offers (imperative → task, personal money-fact → note) + confirm-commit from
+   history. Guards stop chat/fleet/finance hijack; "remember/don't forget to …" route to TASK.
+   Verified 28 parser cases + DB round-trip.
+3. **Migrate old money-notes** (3c620d5) — "migrate my money notes" scans `m8_conversations`
+   operational facts and offers ONE at a time → wallet (confirm yes/skip/stop), marking handled
+   rows in `metadata` (never dropped). TIGHT matcher: personal-expense context + amount+currency,
+   EXCLUDES fleet/business figures. Verified vs the real memory rows: include 3/3 (Omar lunch,
+   deduped from 3 copies), exclude 12/12. Real item it will surface: **Omar Lord lunch 30 SAR → Dining**.
 
-## QUEUED (Muhammad's architecture — next builds)
-- **Tasks work/personal category:** `ALTER TABLE m8_tasks ADD COLUMN category text DEFAULT
-  'personal'`; tab filter (js/tasks.js); parse in the chat lane ("add work task …").
-- **NOTES vs TASKS vs MONEY router:** M8 chat classifies what you tell it → to-do →
-  `m8_tasks`; money-note → wallet candidate (confirm to add); general note → memory.
-  NOTES are a SEPARATE store, never in the Tasks tab. Answer from any of the three.
-- **Offer to migrate existing M8 money-notes** ("30 SAR Omar lunch" held in memory) →
-  confirm-gated add to the wallet, one at a time; never silently.
-- **Active Web Push** (reminders): VAPID env, `m8_push_subscriptions` table,
-  `/api/push-subscribe` (FOLD into ops via `?fn=`), `sw.js` push+notificationclick,
-  a due-task cron. Email-at-due-time is the simpler fallback.
+Live-test docs: `tests/TASKS_CATEGORY_LIVE_TEST.md`, `NOTES_ROUTER_LIVE_TEST.md`,
+`MIGRATE_MONEY_NOTES_LIVE_TEST.md`.
 
-## Device tests still worth a glance
-Voice EN+AR auto-detects (no toggle needed); typed→silent / spoken→spoken reply in the
-spoken language; Tasks panel persists; PWA v2 icon installs; Money unlocks with the key
-and shows real numbers; "add 30 sar lunch" in chat round-trips with an `[M8]` tag.
+## ⬜ NEXT — Build #4: ACTIVE Web Push reminders (Muhammad is on ANDROID → push works well)
+Design (all folds into the 12-fn cap — NO new `api/*.js`):
+- **dep:** add `web-push` to `package.json` (Vercel installs on build).
+- **table** `m8_push_subscriptions` (endpoint text PK, p256dh, auth, created_at).
+- **endpoint:** `lib/handlers/push-subscribe.js` + case in `api/ops.js` (`?fn=push-subscribe`)
+  + `vercel.json` rewrite `/api/push-subscribe → /api/ops?fn=push-subscribe`.
+  GET → `{publicKey: VAPID_PUBLIC_KEY}`; POST saves the subscription; DELETE removes it.
+- **sw.js:** add `push` (registration.showNotification) + `notificationclick` (focus/open) handlers.
+- **frontend:** an "Enable reminders" toggle → `Notification.requestPermission()` →
+  `pushManager.subscribe({userVisibleOnly:true, applicationServerKey: urlB64ToUint8(publicKey)})`
+  → POST `/api/push-subscribe`.
+- **due-task cron:** `lib/handlers/push-cron.js` + case in ops (`?fn=push-cron`) + rewrite
+  `/api/push-cron → /api/ops?fn=push-cron` + `vercel.json` cron `{path:"/api/push-cron",
+  schedule:"*/15 * * * *"}` (CRON_SECRET bearer, like loop-attest). Reads `m8_tasks` due now &
+  not done, sends web-push to all subs.
+- **Muhammad's manual steps (non-eng → give click-by-click):** generate a VAPID keypair (no node
+  on host → browser Web Crypto snippet or vapidkeys.com), set Vercel env `VAPID_PUBLIC_KEY` /
+  `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` (mailto:), deploy, install the PWA **from PRODUCTION**
+  (previews are 401-walled), tap Enable reminders, device-test. NEVER paste the PRIVATE key in chat.
 
-## Privacy wall (keep holding it)
-Wallet text (note/category/counterparty/amount) NEVER enters an LLM prompt or a log. The
-Money view + chat answers are deterministic + code-templated; money turns are stripped
-from LLM history. Parse with code, not the model.
+## Privacy wall (hold it)
+Wallet text NEVER enters an LLM prompt/log. Money replies carry `MONEY_SENTINEL` (stripped from
+history). Notes are general memory (separate from the walled wallet). Parse with code, not the model.
+
+## No-node host
+Verify JS via the browser-preview `new Function()` syntax check + run pure parsers via
+`preview_eval`. Money DB writes need a round-trip audit (add → `[M8]` tag + `m8_wallet_writes`
+row → delete). Preview: launch config **"m8-scifi"** (serve.ps1 now honors `$env:PORT`; autoPort
+is on because 4188 is OS-reserved).
