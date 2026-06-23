@@ -176,12 +176,23 @@
     return wrap;
   }
 
+  function openWalletBtn() {
+    var a = document.createElement("a");
+    a.className = "money-openwallet";
+    a.href = "https://family-wallet.vercel.app";
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.textContent = "Open Family Wallet ↗";
+    return a;
+  }
+
   function render(d) {
     body.innerHTML = "";
     body.appendChild(ringSection(d));
     body.appendChild(tilesSection(d));
     body.appendChild(insightCards(d));
-    var foot = el("div", "money-foot", "Family Wallet · " + (d.month || "") + " · read-only");
+    body.appendChild(openWalletBtn());
+    var foot = el("div", "money-foot", "Family Wallet · " + (d.month || "") + " · read-only in M8");
     body.appendChild(foot);
   }
 
