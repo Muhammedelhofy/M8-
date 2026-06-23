@@ -692,7 +692,7 @@ html, body {
   bottom: 0; left: 0; right: 0;
   height: var(--footer-h);
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 8px;
   padding: 10px 12px 12px;
   background: var(--bg-secondary);
@@ -870,20 +870,15 @@ body {
 .orb { position: relative; width: 40px; height: 40px; overflow: visible;
   background: radial-gradient(circle at 36% 30%, #f2feff, #2de2e6 36%, #5b8cff 68%, #162670) !important;
   box-shadow: 0 0 18px rgba(45,226,230,.85), 0 0 38px rgba(91,140,255,.5) !important; }
-.orb::before { content:''; position:absolute; inset:-5px; border-radius:50%;
-  background: conic-gradient(from 0deg, transparent, rgba(45,226,230,.95), transparent 44%);
-  -webkit-mask: radial-gradient(farthest-side, transparent 72%, #000 74%);
-  mask: radial-gradient(farthest-side, transparent 72%, #000 74%);
-  animation: orb-ring 3s linear infinite; }
-.orb::after { content:''; position:absolute; inset:-10px; border-radius:50%;
-  border: 1.5px dashed rgba(155,108,255,.6); animation: orb-ring 9s linear infinite reverse; }
+/* low-noise: the orbiting cyan reticle (::before) + violet dashed ring (::after)
+   are removed — keep just the glowing core (the .orb radial gradient + glow). */
 @keyframes orb-ring { to { transform: rotate(360deg); } }
 .orb.listening { background: radial-gradient(circle at 36% 30%, #ffe3df, #ff6a5a 42%, #c62828) !important;
   box-shadow: 0 0 22px rgba(244,67,54,.6) !important; }
-.orb.thinking  { background: radial-gradient(circle at 36% 30%, #fff3c4, #ffc83d 42%, #f57f17) !important;
-  box-shadow: 0 0 22px rgba(255,193,7,.55) !important; }
-.orb.speaking  { background: radial-gradient(circle at 36% 30%, #c9ffe0, #46e6b0 44%, #1b8a4c) !important;
-  box-shadow: 0 0 22px rgba(70,230,176,.6) !important; }
+.orb.thinking  { background: radial-gradient(circle at 36% 30%, #d8fbff, #2de2e6 42%, #0e6f86) !important;
+  box-shadow: 0 0 22px rgba(45,226,230,.6) !important; }
+.orb.speaking  { background: radial-gradient(circle at 36% 30%, #cffff4, #25d9c4 44%, #0e7c8a) !important;
+  box-shadow: 0 0 22px rgba(37,217,196,.6) !important; }
 
 /* ── header text ── */
 .m8-name { font-family:'Orbitron',sans-serif !important; font-weight:800 !important; font-size:19px !important;
@@ -924,6 +919,26 @@ body {
 .btn-set:hover { filter: drop-shadow(0 0 9px rgba(45,226,230,.9)); transform: rotate(30deg); }
 .btn-set svg { width:24px; height:24px; }
 
+/* ── header menu launcher (collapses Tasks/Money/Diagnostics into one circle) ── */
+.menu-wrap { position: relative; display: flex; align-items: center; }
+.menu-wrap > .btn-set:hover { transform: none; } /* dots glyph shouldn't spin */
+.launcher { position: absolute; top: calc(100% + 10px); right: 0; z-index: 320;
+  display: flex; flex-direction: column; min-width: 188px; padding: 6px;
+  background: rgba(9,16,36,.97); border: 1px solid var(--border); border-radius: 14px;
+  box-shadow: 0 12px 36px rgba(0,0,0,.55), 0 0 18px rgba(45,226,230,.12);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.launcher[hidden] { display: none; }
+.launcher-item { display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 11px 12px; border: none; background: none; cursor: pointer;
+  color: var(--text-primary); font-family: 'Rajdhani', sans-serif; font-size: 15px;
+  font-weight: 600; letter-spacing: .4px; border-radius: 10px; text-align: left; }
+.launcher-item:hover { background: rgba(45,226,230,.1); }
+.launcher-item svg { width: 21px; height: 21px; color: var(--cy); flex-shrink: 0;
+  filter: drop-shadow(0 0 5px rgba(45,226,230,.45)); }
+
+/* stop button shows ONLY while M8 is speaking (toggled by setStatus) */
+#stop-btn { display: none; }
+
 /* ── DIAGNOSTICS slide-in tab ── */
 .diag-panel { position: fixed; inset: 0; z-index: 300; display:flex; flex-direction:column;
   transform: translateX(100%); opacity: 0;
@@ -943,8 +958,7 @@ body {
 .diag-row b.ok { color:#46e6b0; }
 
 /* ── living orb: clean state motion over the arc-reactor ── */
-.orb.thinking  { animation: none !important; }
-.orb.thinking::before { animation-duration: .85s !important; }
+.orb.thinking  { animation: orb-fx-pulse 1.5s ease-in-out infinite !important; }
 .orb.speaking  { animation: orb-fx-pulse .5s ease-in-out infinite !important; }
 .orb.listening { animation: orb-fx-pulse 1s  ease-in-out infinite !important; }
 @keyframes orb-fx-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.13); } }

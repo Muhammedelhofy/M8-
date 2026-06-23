@@ -707,6 +707,22 @@ function init() {
     UI.textInput.style.height = Math.min(UI.textInput.scrollHeight, 120) + "px";
   });
 
+  // Header menu launcher: one circle toggles a small list (Tasks/Money/Diagnostics).
+  // The items keep their original IDs, so tasks.js / money.js / the diagnostics
+  // inline script open the right panel; here we only toggle the menu's visibility.
+  const menuBtn = document.getElementById("menu-btn");
+  const launcher = document.getElementById("launcher");
+  if (menuBtn && launcher) {
+    const setOpen = (open) => {
+      if (open) launcher.removeAttribute("hidden"); else launcher.setAttribute("hidden", "");
+      menuBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    };
+    menuBtn.addEventListener("click", (e) => { e.stopPropagation(); setOpen(launcher.hasAttribute("hidden")); });
+    launcher.addEventListener("click", () => setOpen(false)); // a chosen item opens its panel + closes the menu
+    document.addEventListener("click", (e) => { if (!menuBtn.contains(e.target) && !launcher.contains(e.target)) setOpen(false); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") setOpen(false); });
+  }
+
   // Set default language and show welcome
   setLanguage("en");
   setTimeout(showWelcome, 600);
@@ -959,6 +975,9 @@ function setStatus(status) {
 
   // Update orb class
   UI.orb.className = "orb " + status;
+
+  // Stop button shows ONLY while M8 is speaking (low-noise header).
+  if (UI.stopBtn) UI.stopBtn.style.display = (status === "speaking") ? "flex" : "none";
 
   // Update mic button
   if (status !== "listening") {

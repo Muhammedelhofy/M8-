@@ -42,36 +42,51 @@
       </div>
     </div>
     <div class="header-right">
-      <button id="tasks-btn" class="btn-set" aria-label="Tasks" title="Tasks">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
-             stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 6h9"/><path d="M4 12h9"/><path d="M4 18h6"/>
-          <path d="M16.5 5.6l1.6 1.6 3.4-3.4"/>
-        </svg>
-      </button>
-      <button id="money-btn" class="btn-set" aria-label="Money" title="Money">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
-             stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H18a2 2 0 0 1 2 2v1"/>
-          <path d="M3 7.5V17a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3"/>
-          <path d="M21 11h-4a2 2 0 0 0 0 4h4a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1z"/>
-        </svg>
-      </button>
-      <button id="settings-btn" class="btn-set" aria-label="Diagnostics and settings" title="Diagnostics">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-             stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2.2 L20.5 7 V17 L12 21.8 L3.5 17 V7 Z"/>
-          <circle cx="12" cy="12" r="2.1" fill="currentColor" stroke="none"/>
-          <circle cx="12" cy="6.6" r="1"/><circle cx="16.8" cy="14.6" r="1"/><circle cx="7.2" cy="14.6" r="1"/>
-          <line x1="12" y1="12" x2="12" y2="6.6"/><line x1="12" y1="12" x2="16.8" y2="14.6"/><line x1="12" y1="12" x2="7.2" y2="14.6"/>
-        </svg>
-      </button>
       <button id="stop-btn" class="btn-icon" title="Stop speaking" aria-label="Stop speaking">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <rect x="6.6" y="6" width="3.6" height="12" rx="1.4"/>
           <rect x="13.8" y="6" width="3.6" height="12" rx="1.4"/>
         </svg>
       </button>
+      <div class="menu-wrap">
+        <button id="menu-btn" class="btn-set" aria-label="Menu" title="Menu" aria-haspopup="true" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+            <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+            <circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+          </svg>
+        </button>
+        <div id="launcher" class="launcher" hidden>
+          <button id="tasks-btn" class="launcher-item" aria-label="Tasks">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 6h9"/><path d="M4 12h9"/><path d="M4 18h6"/>
+              <path d="M16.5 5.6l1.6 1.6 3.4-3.4"/>
+            </svg>
+            <span>Tasks</span>
+          </button>
+          <button id="money-btn" class="launcher-item" aria-label="Money">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H18a2 2 0 0 1 2 2v1"/>
+              <path d="M3 7.5V17a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3"/>
+              <path d="M21 11h-4a2 2 0 0 0 0 4h4a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1z"/>
+            </svg>
+            <span>Money</span>
+          </button>
+          <button id="settings-btn" class="launcher-item" aria-label="Diagnostics">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2.2 L20.5 7 V17 L12 21.8 L3.5 17 V7 Z"/>
+              <circle cx="12" cy="12" r="2.1" fill="currentColor" stroke="none"/>
+              <circle cx="12" cy="6.6" r="1"/><circle cx="16.8" cy="14.6" r="1"/><circle cx="7.2" cy="14.6" r="1"/>
+              <line x1="12" y1="12" x2="12" y2="6.6"/><line x1="12" y1="12" x2="16.8" y2="14.6"/><line x1="12" y1="12" x2="7.2" y2="14.6"/>
+            </svg>
+            <span>Diagnostics</span>
+          </button>
+        </div>
+      </div>
       <button id="lang-toggle" class="btn-lang">EN</button>
     </div>
   </header>
