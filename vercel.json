@@ -14,6 +14,8 @@
     { "source": "/api/loop-attest",             "destination": "/api/ops?fn=loop-attest" },
     { "source": "/api/notify-prefs",            "destination": "/api/ops?fn=notify-prefs" },
     { "source": "/api/wallet",                  "destination": "/api/ops?fn=wallet" },
+    { "source": "/api/push-subscribe",          "destination": "/api/ops?fn=push-subscribe" },
+    { "source": "/api/push-cron",               "destination": "/api/ops?fn=push-cron" },
     { "source": "/api/(.*)", "destination": "/api/$1" }
   ],
   "functions": {
@@ -32,6 +34,7 @@
     { "path": "/api/cron-summarize", "schedule": "0 2 * * *" },
     { "path": "/api/cron-explore", "schedule": "0 1 * * *" },
     { "path": "/api/cron-verify", "schedule": "15 1 * * *" },
-    { "path": "/api/morning-brief", "schedule": "0 3 * * *" }
+    { "path": "/api/morning-brief", "schedule": "0 3 * * *" },
+    { "path": "/api/push-cron", "schedule": "0 4 * * *" }
   ]
 }

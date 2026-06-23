@@ -116,4 +116,37 @@
     var b = e.target.closest("button[data-cat]"); if (!b) return;
     setFilter(b.getAttribute("data-cat"));
   });
+
+  // ── Push reminders (build #4): subscribe this device for due-task pushes ──
+  var remBtn = document.getElementById("tasks-remind");
+  function urlB64ToUint8(s) {
+    var pad = "=".repeat((4 - (s.length % 4)) % 4);
+    var b = (s + pad).replace(/-/g, "+").replace(/_/g, "/");
+    var raw = atob(b), arr = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+    return arr;
+  }
+  function remOn() { if (remBtn) { remBtn.classList.add("on"); remBtn.title = "Reminders on for this device"; } }
+  function enableReminders() {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return;
+    Notification.requestPermission().then(function (perm) {
+      if (perm !== "granted") return;
+      return fetch("/api/push-subscribe").then(function (r) { return r.json(); }).then(function (d) {
+        if (!d || !d.publicKey) return; // VAPID not configured yet
+        return navigator.serviceWorker.ready.then(function (reg) {
+          return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8(d.publicKey) });
+        }).then(function (sub) {
+          return fetch("/api/push-subscribe", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ subscription: sub.toJSON() }),
+          });
+        }).then(remOn);
+      });
+    }).catch(function () {});
+  }
+  if (remBtn) {
+    remBtn.addEventListener("click", enableReminders);
+    // already-granted devices: refresh the subscription + reflect state (no prompt)
+    if ("Notification" in window && Notification.permission === "granted") enableReminders();
+  }
 })();

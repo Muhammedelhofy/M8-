@@ -17,18 +17,22 @@
  */
 "use strict";
 
-const health      = require("../lib/handlers/health");
-const loopAttest  = require("../lib/handlers/loop-attest");
-const notifyPrefs = require("../lib/handlers/notify-prefs");
-const wallet      = require("../lib/handlers/wallet");
+const health       = require("../lib/handlers/health");
+const loopAttest   = require("../lib/handlers/loop-attest");
+const notifyPrefs  = require("../lib/handlers/notify-prefs");
+const wallet       = require("../lib/handlers/wallet");
+const pushSubscribe = require("../lib/handlers/push-subscribe");
+const pushCron      = require("../lib/handlers/push-cron");
 
 module.exports = async (req, res) => {
   const fn = String((req.query && req.query.fn) || "").toLowerCase();
   switch (fn) {
-    case "health":       return health(req, res);
-    case "loop-attest":  return loopAttest(req, res);
-    case "notify-prefs": return notifyPrefs(req, res);
-    case "wallet":       return wallet(req, res);
+    case "health":         return health(req, res);
+    case "loop-attest":    return loopAttest(req, res);
+    case "notify-prefs":   return notifyPrefs(req, res);
+    case "wallet":         return wallet(req, res);
+    case "push-subscribe": return pushSubscribe(req, res);
+    case "push-cron":      return pushCron(req, res);
     default:
       return res.status(404).json({ error: `unknown ops fn: '${fn}'` });
   }

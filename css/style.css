@@ -1052,6 +1052,9 @@ body {
   background: radial-gradient(circle at 40% 32%, #c9fbff, #2de2e6 60%, #11aebf); }
 .task-cat-tag { font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: .05em; text-transform: uppercase;
   color: #ffcf6b; border: 1px solid rgba(255,193,71,.35); border-radius: 6px; padding: 1px 6px; flex-shrink: 0; }
+.tasks-remind { margin-left: auto; flex-shrink: 0; border: 1px solid var(--border); border-radius: 10px; cursor: pointer;
+  background: rgba(45,226,230,.06); color: var(--mut); font-size: 15px; line-height: 1; padding: 7px 10px; }
+.tasks-remind.on { color: var(--cy); border-color: rgba(45,226,230,.5); background: rgba(45,226,230,.14); }
 
 /* ── Money panel (reuses .diag-panel slide-in) ── */
 .money-refresh { margin-left: auto; width: 34px; height: 34px; flex-shrink: 0; border: 1px solid var(--border);
