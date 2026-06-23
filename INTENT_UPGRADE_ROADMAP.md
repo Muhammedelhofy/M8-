@@ -24,6 +24,17 @@ tasks, notes, fleet) — the wallet is just one of them.
 - Rule: **the AI proposes, the locked code disposes.** Intelligence upgrades change how M8
   *understands*, never what it's *allowed to do*.
 
+## Found during Phase 0 live test (2026-06-24) → Phase 1 targets
+Phase 0 fixed *fall-through* loops (the screenshot cases ✅). But the live test
+exposed a second bug class — a **greedy lane claims the message before the safety
+net runs** ("mis-claim", not fall-through). A net at the END of the chain can't fix
+these; the **Phase 1 intent brain (decide the lane up front)** is the real fix.
+- **AR "احذف آخر مصروف"** → Tasks lane claimed it. Cheap deterministic fix shipped
+  (Build-120: Arabic generic-delete → strong:false, mirrors English). ✅
+- **"make me rich"** → Fleet lane treats unknown text as a driver name and loops
+  "which account?". **Deferred to Phase 1** (Muhammad's call 2026-06-24) — fleet is
+  the live job tool; the intent brain fixes it safely rather than a rushed hack.
+
 ## Locked design rules (reconciled from the council, 2026-06-24)
 - **Phase 0 = pure deterministic, NO LLM.** The safety net is keyword/domain detection +
   templated capability replies. Zero latency, zero cost, cannot worsen behaviour. (Rejected
@@ -56,8 +67,8 @@ tasks, notes, fleet) — the wallet is just one of them.
 
 | Phase | What | Risk | TEST CHECKPOINT | Status |
 |---|---|---|---|---|
-| **0 — Safety net** | **Deterministic, NO AI.** When a message hits a lane's keywords but no parser matches, reply plainly instead of looping. All lanes. | 🟢 none | The real screenshot cases ("remove the last expense", "what was the last expense Sara did") → clear message, no loop | 🟢 **BUILT — offline test 12/12 PASS; awaiting Muhammad's live test** (branch `phase0-safety-net`) |
-| **1 — Wallet pilot + intent core** | Build the **reusable** intent classifier (domain+intent+entity, strict JSON), prove it on the money lane. Includes basic reference ("that/last"). | 🟢 low | messy money sentences all route right; deletes confirm-gated; never guesses between 2 matches | ⬜ not started |
+| **0 — Safety net** | **Deterministic, NO AI.** When a message hits a lane's keywords but no parser matches, reply plainly instead of looping. All lanes. | 🟢 none | The real screenshot cases ("remove the last expense", "what was the last expense Sara did") → clear message, no loop | ✅ **DONE** — live-confirmed EN + AR on his phone (Build-119 `08d801d` + AR fix Build-120 `29c0834`). Offline 12/12. Rollback → `422e97c`. |
+| **1 — Wallet pilot + intent core** | Build the **reusable** intent classifier (domain+intent+entity, strict JSON), prove it on the money lane. Includes basic reference ("that/last"). | 🟢 low | messy money sentences all route right; deletes confirm-gated; never guesses between 2 matches | 🟢 **BUILT** — `lib/intent-router.js` + wallet 2nd-stage; privacy=live-msg-only; kill switch `M8_INTENT_BRAIN_DISABLED`; offline confirm-parse 5/5 PASS. Awaiting deploy + live test (branch `phase1-intent-brain`). |
 | **2 — Reference resolution** | Generalize "it / that / the last one / undo / scratch that" across lanes. | 🟢 low | reference phrases work | ⬜ not started |
 | **3 — Tasks + Notes** | Wire the intent core into tasks + notes. | 🟢 low | work without command vocabulary | ⬜ not started |
 | **4 — Fleet + general** | Intent core into fleet/earnings + free chat. | 🟡 med | conversational fleet queries | ⬜ not started |
@@ -86,3 +97,16 @@ as a standalone MD (per team-brief convention), never a chat paste.
   wired into both routing paths (buffered + streaming). Offline PS mirror
   `tests/phase0-safety-net-test.ps1` = 12/12 PASS. Live test sheet `tests/PHASE0_LIVE_TEST.md`.
   Nothing committed/deployed — awaiting Muhammad's live test, then "go".
+- **2026-06-24 — Phase 0 DEPLOYED + live-tested.** Build-119 (`08d801d`) live; Muhammad tested on
+  phone: EN money read+delete loops FIXED ✅, add-expense intact ✅. Two greedy-lane MIS-CLAIMS
+  surfaced (not fall-through): AR delete → Tasks lane (fixed, Build-120 `29c0834`, deployed,
+  awaiting AR re-test); "make me rich" → Fleet driver loop (DEFERRED to Phase 1 per Muhammad —
+  fleet is the live job tool). Key lesson recorded above. Phase 0 ✅ once AR re-test passes.
+- **2026-06-24 — Phase 1 BUILT** (branch `phase1-intent-brain`). `lib/intent-router.js`:
+  `classifyMoneyIntent()` → fast free model (Groq-first), strict JSON {kind,amount,currency,
+  category,note,confidence}, temp 0 / thinkingBudget 0 / 6s timeout, PRIVACY = live message only
+  (his explicit choice), not logged, fail-safe → null. Wired as the wallet lane's 2nd-stage parser
+  (keyword fast-path first; AI only on a miss + money-plausible). `pendingExpenseFromHistory` now
+  reconstructs from the confirm prompt so AI-detected adds survive "yes". Kill switch
+  `M8_INTENT_BRAIN_DISABLED=1`. Offline `tests/phase1-confirm-parse-test.ps1` 5/5. Live sheet
+  `tests/PHASE1_LIVE_TEST.md`. NOT deployed — awaiting Muhammad's go.
