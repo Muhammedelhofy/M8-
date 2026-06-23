@@ -1,94 +1,87 @@
-﻿# M8 Next Session Brief — Session-58 Close
+# M8 Next Session Brief — Session-59 Close
 
-**Head commit:** e061395 — Build-104 (2026-06-20)
-**Vercel:** auto-deployed on every push to main (m8-alpha.vercel.app)
+**Head commit (fix/odysseus-probe-fix):** 1735905 — Build-117 (2026-06-23)
+**Prod (origin/main):** `98dcd54` — M8 batch: Notes tab + assistant architecture LIVE
+**Vercel:** m8-alpha.vercel.app — auto-deploys on push to main (**never push without Muhammad's OK**)
+**⛔ HARD RULE:** Vercel Hobby caps at **12 serverless functions** (AT 12). Never add `api/*.js`.
 
 ---
 
-## What shipped this session (Builds 90–104)
+## What shipped this session — Build-117 (Odysseus probe fix)
 
-| Build | What | Commit |
+**Branch:** `fix/odysseus-probe-fix` — **NOT merged to main yet. Awaiting Muhammad's OK to merge.**
+
+| What | Detail |
+|------|--------|
+| `lib/discovery.js` | `UPGRADE_PRESSURE_RE` gets 2 new alternations: `present…together as the established results` + `write…up as a proven result`. `UPGRADE_PRESSURE_DIRECTIVE` gets 3 new bullets with probe-specific vocab to hit each PRESENT check. |
+| `tests/B117-odysseus-probe-fix-verify.ps1` | 44/44 PASS (PS 5.1 mirror). Regressions: discovery 34/34, novelty 37/37, loop 52/52, m3-conjecture 53/53. |
+| `NORTH_STAR.md` | L5 maturity 60% → 70%, footer Session-59/Build-116 (doc update carried from prior session). |
+| `m8_mind_2026.html` | Session-59 + books-ingested alarm fixed (doc update carried from prior session). |
+| `reports/build-117-done.json` | Build report. |
+
+**🔴 Action needed: merge `fix/odysseus-probe-fix` → main, then push (auto-deploys prod).**
+Then run the Odysseus battery to confirm the probe fix works live.
+
+---
+
+## What is ALREADY live on prod (B110–B116)
+
+| Build | What | Status |
 |-------|------|--------|
-| 90 | Entity slug: Arabic/Latin transliteration + deduplication (Mohammed==Muhammad); 39/39 PS | 4ffb576 |
-| 92 | Conjecture learning loop: verified leaves → proposer feedback | 63ca9db |
-| 95 | Fleet intelligence report: per-driver P&L + recommended actions; 51/51 PS | 76d896a |
-| 96 | Driver nudge logging: every Arabic nudge → m8_nudge_log | ee733a5 |
-| 97 | Uber CSV (passive): parser + cross-platform merge; 18/18 PS | c9044df |
-| 99 | Outcome-biased proposer: AVOID (failed sketches) + VERIFIED blocks in conjecture gen | 36611a3 |
-| 103 | Provider health: GET /api/health (6 providers), graceful degradation on quota | c140547 |
-| 104 | Auto Bolt fleet cron: daily sync to Supabase fleet_data via server-side API call | e061395 |
+| B110 | Brain tables fix (m8_graph_nodes, m8_loop_runs, etc.) | ✅ LIVE |
+| B111 | Durable conjecture-outcome reconciliation | ✅ LIVE |
+| B112 | Learn→generate narration (PREFER/EVIDENCE in systemInstruction) | ✅ LIVE |
+| B113 | Outcome-aware generation (Lean down-weights, gen_version=3) | ✅ LIVE |
+| B114 | Survivor evidence narration (free; 5 templates earn) | ✅ LIVE |
+| B115 | "what has the engine learned" read-only chat command | ✅ LIVE |
+| B116 | Survivor signal STEERS generation (gen_version=4, 5 over-mined down-weighted) | ✅ LIVE (verified 2026-06-23) |
+| M3.1 | Clustering + human review queue | ✅ LIVE |
+| Family Wallet bridge | Read + add-expense + edit-expense (privacy wall holds) | ✅ LIVE |
+| Sci-fi PWA + voice | MediaRecorder→Groq Whisper, installable | ✅ LIVE |
+| Web Push (Android) | 7am KSA daily cron, VAPID live, notification delivered | ✅ LIVE |
 
-**Parallel builds status:**
-- B100: Driver Profile Manager — DONE + LIVE-VERIFIED `2f822d3` 78/78 — "set Ahmad rental 1800 SAR" confirmed DB write 2026-06-20
-- B101: Ingest audit + atomic ingest pipeline — DONE `68317db` 45/45 — /api/ingest-full + /api/ingest-extract-existing; 0 books confirmed
-- B102: Knowledge re-ingestion — DONE `17197e7` 54/54 — "re-extract knowledge" chat command wired
-
----
-
-## Applied migrations (all confirmed in Supabase)
-
-| Migration | Status |
-|-----------|--------|
-| B85d_reasoning_chains.sql | Applied |
-| B85e_memory_consolidation.sql | Applied |
-| B86 longitudinal RPC (b86_longitudinal_rpc) | Applied |
-| B90_entity_slug.sql | Applied |
-| B92_conjecture_outcomes.sql | Applied |
+**Live telemetry (2026-06-23 nightly run):** `gen_version=4`, `survivor_steered=true`, 5 templates down-weighted.
 
 ---
 
-## Honest DB state (2026-06-20 check)
+## L5 promotion gate — what's blocking
 
-| Table | Count | Note |
-|-------|-------|------|
-| m8_graph_nodes | 161 | All Collatz — 0 book nodes |
-| driver_cost_profiles | 1 | Placeholder "Driver Name" only — no real data |
-| m8_conjecture_outcomes | 0 | B92/B99 wired, not yet run |
-| m8_nudge_log | 0 | B96 wired, no live nudges fired |
-| m8_knowledge_sources | 4 | Sources stored but extraction (Stage 2) never called |
+| Gate condition | Status |
+|----------------|--------|
+| `run_status=ok` | ✅ nightly cron runs |
+| `m3_gate_pass=true` | ✅ Wilson-Newcombe gate passes |
+| `survivors_persisted >= 1` | ✅ survivors persist |
+| `odysseus_pass=true` | 🔴 **FAILING** — battery has 3 failing probes (fixed in B117, pending deploy) |
+| `consecutive_clean >= 3` | 🔴 0 — blocked by above |
 
----
-
-## Orchestrator stacking order (Build positions)
-
-1. 84 intent router (classifyIntent)
-2. 85b entity card + recallEntities
-3. 86 longitudinal context (topics + trending entities)
-4. 85d reasoning chain (BEFORE main answer, isComplex gate, 8s budget, thought_process stripped)
-5. 85c reflector (AFTER main answer, binary rubric, 200-char gate)
-6. 88 proactive follow-ups (LAST — after reflector, M8-CHIPS)
-7. 87 driver cost profiles (overlaid on financeCtx before injection)
-8. 85e memory consolidation (on-demand /api/memory-consolidate)
-9. 95 fleet intelligence report (SLOT 3e, LIVE_DATA + finance paths)
-10. 99 outcome-biased conjecture proposer (m3Mode path)
+**After B117 deploys, re-run the battery** (`tests/odysseus/battery-m3-armed.json` + `tests/odysseus/battery-l5.json`) via the `run-odysseus-battery.ps1` script (or equivalent). If both batteries pass, the nightly cron will start advancing `consecutive_clean`.
 
 ---
 
 ## What to do next (prioritized)
 
-1. Pull and check B100/B101/B102 reports (reports/build-1XX-done.json)
-2. Run `tests/B100-driver-profile-verify.ps1` + enter real driver profiles via chat
-3. Run `tests/B101-ingest-audit-verify.ps1` + call POST /api/ingest-extract-existing to populate graph
-4. Live-test: type "set Ahmad's rental to 1800 SAR" in M8 chat
-5. Live-test: type "re-extract knowledge" in M8 chat after B102 lands
-6. Update m8_mind_2026.html footer once B100-102 are confirmed
+| Priority | Action |
+|----------|--------|
+| 🔴 1 | Merge `fix/odysseus-probe-fix` → main → push (auto-deploys) |
+| 🔴 2 | Run Odysseus battery — verify all probes pass live |
+| 🟢 3 | Watch the next nightly cron row in `m8_loop_runs` for `odysseus_pass=true`, `consecutive_clean=1` |
+| ⚪ 4 | Once `consecutive_clean >= 3`: L5 gate passes → begin L6 planning |
 
 ---
 
-## Files parallel sessions must NOT touch (owned by prior parallel builds)
+## Key constraints (never forget)
 
-- lib/fleet.js (Build-72b)
-- lib/morning-brief.js, lib/notify.js, lib/nudges.js (Track-A)
-- lib/fleet-report.js (Build-95)
-- lib/nudge-logger.js (Build-96)
-- lib/platform-merge.js, lib/platform-schemas.js (Build-97)
+- **Fable 5 BLOCKED** (US gov) — use Opus for autonomous high-effort sessions
+- **Vercel 12-function cap** — NEVER add `api/*.js`; fold new endpoints into `api/ops.js` via `?fn=`
+- **Never git add -A** — add files by name only
+- **PS 5.1 host** — no Node; all tests are PS mirrors; use `[IO.File]::ReadAllText` for UTF-8
+- **Use PowerShell `.Replace()`** for `m8_mind_2026.html` edits (em-dash U+2014 breaks Edit tool)
+- **Financial text NEVER enters LLM** — privacy wall in place (`MONEY_SENTINEL` strip)
+- **Pushing main auto-deploys prod** — always await explicit "merge/deploy" OK
 
-## Key constraints
+---
 
-- Fable 5 BLOCKED (US gov) — use Opus for autonomous high-effort sessions
-- Always use PowerShell Replace() for m8_mind_2026.html (em-dash U+2014 breaks Edit tool)
-- reports/ folder is the git message bus for parallel sessions
-- Master session owns: Supabase migrations, Vercel (auto on push), coordinator merges
-- Every parallel prompt: Model/Effort header + reports/ git block at end (3x corrected)
-- PS 5.1: pure ASCII source, no Arabic literals, no function named CP, use [IO.File]::ReadAllText for UTF-8
-- Never git add -A — add files by name only
+## Canonical docs (update on every ship)
+
+- `NORTH_STAR.md` — maturity ladder + vision (update % and Session/Build footer)
+- `m8_mind_2026.html` — the "M8 Mind" diagram (update status cells and footer comment only)
