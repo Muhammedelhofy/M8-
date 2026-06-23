@@ -26,12 +26,12 @@
   <button id="gen">Generate a new key pair</button>
   <div class="field"><label>VAPID_PUBLIC_KEY</label><textarea id="pub" readonly></textarea></div>
   <div class="field"><label>VAPID_PRIVATE_KEY (secret — never share / never paste in chat)</label><textarea id="priv" readonly></textarea></div>
-  <div class="field"><label>VAPID_SUBJECT</label><textarea id="subj" readonly>mailto:m.7oofy@gmail.com</textarea></div>
+  <div class="field"><label>VAPID_SUBJECT</label><textarea id="subj" readonly>mailto:mohd.hofy@gmail.com</textarea></div>
   <h3>Then, in Vercel → your M8 project → Settings → Environment Variables (Production):</h3>
   <ol>
     <li>Add <code>VAPID_PUBLIC_KEY</code> = the public value above.</li>
     <li>Add <code>VAPID_PRIVATE_KEY</code> = the private value above.</li>
-    <li>Add <code>VAPID_SUBJECT</code> = <code>mailto:m.7oofy@gmail.com</code>.</li>
+    <li>Add <code>VAPID_SUBJECT</code> = <code>mailto:mohd.hofy@gmail.com</code>.</li>
     <li>Save, then redeploy (or it applies on the next deploy).</li>
   </ol>
 <script>

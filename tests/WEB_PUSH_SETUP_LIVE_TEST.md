@@ -11,7 +11,7 @@ into `api/ops.js` — still 12/12).
 ## 2. Set env vars in Vercel (M8 project → Settings → Environment Variables → Production)
 - `VAPID_PUBLIC_KEY`  = the public value
 - `VAPID_PRIVATE_KEY` = the private value
-- `VAPID_SUBJECT`     = `mailto:m.7oofy@gmail.com`
+- `VAPID_SUBJECT`     = `mailto:mohd.hofy@gmail.com`
 Save. (CRON_SECRET is already set for the other crons — the cron reuses it.)
 
 ## 3. Deploy
