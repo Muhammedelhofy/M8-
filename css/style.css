@@ -1043,6 +1043,15 @@ body {
 .task-del { width: 24px; height: 24px; flex-shrink: 0; border: none; background: none; color: var(--mut); cursor: pointer; padding: 0; opacity: .6; }
 .task-del:hover { color: #ff8a80; opacity: 1; }
 .task-del svg { width: 16px; height: 16px; }
+/* work/personal filter (doubles as the add-target) + row tag */
+.tasks-filter { display: flex; gap: 6px; padding: 2px 18px 6px; }
+.tasks-filter button { flex: 1; font-family: 'Rajdhani', sans-serif; font-size: 12.5px; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--mut); background: rgba(120,160,255,.05);
+  border: 1px solid rgba(120,170,255,.18); border-radius: 9px; padding: 6px 0; cursor: pointer; transition: all .15s; }
+.tasks-filter button.active { color: #03161d; font-weight: 600; border-color: transparent;
+  background: radial-gradient(circle at 40% 32%, #c9fbff, #2de2e6 60%, #11aebf); }
+.task-cat-tag { font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: .05em; text-transform: uppercase;
+  color: #ffcf6b; border: 1px solid rgba(255,193,71,.35); border-radius: 6px; padding: 1px 6px; flex-shrink: 0; }
 
 /* ── Money panel (reuses .diag-panel slide-in) ── */
 .money-refresh { margin-left: auto; width: 34px; height: 34px; flex-shrink: 0; border: 1px solid var(--border);

@@ -12,6 +12,11 @@
   var SVG_CIRCLE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/></svg>';
   var SVG_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.4l2.4 2.4 4.6-5"/></svg>';
   var SVG_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  var WORK_TAG = '<span class="task-cat-tag">work</span>';
+
+  var filterBar = document.getElementById("tasks-filter");
+  var allTasks = [];
+  var filter = "all"; // active tab: doubles as the category for newly added tasks
 
   function esc(s) {
     return String(s || "").replace(/[&<>"']/g, function (c) {
@@ -37,23 +42,41 @@
       return '<div class="task-row' + (t.done ? " done" : "") + '" data-id="' + t.id + '">' +
         '<button class="task-check" aria-label="toggle">' + (t.done ? SVG_CHECK : SVG_CIRCLE) + "</button>" +
         '<span class="task-title">' + esc(t.title) + "</span>" +
+        (t.category === "work" ? WORK_TAG : "") +
         (t.done ? "" : dueLabel(t.due_at)) +
         '<button class="task-del" aria-label="delete">' + SVG_X + "</button>" +
         "</div>";
     }).join("");
   }
 
+  function applyFilter() {
+    var shown = filter === "all" ? allTasks
+      : allTasks.filter(function (t) { return (t.category || "personal") === filter; });
+    render(shown);
+  }
+
+  function setFilter(cat) {
+    filter = cat;
+    if (filterBar) Array.prototype.forEach.call(filterBar.querySelectorAll("button"), function (b) {
+      b.classList.toggle("active", b.getAttribute("data-cat") === cat);
+    });
+    if (input) input.placeholder = cat === "work" ? "Add a work task…"
+      : cat === "personal" ? "Add a personal task…" : "Add a task…";
+    applyFilter();
+  }
+
   function load() {
     fetch("/api/tasks").then(function (r) { return r.json(); })
-      .then(function (d) { render(d.tasks || []); }).catch(function () {});
+      .then(function (d) { allTasks = d.tasks || []; applyFilter(); }).catch(function () {});
   }
 
   function add() {
     var t = (input.value || "").trim();
     if (!t) return;
+    var category = filter === "work" ? "work" : "personal"; // active tab = add target
     fetch("/api/tasks", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: t, due_at: due.value || null }),
+      body: JSON.stringify({ title: t, due_at: due.value || null, category: category }),
     }).then(function () { input.value = ""; due.value = ""; load(); }).catch(function () {});
   }
 
@@ -86,5 +109,11 @@
     var id = row.getAttribute("data-id");
     if (e.target.closest(".task-check")) toggle(id, !row.classList.contains("done"));
     else if (e.target.closest(".task-del")) del(id);
+  });
+
+  // work/personal filter (re-renders from cache; no refetch)
+  if (filterBar) filterBar.addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-cat]"); if (!b) return;
+    setFilter(b.getAttribute("data-cat"));
   });
 })();
