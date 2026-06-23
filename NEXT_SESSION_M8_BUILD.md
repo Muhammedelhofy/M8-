@@ -6,9 +6,11 @@ Pushing `main` AUTO-DEPLOYS prod `m8-alpha.vercel.app` — **never deploy withou
 NEVER add `api/*.js` — fold via `?fn=` (handler in `lib/handlers/` + a case in `api/ops.js`
 + a `vercel.json` rewrite). `ls api/*.js | wc -l` must stay ≤ 12.
 
-## ✅ DONE this session — the assistant architecture, all 4 builds (on branch, VERIFIED, NOT deployed)
-`origin/main` = d2f7854. Branch HEAD = **1f550a1**. The DB changes are ALREADY LIVE on the BOLT
-Supabase `ltqpoupferwituusxwal` (additive/safe — old prod code ignores them).
+## ✅ DONE this session — the assistant architecture, all 4 builds — DEPLOYED to prod ✅
+**LIVE on `m8-alpha.vercel.app`** — `main` = `origin/main` = **98d6d32** (deploy `dpl_7LSjj5…` READY,
+`/api/health` ok, sha 98d6d32, **12/12** functions). Builds 1–3 are usable now; **Build #4 (Web Push)
+is live but DORMANT until VAPID env is set** (push-cron is a no-op without keys). `fun/scifi-ui` may
+sit 1 doc-commit ahead of `main` — that's fine.
 
 1. **Tasks work/personal category** (63bcf24) — `m8_tasks.category` + `api/tasks.js` + chat parse
    (EN+AR) + Tasks-tab ALL/WORK/PERSONAL filter (doubles as add-target) + amber WORK tag.
@@ -27,8 +29,7 @@ Supabase `ltqpoupferwituusxwal` (additive/safe — old prod code ignores them).
 Verified on the no-node host: syntax-compiled, parsers pass (10 + 28 + matcher 15/15), DB
 round-trips, UI screenshots, function count 12/12. Live-test docs in `tests/`.
 
-## ⬜ TO GO LIVE (Muhammad's call)
-- **Deploy 1–3** anytime (no new env needed): merge `fun/scifi-ui` → `main`.
+## ⬜ REMAINING — activate Web Push (1–3 are already deployed + usable)
 - **Activate #4 Web Push** (`tests/WEB_PUSH_SETUP_LIVE_TEST.md`): (1) double-click
   `generate-vapid.html` → set `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` in Vercel
   (Production); (2) deploy; (3) install the PWA from PROD on Android, open Tasks, tap 🔔, Allow;
