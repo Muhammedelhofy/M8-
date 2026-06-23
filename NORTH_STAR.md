@@ -38,7 +38,8 @@ structure, honesty, and persistence the raw model won't maintain on its own.
 ## Track A — Personal AI OS *(the proving ground)*
 Real utility, on real data, today. Keeps M8 honest in consequences, not just prose.
 - Fleet intelligence · Finance / P&L · EOSB · multi-company registry
-- Operator-assistant breadth · web search · code execution · ops memory
+- Operator-assistant breadth · **live web search (Serper→Tavily waterfall, Build-118)** · code execution · ops memory
+- Family Wallet bridge (read/add/edit, privacy-walled) · sci-fi PWA + voice · Web Push reminders
 
 ## Track B — Unsolved-Problem Engine *(the ascent)*
 The autonomous-exploration ladder, each rung strictly more capable than the last:
@@ -177,12 +178,14 @@ if M8 treats *verified-to-N* as *proof* — the North Star collapses.
 | L2 Grounded assistant | ✅ complete |
 | L3 Proactive ops | 🟢 ~85% |
 | L4 Verified tools | 🟢 ~85% (M4-manual §0.4 gate PASSED live 2026-06-14) |
-| L5 Autonomous loop | 🟢 ~70% ← current (M1 + M3-lite + M2/novelty + M3-full + M3.1 + M4-manual+gate + the **learn→generate loop B110–B116** shipped; the nightly cron now RUNS unattended and STEERS generation — live-verified 2026-06-23: run produced `gen_version=4` + `survivor_steered=true`, 5 over-mined templates down-weighted) |
+| L5 Autonomous loop | 🟢 ~75% ← current (M1 + M3-lite + M2/novelty + M3-full + M3.1 + M4-manual+gate + the **learn→generate loop B110–B116** shipped; nightly cron RUNS unattended + STEERS generation, `gen_version=4`/`survivor_steered=true`. **Build-117 fixed the 3 failing Odysseus probes** → both batteries CLEAN 2026-06-23 (8/8 + 6/6, attestation #20 PASS) = **promotion-gate streak night 1/3**; 2 more clean nightly runs → `consecutive_clean=3` → L5 promoted) |
 | L6 Compound | ⚪ the destination |
 
 ---
 
-*Canonical as of Session-59 / Build-116 (2026-06-23) — the learn→generate loop (B110–B116)
+*Canonical as of Session-59 / Build-118 (2026-06-23) — the learn→generate loop (B110–B116)
 + M3.1 survivor clustering are SHIPPED and LIVE-VERIFIED on the nightly cron (gen_version=4,
-survivor_steered=true). Track A also gained the live Family Wallet bridge + sci-fi PWA.
+survivor_steered=true). Build-117 fixed the Odysseus battery (now CLEAN → L5 streak 1/3);
+Build-118 added the live web-search waterfall (Serper→Tavily, ~3500/mo free) so Track A
+stops fabricating live data. Track A also has the live Family Wallet bridge + sci-fi PWA + Web Push.
 Edit deliberately; do not regenerate from scratch.*

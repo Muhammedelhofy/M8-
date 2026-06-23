@@ -1,0 +1,21 @@
+{
+  "build": 118,
+  "task": "M8 fabricated live data (fake scores + fake 'BBC/365Scores agree' citations). Add a live web-search waterfall + fix the routing so live queries actually search.",
+  "status": "done",
+  "deployed": true,
+  "prod_sha": "8016c25",
+  "vercel": "READY, production, 12/12 functions",
+  "live_verified": "Muhammad confirmed working on his phone 2026-06-23",
+  "root_cause": "3-part: (1) ROUTING — bare 'score' with no vs/match fell to NONE and answered from training; (2) one provider — only Tavily wired, SERPER_API_KEY unused; (3) the empty-search honesty guard already existed (orchestrator ~3062) but never fired because the query never reached search.",
+  "files_changed": [
+    "lib/tools/serperSearch.js (NEW) — Serper/Google wrapper; normalizeSerper() maps answerBox/sports_results/knowledgeGraph + organic -> {results:[{title,url,content}], answer}; 7s timeout; X-API-KEY header",
+    "lib/search.js — waterfall Serper(2500/mo free) -> Tavily(1000/mo free) -> empty; each env-gated, fails safe; ~3500 free/mo",
+    "lib/intentClassifier.js — bare score/scored/who-won/final-score/half-time + Arabic (natija/man-faza/score) route to LIVE_DATA",
+    "tests/B118-live-search-verify.ps1 (NEW) — 32/32"
+  ],
+  "tests": "B118 32/32; regressions intent-routing 26/26, under-routing 39/39, fleet-routing 19/19; serperSearch.js + search.js brace/paren balanced; Vercel build = JS syntax proof (node absent).",
+  "free_stack": "Stayed 100% free (his rule). Gemini built-in grounding left as a future PAID tier-3 opt-in, OFF by default.",
+  "rollback": "Vercel 1-click to 08a83ff, OR unset SERPER_API_KEY (waterfall degrades to Tavily-only = pre-118 behavior).",
+  "tradeoff": "'score' now always searches (even 'credit score') — benign; LIVE_DATA grounds, never fabricates.",
+  "lesson": "Before building 'add web search', traced the existing path and found Tavily + an anti-fabrication guard already shipped — the real fix was ROUTING, not new infra."
+}

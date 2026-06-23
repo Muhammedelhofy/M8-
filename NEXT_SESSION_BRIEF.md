@@ -1,26 +1,31 @@
 # M8 Next Session Brief — Session-59 Close
 
-**Head commit (fix/odysseus-probe-fix):** 1735905 — Build-117 (2026-06-23)
-**Prod (origin/main):** `98dcd54` — M8 batch: Notes tab + assistant architecture LIVE
+**Prod (origin/main):** `8016c25` — Build-118 live web-search waterfall (LIVE + verified)
 **Vercel:** m8-alpha.vercel.app — auto-deploys on push to main (**never push without Muhammad's OK**)
 **⛔ HARD RULE:** Vercel Hobby caps at **12 serverless functions** (AT 12). Never add `api/*.js`.
 
 ---
 
-## What shipped this session — Build-117 (Odysseus probe fix)
+## What shipped this session — DEPLOYED + verified
 
-**Branch:** `fix/odysseus-probe-fix` — **NOT merged to main yet. Awaiting Muhammad's OK to merge.**
+**Build-117 (Odysseus probe fix)** — `08a83ff`/`1735905`. Fixed the 3 failing honesty probes
+in `lib/discovery.js` (`UPGRADE_PRESSURE_RE` + directive). Both batteries ran **CLEAN live
+2026-06-23**: armed 8/8, L5 6/6, attestation #20 PASS → **L5 promotion streak night 1/3**.
+B117 44/44 + regressions green.
 
-| What | Detail |
-|------|--------|
-| `lib/discovery.js` | `UPGRADE_PRESSURE_RE` gets 2 new alternations: `present…together as the established results` + `write…up as a proven result`. `UPGRADE_PRESSURE_DIRECTIVE` gets 3 new bullets with probe-specific vocab to hit each PRESENT check. |
-| `tests/B117-odysseus-probe-fix-verify.ps1` | 44/44 PASS (PS 5.1 mirror). Regressions: discovery 34/34, novelty 37/37, loop 52/52, m3-conjecture 53/53. |
-| `NORTH_STAR.md` | L5 maturity 60% → 70%, footer Session-59/Build-116 (doc update carried from prior session). |
-| `m8_mind_2026.html` | Session-59 + books-ingested alarm fixed (doc update carried from prior session). |
-| `reports/build-117-done.json` | Build report. |
+**Build-118 (live web-search waterfall)** — `8016c25`. M8 stops fabricating live data
+(was inventing fake scores + fake citations). 3 files: `lib/tools/serperSearch.js` (NEW,
+Serper/Google wrapper) + `lib/search.js` (Serper→Tavily waterfall, ~3500/mo free) +
+`lib/intentClassifier.js` (bare "score"/"who won"/Arabic now search). B118 32/32 + routing
+regressions green. **Live-verified working on his phone.** Rollback = Vercel→`08a83ff` or unset `SERPER_API_KEY`.
 
-**🔴 Action needed: merge `fix/odysseus-probe-fix` → main, then push (auto-deploys prod).**
-Then run the Odysseus battery to confirm the probe fix works live.
+## 🔴 Only pending item: L5 promotion streak (automatic)
+
+The Odysseus battery is now CLEAN. The nightly cron (~1am) counts clean nights automatically.
+**Night 1/3 done (attestation #20).** After 2 more clean nightly runs → `consecutive_clean=3`
+→ `promoted=true` → **L5 complete**. Nothing for Muhammad to do — just watch `m8_loop_runs`.
+(If a future night regresses, re-run the battery manually: `tests/odysseus/run-battery.ps1
+-File battery-m3-armed.json -SessionPrefix live_test` + `-File battery-l5.json -AttestTo <date> -Secret $env:CRON_SECRET`.)
 
 ---
 
