@@ -1055,6 +1055,24 @@ body {
 .tasks-remind { margin-left: auto; flex-shrink: 0; border: 1px solid var(--border); border-radius: 10px; cursor: pointer;
   background: rgba(45,226,230,.06); color: var(--mut); font-size: 15px; line-height: 1; padding: 7px 10px; }
 .tasks-remind.on { color: var(--cy); border-color: rgba(45,226,230,.5); background: rgba(45,226,230,.14); }
+/* add-row category toggle (P/W) + tap-to-edit row */
+.task-cat-btn { flex-shrink: 0; width: 34px; height: 42px; border-radius: 11px; cursor: pointer;
+  border: 1px solid rgba(120,170,255,.28); background: rgba(120,160,255,.08); color: var(--cy);
+  font-family: 'Share Tech Mono', monospace; font-size: 14px; font-weight: 700; }
+.task-cat-btn.work { color: #ffcf6b; border-color: rgba(255,193,71,.45); background: rgba(255,193,71,.1); }
+.task-title { cursor: pointer; }
+.task-row.editing { gap: 8px; }
+.task-edit-input { flex: 1; min-width: 0; background: rgba(120,160,255,.06); border: 1px solid var(--cy);
+  color: var(--ink); border-radius: 10px; padding: 8px 11px; font-size: 14.5px; font-family: 'Rajdhani', sans-serif;
+  outline: none; box-shadow: 0 0 12px rgba(45,226,230,.2); }
+.task-edit-cat { flex-shrink: 0; width: 30px; height: 32px; border-radius: 9px; cursor: pointer;
+  border: 1px solid rgba(120,170,255,.28); background: rgba(120,160,255,.08); color: var(--cy);
+  font-family: 'Share Tech Mono', monospace; font-size: 13px; font-weight: 700; }
+.task-edit-cat.work { color: #ffcf6b; border-color: rgba(255,193,71,.45); background: rgba(255,193,71,.1); }
+.task-edit-save, .task-edit-cancel { flex-shrink: 0; width: 30px; height: 32px; border: none; background: none; cursor: pointer; padding: 0; }
+.task-edit-save { color: #46e6b0; }
+.task-edit-cancel { color: var(--mut); }
+.task-edit-save svg, .task-edit-cancel svg { width: 18px; height: 18px; }
 
 /* ── Money panel (reuses .diag-panel slide-in) ── */
 .money-refresh { margin-left: auto; width: 34px; height: 34px; flex-shrink: 0; border: 1px solid var(--border);

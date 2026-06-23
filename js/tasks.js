@@ -1,4 +1,4 @@
-// M8 Tasks v1 — the slide-in Tasks panel (manual to-do). Talks to /api/tasks.
+// M8 Tasks — slide-in panel (manual to-do) + chat-driven. Talks to /api/tasks.
 (function () {
   var panel = document.getElementById("tasks-panel");
   var openBtn = document.getElementById("tasks-btn");
@@ -12,11 +12,14 @@
   var SVG_CIRCLE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/></svg>';
   var SVG_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.4l2.4 2.4 4.6-5"/></svg>';
   var SVG_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  var SVG_SAVE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>';
   var WORK_TAG = '<span class="task-cat-tag">work</span>';
 
   var filterBar = document.getElementById("tasks-filter");
+  var catBtn = document.getElementById("task-cat");
   var allTasks = [];
-  var filter = "all"; // active tab: doubles as the category for newly added tasks
+  var filter = "all";        // view filter (ALL / WORK / PERSONAL)
+  var addCat = "personal";   // category for NEW tasks (the add-row toggle)
 
   function esc(s) {
     return String(s || "").replace(/[&<>"']/g, function (c) {
@@ -40,8 +43,8 @@
     if (!tasks.length) { list.innerHTML = '<div class="tasks-empty">No tasks yet. Add one above.</div>'; return; }
     list.innerHTML = tasks.map(function (t) {
       return '<div class="task-row' + (t.done ? " done" : "") + '" data-id="' + t.id + '">' +
-        '<button class="task-check" aria-label="toggle">' + (t.done ? SVG_CHECK : SVG_CIRCLE) + "</button>" +
-        '<span class="task-title">' + esc(t.title) + "</span>" +
+        '<button class="task-check" aria-label="mark done" title="Mark done">' + (t.done ? SVG_CHECK : SVG_CIRCLE) + "</button>" +
+        '<span class="task-title" title="Tap to edit">' + esc(t.title) + "</span>" +
         (t.category === "work" ? WORK_TAG : "") +
         (t.done ? "" : dueLabel(t.due_at)) +
         '<button class="task-del" aria-label="delete">' + SVG_X + "</button>" +
@@ -60,9 +63,18 @@
     if (filterBar) Array.prototype.forEach.call(filterBar.querySelectorAll("button"), function (b) {
       b.classList.toggle("active", b.getAttribute("data-cat") === cat);
     });
-    if (input) input.placeholder = cat === "work" ? "Add a work task…"
-      : cat === "personal" ? "Add a personal task…" : "Add a task…";
+    // viewing a WORK/PERSONAL tab also presets the add-toggle to match (handy default)
+    if (cat === "work" || cat === "personal") setAddCat(cat);
     applyFilter();
+  }
+
+  function setAddCat(c) {
+    addCat = c === "work" ? "work" : "personal";
+    if (catBtn) {
+      catBtn.textContent = addCat === "work" ? "W" : "P";
+      catBtn.classList.toggle("work", addCat === "work");
+      catBtn.title = "New task: " + addCat + " — tap to switch";
+    }
   }
 
   function load() {
@@ -73,10 +85,9 @@
   function add() {
     var t = (input.value || "").trim();
     if (!t) return;
-    var category = filter === "work" ? "work" : "personal"; // active tab = add target
     fetch("/api/tasks", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: t, due_at: due.value || null, category: category }),
+      body: JSON.stringify({ title: t, due_at: due.value || null, category: addCat }),
     }).then(function () { input.value = ""; due.value = ""; load(); }).catch(function () {});
   }
 
@@ -94,6 +105,44 @@
     }).then(function () { load(); }).catch(function () {});
   }
 
+  // ── inline edit: rename + switch work/personal ──
+  function taskById(id) {
+    for (var i = 0; i < allTasks.length; i++) { if (String(allTasks[i].id) === String(id)) return allTasks[i]; }
+    return null;
+  }
+  function enterEdit(id) {
+    var t = taskById(id); if (!t) return;
+    var row = list.querySelector('.task-row[data-id="' + id + '"]'); if (!row) return;
+    var cat = t.category === "work" ? "work" : "personal";
+    row.classList.add("editing");
+    row.innerHTML =
+      '<input class="task-edit-input" type="text" value="' + esc(t.title) + '" aria-label="task title" />' +
+      '<button class="task-edit-cat' + (cat === "work" ? " work" : "") + '" data-cat="' + cat + '" title="work / personal">' + (cat === "work" ? "W" : "P") + '</button>' +
+      '<button class="task-edit-save" aria-label="save">' + SVG_SAVE + '</button>' +
+      '<button class="task-edit-cancel" aria-label="cancel">' + SVG_X + '</button>';
+    var inp = row.querySelector(".task-edit-input");
+    if (inp) {
+      inp.focus();
+      try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch (_) {}
+      inp.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") saveEdit(id);
+        else if (e.key === "Escape") applyFilter();
+      });
+    }
+  }
+  function saveEdit(id) {
+    var row = list.querySelector('.task-row[data-id="' + id + '"]'); if (!row) return;
+    var inp = row.querySelector(".task-edit-input");
+    var cb = row.querySelector(".task-edit-cat");
+    var title = inp ? inp.value.trim() : "";
+    var cat = cb ? cb.getAttribute("data-cat") : "personal";
+    if (!title) { applyFilter(); return; }
+    fetch("/api/tasks", {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: id, title: title, category: cat }),
+    }).then(function () { load(); }).catch(function () { load(); });
+  }
+
   if (openBtn) openBtn.addEventListener("click", function () {
     panel.classList.add("open"); panel.setAttribute("aria-hidden", "false"); load();
   });
@@ -102,13 +151,22 @@
   });
   if (addBtn) addBtn.addEventListener("click", add);
   if (input) input.addEventListener("keydown", function (e) { if (e.key === "Enter") add(); });
+  if (catBtn) catBtn.addEventListener("click", function () { setAddCat(addCat === "work" ? "personal" : "work"); });
+  setAddCat(addCat);
 
-  // event-delegated row actions
+  // event-delegated row actions (incl. inline-edit controls)
   list.addEventListener("click", function (e) {
     var row = e.target.closest(".task-row"); if (!row) return;
     var id = row.getAttribute("data-id");
-    if (e.target.closest(".task-check")) toggle(id, !row.classList.contains("done"));
-    else if (e.target.closest(".task-del")) del(id);
+    if (e.target.closest(".task-edit-cat")) {
+      var b = e.target.closest(".task-edit-cat");
+      var nc = b.getAttribute("data-cat") === "work" ? "personal" : "work";
+      b.setAttribute("data-cat", nc); b.textContent = nc === "work" ? "W" : "P"; b.classList.toggle("work", nc === "work");
+    } else if (e.target.closest(".task-edit-save")) { saveEdit(id); }
+    else if (e.target.closest(".task-edit-cancel")) { applyFilter(); }
+    else if (e.target.closest(".task-check")) { toggle(id, !row.classList.contains("done")); }
+    else if (e.target.closest(".task-del")) { del(id); }
+    else if (e.target.closest(".task-title")) { enterEdit(id); }
   });
 
   // work/personal filter (re-renders from cache; no refetch)
@@ -146,7 +204,6 @@
   }
   if (remBtn) {
     remBtn.addEventListener("click", enableReminders);
-    // already-granted devices: refresh the subscription + reflect state (no prompt)
     if ("Notification" in window && Notification.permission === "granted") enableReminders();
   }
 })();
