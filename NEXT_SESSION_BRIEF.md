@@ -1,8 +1,16 @@
 # M8 Next Session Brief — Session-59 Close
 
-**Prod (origin/main):** `8016c25` — Build-118 live web-search waterfall (LIVE + verified)
+**Prod (origin/main):** `2fa18c6` — Build-135 wallet "latest/recent expense" read (DEPLOYED, awaiting his live confirm)
 **Vercel:** m8-alpha.vercel.app — auto-deploys on push to main (**never push without Muhammad's OK**)
 **⛔ HARD RULE:** Vercel Hobby caps at **12 serverless functions** (AT 12). Never add `api/*.js`.
+
+## Build-135 — wallet recent-expense read (just shipped)
+M8 can now answer "what's my last expense?" incl. app-logged ones (prev. it only knew its OWN
+writes + monthly totals → hit a hard decline). `getRecentExpenses()` in `lib/wallet.js` (read-only,
+no `note` column — privacy wall intact, uses existing m8_wallet SELECT grant, no DB change).
+Routing: `parseRecentQuery` in `lib/orchestrator.js` + `last_expense` intent kind in `lib/intent-router.js`.
+Offline 15/15 (`tests/build135-wallet-recent-test.ps1`). 🔴 PENDING: his live confirm — see
+`tests/BUILD135_LIVE_TEST.md` (8 chat questions). Rollback = Vercel→`bb0bac7`.
 
 ---
 
