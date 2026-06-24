@@ -159,6 +159,49 @@ Check "non-money 'what is the weather' KEPT" (Strip-Keeps 'user' 'what is the we
 Check "non-money 'remind me tomorrow' KEPT" (Strip-Keeps 'user' 'remind me tomorrow')
 Check "reference 'change that to 40' (no currency) KEPT by strip" (Strip-Keeps 'user' 'change that to 40')
 
+Write-Host "-- Build-125: edit target-amount + reconstruct edit from OUR confirm prompt --"
+$CATS = @('Groceries','Fuel','Dining','Transport','Bills','Shopping','Health','Rent','Other')
+function Get-EditTargetAmount([string]$text) {
+  $t = Norm-Digits $text
+  $after = [regex]::Match($t, '(?:\bto\b|→|إلى|الى)\s*(\d+(?:[.,]\d+)?)', 'IgnoreCase')
+  if ($after.Success) { $pick = $after.Groups[1].Value }
+  else { $f = [regex]::Match($t, '(\d+(?:[.,]\d+)?)'); if ($f.Success) { $pick = $f.Groups[1].Value } else { return $null } }
+  $amt = [double]($pick -replace ',', '.')
+  if ($amt -le 0) { return $null }
+  return $amt
+}
+function Get-ConfirmEdit([string]$text) {
+  $m = [regex]::Match($text, '→\s*([^?؟\n]+?)\s*[?؟]')
+  if (-not $m.Success) { return $null }
+  $seg = $m.Groups[1].Value
+  $amt = Get-EditTargetAmount $seg
+  $cat = $null
+  $low = $seg.ToLower()
+  foreach ($c in $CATS) { if (($c -ne 'Other') -and ($low.Contains($c.ToLower()))) { $cat = $c; break } }
+  if (($null -eq $amt) -and ($null -eq $cat)) { return $null }
+  return [pscustomobject]@{ amount = $amt; category = $cat }
+}
+$DOT = [char]0x00B7; $ARROW = [char]0x2192
+# target amount: the figure AFTER "to", not the first number
+Check "target '...30...to 40 egp' -> 40 (not 30)" ((Get-EditTargetAmount ('change the 30 egp that you added it to the wallet to 40 egp')) -eq 40)
+Check "target 'change that to 40' -> 40" ((Get-EditTargetAmount 'change that to 40') -eq 40)
+Check "target 'make it 50' (no 'to') -> 50" ((Get-EditTargetAmount 'make it 50') -eq 50)
+Check "target AR 'khalleh 40' -> 40" ((Get-EditTargetAmount 'خله ٤٠') -eq 40)
+Check "target 'remove it' -> null" ($null -eq (Get-EditTargetAmount 'remove it'))
+# reconstruct the pending edit from OUR confirm prompt (THE Build-125 bug fix)
+$promptAmt = ('🧾 Update last expense (30 EGP ' + $DOT + ' Groceries) ' + $ARROW + ' 40 EGP? Reply "yes" or "no".')
+$r1 = Get-ConfirmEdit $promptAmt
+Check "reconstruct prompt -> amount 40 (NOT the old 30)" (($null -ne $r1) -and ($r1.amount -eq 40) -and ($null -eq $r1.category))
+$promptBoth = ('🧾 Update last expense (30 EGP ' + $DOT + ' Dining) ' + $ARROW + ' 40 EGP ' + $DOT + ' Fuel? Reply "yes" or "no".')
+$r2 = Get-ConfirmEdit $promptBoth
+Check "reconstruct prompt -> amount 40 + category Fuel" (($null -ne $r2) -and ($r2.amount -eq 40) -and ($r2.category -eq 'Fuel'))
+$promptCat = ('🧾 Update last expense (30 EGP ' + $DOT + ' Dining) ' + $ARROW + ' Fuel? Reply "yes" or "no".')
+$r3 = Get-ConfirmEdit $promptCat
+Check "reconstruct prompt -> category-only Fuel" (($null -ne $r3) -and ($null -eq $r3.amount) -and ($r3.category -eq 'Fuel'))
+$promptAR = ('🧾 تعديل آخر مصروف (30 EGP ' + $DOT + ' Groceries) ' + $ARROW + ' 40 EGP؟ اكتب «نعم» أو «لا».')
+$r4 = Get-ConfirmEdit $promptAR
+Check "reconstruct AR prompt -> amount 40" (($null -ne $r4) -and ($r4.amount -eq 40))
+
 Write-Host ""
 Write-Host ("RESULT: " + $script:pass + " passed, " + $script:fail + " failed.")
 if ($script:fail -gt 0) { exit 1 } else { exit 0 }

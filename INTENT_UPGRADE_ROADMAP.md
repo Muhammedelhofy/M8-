@@ -188,3 +188,11 @@ as a standalone MD (per team-brief convention), never a chat paste.
   prod `/api/chat` GET → **405** (loads) on `m8-alpha.vercel.app`; alias confirmed on `2faa2a7`.
   Awaiting his live confirmation of the reference cases (`tests/PHASE2_LIVE_TEST.md`). Rollback →
   Vercel `d4af231`. NEXT = Phase 3 (tasks/notes).
+- **2026-06-24 — Build-125 FIX (live test caught it).** Live: "change that to 40" gave the right update
+  card, but replying "yes" looped ("What do you want to change to 40?"). ROOT CAUSE: `pendingEditFromHistory`
+  re-parsed the user's words with the keyword `parseEditExpense` (which can't read reference phrasing) —
+  the EDIT path never got the prompt-reconstruction the ADD path got in Phase 1. FIX: `parseConfirmEditPrompt`
+  reconstructs {amount,category} from OUR "🧾 Update last expense (…) → 40 EGP?" prompt (post-arrow only,
+  so the OLD value isn't grabbed); `pendingEditFromHistory` is now prompt-first. Also `parseEditTargetAmount`
+  picks the figure AFTER "to" ("change the 30 to 40" → 40, not 30) — used by `parseReference` + the
+  intent-brain edit path. Offline mirror → **48/48**. Deploying with his "go" still in effect for Phase 2.
