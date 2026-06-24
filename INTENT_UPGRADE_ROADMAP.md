@@ -260,3 +260,11 @@ as a standalone MD (per team-brief convention), never a chat paste.
   **24/24** (looksFleet classification + the 4-way entry decision incl. the "make me rich" loop case). Live
   sheet `tests/PHASE4_FLEET_LIVE_TEST.md`. NOT deployed — awaiting his live test + explicit "go". Rollback →
   `67f8c8b`.
+- **2026-06-24 — Build-131 (Phase 4 pre-deploy review fix).** Pre-deploy bug-check of Build-130 surfaced one
+  edge: the no-data capability reply also fired for a bare greeting (`greetingBrief`) → "good morning" with no
+  fleet data synced would get a "couldn't map this to fleet" lecture instead of a normal greeting. Narrowed it
+  to `directFleet` only (a real fleet question). Added date/range follow-up regression guards to the mirror
+  (proves the `followup` change kept date/range entry while dropping the bare guess). Offline
+  `tests/phase4-fleet-gate-test.ps1` now **27/27**. Rest of the review: no regressions (date/range follow-ups,
+  known bare-name replies, verb-phrase known→driver / unknown→honest not-found all intact; `driverCands=null`
+  null-safe downstream; no new LLM calls; `looksFleet` unchanged so orchestrator fleet gating is unchanged).

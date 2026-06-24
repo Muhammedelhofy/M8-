@@ -94,6 +94,16 @@ function Test-KnownDriver([string]$cand, [string[]]$roster) {
   return $false
 }
 
+# dateRef / rangeRef mirror (subset) — these (with verb-phrase cands) drive `followup`.
+function Test-DateRef([string]$msg) {
+  return (RX $msg '\b(today|yesterday|tonight|last\s+night)\b') -or `
+         (RX $msg '\b(?:on\s+)?the\s+\d{1,2}(?:st|nd|rd|th)\b') -or `
+         (RX $msg '\b\d{1,2}(?:st|nd|rd|th)?\s+(?:of\s+)?(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)')
+}
+function Test-RangeRef([string]$msg) {
+  return (RX $msg '\b(this|last|past|current)\s+(week|month)\b') -or (RX $msg '\blast\s+\d{1,2}\s+days?\b')
+}
+
 # ── Entry-gate decision (mirror of the reshaped buildFleetContext flow) ──
 function Get-FleetGate([string]$msg, [bool]$recentFleet, [string[]]$roster) {
   $verb = Get-VerbCands $msg
@@ -104,8 +114,8 @@ function Get-FleetGate([string]$msg, [bool]$recentFleet, [string[]]$roster) {
     if ($b) { $driverCands = @($b); $bareGuess = $true }
   }
   $hasVerb = [bool]$verb
-  # followup uses ONLY verb-phrase cands (a bare guess must not force the path).
-  $followup = $hasVerb -and $recentFleet
+  # followup uses date / range / VERB-phrase cands (a bare guess must NOT force the path).
+  $followup = ((Test-DateRef $msg) -or (Test-RangeRef $msg) -or $hasVerb) -and $recentFleet
   $directFleet = (Test-LooksFleet $msg) -or $followup
   $maybeDriver = (-not $directFleet) -and [bool]$driverCands
 
@@ -169,6 +179,11 @@ $gateCases = @(
   # Fresh-session comparison: real drivers -> claim; non-drivers -> fall through to search.
   @{ msg = 'compare ali and mansour';  recent = $false; want = 'driver'     }
   @{ msg = 'compare iphone and samsung'; recent = $false; want = 'fallthrough' }
+  # Date/range FOLLOW-UPS must still enter fleet WITH recent context, but NOT without it
+  # (regression guard: the `followup` change kept date/range, dropped the bare guess).
+  @{ msg = 'what about the 7th';        recent = $true;  want = 'snapshot'    }
+  @{ msg = 'what about the 7th';        recent = $false; want = 'fallthrough' }
+  @{ msg = 'and this week?';            recent = $true;  want = 'snapshot'    }
 )
 
 $fail = 0
