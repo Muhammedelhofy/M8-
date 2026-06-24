@@ -317,7 +317,8 @@ as a standalone MD (per team-brief convention), never a chat paste.
   project, its own session.)
 - **2026-06-24 — Build-133 + Build-134 DEPLOYED to prod** (m8-alpha `b5a63bc`; his "deploy both"). ff-merge
   `build-133-134` → main; prod build READY (12 lambdas), `m8-alpha` alias on `b5a63bc`, live `/api/chat` GET →
-  405. Awaiting his live confirm that "how did the fleet do this week" now returns the weekly rollup. Rollback
-  → `67f8c8b`. **OPEN (separate, next): Hofy/Family-Wallet credit-card balance linking** — a different repo +
+  405. **✅ LIVE-VERIFIED on his phone:** "how did the fleet do this week" now returns the WEEKLY ROLLUP
+  (Jun 16–22: 36,408.88 SAR net, +16% vs prior 7 days, 1,920 orders, best/slowest day, top performers) —
+  matching the morning brief's figure, NOT the MTD report. Build-133 confirmed working. Rollback → `67f8c8b`. **OPEN (separate, next): Hofy/Family-Wallet credit-card balance linking** — a different repo +
   Supabase; needs its own session (read the wallet's account/transaction model first; confirm credit-up vs
   debit-down direction). No privacy-wall concern there (it's his own app/DB, no LLM sees it).
