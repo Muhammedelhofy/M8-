@@ -1,6 +1,6 @@
 # M8 Intelligence Upgrade — Intent Routing Roadmap
 
-**Owner:** Muhammad · **Started:** 2026-06-24 · **Status:** Phase 0 not started
+**Owner:** Muhammad · **Started:** 2026-06-24 · **Status:** Phases 0/1/1.1 DONE+live · Phase 2 (wallet) BUILT, awaiting live test
 **This is the doc we follow so we don't get lost.** Update the status column + changelog after every step.
 
 ---
@@ -95,7 +95,7 @@ All four (GPT/Grok/Gemini/Manus): **architecture is right, spread it.** Unanimou
 |---|---|---|---|---|
 | **0 — Safety net** | **Deterministic, NO AI.** When a message hits a lane's keywords but no parser matches, reply plainly instead of looping. All lanes. | 🟢 none | The real screenshot cases ("remove the last expense", "what was the last expense Sara did") → clear message, no loop | ✅ **DONE** — live-confirmed EN + AR on his phone (Build-119 `08d801d` + AR fix Build-120 `29c0834`). Offline 12/12. Rollback → `422e97c`. |
 | **1 — Wallet pilot + intent core** | Build the **reusable** intent classifier (domain+intent+entity, strict JSON), prove it on the money lane. Includes basic reference ("that/last"). | 🟢 low | messy money sentences all route right; deletes confirm-gated; never guesses between 2 matches | ✅ **DONE — live-verified on prod** (Build-121 `d1c1a11`). EN+AR messy adds understood (incl. a typo "غدا"), survived "yes", logged right; delete_last graceful; keyword path intact. Kill switch `M8_INTENT_BRAIN_DISABLED`. |
-| **2 — Reference resolution** | Generalize "it / that / the last one / undo / scratch that" across lanes. | 🟢 low | reference phrases work | ⬜ not started |
+| **2 — Reference resolution** | Generalize "it / that / the last one / undo / scratch that" across lanes. | 🟢 low | reference phrases work | 🟡 **BUILT — wallet lane** (branch `phase2-reference`, Build-123). Deterministic `parseReference`+`walletRefContext` resolve "it/that/last/undo/scratch/change-to-N" → last M8 write, gated on recent wallet context; edits confirm-gated, delete stays honest (no new power). Offline 32/32. NOT deployed — awaiting live test + "go". Other lanes (tasks/notes) = Phase 3. |
 | **3 — Tasks + Notes** | Wire the intent core into tasks + notes. | 🟢 low | work without command vocabulary | ⬜ not started |
 | **4 — Fleet + general** | Intent core into fleet/earnings + free chat. | 🟡 med | conversational fleet queries | ⬜ not started |
 
@@ -155,3 +155,22 @@ as a standalone MD (per team-brief convention), never a chat paste.
   stored data). Offline `tests/phase1-hardening-test.ps1` 8/8. Confidence float demoted to a coarse
   floor (0.5) — the real write-safety is the deterministic amount + confirm card (Gemini's point).
   FOUND (pre-existing, not fixed tonight): `parseAmountCurrency` turns "1,500" into 1.5 (comma→dot).
+- **2026-06-24 — Build-122 DEPLOYED to prod** (`d4af231`, m8-alpha, preview-load-verified first).
+  Live spot-check of the 3 lines (throw 30 egp / spelled-out / long paste) folded into the NEXT
+  session's Step 1. NEXT = Phase 2 (reference resolution) in a fresh session, Opus·High.
+- **2026-06-24 — Phase 2 BUILT** (branch `phase2-reference`, Build-123). Reference resolution on the
+  WALLET lane: a deterministic resolver (no LLM) turns anaphoric commands into actions on the SINGLE
+  last M8-added expense. New in `lib/orchestrator.js`: `refHasAnaphor` (pronoun / "the last one" /
+  Arabic clitic verb), `parseReference` → `{action: edit|delete|show, amount}` (EDIT needs a real
+  digit amount, DELETE never does, ≤80 chars so a paste isn't a reference), `walletRefContext(history)`
+  (is the LAST turn a wallet reply? add_pending / edit_pending / recent / null), and
+  `handleWalletReference` — wired *before* the Phase-1 intent brain. Edits reuse the existing
+  confirm card; **delete stays honest** ("can't delete from chat… I can edit it / Wallet app") — NO
+  new delete power (invariant). Tier-2: the intent-brain gate now also fires on a fuzzy anaphor when
+  there's wallet context (`refish`), so phrasings the regex misses still reach `delete_last`/`edit_last`.
+  GATING = the safety: references are claimed ONLY right after a wallet turn, so a stray "remove it" in
+  a task/notes chat is not hijacked; only ever the single last write (never guesses). KEY JS LESSON:
+  `\b` is ASCII-only in JS → a trailing `\b` after Arabic letters never matches; Arabic patterns use
+  substring-on-stem instead. Offline `tests/phase2-reference-test.ps1` **32/32** (mirror gotcha hit +
+  fixed: a helper named `H` was shadowed by the `Get-History` alias). Live sheet
+  `tests/PHASE2_LIVE_TEST.md`. NOT deployed — awaiting Muhammad's live test, then explicit "go".
