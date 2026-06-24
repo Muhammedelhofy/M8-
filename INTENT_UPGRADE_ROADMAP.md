@@ -96,7 +96,7 @@ All four (GPT/Grok/Gemini/Manus): **architecture is right, spread it.** Unanimou
 | **0 — Safety net** | **Deterministic, NO AI.** When a message hits a lane's keywords but no parser matches, reply plainly instead of looping. All lanes. | 🟢 none | The real screenshot cases ("remove the last expense", "what was the last expense Sara did") → clear message, no loop | ✅ **DONE** — live-confirmed EN + AR on his phone (Build-119 `08d801d` + AR fix Build-120 `29c0834`). Offline 12/12. Rollback → `422e97c`. |
 | **1 — Wallet pilot + intent core** | Build the **reusable** intent classifier (domain+intent+entity, strict JSON), prove it on the money lane. Includes basic reference ("that/last"). | 🟢 low | messy money sentences all route right; deletes confirm-gated; never guesses between 2 matches | ✅ **DONE — live-verified on prod** (Build-121 `d1c1a11`). EN+AR messy adds understood (incl. a typo "غدا"), survived "yes", logged right; delete_last graceful; keyword path intact. Kill switch `M8_INTENT_BRAIN_DISABLED`. |
 | **2 — Reference resolution** | Generalize "it / that / the last one / undo / scratch that" across lanes. | 🟢 low | reference phrases work | ✅ **DONE — LIVE-VERIFIED on prod** (m8-alpha `67c44e1` = Build-123 references + Build-124 privacy + Build-125 edit-yes fix). Confirmed on his device 2026-06-24: log → "change that to 40" → update card → "yes" → **"Done ✓ updated the last expense to 40 EGP."** Deterministic `parseReference`+`walletRefContext` resolve "it/that/last/undo/scratch/change-to-N" → last M8 write, gated on recent wallet context; edits confirm-gated, delete stays honest (no new power). Offline 48/48. Other lanes (tasks/notes) = Phase 3. |
-| **3 — Tasks + Notes** | Wire the intent core into tasks + notes. | 🟢 low | work without command vocabulary | ⬜ not started |
+| **3 — Tasks + Notes** | Wire the intent core into tasks + notes. | 🟢 low | work without command vocabulary | 🟡 **3a Tasks BUILT** (branch `phase3-tasks`, Build-126). Reference resolution on the Tasks lane: "scratch it / mark it done / remove the last one" → newest open task, gated on task context (`TASK_SENTINEL`). DELETE is confirm-gated (real delete); done direct. Offline 29/29. NOT deployed — awaiting live test + "go". 3b Notes next. |
 | **4 — Fleet + general** | Intent core into fleet/earnings + free chat. | 🟡 med | conversational fleet queries | ⬜ not started |
 
 **Workflow each phase:** build on a branch → **code-only, nothing deployed** → Claude says
@@ -200,3 +200,15 @@ as a standalone MD (per team-brief convention), never a chat paste.
   → `yes` (logged) → `change that to 40` → `🧾 Update last expense (30 EGP · Groceries) → 40 EGP?` → `yes`
   → **"Done ✓ updated the last expense to 40 EGP."** Reference resolution + the edit-yes reconstruction
   both proven on real prod. Phase 2 CLOSED. NEXT = Phase 3 (tasks/notes), then Phase 4 (fleet harder to enter).
+- **2026-06-24 — Phase 3a (Tasks) BUILT** (branch `phase3-tasks`, Build-126; scope = "Tasks first" per
+  his pick). Reference resolution on the Tasks lane, mirroring Phase 2: `parseTaskReference`
+  ({delete|done|show}), `taskRefContext(history)` (gated on a new `TASK_SENTINEL` = U+2064, distinct
+  from MONEY_SENTINEL U+2063 so lanes don't collide), `handleTaskReference` (runs first in
+  `handleTasksCommand`, which now takes `history`). "it/that/the last one" → the SINGLE newest open task.
+  **KEY DIFFERENCE vs wallet — Tasks have REAL delete → reference-DELETE is CONFIRM-GATED** ("🗑️ Delete
+  task «X»? yes/no", reconstructed from the prompt + title-guarded so "yes" deletes the SAME task); "done"
+  applies directly (recoverable, names the task) incl. the recurring-spawn. Gating = the safety (claimed
+  only right after a task turn). EN done broadened to catch split phrasals ("checked it off"); Arabic
+  clitics (احذفها/خلصتها) handled (no \b after Arabic). Offline `tests/phase3-task-reference-test.ps1`
+  **29/29**; live sheet `tests/PHASE3_TASKS_LIVE_TEST.md`. NOT deployed — awaiting his live test + "go".
+  NEXT after this lands = Phase 3b (Notes), same pattern.
