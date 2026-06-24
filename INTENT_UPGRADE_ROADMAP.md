@@ -298,3 +298,20 @@ as a standalone MD (per team-brief convention), never a chat paste.
   `fleet_data` cloud blob, NOT the dashboard's local state — a dashboard edit only reaches M8 after the
   dashboard pushes to cloud (or the 21:00 UTC cron). During testing the blob's newest day was 22 Jun (synced
   21:00 UTC prior night), so "yesterday"=23 Jun correctly returned not-found.
+- **2026-06-24 — Build-133 (this-week → weekly rollup) + Build-134 (privacy #1) BUILT** (branch
+  `build-133-134`; both touch `orchestrator.js` so they ship as one unit). **Build-133:** live test showed
+  "how did the fleet do this week" returning the month-to-date intelligence report instead of a weekly
+  rollup. ROOT CAUSE: `detectFleetReportQuery`'s regex (`how.*fleet`) matched and SLOT 3e OVERWROTE the
+  rollup with the MTD report; the internal `llmFleetClassify` could also pick `mtd_ranking` first. FIX: new
+  `isWeekRangeQuery()` (`lib/fleet.js`, "this/last week" + "last N days" + "weekly"; "this month" excluded so
+  MTD-month + "this month's rankings" are untouched) gates (a) the `mtd_ranking` shortcut in
+  `buildFleetContext` and (b) BOTH SLOT 3e fleet-report calls (buffered + streaming) → an explicit week range
+  now keeps the deterministic weekly rollup. **Build-134 (privacy #1):** `stripMoneyHistory` now also strips a
+  user turn whose REPLY M8 tagged with `MONEY_SENTINEL` (the next assistant turn), so a money turn with NO
+  currency word ("throw 30 to it") can't leak to the fall-through LLM — closing the last open privacy-invariant
+  gap. Offline `tests/build133-week-rollup-test.ps1` **19/19** + `tests/build134-privacy-strip-test.ps1`
+  **8/8**; Phase 4 mirror still 27/27. ★ PS-MIRROR LESSON: .NET `String.IndexOf(string)` is CULTURE-AWARE and
+  treats U+2063 (the invisible MONEY_SENTINEL) as ignorable → matches every string at index 0; JS `indexOf`
+  is ordinal, so the JS code was correct — the mirror had to use `IndexOf(s, StringComparison.Ordinal)`. NOT
+  deployed — awaiting his live test + "go". (Hofy/Family-Wallet credit-card balance linking = a SEPARATE
+  project, its own session.)
