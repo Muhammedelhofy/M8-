@@ -30,8 +30,19 @@ function Note-RefContext($history) {
   if (($null -eq $last) -or ($last.role -ne 'assistant')) { return $null }
   $c = [string]$last.content
   if ([regex]::IsMatch($c, 'Delete note |حذف ملاحظة ')) { return 'delete_pending' }
-  if ([regex]::IsMatch($c, 'Saved as a note|حفظتها كملاحظة|You have \d+ note|عندك \d+ ملاحظة|Notes about|ملاحظات عن|Deleted the note|حذفت الملاحظة|Your last note|آخر ملاحظة')) { return 'recent' }
+  if ([regex]::IsMatch($c, 'Saved as a note|Noted:|حفظتها كملاحظة|سجّلتها|You have \d+ note|عندك \d+ ملاحظة|Notes about|ملاحظات عن|Deleted the note|حذفت الملاحظة|Your last note|آخر ملاحظة')) { return 'recent' }
   return $null
+}
+
+# Mirror of parseNoteCapture (does the phrase SAVE a note?). Build-129 adds bare "note X".
+function Note-Captures([string]$raw) {
+  $m = $raw.Trim()
+  if ([regex]::IsMatch($m, '^notes?\s*:\s*(.+)', 'IgnoreCase')) { return $true }
+  if ([regex]::IsMatch($m, '^(?:make|take|add|leave|write)\s+(?:a\s+)?note', 'IgnoreCase')) { return $true }
+  if ([regex]::IsMatch($m, '^(?:jot|note)\s+(?:this\s+)?down', 'IgnoreCase')) { return $true }
+  if ([regex]::IsMatch($m, '^note\s+(?:that\s+|about\s+|of\s+)?(.+)', 'IgnoreCase')) { return $true }
+  if ([regex]::IsMatch($m, '^remember\s+', 'IgnoreCase')) { return $true }
+  return $false
 }
 
 function Get-PendingNoteContent($history) {
@@ -97,6 +108,18 @@ Check "ctx delete_pending"     ((Note-RefContext $delPend) -eq 'delete_pending')
 Check "ctx AR delete_pending"  ((Note-RefContext $arDel)   -eq 'delete_pending')
 Check "ctx null (capture offer NOT note ctx)" ($null -eq (Note-RefContext $offer))
 Check "ctx null (general reply)" ($null -eq (Note-RefContext $general))
+# Build-129: the real capture save reply must count as note context
+$noted   = @( (Turn 'assistant' '📝 Noted: "the rent is due".') )
+$notedAR = @( (Turn 'assistant' '📝 سجّلتها: «الإيجار مستحق».') )
+Check "ctx recent (Noted: save reply)"    ((Note-RefContext $noted)   -eq 'recent')
+Check "ctx recent (AR save reply)"        ((Note-RefContext $notedAR) -eq 'recent')
+
+Write-Host "-- Build-129: parseNoteCapture saves bare 'note X' (the live bug) --"
+Check "captures 'note the rent is due'" (Note-Captures 'note the rent is due')
+Check "captures 'note: wifi is X'"      (Note-Captures 'note: wifi is X')
+Check "captures 'note that rent is due'" (Note-Captures 'note that rent is due')
+Check "captures 'remember the gate code'" (Note-Captures 'remember the gate code')
+Check "does NOT capture bare 'notes'"    (-not (Note-Captures 'notes'))
 
 Write-Host "-- parsePendingNoteDeleteContent --"
 Check "content EN -> buy gift"  ((Get-PendingNoteContent $delPend) -eq 'buy gift')

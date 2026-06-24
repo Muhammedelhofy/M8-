@@ -38,6 +38,17 @@ function Get-RefAmount([string]$text) {
   return $a
 }
 
+# Mirror of parseEditTargetAmount: figure AFTER "to"/→/إلى, else first number.
+function Get-EditTargetAmount([string]$text) {
+  $t = Norm-Digits $text
+  $after = [regex]::Match($t, '(?:\bto\b|→|إلى|الى)\s*(\d+(?:[.,]\d+)?)', 'IgnoreCase')
+  if ($after.Success) { $pick = $after.Groups[1].Value }
+  else { $f = [regex]::Match($t, '(\d+(?:[.,]\d+)?)'); if ($f.Success) { $pick = $f.Groups[1].Value } else { return $null } }
+  $amt = [double]($pick -replace ',', '.')
+  if ($amt -le 0) { return $null }
+  return $amt
+}
+
 function Ref-HasAnaphor([string]$m) {
   if ([regex]::IsMatch($m, '\b(it|that|this|those|these)\b|\b(?:the\s+)?(?:last|previous|recent)\s+(?:one|expense|entry)\b|\blast\s+one\b', 'IgnoreCase')) { return $true }
   if ([regex]::IsMatch($m, 'ذا|ذلك|هذا|هذه|هذي|اللي|الأخير|الاخير|آخر\s*(?:واحد|مصروف|عملية|شي)')) { return $true }
@@ -48,13 +59,14 @@ function Ref-HasAnaphor([string]$m) {
 function Parse-Reference([string]$raw) {
   $m = $raw.Trim()
   if (($m.Length -eq 0) -or ($m.Length -gt 80)) { return $null }
+  $amt = Get-EditTargetAmount $m
+  $isEdit = ([regex]::IsMatch($m, '\b(change|make|set|update|fix|correct|edit|adjust|bump|raise|lower)\b', 'IgnoreCase')) -or `
+            ([regex]::IsMatch($m, 'غيّر|غير|خلّ|خل|خلي|عدّل|عدل|صحّح|صحح'))
+  # edit + concrete amount is unambiguous even without a pronoun ("change to 43")
+  if ($isEdit -and ($null -ne $amt)) { return [pscustomobject]@{ action = 'edit';   amount = $amt } }
   if (-not (Ref-HasAnaphor $m)) { return $null }
-  $amt = Get-RefAmount $m
   $isDelete = ([regex]::IsMatch($m, '\b(remove|delete|undo|scratch|nix|drop|forget|erase)\b|get\s+rid\s+of|take\s+(?:it|that)\s+back', 'IgnoreCase')) -or `
               ([regex]::IsMatch($m, 'احذف|امسح|شيل|ألغ|الغ|تراجع|رجّع|رجع'))
-  $isEdit   = ([regex]::IsMatch($m, '\b(change|make|set|update|fix|correct|edit|adjust|bump|raise|lower)\b', 'IgnoreCase')) -or `
-              ([regex]::IsMatch($m, 'غيّر|غير|خلّ|خل|خلي|عدّل|عدل|صحّح|صحح'))
-  if ($isEdit -and ($null -ne $amt)) { return [pscustomobject]@{ action = 'edit';   amount = $amt } }
   if ($isDelete)                     { return [pscustomobject]@{ action = 'delete'; amount = $null } }
   if ($isEdit)                       { return [pscustomobject]@{ action = 'edit';   amount = $null } }
   if (([regex]::IsMatch($m, '\b(?:the\s+)?last\s+(?:one|expense|entry)\b|\blast\s+one\b', 'IgnoreCase')) -or ([regex]::IsMatch($m, 'آخر\s*(?:واحد|مصروف|عملية)|الأخير|الاخير'))) {
@@ -90,6 +102,8 @@ function ExpectRef([string]$phrase, [string]$label, [string]$expectAction, $expe
 Write-Host "== Phase 2 reference resolver — PS 5.1 mirror =="
 Write-Host "-- parseReference (EN) --"
 ExpectRef "change that to 40"        "EN change-to-40"      "edit"   40
+ExpectRef "change to 43"             "EN change-to-43-noanaphor" "edit" 43
+ExpectRef "change to 43 egp"         "EN change-to-43-egp"  "edit"   43
 ExpectRef "make it 50"              "EN make-it-50"        "edit"   50
 ExpectRef "set it to 12.5"          "EN set-it-12.5"       "edit"   12.5
 ExpectRef "remove it"               "EN remove-it"         "delete" $null

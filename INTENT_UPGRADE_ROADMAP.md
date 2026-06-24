@@ -229,3 +229,15 @@ as a standalone MD (per team-brief convention), never a chat paste.
   the wallet (Phase 2), tasks, AND notes. Awaiting his live confirm (`tests/PHASE3_TASKS_LIVE_TEST.md` +
   `tests/PHASE3_NOTES_LIVE_TEST.md`). Rollback → Vercel `d4af231`. **Phase 3 CLOSED. NEXT = Phase 4
   (fleet: make it HARDER to enter — unknowns → Phase 0, never into fleet; any fleet AI = READ-ONLY).**
+- **2026-06-24 — Build-129 FIX (Phase 3 live test caught it).** Tasks reference resolution + the Build-127
+  wallet-overlay both LIVE-VERIFIED (scratch it / mark it done / change it to 50 showed current 43 not
+  stale 30 ✓). But NOTES had two bugs: (1) **bare "note the rent is due" didn't match `parseNoteCapture`**
+  (it needed `note:` / `note down` / `make a note that`) → fell to the LLM, which said "Noted:" but NEVER
+  saved (empty Notes tab) → the later "delete it" found nothing; (2) **`noteRefContext` didn't recognize
+  the real save reply** "📝 Noted." either. The LLM also MIMICKED M8's "Delete note X? yes/no" card on the
+  fall-through (confusing). FIX: parseNoteCapture now catches bare "note <X>"; the capture reply echoes
+  content ("📝 Noted: «X».") and `noteRefContext` recognizes it; plus `parseReference` now resolves an
+  EDIT with a target amount even WITHOUT a pronoun ("change to 43", which had fallen through). Offline
+  phase2 50/50, phase3-task 29/29, phase3-note 34/34. LESSON: a deterministic lane that FAILS to claim a
+  command hands the user to the LLM, which can fabricate AND mimic M8's own cards — so capture coverage
+  gaps are higher-stakes than they look.
