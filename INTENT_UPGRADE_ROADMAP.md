@@ -1,6 +1,6 @@
 # M8 Intelligence Upgrade — Intent Routing Roadmap
 
-**Owner:** Muhammad · **Started:** 2026-06-24 · **Status:** Phases 0/1/1.1/2 DEPLOYED to prod (m8-alpha) · Phase 3 (tasks/notes) next
+**Owner:** Muhammad · **Started:** 2026-06-24 · **Status:** Phases 0/1/1.1/2 LIVE-VERIFIED on prod (m8-alpha) · Phase 3 (tasks/notes) next
 **This is the doc we follow so we don't get lost.** Update the status column + changelog after every step.
 
 ---
@@ -95,7 +95,7 @@ All four (GPT/Grok/Gemini/Manus): **architecture is right, spread it.** Unanimou
 |---|---|---|---|---|
 | **0 — Safety net** | **Deterministic, NO AI.** When a message hits a lane's keywords but no parser matches, reply plainly instead of looping. All lanes. | 🟢 none | The real screenshot cases ("remove the last expense", "what was the last expense Sara did") → clear message, no loop | ✅ **DONE** — live-confirmed EN + AR on his phone (Build-119 `08d801d` + AR fix Build-120 `29c0834`). Offline 12/12. Rollback → `422e97c`. |
 | **1 — Wallet pilot + intent core** | Build the **reusable** intent classifier (domain+intent+entity, strict JSON), prove it on the money lane. Includes basic reference ("that/last"). | 🟢 low | messy money sentences all route right; deletes confirm-gated; never guesses between 2 matches | ✅ **DONE — live-verified on prod** (Build-121 `d1c1a11`). EN+AR messy adds understood (incl. a typo "غدا"), survived "yes", logged right; delete_last graceful; keyword path intact. Kill switch `M8_INTENT_BRAIN_DISABLED`. |
-| **2 — Reference resolution** | Generalize "it / that / the last one / undo / scratch that" across lanes. | 🟢 low | reference phrases work | ✅ **DEPLOYED — wallet lane** (prod m8-alpha `2faa2a7` = Build-123 + Build-124). Deterministic `parseReference`+`walletRefContext` resolve "it/that/last/undo/scratch/change-to-N" → last M8 write, gated on recent wallet context; edits confirm-gated, delete stays honest (no new power). Build-124 also closed a privacy leak (messy money turns reaching the LLM). Offline 39/39. Awaiting his live confirmation. Other lanes (tasks/notes) = Phase 3. |
+| **2 — Reference resolution** | Generalize "it / that / the last one / undo / scratch that" across lanes. | 🟢 low | reference phrases work | ✅ **DONE — LIVE-VERIFIED on prod** (m8-alpha `67c44e1` = Build-123 references + Build-124 privacy + Build-125 edit-yes fix). Confirmed on his device 2026-06-24: log → "change that to 40" → update card → "yes" → **"Done ✓ updated the last expense to 40 EGP."** Deterministic `parseReference`+`walletRefContext` resolve "it/that/last/undo/scratch/change-to-N" → last M8 write, gated on recent wallet context; edits confirm-gated, delete stays honest (no new power). Offline 48/48. Other lanes (tasks/notes) = Phase 3. |
 | **3 — Tasks + Notes** | Wire the intent core into tasks + notes. | 🟢 low | work without command vocabulary | ⬜ not started |
 | **4 — Fleet + general** | Intent core into fleet/earnings + free chat. | 🟡 med | conversational fleet queries | ⬜ not started |
 
@@ -196,3 +196,7 @@ as a standalone MD (per team-brief convention), never a chat paste.
   so the OLD value isn't grabbed); `pendingEditFromHistory` is now prompt-first. Also `parseEditTargetAmount`
   picks the figure AFTER "to" ("change the 30 to 40" → 40, not 30) — used by `parseReference` + the
   intent-brain edit path. Offline mirror → **48/48**. Deploying with his "go" still in effect for Phase 2.
+- **2026-06-24 — Phase 2 LIVE-VERIFIED ✅ (prod `67c44e1`).** On his device: `throw 30 egp to groceries`
+  → `yes` (logged) → `change that to 40` → `🧾 Update last expense (30 EGP · Groceries) → 40 EGP?` → `yes`
+  → **"Done ✓ updated the last expense to 40 EGP."** Reference resolution + the edit-yes reconstruction
+  both proven on real prod. Phase 2 CLOSED. NEXT = Phase 3 (tasks/notes), then Phase 4 (fleet harder to enter).

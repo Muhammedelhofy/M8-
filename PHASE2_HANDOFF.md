@@ -3,11 +3,12 @@
 **Tracker:** `INTENT_UPGRADE_ROADMAP.md` (status table + changelog) · **Memory:** `[[m8-intent-routing]]`
 
 ## Where we are
-- **Phases 0 / 1 / 1.1 = LIVE on prod** (m8-alpha, `d4af231`). Wallet understands messy/typo/synonym
-  money sentences; amounts deterministic; privacy-masked; kill switch `M8_INTENT_BRAIN_DISABLED`.
-- **Phase 2 (wallet reference resolution) = BUILT, NOT deployed.**
-  Branch `phase2-reference`, commit **Build-123 `923a9ad`**. Preview build went **READY (12 lambdas)** =
-  code loads. Offline `tests/phase2-reference-test.ps1` **32/32**.
+- **Phases 0 / 1 / 1.1 / 2 = LIVE-VERIFIED on prod** (m8-alpha, latest **`67c44e1`**).
+- **Phase 2 (wallet reference resolution) = DONE.** Build-123 (references) + Build-124 (privacy strip) +
+  Build-125 (edit-"yes" reconstruction). Confirmed on his device 2026-06-24: `change that to 40` →
+  update card → `yes` → "Done ✓ updated the last expense to 40 EGP." Offline `tests/phase2-reference-test.ps1`
+  **48/48**. Rollback = Vercel → `d4af231`.
+- **NEXT = Phase 3** (tasks + notes), then Phase 4 (fleet harder to enter).
 
 ## What Phase 2 does (wallet lane only)
 Anaphoric commands now resolve to the **single last M8-added expense**, but only right after a wallet turn:
