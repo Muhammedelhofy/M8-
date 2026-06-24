@@ -1,6 +1,6 @@
 # M8 Intelligence Upgrade — Intent Routing Roadmap
 
-**Owner:** Muhammad · **Started:** 2026-06-24 · **Status:** ✅ **ALL phases (0/1/1.1/2/3/4) DEPLOYED to prod (m8-alpha `abbd64c`)** — the intent-routing upgrade is COMPLETE; awaiting his live behavioral confirm of Phase 4 (the "make me rich" loop)
+**Owner:** Muhammad · **Started:** 2026-06-24 · **Status:** ✅ **ALL phases (0/1/1.1/2/3/4) DEPLOYED to prod (m8-alpha `2f990ad`)** — the intent-routing upgrade is COMPLETE + LIVE-VERIFIED (the "make me rich" loop is gone). Build-132 fleet-fetch reliability fix also deployed (cold-start "no data" fix). Rollback → Vercel `67f8c8b`.
 **This is the doc we follow so we don't get lost.** Update the status column + changelog after every step.
 
 ---
@@ -288,4 +288,13 @@ as a standalone MD (per team-brief convention), never a chat paste.
   happy-path latency; chat budget is 180s). Not mirror-testable (network); verified by preview build READY +
   live. NOTE (deferred, not a bug): a vague "how do the fleet do this week" sometimes routes to MTD rankings
   instead of a weekly rollup (the free intent-classifier picks `mtd_ranking` before the deterministic range
-  path) — non-deterministic, data-aware, "smarter-fleet" territory; left for a future tweak.
+  path) — non-deterministic, data-aware, "smarter-fleet" territory; left for a future tweak (~Build-133).
+- **2026-06-24 — Build-132 DEPLOYED to prod** (m8-alpha `2f990ad`; his "deploy 132" after I explained the
+  deferred this-week→MTD nuance). ff-merge `fix-fleet-fetch` → main; prod build READY (12 lambdas), `m8-alpha`
+  alias on `2f990ad`, live `/api/chat` GET → 405. **LIVE-VERIFIED earlier this session that Phase 4 works (the
+  "make me rich"/"make me money"/random-text driver loop is gone → normal chat) and that real fleet queries
+  return real data (pace-to-target, morning brief, exact single-day net).** The cold-start "no data" blips
+  that surfaced are addressed by 132 (12s timeout + one retry). KEY DATA NOTE: M8 reads the Supabase
+  `fleet_data` cloud blob, NOT the dashboard's local state — a dashboard edit only reaches M8 after the
+  dashboard pushes to cloud (or the 21:00 UTC cron). During testing the blob's newest day was 22 Jun (synced
+  21:00 UTC prior night), so "yesterday"=23 Jun correctly returned not-found.
