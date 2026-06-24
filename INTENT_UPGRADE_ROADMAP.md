@@ -1,6 +1,6 @@
 # M8 Intelligence Upgrade — Intent Routing Roadmap
 
-**Owner:** Muhammad · **Started:** 2026-06-24 · **Status:** ✅ **ALL phases (0/1/1.1/2/3/4) DEPLOYED to prod (m8-alpha `2f990ad`)** — the intent-routing upgrade is COMPLETE + LIVE-VERIFIED (the "make me rich" loop is gone). Build-132 fleet-fetch reliability fix also deployed (cold-start "no data" fix). Rollback → Vercel `67f8c8b`.
+**Owner:** Muhammad · **Started:** 2026-06-24 · **Status:** ✅ **ALL phases (0/1/1.1/2/3/4) DEPLOYED + LIVE-VERIFIED to prod (m8-alpha `b5a63bc`)** — intent-routing upgrade COMPLETE (the "make me rich" loop is gone). Also live: Build-132 fleet-fetch reliability (cold-start "no data" fix), Build-133 (this-week → weekly rollup), Build-134 (privacy #1 — money turns with no currency word no longer leak). Rollback → Vercel `67f8c8b`.
 **This is the doc we follow so we don't get lost.** Update the status column + changelog after every step.
 
 ---
@@ -315,3 +315,9 @@ as a standalone MD (per team-brief convention), never a chat paste.
   is ordinal, so the JS code was correct — the mirror had to use `IndexOf(s, StringComparison.Ordinal)`. NOT
   deployed — awaiting his live test + "go". (Hofy/Family-Wallet credit-card balance linking = a SEPARATE
   project, its own session.)
+- **2026-06-24 — Build-133 + Build-134 DEPLOYED to prod** (m8-alpha `b5a63bc`; his "deploy both"). ff-merge
+  `build-133-134` → main; prod build READY (12 lambdas), `m8-alpha` alias on `b5a63bc`, live `/api/chat` GET →
+  405. Awaiting his live confirm that "how did the fleet do this week" now returns the weekly rollup. Rollback
+  → `67f8c8b`. **OPEN (separate, next): Hofy/Family-Wallet credit-card balance linking** — a different repo +
+  Supabase; needs its own session (read the wallet's account/transaction model first; confirm credit-up vs
+  debit-down direction). No privacy-wall concern there (it's his own app/DB, no LLM sees it).
