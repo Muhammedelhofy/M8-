@@ -1,6 +1,6 @@
 # M8 Intelligence Upgrade — Intent Routing Roadmap
 
-**Owner:** Muhammad · **Started:** 2026-06-24 · **Status:** Phases 0/1/1.1/2 LIVE-VERIFIED on prod (m8-alpha) · Phase 3 (tasks/notes) next
+**Owner:** Muhammad · **Started:** 2026-06-24 · **Status:** Phases 0/1/1.1/2/3 DEPLOYED to prod (m8-alpha `203d8e0`) · Phase 4 (fleet) next
 **This is the doc we follow so we don't get lost.** Update the status column + changelog after every step.
 
 ---
@@ -96,7 +96,7 @@ All four (GPT/Grok/Gemini/Manus): **architecture is right, spread it.** Unanimou
 | **0 — Safety net** | **Deterministic, NO AI.** When a message hits a lane's keywords but no parser matches, reply plainly instead of looping. All lanes. | 🟢 none | The real screenshot cases ("remove the last expense", "what was the last expense Sara did") → clear message, no loop | ✅ **DONE** — live-confirmed EN + AR on his phone (Build-119 `08d801d` + AR fix Build-120 `29c0834`). Offline 12/12. Rollback → `422e97c`. |
 | **1 — Wallet pilot + intent core** | Build the **reusable** intent classifier (domain+intent+entity, strict JSON), prove it on the money lane. Includes basic reference ("that/last"). | 🟢 low | messy money sentences all route right; deletes confirm-gated; never guesses between 2 matches | ✅ **DONE — live-verified on prod** (Build-121 `d1c1a11`). EN+AR messy adds understood (incl. a typo "غدا"), survived "yes", logged right; delete_last graceful; keyword path intact. Kill switch `M8_INTENT_BRAIN_DISABLED`. |
 | **2 — Reference resolution** | Generalize "it / that / the last one / undo / scratch that" across lanes. | 🟢 low | reference phrases work | ✅ **DONE — LIVE-VERIFIED on prod** (m8-alpha `67c44e1` = Build-123 references + Build-124 privacy + Build-125 edit-yes fix). Confirmed on his device 2026-06-24: log → "change that to 40" → update card → "yes" → **"Done ✓ updated the last expense to 40 EGP."** Deterministic `parseReference`+`walletRefContext` resolve "it/that/last/undo/scratch/change-to-N" → last M8 write, gated on recent wallet context; edits confirm-gated, delete stays honest (no new power). Offline 48/48. Other lanes (tasks/notes) = Phase 3. |
-| **3 — Tasks + Notes** | Wire the intent core into tasks + notes. | 🟢 low | work without command vocabulary | 🟡 **3a Tasks + 3b Notes BUILT** (branch `phase3-notes` stacked on `phase3-tasks`; Build-126 tasks + Build-128 notes + Build-127 wallet edit-overlay fix). Reference resolution on BOTH lanes: "scratch it / mark it done / the last one / delete it" → newest open task / newest note, each gated on its own lane context. DELETE confirm-gated on both (real delete); task done direct. Offline 29/29 (tasks) + 27/27 (notes). NOT deployed — awaiting one live test + "go". |
+| **3 — Tasks + Notes** | Wire the intent core into tasks + notes. | 🟢 low | work without command vocabulary | ✅ **DEPLOYED to prod** (m8-alpha `203d8e0` = Build-126 tasks + Build-128 notes + Build-127 wallet edit-overlay fix). Reference resolution on BOTH lanes: "scratch it / mark it done / the last one / delete it" → newest open task / newest note, each gated on its own lane context. DELETE confirm-gated on both (real delete); task done direct. Offline 29/29 (tasks) + 27/27 (notes); prod build READY + /api/chat 405. Awaiting his live confirm. |
 | **4 — Fleet + general** | Intent core into fleet/earnings + free chat. | 🟡 med | conversational fleet queries | ⬜ not started |
 
 **Workflow each phase:** build on a branch → **code-only, nothing deployed** → Claude says
@@ -223,3 +223,9 @@ as a standalone MD (per team-brief convention), never a chat paste.
   sheet `tests/PHASE3_NOTES_LIVE_TEST.md`. **Deploy attempt was auto-blocked** (standing "no deploy
   without explicit OK" — correct); whole stack (3a+3b+fix) staged for ONE merge to main on his "go".
   Rollback → `d4af231`. NEXT = Phase 4 (fleet harder to enter).
+- **2026-06-24 — Phase 3 (3a Tasks + 3b Notes) + Build-127 DEPLOYED to prod** (m8-alpha `203d8e0`; he
+  said "deploy if recommended" → recommended yes). One ff-merge `phase3-notes` → main. Prod build READY
+  (12 lambdas), `/api/chat` GET → **405**, alias confirmed on `203d8e0`. Reference resolution now LIVE on
+  the wallet (Phase 2), tasks, AND notes. Awaiting his live confirm (`tests/PHASE3_TASKS_LIVE_TEST.md` +
+  `tests/PHASE3_NOTES_LIVE_TEST.md`). Rollback → Vercel `d4af231`. **Phase 3 CLOSED. NEXT = Phase 4
+  (fleet: make it HARDER to enter — unknowns → Phase 0, never into fleet; any fleet AI = READ-ONLY).**
