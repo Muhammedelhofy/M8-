@@ -1,16 +1,21 @@
 # M8 Next Session Brief — Session-59 Close
 
-**Prod (origin/main):** `2fa18c6` — Build-135 wallet "latest/recent expense" read (DEPLOYED, awaiting his live confirm)
+**Prod (origin/main):** `84bd8c7` — Build-137 M8 family memory (DEPLOYED; "what's my last expense" Build-135 already live-confirmed on his phone)
 **Vercel:** m8-alpha.vercel.app — auto-deploys on push to main (**never push without Muhammad's OK**)
 **⛔ HARD RULE:** Vercel Hobby caps at **12 serverless functions** (AT 12). Never add `api/*.js`.
 
-## Build-135 — wallet recent-expense read (just shipped)
-M8 can now answer "what's my last expense?" incl. app-logged ones (prev. it only knew its OWN
-writes + monthly totals → hit a hard decline). `getRecentExpenses()` in `lib/wallet.js` (read-only,
-no `note` column — privacy wall intact, uses existing m8_wallet SELECT grant, no DB change).
-Routing: `parseRecentQuery` in `lib/orchestrator.js` + `last_expense` intent kind in `lib/intent-router.js`.
-Offline 15/15 (`tests/build135-wallet-recent-test.ps1`). 🔴 PENDING: his live confirm — see
-`tests/BUILD135_LIVE_TEST.md` (8 chat questions). Rollback = Vercel→`bb0bac7`.
+## Wallet UX run — Builds 135 / 136 / 137 (all shipped this session)
+- **B-135 wallet recent-expense read** — "what's my last expense?" incl. app-logged ones. `getRecentExpenses()`
+  in `lib/wallet.js` (read-only, no `note`), `parseRecentQuery`/`last_expense` routing. 15/15. **Live-confirmed.**
+- **B-136 per-member queries** — "Sara's last expense" / "and sara" → that member. `getMembers`/`getMemberSpend`
+  + member_id filter; `matchMember`/`isBareMemberRef` (EN+AR aliases). 12/12. Uses existing m8_wallet grants.
+- **B-137 family memory** — the "M8 lost about who Sara is" fix. (A) seeded profile fact `spouse_name`
+  "Muhammad's wife is Sara" + retired stale test fact `accountant_name`; tiny household roster injected
+  (names/roles only). (B) de-greedied the money capability net so a TEACHING sentence reaches the LLM.
+  (C) deterministic relationship capture in `lib/memory.js`. 16/16. Kill: `M8_HOUSEHOLD_CONTEXT_DISABLED=1`.
+- **Two-Saras note:** "Sara" = his WIFE (wallet member). The old "Sara Mansour the accountant" was TEST data,
+  now retired. Wallet lane scopes "Sara"→wife by member match. Rollback codes: B135 `bb0bac7`, B137 `5803bcf`.
+- 🔴 PENDING: his live phone confirm of B-137 ("who is Sara?" + no money-lane regression) — `tests/BUILD137_LIVE_TEST.md`.
 
 ---
 
