@@ -1,16 +1,15 @@
 # Intent Routing — Phase 4 (Fleet RESHAPE) Handoff
 
 **Tracker:** `INTENT_UPGRADE_ROADMAP.md` (status table + changelog). **This stream's canonical doc.**
-**Prod (origin/main):** `67f8c8b` — Phases 0/1/1.1/2/3 LIVE on m8-alpha.
-**Phase 4 branch:** `phase4-fleet` @ `1721b61` (Build-130) — **preview READY, NOT deployed.**
-**⛔ Pushing `main` auto-deploys prod — deploy ONLY on his explicit "go".** Rollback = `67f8c8b`.
+**Prod (origin/main):** ✅ `abbd64c` — **ALL phases 0/1/1.1/2/3/4 LIVE on m8-alpha.**
+**Phase 4:** Build-130 + Build-131 — **DEPLOYED to prod 2026-06-24.** Rollback = Vercel → `67f8c8b`.
 
 ---
 
 ## Where Phase 4 stands
 
-**Status: BUILT + offline-verified, awaiting his LIVE test, then his "go" to deploy.**
-This is the **last phase** — once it's live-verified + deployed, the whole intent-routing upgrade is done.
+**Status: ✅ DEPLOYED + load-verified (prod build READY, `/api/chat` 405). Awaiting his LIVE behavioral confirm.**
+This was the **last phase** — the all-lanes intent-routing upgrade (0→4) is now COMPLETE.
 
 - **Change:** `lib/fleet.js` ONLY (chat fleet lane's `buildFleetContext` entry/gating). The orchestrator
   just calls `buildFleetContext`, so buffered + streaming are both covered with zero edits to the shared

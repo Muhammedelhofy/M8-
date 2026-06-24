@@ -1,6 +1,6 @@
 # M8 Intelligence Upgrade — Intent Routing Roadmap
 
-**Owner:** Muhammad · **Started:** 2026-06-24 · **Status:** Phases 0/1/1.1/2/3 DEPLOYED to prod (m8-alpha `67f8c8b`) · Phase 4 (fleet) BUILT on branch `phase4-fleet`, awaiting live test + "go"
+**Owner:** Muhammad · **Started:** 2026-06-24 · **Status:** ✅ **ALL phases (0/1/1.1/2/3/4) DEPLOYED to prod (m8-alpha `abbd64c`)** — the intent-routing upgrade is COMPLETE; awaiting his live behavioral confirm of Phase 4 (the "make me rich" loop)
 **This is the doc we follow so we don't get lost.** Update the status column + changelog after every step.
 
 ---
@@ -97,7 +97,7 @@ All four (GPT/Grok/Gemini/Manus): **architecture is right, spread it.** Unanimou
 | **1 — Wallet pilot + intent core** | Build the **reusable** intent classifier (domain+intent+entity, strict JSON), prove it on the money lane. Includes basic reference ("that/last"). | 🟢 low | messy money sentences all route right; deletes confirm-gated; never guesses between 2 matches | ✅ **DONE — live-verified on prod** (Build-121 `d1c1a11`). EN+AR messy adds understood (incl. a typo "غدا"), survived "yes", logged right; delete_last graceful; keyword path intact. Kill switch `M8_INTENT_BRAIN_DISABLED`. |
 | **2 — Reference resolution** | Generalize "it / that / the last one / undo / scratch that" across lanes. | 🟢 low | reference phrases work | ✅ **DONE — LIVE-VERIFIED on prod** (m8-alpha `67c44e1` = Build-123 references + Build-124 privacy + Build-125 edit-yes fix). Confirmed on his device 2026-06-24: log → "change that to 40" → update card → "yes" → **"Done ✓ updated the last expense to 40 EGP."** Deterministic `parseReference`+`walletRefContext` resolve "it/that/last/undo/scratch/change-to-N" → last M8 write, gated on recent wallet context; edits confirm-gated, delete stays honest (no new power). Offline 48/48. Other lanes (tasks/notes) = Phase 3. |
 | **3 — Tasks + Notes** | Wire the intent core into tasks + notes. | 🟢 low | work without command vocabulary | ✅ **DEPLOYED to prod** (m8-alpha `203d8e0` = Build-126 tasks + Build-128 notes + Build-127 wallet edit-overlay fix). Reference resolution on BOTH lanes: "scratch it / mark it done / the last one / delete it" → newest open task / newest note, each gated on its own lane context. DELETE confirm-gated on both (real delete); task done direct. Offline 29/29 (tasks) + 27/27 (notes); prod build READY + /api/chat 405. Awaiting his live confirm. |
-| **4 — Fleet + general** | **RESHAPE: make Fleet HARDER to enter** (not smarter). Unknown/non-fleet text → fall through, never a driver loop. Fleet stays READ-ONLY. | 🟡 med | "make me rich" → normal chat (no driver loop); real fleet queries intact | 🟢 **BUILT (Build-130, branch `phase4-fleet`)** — `lib/fleet.js` only. Offline `tests/phase4-fleet-gate-test.ps1` **24/24**. NOT deployed — awaiting his live test + "go". |
+| **4 — Fleet + general** | **RESHAPE: make Fleet HARDER to enter** (not smarter). Unknown/non-fleet text → fall through, never a driver loop. Fleet stays READ-ONLY. | 🟡 med | "make me rich" → normal chat (no driver loop); real fleet queries intact | ✅ **DEPLOYED to prod (Build-130 + Build-131, m8-alpha `abbd64c`)** — `lib/fleet.js` only. Offline `tests/phase4-fleet-gate-test.ps1` **27/27**; prod build READY (12 lambdas) + `/api/chat` 405 (loads). Awaiting his live behavioral confirm. |
 
 **Workflow each phase:** build on a branch → **code-only, nothing deployed** → Claude says
 "🔴 TEST THIS NOW" → Muhammad tests locally → only deploy on his explicit "go".
@@ -268,3 +268,11 @@ as a standalone MD (per team-brief convention), never a chat paste.
   `tests/phase4-fleet-gate-test.ps1` now **27/27**. Rest of the review: no regressions (date/range follow-ups,
   known bare-name replies, verb-phrase known→driver / unknown→honest not-found all intact; `driverCands=null`
   null-safe downstream; no new LLM calls; `looksFleet` unchanged so orchestrator fleet gating is unchanged).
+- **2026-06-24 — Phase 4 DEPLOYED to prod** (m8-alpha `abbd64c`; his "deploy if recommended + check for bugs
+  first" → reviewed, one edge fixed as Build-131, recommended yes). One ff-merge `phase4-fleet` → main. Prod
+  build READY (12 lambdas, atomic), `m8-alpha.vercel.app` alias confirmed on `abbd64c`, live `/api/chat`
+  GET → **405** (function loads). **This was the LAST phase — the all-lanes intent-routing upgrade
+  (Phases 0→4) is COMPLETE: deterministic safety net + AI intent brain + reference resolution on wallet /
+  tasks / notes, and Fleet reshaped to be hard-to-enter & read-only.** Remaining = his live behavioral confirm
+  on the phone (the "make me rich" loop should now be a normal chat reply) + the optional wallet privacy fix
+  #1 as a separate build. Rollback for prod = Vercel → `67f8c8b`.
