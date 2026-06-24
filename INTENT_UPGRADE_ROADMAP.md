@@ -35,6 +35,32 @@ these; the **Phase 1 intent brain (decide the lane up front)** is the real fix.
   "which account?". **Deferred to Phase 1** (Muhammad's call 2026-06-24) — fleet is
   the live job tool; the intent brain fixes it safely rather than a rushed hack.
 
+## Phase 1 code review — council round 2 (2026-06-24) → rulings
+All four (GPT/Grok/Gemini/Manus): **architecture is right, spread it.** Unanimous #1 fix = the
+**write-action gate**. Reconciled decisions:
+- **Writes (add/edit) must require a DETERMINISTIC amount** present in the message — never let the
+  AI invent one ("add lunch" must NOT become "add 50"). No number → CLARIFY ("how much?"), not
+  confirm. (GPT B-table + Grok/Manus numeric sanity + Gemini "drop fake confidence".)
+- **Stop trusting the LLM confidence float** as the write gate (a free model says 0.95 on a
+  hallucination — Gemini). Use it only as a coarse floor; the deterministic amount-check + the
+  confirm card are the real safety. Reads (total/category) keep the low bar.
+- **Add numeric/currency sanity checks** in `classifyMoneyIntent` (reject ≤0, NaN, absurd, currency
+  ∉ {SAR,EGP}).
+- **Use native JSON mode** (`response_format:{type:"json_object"}`) on OpenAI-compatible providers;
+  keep `extractJson` as fallback (3/4 — manual parsing across 6 free models is brittle).
+- **Length guard** (Claude found live): skip the money AI on long pastes (>~200 chars) — a paste of
+  the team brief got misread as an 8 EGP expense.
+- **Privacy — CORRECT THE CLAIM (honesty):** "nothing logged" is only true on M8's side; the live
+  message IS sent to a free external provider that MAY log/retain it. Accurate statement + Muhammad
+  re-confirms posture (accept / pin to one provider / strip numbers before the call).
+- **Per-lane classifiers, shared plumbing** (3/4 vs Manus's generic) — share provider/timeout/JSON/
+  validation; keep prompts per-domain (generic = "prompt soup" + free-model attention loss).
+- **Future arbitrary-delete = hard invariant:** AI extracts SEARCH PARAMS only; deterministic code
+  queries; count>1 → numbered list, user picks; AI never generates the row id.
+- **Phase 4 Fleet RESHAPE (unanimous):** make Fleet HARDER to enter, not smarter. Unknowns →
+  "unknown" → Phase 0, NEVER into fleet (false negative OK, false positive dangerous). Any fleet AI
+  = READ-ONLY intents; fleet gets its own Phase 0 net. This is the real "make me rich" fix.
+
 ## Locked design rules (reconciled from the council, 2026-06-24)
 - **Phase 0 = pure deterministic, NO LLM.** The safety net is keyword/domain detection +
   templated capability replies. Zero latency, zero cost, cannot worsen behaviour. (Rejected
@@ -68,7 +94,7 @@ these; the **Phase 1 intent brain (decide the lane up front)** is the real fix.
 | Phase | What | Risk | TEST CHECKPOINT | Status |
 |---|---|---|---|---|
 | **0 — Safety net** | **Deterministic, NO AI.** When a message hits a lane's keywords but no parser matches, reply plainly instead of looping. All lanes. | 🟢 none | The real screenshot cases ("remove the last expense", "what was the last expense Sara did") → clear message, no loop | ✅ **DONE** — live-confirmed EN + AR on his phone (Build-119 `08d801d` + AR fix Build-120 `29c0834`). Offline 12/12. Rollback → `422e97c`. |
-| **1 — Wallet pilot + intent core** | Build the **reusable** intent classifier (domain+intent+entity, strict JSON), prove it on the money lane. Includes basic reference ("that/last"). | 🟢 low | messy money sentences all route right; deletes confirm-gated; never guesses between 2 matches | 🟢 **BUILT** — `lib/intent-router.js` + wallet 2nd-stage; privacy=live-msg-only; kill switch `M8_INTENT_BRAIN_DISABLED`; offline confirm-parse 5/5 PASS. Awaiting deploy + live test (branch `phase1-intent-brain`). |
+| **1 — Wallet pilot + intent core** | Build the **reusable** intent classifier (domain+intent+entity, strict JSON), prove it on the money lane. Includes basic reference ("that/last"). | 🟢 low | messy money sentences all route right; deletes confirm-gated; never guesses between 2 matches | ✅ **DONE — live-verified on prod** (Build-121 `d1c1a11`). EN+AR messy adds understood (incl. a typo "غدا"), survived "yes", logged right; delete_last graceful; keyword path intact. Kill switch `M8_INTENT_BRAIN_DISABLED`. |
 | **2 — Reference resolution** | Generalize "it / that / the last one / undo / scratch that" across lanes. | 🟢 low | reference phrases work | ⬜ not started |
 | **3 — Tasks + Notes** | Wire the intent core into tasks + notes. | 🟢 low | work without command vocabulary | ⬜ not started |
 | **4 — Fleet + general** | Intent core into fleet/earnings + free chat. | 🟡 med | conversational fleet queries | ⬜ not started |
@@ -110,3 +136,22 @@ as a standalone MD (per team-brief convention), never a chat paste.
   reconstructs from the confirm prompt so AI-detected adds survive "yes". Kill switch
   `M8_INTENT_BRAIN_DISABLED=1`. Offline `tests/phase1-confirm-parse-test.ps1` 5/5. Live sheet
   `tests/PHASE1_LIVE_TEST.md`. NOT deployed — awaiting Muhammad's go.
+- **2026-06-24 — Phase 1 DEPLOYED + live-verified ✅** (prod `d1c1a11`, m8-alpha). Verified on his
+  laptop: "throw 30 egp to groceries", "put down fifty riyals for lunch", AND Arabic "حط ٥٠ ريال غدا"
+  (with a typo) all understood → correct confirm → "yes" logged the right amount/category; keyword
+  path ("add 50 sar lunch") unchanged; delete_last stayed honest. The intent brain works on the
+  wallet, EN+AR, typo-tolerant. PROCESS NOTE: deploy needs an EXPLICIT yes — a preview build
+  load-check (405 on /api/chat) caught nothing wrong but de-risked the un-syntax-checkable push;
+  the wallet can't be tested on a preview (per-origin localStorage key + prod-only env) → prod is
+  the only real test. NEXT: team round on the real Phase-1 code, then Phase 2 (reference resolution).
+- **2026-06-24 — Phase 1.1 HARDENING built** (branch `phase1-hardening`) from the council round 2.
+  (1) **Amount is now deterministic** — the model returns KIND+CATEGORY only; the figure is parsed
+  from the text (never invented). Writes REQUIRE a real digit amount; none → clarify (deliberate
+  trade: spelled-out "fifty" now asks for digits). (2) **Numeric sanity** cap (>0, ≤1,000,000).
+  (3) **Length guard** — AI skipped on >200-char messages (fixes the paste-as-8-EGP bug).
+  (4) **Native JSON mode** (`response_format`/`responseMimeType`) wired through `lib/llm.js`;
+  `extractJson` kept as fallback. (5) **Privacy: amounts MASKED to "#"** before the provider call +
+  the claim corrected to the honest version (provider may log the rest; M8 doesn't, and never sends
+  stored data). Offline `tests/phase1-hardening-test.ps1` 8/8. Confidence float demoted to a coarse
+  floor (0.5) — the real write-safety is the deterministic amount + confirm card (Gemini's point).
+  FOUND (pre-existing, not fixed tonight): `parseAmountCurrency` turns "1,500" into 1.5 (comma→dot).
