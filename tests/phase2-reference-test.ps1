@@ -140,6 +140,25 @@ Check "ctx null when no sentinel" ($null -eq (Wallet-RefContext $noSent))
 Check "ctx null when last is user" ($null -eq (Wallet-RefContext $userLast))
 Check "ctx null when empty history" ($null -eq (Wallet-RefContext @()))
 
+Write-Host "-- stripMoneyHistory (Build-124 privacy fix: money-plausible user turns hidden from LLM) --"
+# Mirror of the _MONEY_PLAUSIBLE regex + the strip filter. The keyword parsers
+# (parseAddExpense/parseSpendQuery/parseEditExpense) also strip and are NOT mirrored
+# here — this validates the NEW clause: a missed-but-money-plausible user turn is dropped.
+$MONEY_PLAUSIBLE = '\b(sar|sr|riyals?|egp|pounds?|expenses?|wallet|balance|transactions?|spend(?:ing)?|spent|paid)\b|ريال|﷼|جنيه|مصروف|مصاريف|محفظة|رصيد|دفعت|صرفت|أنفقت|انفقت'
+function Strip-Keeps([string]$role, [string]$content) {
+  # returns $true if the turn is KEPT (reaches the LLM), $false if stripped
+  if ($content.IndexOf($SENT) -ge 0) { return $false }
+  if (($role -eq 'user') -and ([regex]::IsMatch($content, $MONEY_PLAUSIBLE, 'IgnoreCase'))) { return $false }
+  return $true
+}
+Check "leak fixed: 'throw 30 egp to groceries' STRIPPED" (-not (Strip-Keeps 'user' 'throw 30 egp to groceries'))
+Check "leak fixed: 'put down fifty riyals for lunch' STRIPPED" (-not (Strip-Keeps 'user' 'put down fifty riyals for lunch'))
+Check "AR leak: 'صرفت ٣٠ على القهوة' STRIPPED" (-not (Strip-Keeps 'user' 'صرفت ٣٠ على القهوة'))
+Check "assistant money reply (sentinel) STRIPPED" (-not (Strip-Keeps 'assistant' ('Done logged 30 EGP' + $SENT)))
+Check "non-money 'what is the weather' KEPT" (Strip-Keeps 'user' 'what is the weather')
+Check "non-money 'remind me tomorrow' KEPT" (Strip-Keeps 'user' 'remind me tomorrow')
+Check "reference 'change that to 40' (no currency) KEPT by strip" (Strip-Keeps 'user' 'change that to 40')
+
 Write-Host ""
 Write-Host ("RESULT: " + $script:pass + " passed, " + $script:fail + " failed.")
 if ($script:fail -gt 0) { exit 1 } else { exit 0 }

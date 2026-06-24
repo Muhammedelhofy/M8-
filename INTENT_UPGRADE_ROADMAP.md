@@ -174,3 +174,12 @@ as a standalone MD (per team-brief convention), never a chat paste.
   substring-on-stem instead. Offline `tests/phase2-reference-test.ps1` **32/32** (mirror gotcha hit +
   fixed: a helper named `H` was shadowed by the `Get-History` alias). Live sheet
   `tests/PHASE2_LIVE_TEST.md`. NOT deployed — awaiting Muhammad's live test, then explicit "go".
+- **2026-06-24 — Build-124 PRIVACY FIX** (same branch, found during the Phase 2 live test). The live
+  transcript showed the fall-through LLM echoing real expenses ("30 EGP groceries", "50 SAR lunch").
+  ROOT CAUSE: `stripMoneyHistory` decided what to hide using the *keyword* parsers, which MISS the
+  messy phrasings the Phase-1 brain understands ("throw 30 egp…", "put down fifty riyals…") → they
+  leaked into the LLM history on a fall-through turn. FIX: also strip any user turn matching
+  `_MONEY_PLAUSIBLE` (currency word / spend verb), EN+AR. Deterministic, one clause; over-strip only
+  costs prior-turn LLM context (never the current turn). Residual (documented): a money sentence with
+  NO currency word + a non-category number (e.g. "throw 30 to it") still slips — full closure needs the
+  LLM, declined. Offline mirror extended → **39/39**. Deploying together with Build-123 (his "go").
