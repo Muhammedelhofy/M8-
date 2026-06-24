@@ -276,3 +276,16 @@ as a standalone MD (per team-brief convention), never a chat paste.
   tasks / notes, and Fleet reshaped to be hard-to-enter & read-only.** Remaining = his live behavioral confirm
   on the phone (the "make me rich" loop should now be a normal chat reply) + the optional wallet privacy fix
   #1 as a separate build. Rollback for prod = Vercel → `67f8c8b`.
+- **2026-06-24 — Build-132 (fleet fetch reliability — surfaced by the Phase 4 live test).** During the live
+  test, the FIRST fleet queries right after the Build-131 deploy returned the system prompt's generic "I
+  don't have your fleet data loaded" line, while later queries on the SAME data worked (pace, brief, exact
+  single-day). Diagnosis (evidence-based, not Phase 4): the Supabase `fleet_data` row is present + fresh
+  (verified: 45 days May 9→Jun 22, synced 13h prior) and the gating paths are unchanged — so the empty
+  `fleetCtx` was a **cold-start fetch timeout** (a cold lambda's first Supabase read exceeding the 6s cap →
+  null → the no-data reply). Confirmed by re-test: once warm, the same queries returned the correct specific
+  not-found / MTD / exact figure. FIX (`lib/fleet.js` only): `FETCH_TIMEOUT_MS` 6s → **12s** (env
+  `FLEET_FETCH_TIMEOUT_MS`), and `getFleetRecord` **retries once** on a null (a success never retries → no
+  happy-path latency; chat budget is 180s). Not mirror-testable (network); verified by preview build READY +
+  live. NOTE (deferred, not a bug): a vague "how do the fleet do this week" sometimes routes to MTD rankings
+  instead of a weekly rollup (the free intent-classifier picks `mtd_ranking` before the deterministic range
+  path) — non-deterministic, data-aware, "smarter-fleet" territory; left for a future tweak.
