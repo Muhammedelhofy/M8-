@@ -1,6 +1,6 @@
 # M8 Intelligence Upgrade — Intent Routing Roadmap
 
-**Owner:** Muhammad · **Started:** 2026-06-24 · **Status:** Phases 0/1/1.1 DONE+live · Phase 2 (wallet) BUILT, awaiting live test
+**Owner:** Muhammad · **Started:** 2026-06-24 · **Status:** Phases 0/1/1.1/2 DEPLOYED to prod (m8-alpha) · Phase 3 (tasks/notes) next
 **This is the doc we follow so we don't get lost.** Update the status column + changelog after every step.
 
 ---
@@ -95,7 +95,7 @@ All four (GPT/Grok/Gemini/Manus): **architecture is right, spread it.** Unanimou
 |---|---|---|---|---|
 | **0 — Safety net** | **Deterministic, NO AI.** When a message hits a lane's keywords but no parser matches, reply plainly instead of looping. All lanes. | 🟢 none | The real screenshot cases ("remove the last expense", "what was the last expense Sara did") → clear message, no loop | ✅ **DONE** — live-confirmed EN + AR on his phone (Build-119 `08d801d` + AR fix Build-120 `29c0834`). Offline 12/12. Rollback → `422e97c`. |
 | **1 — Wallet pilot + intent core** | Build the **reusable** intent classifier (domain+intent+entity, strict JSON), prove it on the money lane. Includes basic reference ("that/last"). | 🟢 low | messy money sentences all route right; deletes confirm-gated; never guesses between 2 matches | ✅ **DONE — live-verified on prod** (Build-121 `d1c1a11`). EN+AR messy adds understood (incl. a typo "غدا"), survived "yes", logged right; delete_last graceful; keyword path intact. Kill switch `M8_INTENT_BRAIN_DISABLED`. |
-| **2 — Reference resolution** | Generalize "it / that / the last one / undo / scratch that" across lanes. | 🟢 low | reference phrases work | 🟡 **BUILT — wallet lane** (branch `phase2-reference`, Build-123). Deterministic `parseReference`+`walletRefContext` resolve "it/that/last/undo/scratch/change-to-N" → last M8 write, gated on recent wallet context; edits confirm-gated, delete stays honest (no new power). Offline 32/32. NOT deployed — awaiting live test + "go". Other lanes (tasks/notes) = Phase 3. |
+| **2 — Reference resolution** | Generalize "it / that / the last one / undo / scratch that" across lanes. | 🟢 low | reference phrases work | ✅ **DEPLOYED — wallet lane** (prod m8-alpha `2faa2a7` = Build-123 + Build-124). Deterministic `parseReference`+`walletRefContext` resolve "it/that/last/undo/scratch/change-to-N" → last M8 write, gated on recent wallet context; edits confirm-gated, delete stays honest (no new power). Build-124 also closed a privacy leak (messy money turns reaching the LLM). Offline 39/39. Awaiting his live confirmation. Other lanes (tasks/notes) = Phase 3. |
 | **3 — Tasks + Notes** | Wire the intent core into tasks + notes. | 🟢 low | work without command vocabulary | ⬜ not started |
 | **4 — Fleet + general** | Intent core into fleet/earnings + free chat. | 🟡 med | conversational fleet queries | ⬜ not started |
 
@@ -183,3 +183,8 @@ as a standalone MD (per team-brief convention), never a chat paste.
   costs prior-turn LLM context (never the current turn). Residual (documented): a money sentence with
   NO currency word + a non-category number (e.g. "throw 30 to it") still slips — full closure needs the
   LLM, declined. Offline mirror extended → **39/39**. Deploying together with Build-123 (his "go").
+- **2026-06-24 — Build-123 + Build-124 DEPLOYED to prod** (m8-alpha `2faa2a7`; he chose "deploy Phase 2 +
+  privacy fix"). Merged `phase2-reference` → main (clean ff). Vercel prod build READY (12 lambdas);
+  prod `/api/chat` GET → **405** (loads) on `m8-alpha.vercel.app`; alias confirmed on `2faa2a7`.
+  Awaiting his live confirmation of the reference cases (`tests/PHASE2_LIVE_TEST.md`). Rollback →
+  Vercel `d4af231`. NEXT = Phase 3 (tasks/notes).
