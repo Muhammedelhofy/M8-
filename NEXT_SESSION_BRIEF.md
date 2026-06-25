@@ -1,5 +1,25 @@
 # M8 Next Session Brief — Session-59 Close
 
+## 🧭 NEXT DIRECTION (Muhammad, 2026-06-25) — "the turning point": DEEPER meaning-based routing
+He wants the meaning-based routing (the B-152 arbiter) **extended past wallet⇄fleet to ALL
+domains** (tasks, notes, docs, memory, web, chat) — decide the lane by MEANING, not keywords,
+everywhere. Calls it a likely turning point. **HARD constraint: stay under FREE quota.** He
+OK'd adding **free** APIs if they help (e.g. free embeddings). Recommended path (council-aligned):
+generalize `arbitrate()` into a full domain classifier built from a CAPABILITY_REGISTRY
+(GPT's anti-drift point), LLM consulted only on contest/miss (free Groq/Gemini), and OPTIONALLY
+add **pgvector embeddings** (free on his Supabase) + a **free embedding model** (Gemini
+text-embedding-004 free tier) for "novel phrasing → nearest known intent" recall. The arbiter
+already LOGS decisions to `m8_router_misses` lane=`arbiter:*` → his live testing now BUILDS the
+real dataset that should drive this. Do AFTER he confirms B-152/153/154 live. See
+`TEAM_ROUND_ROUTING_2026-06-25_RESPONSES.md` (§4 cascade, §5 incremental rollout).
+
+**✅ DEPLOYED — Build-154 currency-context follow-up (prod `e55e46d`):** two live-caught fixes —
+(A) "i want to see the amounts in sar" drifted to FLEET (arbiter now prefers the MOST-RECENT
+turn: last turn wallet ⇒ lean wallet even if a fleet brief is still in the window; + "amounts/
+see/want … in <cur>" now counts as a convert request); (B) "convert to sar" converted the whole
+HOUSEHOLD not Sara (breakdown header "Sara's TOP spending" broke member capture → allow "top" +
+possessive converted header). Tests build152 36/36, build153 28/28, adjacent 40/40. 🔴 pending his live re-test.
+
 **✅ DEPLOYED — Build-153 single-currency wallet view (prod `33bc213`):** merged 2026-06-25.
 `parseCurrencyConvert` + `renderConvertedBreakdown` (orchestrator.js) + `getCategoryBreakdown`
 now returns `rate` (wallet.js). "put all currency in sar" / "convert to sar" / "one currency" /
