@@ -2,7 +2,7 @@
 <!-- CANONICAL M8 DIAGRAM (promoted 2026-06-17, Session-44). This "M8 Mind" view is now the single
      source-of-truth visual — the old dense architecture diagram was archived to archive/diagrams/.
      Update THIS file on every ship: bump the Build/Session in the footer + this note, flip status/%
-     cells, do NOT regenerate the structure. Currently: Session-59 (Build-118 live web-search waterfall Serper->Tavily DEPLOYED+verified; Build-117 Odysseus battery CLEAN -> L5 streak 1/3; Build-116 learn->generate loop LIVE on nightly cron; prior: Build-85d multi-hop reasoning chain: complex why/how/compare questions decompose into 2-4 sub-questions, answer each on already-fetched context, synthesize a visible step-by-step chain; 8s budget, fleet/finance/compute hard-gated; 53/53 offline). Prior: Build-84 multi-source answer engine + Build-85a/b. — Builds 79/80/81 (memory: fact extraction + recall fix + pgvector semantic search) + Build-82a (scanned PDF rejection) + Build-82 (knowledge graph injection, verified with Ibn Kathir) + Build-83b (KG semantic search) + Build-83c (entity memory) + Build-83d (M4 proposer feedback). bn01 ingested 201 nodes. All migrations applied. -->
+     cells, do NOT regenerate the structure. Currently: Session-60 (Builds 135->149 2026-06-25: Family Wallet personal-finance assistant + FAMILY MEMORY — 15 builds/168 tests/0 fails, privacy wall held; bumped Memory 40->48% + Hands 42->46%). Prior Session-59 (Build-118 live web-search waterfall Serper->Tavily DEPLOYED+verified; Build-117 Odysseus battery CLEAN -> L5 streak 1/3; Build-116 learn->generate loop LIVE on nightly cron; prior: Build-85d multi-hop reasoning chain: complex why/how/compare questions decompose into 2-4 sub-questions, answer each on already-fetched context, synthesize a visible step-by-step chain; 8s budget, fleet/finance/compute hard-gated; 53/53 offline). Prior: Build-84 multi-source answer engine + Build-85a/b. — Builds 79/80/81 (memory: fact extraction + recall fix + pgvector semantic search) + Build-82a (scanned PDF rejection) + Build-82 (knowledge graph injection, verified with Ibn Kathir) + Build-83b (KG semantic search) + Build-83c (entity memory) + Build-83d (M4 proposer feedback). bn01 ingested 201 nodes. All migrations applied. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -301,10 +301,10 @@
         <div class="rrole">What it <b>remembers</b>, so it grows smarter each session: facts, past work, even failed attempts — each tagged with how trustworthy it is. The "memory that evolves" part is still young.</div>
         <div class="flow"><span class="ar">→</span> feeds <b>recall</b> into every answer</div>
         <div class="bar-wrap">
-          <div class="bar-row"><span class="blabel">Built toward the vision</span><span class="bpct">~45%</span></div>
-          <div class="bar"><span style="width:40%"></span></div>
-          <div class="est">it stores & recalls well; truly self-improving memory is almost all ahead · estimate</div>
-          <div class="foot">internally: provenance + trust tiers on every memory (Builds 38–39); shared by business &amp; research. <b>Ingestion LIVE</b> (Builds 58/62/66/81/82/83b): semantic recall (pgvector, cosine 0.70), entity memory (83c), knowledge graph (82/83b). <b>Books INGESTED 2026-06-22: The New World Order (~15 chunks) + Ibn Kathir (Arabic); 25 sources / 182 nodes.</b> Pipeline B101 hardened. Free-tier throttles whole-book bulk (NotebookLM for those). Older history: bn02–bn20 ingestion.</div>
+          <div class="bar-row"><span class="blabel">Built toward the vision</span><span class="bpct">~52%</span></div>
+          <div class="bar"><span style="width:48%"></span></div>
+          <div class="est">now <b>knows your household &amp; people</b>, protects its own memory, and flags conflicts — self-improving memory still ahead · estimate</div>
+          <div class="foot">internally: provenance + trust tiers on every memory (Builds 38–39); shared by business &amp; research. <b>Ingestion LIVE</b> (Builds 58/62/66/81/82/83b): semantic recall (pgvector, cosine 0.70), entity memory (83c), knowledge graph (82/83b). <b style="color:#54d6c8">FAMILY MEMORY (B-137/140/147, 2026-06-25): M8 learns the people you name ("X is my wife/brother"), profile facts are NEVER evicted, transient junk (weather/price/score) is blocked at write + 17 stale rows purged, and same-name conflicts are flagged not silently merged (the two-Saras lesson).</b> Books INGESTED 2026-06-22: The New World Order + Ibn Kathir; 25 sources / 182 nodes. Pipeline B101 hardened. Older history: bn02–bn20 ingestion.</div>
         </div>
       </div>
 
@@ -340,12 +340,12 @@
 
       <div class="region c-hands glow-hands">
         <div class="rhead"><span class="ricon">🛠️</span><span class="rtitle">Hands — runs your business</span><span class="node"></span></div>
-        <div class="rrole">Does <b>real work on real data today</b>: fleet performance, verified profit &amp; loss, end-of-service pay, multi-company registry, and early-warning alerts.</div>
+        <div class="rrole">Does <b>real work on real data today</b>: fleet performance, verified profit &amp; loss, end-of-service pay, multi-company registry, early-warning alerts — and now <b>your personal Family Wallet</b>.</div>
         <div class="flow"><span class="ar">→</span> turns the core's decisions into <b>action</b></div>
         <div class="bar-wrap">
-          <div class="bar-row"><span class="blabel">Built toward the vision</span><span class="bpct">~42%</span></div>
-          <div class="bar"><span style="width:42%"></span></div>
-          <div class="est">fleet &amp; finance trusted; Excel (5 sheets) + PPTX export on demand; fleet insight flags; reply-to-message UX; email, calendar, tasks not yet connected · estimate</div>
+          <div class="bar-row"><span class="blabel">Built toward the vision</span><span class="bpct">~46%</span></div>
+          <div class="bar"><span style="width:46%"></span></div>
+          <div class="est">fleet &amp; finance trusted; Excel + PPTX on demand; reply-to-message UX. <b style="color:#54d6c8">FAMILY WALLET LIVE (B-135→149): last expense, per-person ("Sara's"/"her"), specific dates &amp; ranges, itemized "what for", income/net, "where's the money going", compare, budgets/bills, "did I pay X" — all code-computed, money NEVER sent to an LLM.</b> email, calendar, tasks not yet connected · estimate</div>
         </div>
       </div>
 
@@ -465,9 +465,17 @@
     <span class="tl done">Build-100 driver profile manager &#8212; chat CRUD over driver_cost_profiles (upsert/list/delete); auto-clears placeholder row; 78/78 + LIVE-VERIFIED &#10003;</span>
     <span class="tl done">Build-101 atomic ingest pipeline &#8212; /api/ingest-full (store+extract one call) + /api/ingest-extract-existing (repair unextracted); 45/45; audit: 0 books ever persisted &#10003;</span>
     <span class="tl done">Build-103 provider health &#8212; GET /api/health shows 8 providers + Supabase; graceful degradation returns provider detail on quota fail &#10003;</span>
-    <span class="tl cur">Morning brief P&amp;L &#8212; wire finance engine into daily email; ingest bn02&#8211;bn20</span>
-    <span class="tl future">evolving memory · driver cost profiles → real P&amp;L</span>
-    <span class="tl future">L6 — a compound mind</span>
+    <span class="tl done">Build-118 live web search &#8212; Serper&#8594;Tavily waterfall (~3500/mo free), anti-fabrication guard engages &#10003;</span>
+    <span class="tl done">Build-135&#8594;139 Family Wallet reads &#8212; last expense / per-member ("Sara's"/"her", pronoun+anaphora) / specific dates / itemized "what for" &#10003;</span>
+    <span class="tl done">Build-137 family memory &#8212; M8 learns the people you name; de-greedied the money net so teaching reaches the brain &#10003;</span>
+    <span class="tl done">Build-140 memory hygiene &#8212; profile facts never evicted + transient-junk write-guard + 17 stale rows purged &#10003;</span>
+    <span class="tl done">Build-141&#8594;143 wallet date-ranges + income/net + category insight + compare + budgets/bills &#10003;</span>
+    <span class="tl done">Build-144&#8594;146 note "what for" (owner-only, never to LLM) + known-person web-search suppression + "did I pay X" &#10003;</span>
+    <span class="tl done">Build-147 contradiction handling &#8212; flag same-name conflicts, never auto-merge (two-Saras lesson) &#10003;</span>
+    <span class="tl done">Build-148 morning-brief wallet section &#8212; EMAIL-ONLY, opt-in, fail-safe (money stays out of the LLM path) &#10003;</span>
+    <span class="tl done">Build-149 polish &#8212; Arabic labels + category-over-range + vs-last-month % · 15 builds / 168 tests / 0 fails &#10003;</span>
+    <span class="tl cur">next: connect tasks &harr; wallet (write-side cross-domain) · let M8 learn novel phrasings it currently misses</span>
+    <span class="tl future">evolving memory · proactive assistant · L6 compound mind</span>
   </div>
 
   <!-- THE HARD PROBLEMS -->
@@ -498,7 +506,7 @@
 
   <div class="footer">
     Plain-language map of <b>The M8 Mind</b> · drawn from NORTH_STAR.md, the live build list & HONESTY_TRACK_PLAN.md ·
-    status as of <b>Session-59 &#183; Build-118: live web search (Serper&#8594;Tavily, free) + Build-117 Odysseus honesty battery CLEAN (8/8 + 6/6 &#8594; L5 streak 1/3); the learn&#8594;generate loop LIVE on the nightly cron (gen_version=4, survivor_steered=true) &#8212; Builds 90&#8211;118 + M3.1 survivor clustering shipped &amp; deployed; Family Wallet bridge + sci-fi PWA + live web search on Track A</b> (2026-06-23) · priorities set with the AI Council (GPT · Gemini · Grok · Manus).<br>
+    status as of <b>Session-60 &#183; Builds 135&#8594;149 (2026-06-25): the Family Wallet became a real personal-finance assistant (reads, per-person, dates/ranges, itemized "what for", income/net, category insight, compare, budgets/bills, "did I pay X") AND M8 gained FAMILY MEMORY (knows your household, learns the people you name, protects its own memory, flags conflicts) — 15 builds, 168 tests, 0 fails, all Vercel READY, the privacy wall held throughout (money never reaches an LLM). Prior: Build-118 live web search + Build-117 Odysseus battery + the learn&#8594;generate loop on the nightly cron</b> (2026-06-25) · priorities set with the AI Council (GPT · Gemini · Grok · Manus).<br>
     The one claim we never make: that we’re already there.
   </div>
 
