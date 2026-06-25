@@ -31,6 +31,19 @@ mirrors (B151/135/136) 40/40, 0 fail. **PENDING:** Muhammad's live phone test
 8. ⏳ Contradiction handling (uses contradiction_flag column).
 9. ⏳ Proactive daily brief (fold wallet/bills into the 7am brief).
 - NOTE: M8 memory has ~366 current facts, ~215 = Collatz/Lean research history (dormant, beyond recall cap) — left intact.
+
+## 🔴 Flagged live on phone (2026-06-25) — wallet breakdown currency (NOT YET BUILT, queued)
+Muhammad's breakdown shows mixed currencies (his = SAR, Sara = EGP). He asked **"put all
+currency in sar"** to see one unified total. TWO bugs:
+1. **Misread as add-expense.** "put … sar" hit the money intent brain → kind="add" → no
+   amount → it replied *"How much? Add the amount in digits"* (orchestrator.js intent-brain
+   "add" lane, ~2446). FIX: a conversion/format request ("put it in SAR", "convert to SAR",
+   "all in one currency") must NOT classify as add. Guard the add lane / teach the classifier.
+2. **No currency conversion.** On the reprompt M8 just re-showed the same mixed list — it has
+   no SAR↔EGP rate. FIX: fetch a rate from a FREE no-key FX source (e.g. open.er-api.com /
+   exchangerate.host) DETERMINISTICALLY, M8 does the math. Privacy wall holds — only the RATE
+   comes in; his amounts never leave. Add a "show breakdown in <currency>" option to
+   renderBreakdown. Candidate build after B-152 lands. He said "don't drift" → queued, not built.
 **Vercel:** m8-alpha.vercel.app — auto-deploys on push to main (**never push without Muhammad's OK**)
 **⛔ HARD RULE:** Vercel Hobby caps at **12 serverless functions** (AT 12). Never add `api/*.js`.
 
