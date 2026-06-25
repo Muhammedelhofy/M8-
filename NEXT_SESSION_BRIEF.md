@@ -1,6 +1,6 @@
 # M8 Next Session Brief — Session-59 Close
 
-**Prod (origin/main):** `ae4e174` — Build-138 wallet pronouns + specific-date queries (DEPLOYED; B-135 live-confirmed; B-137 "who is Sara→wife" live-confirmed)
+**Prod (origin/main):** `b10db7c` — Build-139 itemized expense breakdown + "those entries" anaphora (DEPLOYED; B-135/137/138 live-confirmed on his phone)
 **Vercel:** m8-alpha.vercel.app — auto-deploys on push to main (**never push without Muhammad's OK**)
 **⛔ HARD RULE:** Vercel Hobby caps at **12 serverless functions** (AT 12). Never add `api/*.js`.
 
