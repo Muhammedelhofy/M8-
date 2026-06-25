@@ -1,7 +1,7 @@
 # M8 Next Session Brief — Session-59 Close
 
 **Prod (origin/main):** `5fa5312` — Build-148 morning-brief wallet section (DEPLOYED). Session shipped B-135→B-148 (14 builds, 158 passing tests, 0 failures).
-**🔴 PENDING the final BUG/FIXES/TESTS sweep** he asked for across B-135→148 (correctness review of the new wallet lanes + memory changes).
+**✅ FINAL QA SWEEP DONE (B-135→148):** all 14 Vercel deploys `state: READY` (no syntax errors, nodejs:12 cap held); 158 PS tests pass; every `_wallet.X` call resolves to an export; lane order verified (specific→general, category guard protects the spend lane); privacy invariant statically guarded (formatBriefText has no wallet). NO bugs found. 3 minor polish items only (Arabic replies show English period labels; custom-category+range totals instead of filtering; plain "spend this month" lost the vs-last-month %). Left as-is (low value).
 **B-148 is dormant:** set `M8_BRIEF_WALLET_ENABLED=1` on Vercel to turn on the email-only wallet section (confirm brief arrives by email first).
 
 ## Evolution sequence he ordered (2026-06-25) — working through it
