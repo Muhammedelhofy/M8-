@@ -1,6 +1,6 @@
 # M8 Next Session Brief — Session-59 Close
 
-**Prod (origin/main):** `84bd8c7` — Build-137 M8 family memory (DEPLOYED; "what's my last expense" Build-135 already live-confirmed on his phone)
+**Prod (origin/main):** `ae4e174` — Build-138 wallet pronouns + specific-date queries (DEPLOYED; B-135 live-confirmed; B-137 "who is Sara→wife" live-confirmed)
 **Vercel:** m8-alpha.vercel.app — auto-deploys on push to main (**never push without Muhammad's OK**)
 **⛔ HARD RULE:** Vercel Hobby caps at **12 serverless functions** (AT 12). Never add `api/*.js`.
 
@@ -13,9 +13,14 @@
   "Muhammad's wife is Sara" + retired stale test fact `accountant_name`; tiny household roster injected
   (names/roles only). (B) de-greedied the money capability net so a TEACHING sentence reaches the LLM.
   (C) deterministic relationship capture in `lib/memory.js`. 16/16. Kill: `M8_HOUSEHOLD_CONTEXT_DISABLED=1`.
+- **B-138 pronouns + dates** — "what was HER last expense" now resolves "her"→Sara (anaphora, then
+  gendered household fallback); "her total on 23rd of june" works via `parseExpenseDate`+`getExpensesByDate`
+  (yesterday/today/ISO/month-name+day). `resolveMemberCtx` in `lib/orchestrator.js`. 14/14.
 - **Two-Saras note:** "Sara" = his WIFE (wallet member). The old "Sara Mansour the accountant" was TEST data,
-  now retired. Wallet lane scopes "Sara"→wife by member match. Rollback codes: B135 `bb0bac7`, B137 `5803bcf`.
-- 🔴 PENDING: his live phone confirm of B-137 ("who is Sara?" + no money-lane regression) — `tests/BUILD137_LIVE_TEST.md`.
+  now retired. Wallet lane scopes "Sara"→wife by member match. Rollback codes: B135 `bb0bac7`, B137 `5803bcf`, B138 `d3d47f0`.
+- 🔴 PENDING his live phone confirm: B-138 (the two failures from tonight) + B-137 no-regression — `tests/BUILD13{7,8}_LIVE_TEST.md`.
+- 🟡 KNOWN polish (not done): "who is Sara?" answers correctly (wife) but pads with a useless web search
+  for a generic "SARA" acronym — prefer known-person memory over web-search for a name. Candidate B-139.
 
 ---
 
