@@ -1,5 +1,14 @@
 # M8 Next Session Brief — Session-59 Close
 
+**✅ DEPLOYED — Build-153 single-currency wallet view (prod `33bc213`):** merged 2026-06-25.
+`parseCurrencyConvert` + `renderConvertedBreakdown` (orchestrator.js) + `getCategoryBreakdown`
+now returns `rate` (wallet.js). "put all currency in sar" / "convert to sar" / "one currency" /
+"breakdown … in sar" / AR بالريال → the breakdown expressed in ONE currency + a Total, using
+the household's own `egp_per_sar` (privacy wall intact — rate only, no amount leaves M8). Also
+kills the misread where "put all currency in sar" → "How much?" (it ran the add lane). Kill:
+`M8_FX_CONVERT_DISABLED=1`. Tests `tests/build153_currency.test.ps1` 23/23 + adjacent 48/48.
+🔴 PENDING his live confirm (`tests/BUILD153_LIVE_TEST.md`). Rollback Vercel→`951f4e0`.
+
 **✅ DEPLOYED — Build-152 wallet⇄fleet ARBITER (prod `951f4e0`, READY ~34s, nodejs:12 held):**
 merged to main 2026-06-25. New `lib/domain-arbiter.js` decides wallet-vs-fleet ONCE by meaning
 (deterministic ownership scoring + a free-LLM tie-breaker fired ONLY on a true contest;
@@ -33,18 +42,12 @@ Vercel→`8b167f9`. Arbiter decisions log (redacted) to `m8_router_misses` lane=
 9. ⏳ Proactive daily brief (fold wallet/bills into the 7am brief).
 - NOTE: M8 memory has ~366 current facts, ~215 = Collatz/Lean research history (dormant, beyond recall cap) — left intact.
 
-## 🔴 Flagged live on phone (2026-06-25) — wallet breakdown currency (NOT YET BUILT, queued)
-Muhammad's breakdown shows mixed currencies (his = SAR, Sara = EGP). He asked **"put all
-currency in sar"** to see one unified total. TWO bugs:
-1. **Misread as add-expense.** "put … sar" hit the money intent brain → kind="add" → no
-   amount → it replied *"How much? Add the amount in digits"* (orchestrator.js intent-brain
-   "add" lane, ~2446). FIX: a conversion/format request ("put it in SAR", "convert to SAR",
-   "all in one currency") must NOT classify as add. Guard the add lane / teach the classifier.
-2. **No currency conversion.** On the reprompt M8 just re-showed the same mixed list — it has
-   no SAR↔EGP rate. FIX: fetch a rate from a FREE no-key FX source (e.g. open.er-api.com /
-   exchangerate.host) DETERMINISTICALLY, M8 does the math. Privacy wall holds — only the RATE
-   comes in; his amounts never leave. Add a "show breakdown in <currency>" option to
-   renderBreakdown. Candidate build after B-152 lands. He said "don't drift" → queued, not built.
+## ✅ DONE as Build-153 (was: flagged live on phone 2026-06-25) — wallet breakdown currency
+Both bugs FIXED + deployed (`33bc213`): (1) the "put all currency in sar" → "How much?" misread
+(the convert lane now runs before the add intent brain); (2) the mixed SAR+EGP breakdown now
+collapses to ONE currency + Total. NOTE: did NOT need an external FX API — the household already
+stores `egp_per_sar` (set in his Wallet app) and `getCategoryBreakdown` already computes each
+category's `.base` (SAR); B-153 just renders it + returns the rate. See the B-153 block at top.
 **Vercel:** m8-alpha.vercel.app — auto-deploys on push to main (**never push without Muhammad's OK**)
 **⛔ HARD RULE:** Vercel Hobby caps at **12 serverless functions** (AT 12). Never add `api/*.js`.
 
