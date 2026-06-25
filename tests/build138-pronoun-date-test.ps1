@@ -40,16 +40,18 @@ function Get-MatchedMember([string]$text) {
     } }
     return $null
 }
-# resolveMemberCtx: $lastNamed = member name found by scanning history (or $null)
+# resolveMemberCtx (Build-151 updated): $lastNamed = member named earlier in history (or $null)
+# "my spend"/"I spent" -> OWNER (Muhammad); "our/total" (no my) -> null household.
 function Resolve-MemberCtx([string]$message, [string]$lastNamed) {
     $explicit = Get-MatchedMember $message
     if ($explicit) { return $explicit }
     $fem  = ($message -match '\b(her|hers|she)\b') -or ($message -match '\bmy\s+wife\b') -or ($message -match 'هي|لها|زوجتي')
-    $masc = ($message -match '\b(his|him|he)\b')   -or ($message -match '\bmy\s+husband\b') -or ($message -match 'هو|له|زوجي')
-    if (-not $fem -and -not $masc) { return $null }
-    if ($lastNamed) { return $lastNamed }                       # conversation context wins
-    if ($fem)  { return ($Members | Where-Object { $_.role -ne 'owner' } | Select-Object -First 1).name }
-    if ($masc) { return ($Members | Where-Object { $_.role -eq 'owner' } | Select-Object -First 1).name }
+    $masc = ($message -match '\b(his|him|he)\b')    -or ($message -match '\bmy\s+husband\b') -or ($message -match 'هو|له|زوجي')
+    $fp = ((($message -match '\bmy\b') -and ($message -match '\b(spend|spending|spent|expenses?|paid|cost)\b')) -or ($message -match '\b(did|do|does|how much did)\s+i\s+(spend|spent|pay|paid)\b')) `
+        -and ($message -notmatch '\bmy\s+wallet\b') -and ($message -notmatch '\bmy\s+(wife|husband|spouse|partner|brother|sister|son|daughter|mother|father|mom|dad|friend)\b')
+    if (-not $fem -and -not $masc -and -not $fp) { return $null }
+    if ($fp -or $masc) { return ($Members | Where-Object { $_.role -eq 'owner' } | Select-Object -First 1).name }
+    if ($fem) { if ($lastNamed) { return $lastNamed } else { return ($Members | Where-Object { $_.role -ne 'owner' } | Select-Object -First 1).name } }
     return $null
 }
 
@@ -70,7 +72,8 @@ $pCases = @(
     @("her no ctx->nonowner", "what was her last expense", $null, "Sara"),
     @("he no ctx->owner", "what did he spend this month", $null, "Muhammad"),
     @("explicit name",   "sara last expense", $null, "Sara"),
-    @("no pronoun->null","what is my last expense", $null, $null)
+    @("my last expense->owner (B-151)", "what is my last expense", $null, "Muhammad"),
+    @("our total->household",           "what is our total spend", $null, $null)
 )
 foreach ($c in $dCases) {
     $got = Get-ExpenseDate $c[1]
