@@ -1,6 +1,8 @@
 # M8 Next Session Brief — Session-59 Close
 
-**Prod (origin/main):** `21c1d75` — Build-141 wallet date-ranges + income/net (DEPLOYED)
+**Prod (origin/main):** `5fa5312` — Build-148 morning-brief wallet section (DEPLOYED). Session shipped B-135→B-148 (14 builds, 158 passing tests, 0 failures).
+**🔴 PENDING the final BUG/FIXES/TESTS sweep** he asked for across B-135→148 (correctness review of the new wallet lanes + memory changes).
+**B-148 is dormant:** set `M8_BRIEF_WALLET_ENABLED=1` on Vercel to turn on the email-only wallet section (confirm brief arrives by email first).
 
 ## Evolution sequence he ordered (2026-06-25) — working through it
 1. ✅ **B-140 memory hygiene** (DONE) — profile facts never evicted (recall splits profile/operational);
