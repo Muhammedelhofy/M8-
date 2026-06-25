@@ -1,12 +1,12 @@
 # M8 Next Session Brief — Session-59 Close
 
-**Prod (origin/main):** `05644e5` — Build-140 memory hygiene (DEPLOYED; B-135/137/138 live-confirmed)
+**Prod (origin/main):** `21c1d75` — Build-141 wallet date-ranges + income/net (DEPLOYED)
 
 ## Evolution sequence he ordered (2026-06-25) — working through it
 1. ✅ **B-140 memory hygiene** (DONE) — profile facts never evicted (recall splits profile/operational);
    `isTransientFact` blocks weather/price/score/daily-snapshot/seed at write; 17 stale rows purged (soft).
-2. ⏳ **Wallet date-ranges + income/net** (next) — "this week", "in June", "between X and Y"; "how much did we earn/net".
-3. ⏳ Category insight — "where is the money going", top categories.
+2. ✅ **B-141 date-ranges + income/net** (DONE) — parseDateRange + getTxnsByRange + PERIOD lane.
+3. ⏳ Category insight (next) — "where is the money going", top categories.
 4. ⏳ All remaining wallet gaps (comparisons, budgets/bills in chat).
 5. ⏳ Surface the note "what for" — APPROVED relaxation: show note to him in app-style reply, NEVER to an LLM.
 6. ⏳ Web-search vs memory routing ("who is X" shouldn't web-search a known person).
