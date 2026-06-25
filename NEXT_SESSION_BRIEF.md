@@ -1,5 +1,19 @@
 # M8 Next Session Brief — Session-59 Close
 
+**🔴 IN FLIGHT — Build-152 wallet⇄fleet ARBITER (built, NOT deployed):** on branch
+`feat/domain-arbiter`. New `lib/domain-arbiter.js` decides wallet-vs-fleet ONCE by meaning
+(deterministic ownership scoring + a free-LLM tie-breaker fired ONLY on a true contest;
+amounts masked, privacy wall intact). Wired into BOTH `orchestrate` + `orchestrateStream`
+via shared `resolveDomainRoute()`; replaces the scattered `!looksFleet` guards with one
+arbiter; toss-ups ASK ("wallet or fleet?") and a bare "wallet"/"fleet" reply resolves the
+original question. Default-safe: neutral/disabled ⇒ byte-for-byte pre-152 behaviour. Kill
+switches `M8_DOMAIN_ARBITER_DISABLED=1` (full) / `M8_ARBITER_LLM_DISABLED=1` (model leg).
+Council round + decision: `TEAM_ROUND_ROUTING_2026-06-25_RESPONSES.md` (chose: JSON
+classifier; wallet⇄fleet scope first; collapsed the shadow-then-flip into ONE reversible
+build since M8 has one user). **Tests:** `tests/build152_arbiter.test.ps1` 35/35 + adjacent
+mirrors (B151/135/136) 40/40, 0 fail. **PENDING:** Muhammad's live phone test
+(`tests/BUILD152_LIVE_TEST.md`) → then his OK to merge+deploy (push main auto-deploys).
+
 **Prod (origin/main):** `db78817` — Build-150 router miss-logger (DEPLOYED; `m8_router_misses` table created). Session shipped B-135→B-150 (16 builds, 243 passing tests, 0 failures).
 **Plan:** see `BUILD_PLAN_150-154.md`. ✅ B-150 done. Muhammad's call (2026-06-25): **SHELVE B-153 email nudges** (he has the Wallet app; low value for him) → **do Career OS next (B-151 memory → B-152 actions)** = serves his #1 goal (job ~July 2026). B-154 cross-domain links = read-only only, last.
 **✅ FINAL QA SWEEP DONE (B-135→148):** all 14 Vercel deploys `state: READY` (no syntax errors, nodejs:12 cap held); 158 PS tests pass; every `_wallet.X` call resolves to an export; lane order verified (specific→general, category guard protects the spend lane); privacy invariant statically guarded (formatBriefText has no wallet). NO bugs found. 3 minor polish items only (Arabic replies show English period labels; custom-category+range totals instead of filtering; plain "spend this month" lost the vs-last-month %). Left as-is (low value).
@@ -17,6 +31,19 @@
 8. ⏳ Contradiction handling (uses contradiction_flag column).
 9. ⏳ Proactive daily brief (fold wallet/bills into the 7am brief).
 - NOTE: M8 memory has ~366 current facts, ~215 = Collatz/Lean research history (dormant, beyond recall cap) — left intact.
+
+## 🔴 Flagged live on phone (2026-06-25) — wallet breakdown currency (NOT YET BUILT, queued)
+Muhammad's breakdown shows mixed currencies (his = SAR, Sara = EGP). He asked **"put all
+currency in sar"** to see one unified total. TWO bugs:
+1. **Misread as add-expense.** "put … sar" hit the money intent brain → kind="add" → no
+   amount → it replied *"How much? Add the amount in digits"* (orchestrator.js intent-brain
+   "add" lane, ~2446). FIX: a conversion/format request ("put it in SAR", "convert to SAR",
+   "all in one currency") must NOT classify as add. Guard the add lane / teach the classifier.
+2. **No currency conversion.** On the reprompt M8 just re-showed the same mixed list — it has
+   no SAR↔EGP rate. FIX: fetch a rate from a FREE no-key FX source (e.g. open.er-api.com /
+   exchangerate.host) DETERMINISTICALLY, M8 does the math. Privacy wall holds — only the RATE
+   comes in; his amounts never leave. Add a "show breakdown in <currency>" option to
+   renderBreakdown. Candidate build after B-152 lands. He said "don't drift" → queued, not built.
 **Vercel:** m8-alpha.vercel.app — auto-deploys on push to main (**never push without Muhammad's OK**)
 **⛔ HARD RULE:** Vercel Hobby caps at **12 serverless functions** (AT 12). Never add `api/*.js`.
 
