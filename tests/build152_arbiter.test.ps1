@@ -43,8 +43,8 @@ function Get-ArbDomain([string]$msg, [bool]$fleet, [bool]$memberHit, [bool]$wall
   if ($wPresent -and (-not $fleet)) { return 'wallet' }
   if ($fleet -and (-not $wPresent)) { return 'fleet' }
   if ((-not $wPresent) -and (-not $fleet)) {
-    if ($walletRef -and (-not $fleetRef)) { return 'wallet' }
-    if ($fleetRef -and (-not $walletRef)) { return 'fleet' }
+    if ($walletRef) { return 'wallet' }   # most-recent turn wins (last turn was wallet)
+    if ($fleetRef)  { return 'fleet' }
     return 'neutral'
   }
   # contest: both signals present
@@ -86,6 +86,7 @@ $B = @(
   @('breakdown of the 497 sar',  $false,$false,$true, $false,$null,'wallet'),  # after a wallet total
   @("what's the breakdown",      $false,$false,$true, $false,$null,'wallet'),  # wallet on screen
   @("what's the breakdown",      $false,$false,$false,$true, $null,'fleet'),   # fleet on screen
+  @('i want to see the amounts in sar', $false,$false,$true,$true,$null,'wallet'), # BUG: last turn wallet wins over an earlier fleet brief still in window
   @('give me the breakdown',     $false,$false,$false,$false,$null,'neutral')  # fresh -> wallet lane asks
 )
 foreach ($r in $B) { Assert-Eq ("anaphora: " + $r[0]) $r[6] (Get-ArbDomain $r[0] $r[1] $r[2] $r[3] $r[4] $r[5]) }

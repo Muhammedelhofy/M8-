@@ -27,7 +27,7 @@ function Parse-ConvTarget([string]$m) {
   if ([regex]::IsMatch($m, '\b(convert|unify|consolidat\w*)\b', 'IgnoreCase')) { if ($target) { return $target } else { return 'SAR' } }
   if ([regex]::IsMatch($m, '\b(?:one|single|same|unified)\s+currenc(?:y|ies)\b', 'IgnoreCase')) { if ($target) { return $target } else { return 'SAR' } }
   if ($target) {
-    $cue = ([regex]::IsMatch($m, '\b(?:all|everything|put|show|give|make|express|breakdown|spend\w*|spent|total|expenses?|combine)\b','IgnoreCase')) -or `
+    $cue = ([regex]::IsMatch($m, '\b(?:all|everything|put|show|give|make|express|display|see|view|want|amounts?|breakdown|spend\w*|spent|total|expenses?|combine)\b','IgnoreCase')) -or `
            ([regex]::IsMatch($low, '^(?:in|to|into|as)\s+(?:sar|sr|riyals?|egp|pounds?)\b'))
     if ($cue) { return $target }
   }
@@ -48,6 +48,7 @@ Write-Host "`n=== Build-153 currency-convert mirror ===" -ForegroundColor Cyan
 # ── A. detection: the conversion requests M8 must catch ───────────────────────
 Write-Host "[A] conversion requests detected + target"
 $A = @(
+  @('i want to see the amounts in sar','SAR'), # B-154: was missed (no cue) -> drifted to fleet
   @('put all currency in sar','SAR'),         # the exact phrase he typed
   @('convert to sar','SAR'),
   @('convert it to egp','EGP'),
@@ -101,6 +102,22 @@ Assert-Eq 'mixed (has EGP) -> note' 'True' "$mixedYes"
 $allSar = @(@{cur='SAR'}, @{cur='SAR'})
 $mixedNo = $false; foreach ($c in $allSar) { if ($c.cur -ne 'SAR') { $mixedNo = $true } }
 Assert-Eq 'all-SAR -> no note' 'False' "$mixedNo"
+
+# ── E. member recovered from a BREAKDOWN header (B-154 anaphora fix) ───────────
+# Mirrors lastWalletQueryContext's memberName regex — "Sara's TOP spending" must
+# yield Sara so "convert to sar" stays scoped to Sara (was: defaulted to household).
+Write-Host "[E] member captured from breakdown / converted headers"
+function Member-From([string]$reply) {
+  $m = [regex]::Match($reply, '\b([A-Z][a-z]+)(?:''s|’s)?\s+(?:top\s+)?(?:expenses?|last|spent|spend|spending|income|net)')
+  if (-not $m.Success) { return $null }
+  $name = $m.Groups[1].Value
+  if ($name -match '^(You|Your|Net|Total|Top|Income|Spending)$') { return $null }
+  return $name
+}
+Assert-Eq "Sara's top spending -> Sara"      'Sara' ([string](Member-From "Sara's top spending Jun 2026: Alia's clothes 3,440 EGP"))
+Assert-Eq "Sara's spending (converted hdr)"  'Sara' ([string](Member-From "Sara's spending Jun 2026 (all in SAR): ..."))
+Assert-Eq "You've spent -> null (excluded)"  ''     ([string](Member-From "You've spent 497 SAR this month"))
+Assert-Eq "Top spending -> null (excluded)"  ''     ([string](Member-From "Top spending this month: Iqos 300 SAR"))
 
 $summaryColor = if ($script:fail -eq 0) { 'Green' } else { 'Red' }
 Write-Host ("`n=== RESULT: {0} passed, {1} failed ===" -f $script:pass, $script:fail) -ForegroundColor $summaryColor
