@@ -49,4 +49,13 @@ Then **deterministic code does the actual work** (numbers/money NEVER enter the 
 4. **Robustness without over-asking:** how to make it clarify only when truly ambiguous (the user hates both "lost" AND constant "which did you mean?").
 5. **Migration risk:** flip-the-router is invasive. Incremental path that doesn't regress the 168 things that work today?
 
+## 6. Added questions — RAG / "ask my own docs" + embeddings
+Context: the owner also wants M8 to answer about HIS OWN documents (CV, Obsidian notes) — an "Obsidian I can ask." M8 already has a working RAG engine (pgvector + citations) but with ~0 of his personal content in it; we can load his docs **Gemini-free** (the build agent reads PDFs/DOCX/MD off disk directly and inserts raw text — no ingest-extraction cost). Note the engine extraction step normally uses Gemini, which he wants to avoid.
+
+6. **Embeddings vs LLM-classifier for the router:** should the "front-door brain" match meaning via **embeddings** (the same technique as RAG) instead of, or alongside, a small LLM classifier? Which is better on a free stack for latency + quota + accuracy?
+7. **Personal-docs RAG:** is it worth wiring his CV + notes into the existing RAG engine? How do we keep *retrieval* free (keyword match vs embeddings on Gemini's embedding quota) and avoid the costly Gemini extraction step?
+8. **Should "ask my docs" be a first-class domain** the router routes to (alongside wallet/fleet/tasks/notes)?
+
+---
+
 Return: a ranked recommendation with one-line rationale each, the single biggest risk you see, and anything we have wrong.
