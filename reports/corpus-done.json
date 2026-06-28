@@ -1,0 +1,53 @@
+{
+  "build": "stream3-corpus-hygiene",
+  "branch": "feat/routing-corpus",
+  "date": "2026-06-28",
+  "status": "complete",
+  "corpus_lines": 87,
+  "corpus_file": "tests/routing_corpus.jsonl",
+  "domain_coverage": {
+    "wallet": 40,
+    "fleet": 13,
+    "finance": 3,
+    "tasks": 6,
+    "notes": 4,
+    "memory": 3,
+    "knowledge": 2,
+    "docs": 2,
+    "web": 3,
+    "driver_profile": 2,
+    "chat": 5,
+    "near_miss_regression": 4
+  },
+  "hygiene": {
+    "archived": [
+      "archive/BUILD_GEN_EXTRACT_SPEC.md",
+      "archive/PHASE1_TEAM_REVIEW.md"
+    ],
+    "notes": {
+      "BUILD_GEN_EXTRACT_SPEC.md": "Spec for general extraction mode (B-gen-extract). tests/B-gen-extract-verify.ps1 EXISTS in tests/ so the work was completed. Archived as historical spec.",
+      "PHASE1_TEAM_REVIEW.md": "Team review brief for Phase 1 intent brain (already live since June 24). Archived as historical team doc."
+    }
+  },
+  "memory_audit": "MEMORY_AUDIT.md",
+  "memory_audit_summary": {
+    "m8_research_notes": "766 rows — ALL math research (collatz-m3 + related). KEEP ALL.",
+    "m8_graph_nodes": "182 nodes — ALL research. KEEP ALL.",
+    "stale_operational_keys": 13,
+    "stale_categories": ["weather (2 keys)", "sports scores (8 keys)", "live prices (3 keys)"],
+    "prune_sql_in_audit": true
+  },
+  "security_note": "m8_router_misses has RLS disabled — documented in MEMORY_AUDIT.md with remediation SQL. Muhammad decides.",
+  "owns": [
+    "tests/routing_corpus.jsonl",
+    "archive/BUILD_GEN_EXTRACT_SPEC.md",
+    "archive/PHASE1_TEAM_REVIEW.md",
+    "MEMORY_AUDIT.md",
+    "reports/corpus-done.json"
+  ],
+  "did_not_touch": [
+    "lib/orchestrator.js",
+    "lib/domain-arbiter.js",
+    "lib/capability-registry.js"
+  ]
+}
