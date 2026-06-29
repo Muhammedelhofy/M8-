@@ -1,0 +1,45 @@
+{
+  "build": "158",
+  "title": "Per-driver date-range fleet breakdown",
+  "branch": "feat/fleet-per-driver-range",
+  "session": "B (Sonnet HIGH)",
+  "status": "ready-to-merge",
+  "date": "2026-06-29",
+
+  "problem": "Muhammad asked 'TOTAL NET EARNING PER DRIVER FROM 1ST OF JUNE TILL 28TH OF JUNE'. Even when routing reached the fleet lane correctly (B-157 fixes that), the fleet lane had no per-driver date-range path -- it returned fleet totals with top-3 drivers only via the range rollup.",
+
+  "solution": "Added driverRangeRef() detection regex, driverRangeRankings() aggregator (all drivers ranked high-to-low for the resolved date window), renderDriverRangePacket() renderer, and buildDriverRangeChart() -- all inserted in lib/fleet.js. The new routing block fires in buildFleetContext BEFORE the fleet insight and range-rollup paths, ensuring 'per driver' phrasing gets a full ranked list, not fleet totals.",
+
+  "files_changed": [
+    "lib/fleet.js",
+    "tests/fleet-per-driver-range.test.ps1",
+    "tests/BUILD158_LIVE_TEST.md",
+    "reports/fleet-per-driver-done.json"
+  ],
+  "files_not_touched": [
+    "lib/orchestrator.js (owned by B-157)",
+    "lib/pnl-engine.js",
+    "lib/fleet-analysis.js",
+    "lib/fleet-report.js"
+  ],
+
+  "test_result": "44/44 PASS",
+  "test_file": "tests/fleet-per-driver-range.test.ps1",
+
+  "live_test": "tests/BUILD158_LIVE_TEST.md -- DEPENDS ON B-157 live first",
+
+  "exports_added": [
+    "driverRangeRef",
+    "driverRangeRankings",
+    "renderDriverRangePacket",
+    "buildDriverRangeChart"
+  ],
+
+  "llm_classifier_updated": true,
+  "new_intent": "per_driver_range",
+
+  "routing_priority": "Fires BEFORE rollup and fleet-insight in buildFleetContext. Single-driver questions still go to driverDailySeries (they have a subject). No regression on fleet totals, MTD ranking, or single-day mission control.",
+
+  "do_not_push_to_main": true,
+  "notes": "Live test must wait for B-157 to deploy (wallet lane currently intercepts the question before it reaches fleet). Once B-157 is live, send the T1 question on phone and verify a ranked driver list appears with a bar chart."
+}
