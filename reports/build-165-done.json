@@ -1,0 +1,44 @@
+{
+  "build": "B-165",
+  "title": "wallet fixes -- date-range ('from X till Y') + breakdown reconcile",
+  "branch": "fix/wallet-range-breakdown",
+  "worktree": "../../M8-b164 (off origin/main @ b6b37a1, which includes the merged B-164)",
+  "status": "code complete; offline-verified (new PS mirror all-pass + 14/14 regression green); NOT deployed -- pending Muhammad's OK to merge->main (prod). Wallet has NO meaningful Vercel-preview test (per-origin localStorage wallet-key + prod-only env), so PROD is the only real test.",
+  "context": "Surfaced during the B-164 live test (2026-06-29). He asked M8 wallet questions about Sara and hit two bugs; both are PRE-EXISTING wallet-handler bugs, NOT caused by B-164 (which is shadow-only and routed every wallet turn correctly at conf 0.90).",
+  "bugs_fixed": {
+    "bug1_date_range": {
+      "symptom": "'give me total expenses for sara from 1st of june till yesterday' -> 'Sara's expenses on Jun 28: 0 SAR (0 entries).'",
+      "root_cause": "parseDateRange() (lib/orchestrator.js) handled 'between X and Y' / weeks / months / 'last N days' but had NO 'from X till Y' branch, so it returned null. parseExpenseDate() then greedily matched the 'yesterday' endpoint, and the single-DATE read path (the one BEFORE the period lane) fired with that one day -> getExpensesByDate(Jun 28) = 0 (also in the wrong currency, SAR not EGP).",
+      "fix": "(a) Added a 'from X (till|until|thru|through|to|up to) Y' two-endpoint branch to parseDateRange (mirrors the existing 'between X and Y' branch); plus an open 'since X' / 'starting X' branch (-> X through today). (b) Guarded the single-date path with `!parseDateRange(m)` so a recognized RANGE defers to the PERIOD lane, which sums the range per-currency and renders 'Sara's spent <range>: <total>'. Bare 'from X' (no end) intentionally stays single-day = zero change to that existing phrasing."
+    },
+    "bug2_breakdown_reconcile": {
+      "symptom": "breakdown listed top-5 categories (8,417 EGP) but the total was 11,047 EGP -> 'but the total is not 11047' -> M8 unhelpfully asked 'What is the correct total?'. (The TOTAL was right; the breakdown just showed top-5 with no remainder/total.)",
+      "root_cause": "renderBreakdown() sliced to topN (5) and printed neither a remainder nor a total, so the listed rows could never add up to the figure the user had just seen.",
+      "fix": "renderBreakdown now appends a '...and N more: <sum>' line (when categories > N) AND a 'Total: <sum>' line, both summed PER CURRENCY (SAR and EGP never mixed). The breakdown now always reconciles to the full total."
+    }
+  },
+  "files": [
+    "lib/orchestrator.js (3 edits: parseDateRange from-till + since/starting branches; single-date path guarded by !parseDateRange(m); renderBreakdown remainder + Total)",
+    "tests/build165_wallet_range_breakdown.test.ps1 (NEW - all checks pass)",
+    "reports/build-165-done.json"
+  ],
+  "not_touched": [
+    "wallet.js data functions (getCategoryBreakdown/getTxnsByRange/getMemberTotals UNCHANGED -- the data was always correct; the bug was parse + render)",
+    "domain-arbiter.js / capability-registry.js (routing was correct -- arbiter:wallet conf 0.90 on every turn)",
+    "the privacy wall (no money text enters any LLM prompt; these are all deterministic code-computed reads)",
+    "No new api/*.js (Vercel 12-fn cap full)"
+  ],
+  "tests": {
+    "new_mirror": "tests/build165_wallet_range_breakdown.test.ps1 -- (1) renderBreakdown reconciliation MATH on his real Sara/June numbers (top-5 8,417 + remainder 2,630 == total 11,047; multi-currency independence); (2) the 'from X till/to Y' regex split (splits the live miss into '1st of june'/'yesterday'; non-range phrasings like 'on june 23' / 'expenses yesterday' / 'from last week' do NOT match); (3) static wiring (range branch present, single-date path guarded, Total/remainder lines present).",
+    "regression": "14/14 GREEN (exit 0): build165(new), build153_currency(28/0), build159_finish_crud(48/0), build157_walletfleet(43/0), build135-wallet-recent(15/0), build136-wallet-member(12/0), build148-brief-wallet(7/0), build151-wallet-fleet-routing(13/0), build152_arbiter(36/0), build155_registry(0 crit), build156_lookup(all gates 0), build160_askmydocs(17/0), build163_routing(26/0), build164_semantic_router(all-pass).",
+    "note": "PS mirrors can't execute the orchestrator JS or hit the live DB, so the date math (yesterday/today are runtime-relative) and the end-to-end wallet read are only proven by the LIVE prod test below."
+  },
+  "live_test_for_muhammad": [
+    "give me total expenses for sara from 1st of june till yesterday   -> EXPECT: 'Sara's spent Jun 1-Jun 28: <total> EGP' (a real range sum), NOT '... on Jun 28: 0'.",
+    "what is the breakdown ?   (after a member/month total)   -> EXPECT: top-5 categories + '...and N more: <sum>' + 'Total: 11,047 EGP' that adds up.",
+    "Sara's spending since June 20   -> EXPECT: a range total from Jun 20 to today.",
+    "Regression to eyeball: 'what did Sara spend on June 23' (single day) still works; 'Sara's total in June' still = 11,047; 'last 3 expenses for Sara' unchanged."
+  ],
+  "deploy": "Branch pushed. NOT merged. Awaiting his explicit OK to merge fix/wallet-range-breakdown -> main (prod auto-deploys on push to main, ~30-60s, atomic). Wallet is his live daily tool with prod-only behaviour, so prod IS the test -- merge, then run the 'live_test_for_muhammad' queries. Rollback = revert the orchestrator.js edits / Vercel rollback to b6b37a1 (the B-164 merge).",
+  "numbering_note": "Shipped as Build-165 (next sequential after B-164). The semantic-router FLIP that was pencilled as 'B-165' (SESSION_BRIEFS/B165_SEMANTIC_ROUTER_FLIP.md) becomes B-166 -- it's the next session per his 'fix all before running next session'."
+}
