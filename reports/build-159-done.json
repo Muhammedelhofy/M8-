@@ -1,0 +1,55 @@
+{
+  "build": "159",
+  "title": "Finish the all-domain flip (tasks/notes/driver_profile) + currency-filtered breakdown",
+  "branch": "feat/b159-finish-crud",
+  "base": "origin/main @ 1809f4a",
+  "session": "B-159 (Opus MAX) — central orchestrator.js, sequential",
+  "status": "ready-to-merge (kill-switched; awaiting Muhammad's OK to push main)",
+  "date": "2026-06-29",
+
+  "job1": {
+    "what": "Flip the LAST keyword-only CRUD lanes (tasks, notes, driver_profile) onto the capability registry — completing the all-domain routing rebuild started in B-155..B-158.",
+    "how": "resolveDomainRoute (behind M8_REGISTRY_CRUD, default OFF) now carries a CLEAR (non-ambiguous) registry winner in {tasks, notes, driver_profile} as `crud` — WITHOUT replacing `arb` (unlike wallet/fleet/finance). capabilityFallback(message, arb, crud) consumes it as a RESCUE: it only fires AFTER every deterministic keyword parser already missed, the registry winner BROADENS the noun match (catches 'remind me'/'fyi'/'set X's salary' the narrow _CAP_* regexes miss), and for tasks/notes the ACTION-signal requirement STAYS so a no-action chat turn is never stolen. driver_profile gets a brand-new help card (its STRONG signal already implies the action). No change to capability-registry.js or domain-arbiter.js — classifyAll already returns these domains.",
+    "no_turn_stolen": "Keyword parsers run FIRST and win; rescue requires (tasks/notes) an action verb; ambiguous/contest -> crud stays null -> pre-159 behaviour.",
+    "telemetry": "Rescued turns log reason `registry_crud_rescue` with the correct lane (incl. driver_profile) via the new `lane` field on the capabilityFallback reply."
+  },
+
+  "job2": {
+    "what": "Currency-filtered breakdown — 'breakdown on 921 sar' returned a SAR+EGP mix; must be SAR-only.",
+    "how": "Added parseBreakdownCurrencyFilter() (a number immediately followed by a currency token => filter to THAT currency; distinct from parseCurrencyConvert's 'in <cur>' CONVERSION). getCategoryBreakdown() gained an optional 4th arg `currencyFilter` that drops other-currency rows at the source. Always on (no flag).",
+    "privacy": "Rate/format only; no figure leaves M8. Only scopes which rows are summed."
+  },
+
+  "files_changed": [
+    "lib/orchestrator.js",
+    "lib/wallet.js",
+    "tests/build159_finish_crud.test.ps1",
+    "tests/BUILD159_LIVE_TEST.md",
+    "reports/build-159-done.json"
+  ],
+  "files_not_touched": [
+    "lib/domain-arbiter.js (classifyAll already returns tasks/notes/driver_profile — no change needed)",
+    "lib/capability-registry.js (signals already exist — refined nothing, duplicated nothing)"
+  ],
+
+  "kill_switches": {
+    "M8_REGISTRY_CRUD": "JOB 1 (and the B-157 wallet/fleet/finance flip). Default OFF = byte-for-byte pre-159. Remove / set =0 to revert.",
+    "M8_FX_CONVERT_DISABLED": "unrelated convert lane (unchanged).",
+    "job2_revert": "JOB 2 has no flag; revert = remove parseBreakdownCurrencyFilter + the currencyFilter arg."
+  },
+
+  "tests": {
+    "new_mirror": "tests/build159_finish_crud.test.ps1",
+    "new_result": "48/48 PASS",
+    "regression": "build152 (36/0), build153 (28/0), build155 (0 money mis-routes), build156 (gates A/B/C all 0), build157 (43/0), build159 (48/0) — 6/6 GREEN",
+    "node": "Node ABSENT on host -> all tests are PS-5.1 mirrors of the JS routing/aggregation decisions (same boundary as build157).",
+    "ps_mirror_note": "One mirror bug found+fixed during dev (PS case-insensitive var $CF aliasing the $cf param disabled the filter) — JS is correct (distinct case-sensitive names); fixed the mirror, not the JS."
+  },
+
+  "live_test": "tests/BUILD159_LIVE_TEST.md — JOB 2 works on deploy (no flag); JOB 1 needs M8_REGISTRY_CRUD=1.",
+
+  "vercel_fn_cap": "No new api/*.js (12-fn cap stays full).",
+  "do_not_push_to_main": true,
+  "rollback": "Vercel env: remove M8_REGISTRY_CRUD (JOB 1 off). Git: revert this branch's commit.",
+  "notes": "Sequential central-file build: verified no other live orchestrator.js session and no uncommitted orchestrator.js edits in sibling worktrees before starting. Isolated worktree at ../../M8-b159."
+}
