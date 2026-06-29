@@ -56,6 +56,20 @@ CheckFalse "wallet balance"                  (IsDocRead "what's my balance")
 CheckFalse "generic chat"                     (IsDocRead "how are you doing today")
 CheckFalse "kafala (no doc ref -> stays memory; honest non-goal)" (IsDocRead "tell me about my kafala operation")
 
+# ---------------------------------------------------------------------------
+# 3. Orchestrator gate guards -- a forced-knowledge turn must reach the graph even
+#    when a topic word trips looksFleet ("...my CV say about my EARNINGS"), and must
+#    not build fleet/finance packets that would pollute/veto it. Non-forced path stays
+#    byte-for-byte (the plain "answer" branch keeps all fleet/finance/search exclusions).
+# ---------------------------------------------------------------------------
+Write-Host "`n-- Orchestrator gate guards (forced-knowledge bypass) --" -ForegroundColor Cyan
+$orch = Get-Content -Raw (Join-Path $PSScriptRoot "..\lib\orchestrator.js")
+CheckTrue "finance build skipped for forced-knowledge"  ($orch.Contains('if (!forceKnowledgeLookup) {'))
+CheckTrue "fleet build skipped for forced-knowledge"    ($orch.Contains('_arb.domain !== "wallet" && !forceKnowledgeLookup'))
+CheckTrue "kgGate opens on forceKnowledgeLookup (bypass)" ($orch -match 'forceKnowledgeLookup \|\|')
+CheckTrue "kgGate keeps img/ingest/compute hard-excluded" ($orch.Contains('!imgTurn && !knowledgeIngestMode && !computeMode &&'))
+CheckTrue "plain answer path still gates on fleetLike"  ($orch -match 'decision\.action === "answer"\) &&\s*\r?\n\s*!fleetCtx\.text && !fleetLike')
+
 Write-Host "`n================ B-163 ROUTING RESULT ================" -ForegroundColor Cyan
 Write-Host ("  PASS: " + $pass) -ForegroundColor Green
 Write-Host ("  FAIL: " + $fail) -ForegroundColor Red
