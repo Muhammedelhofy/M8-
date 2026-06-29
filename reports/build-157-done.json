@@ -1,0 +1,55 @@
+{
+  "build": "B-157",
+  "stream": "wallet-fleet-execution-gate",
+  "branch": "feat/b157-wallet-fleet",
+  "worktree": "../M8-b157 (isolated; off origin/main @ 1d58b77 which includes B-156)",
+  "status": "complete-pending-review-and-live-test",
+  "bug": {
+    "found": "live 2026-06-29 ~04:05 (his phone + shadow log)",
+    "summary": "arbiter routed 3 fleet questions to 'fleet' CORRECTLY, but newer wallet sub-lanes (income/net B-141, expense-by-date B-138) had NO fleet guard and answered with personal money.",
+    "phrasings": [
+      "how many drivers in the bolt fleet already exceeded net earning of 4000 sar this month -> personal net (income-spent)",
+      "i want net earning in ALL JUNE (after 'fleet numbers') -> personal net",
+      "TOTAL NET EARNING PER DRIVER FROM 1ST OF JUNE TILL 28TH OF JUNE -> 'Total expenses on Jun 1: 0 SAR'"
+    ]
+  },
+  "fix": {
+    "primary": "CENTRAL execution gate at the top of handleWalletCommand (lib/orchestrator.js): `if (arb && (arb.domain === 'fleet' || arb.domain === 'finance')) return null;` — one decision enforced ONCE for EVERY wallet sub-lane (income/net, expense-by-date, breakdown, total, recent, payment, convert, add, member, ...) and BOTH dispatch sites (orchestrate + orchestrateStream, which share resolveDomainRoute + handleWalletCommand).",
+    "v2_flip": "resolveDomainRoute now flips the wallet/fleet/finance boundary onto domain-arbiter.classifyAll() (the B-155 registry) behind M8_REGISTRY_CRUD (default OFF). A CLEAR registry winner in {wallet,fleet,finance} REPLACES the arbiter call; a wallet<->fleet money-safety contest ('ask') becomes the clarifier. Same downstream gate enforces it.",
+    "consistency": "capabilityFallback's _fleetVeto generalised to veto on fleet OR finance too, so its money help-card abstains identically."
+  },
+  "behavior_change": "PRIMARY FIX changes behaviour (confident fleet/finance now vetoes ALL wallet lanes — fixes the live bug). V2 FLIP is dormant: M8_REGISTRY_CRUD default OFF = arbiter decides exactly as pre-157.",
+  "files": [
+    "lib/orchestrator.js (central gate in handleWalletCommand; CRUD flip in resolveDomainRoute; capabilityFallback finance veto)",
+    "tests/build157_walletfleet.test.ps1 (NEW - PS-5.1 mirror, 43 assertions)",
+    "tests/BUILD157_LIVE_TEST.md (NEW - phone re-test script)"
+  ],
+  "untouched": "lib/domain-arbiter.js, lib/capability-registry.js, lib/fleet.js NOT modified (per-driver date-range breakdown was backlogged, not built).",
+  "tests": {
+    "mirror": "tests/build157_walletfleet.test.ps1",
+    "result": "43 passed, 0 failed",
+    "asserts": [
+      "[A] the 3 fleet phrasings -> arb 'fleet' AND handleWalletCommand abstains (returns null)",
+      "[B] the 4 working wallet queries (sara last expense / her june total / breakdown / my june spend) -> 'wallet' AND NOT abstained",
+      "[C] central-gate truth table: fleet/finance abstain, wallet/neutral proceed",
+      "[D] registry V2 flip routes the same 7 rows identically + finance->abstain + contest->ask",
+      "[E] write lanes (confirm 'yes', explicit add) not stolen by the gate",
+      "[F] M8_REGISTRY_CRUD default OFF leaves arb untouched"
+    ],
+    "regression": "adjacent mirror suites still PASS: build152_arbiter, build155_registry, build156_lookup, build151-wallet-fleet-routing, build153_currency, build135-wallet-recent, build136-wallet-member.",
+    "node": "ABSENT on host -> PS-5.1 mirror + live phone re-test (BUILD157_LIVE_TEST.md). No PS test mirrors orchestrator.js, so these edits cannot break an existing suite."
+  },
+  "kill_switches": [
+    "M8_REGISTRY_CRUD=1 -> enable the V2 registry flip for wallet/fleet/finance (default unset = OFF = arbiter decides).",
+    "M8_DOMAIN_ARBITER_DISABLED=1 -> arbiter returns neutral; the per-lane looksFleet backstop still applies (unchanged)."
+  ],
+  "deliberate_deviation": "The brief said 'remove the now-redundant scattered !looksFleet per-lane guards'. KEPT them: post-fix they are NOT redundant — they are the NEUTRAL/disabled-arbiter backstop (M8_DOMAIN_ARBITER_DISABLED path + the breakdown ASK clarifier). The central gate owns the CONFIDENT decision; the per-lane looksFleet checks only fire when there is NO arbiter decision. Ripping them out would regress the arbiter-off path. Documented in the code comments.",
+  "backlog": [
+    "Currency filter: 'what is the breakdown on 921 sar' should filter to that currency only (today returns a mix incl. EGP). Handler gap, not routing.",
+    "Per-driver date-range fleet breakdown: 'net earning per driver, all June' resolves to fleet but no per-driver-range breakdown exists -> new fleet feature."
+  ],
+  "privacy_wall": "intact — the gate returns null (no LLM); classifyAll runs deterministic (useLLM:false) and would mask amounts even if consulted. No money text reaches an LLM.",
+  "vercel": "no new api/*.js (12-fn cap respected); lib-only edits.",
+  "rollback": "revert the commit on feat/b157-wallet-fleet; or set M8_REGISTRY_CRUD unset (V2 already OFF). Primary fix is a single guard line.",
+  "deploy": "NOT deployed. No push to main without Muhammad's explicit OK. Branch pushed for review."
+}
