@@ -1,0 +1,40 @@
+{
+  "session": "parallel-stream2-askmydocs-ingest",
+  "build": "askmydocs-ingest",
+  "date": "2026-06-28",
+  "status": "done",
+  "branch": "feat/askmydocs-ingest",
+  "sources": {
+    "vault_files_ingested": [
+      "Projects/CV + LinkedIn.md",
+      "Projects/Job Hunt.md",
+      "Operating Playbook.md"
+    ],
+    "vault_files_skipped_privacy": [
+      "Money & Runway.md",
+      "Status.md"
+    ],
+    "cv_file": "NOT PROVIDED — Muhammad must supply file path for actual CV PDF/DOCX"
+  },
+  "table": "m8_knowledge_sources",
+  "source_ids": [34, 35, 36],
+  "rows": 3,
+  "node_table": "m8_graph_nodes",
+  "node_ids": [247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261],
+  "nodes": 15,
+  "embeddings": "deferred — gemini-embedding-001 is the only path in current engine; no free alternative; keyword ILIKE fallback confirmed working",
+  "smoke_test": {
+    "fleet_supply_courier": {"hits": 10, "pass": true},
+    "careem": {"hits": 5, "pass": true},
+    "pitch_outreach_transfer": {"hits": 2, "pass": true}
+  },
+  "skipped_for_privacy": [
+    "Money & Runway.md (cash/stock balances)",
+    "current salary figure from Job Hunt.md (market rate benchmarks retained)"
+  ],
+  "action_needed": [
+    "Muhammad: provide CV file path (PDF or DOCX) for richer quantified-achievement nodes",
+    "Stream 1 (B-158): wire 'docs' lane in orchestrator to call searchKnowledgeGraph()"
+  ],
+  "security_advisory": "m8_router_misses has RLS disabled — low risk but worth fixing; see INGEST_MANIFEST.md for SQL"
+}
