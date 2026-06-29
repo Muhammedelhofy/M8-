@@ -1,0 +1,87 @@
+{"message": "breakdown of my spend in june", "expect_domain": "wallet", "expect_action": "spend_breakdown", "expect_subject": "owner"}
+{"message": "how much did I spend this month", "expect_domain": "wallet", "expect_action": "spend_breakdown", "expect_subject": "owner"}
+{"message": "what is my total expense in june", "expect_domain": "wallet", "expect_action": "total", "expect_subject": "owner"}
+{"message": "my spend", "expect_domain": "wallet", "expect_subject": "owner"}
+{"message": "what is my last expense", "expect_domain": "wallet", "expect_action": "last_expense", "expect_subject": "owner"}
+{"message": "show me my recent transactions", "expect_domain": "wallet", "expect_action": "last_expense", "expect_subject": "owner"}
+{"message": "how much did I pay for groceries this week", "expect_domain": "wallet", "expect_action": "spend_breakdown", "expect_subject": "owner"}
+{"message": "what did I spend on food last week", "expect_domain": "wallet", "expect_action": "spend_breakdown", "expect_subject": "owner"}
+{"message": "show my budget for this month", "expect_domain": "wallet", "expect_action": "total", "expect_subject": "owner"}
+{"message": "what are my bills this month", "expect_domain": "wallet", "expect_action": "spend_breakdown", "expect_subject": "owner"}
+{"message": "can you show me where my money went this month", "expect_domain": "wallet", "expect_action": "spend_breakdown", "expect_subject": "owner"}
+{"message": "how did i do financially this month", "expect_domain": "wallet", "expect_action": "spend_breakdown", "expect_subject": "owner"}
+{"message": "am talking about my wallet what is the breakdown of my spend in june", "expect_domain": "wallet", "expect_action": "spend_breakdown", "expect_subject": "owner"}
+{"message": "tell me sara's june spend", "expect_domain": "wallet", "expect_action": "member_breakdown", "expect_subject": "sara"}
+{"message": "how much did sara spend", "expect_domain": "wallet", "expect_action": "spend_breakdown", "expect_subject": "sara"}
+{"message": "what is sara's last expense", "expect_domain": "wallet", "expect_action": "last_expense", "expect_subject": "sara"}
+{"message": "give me sara's breakdown", "expect_domain": "wallet", "expect_action": "member_breakdown", "expect_subject": "sara"}
+{"message": "sara's total for this month", "expect_domain": "wallet", "expect_action": "total", "expect_subject": "sara"}
+{"message": "I need to know sara's expenses for the school fees this term", "expect_domain": "wallet", "expect_action": "member_breakdown", "expect_subject": "sara"}
+{"message": "ما هو مصروفي هذا الشهر", "expect_domain": "wallet", "expect_action": "spend_breakdown", "expect_subject": "owner"}
+{"message": "كم صرفت في يونيو", "expect_domain": "wallet", "expect_action": "spend_breakdown", "expect_subject": "owner"}
+{"message": "آخر عملية في محفظتي", "expect_domain": "wallet", "expect_action": "last_expense", "expect_subject": "owner"}
+{"message": "مصاريف سارة هذا الشهر", "expect_domain": "wallet", "expect_action": "member_breakdown", "expect_subject": "sara"}
+{"message": "كم الميزانية الشهرية", "expect_domain": "wallet", "expect_action": "total"}
+{"message": "giv eme break down of sara spend in just", "expect_domain": "wallet", "expect_action": "member_breakdown", "expect_subject": "sara"}
+{"message": "what iz my spend for this mnoth", "expect_domain": "wallet", "expect_action": "spend_breakdown", "expect_subject": "owner"}
+{"message": "brakedown of my expnses in june", "expect_domain": "wallet", "expect_action": "spend_breakdown", "expect_subject": "owner"}
+{"message": "give me break down", "history": [{"role": "assistant", "content": "Your spend in June totalled 1,240 SAR across 3 categories."}], "expect_domain": "wallet", "expect_action": "spend_breakdown"}
+{"message": "i want to see the amounts in sar", "history": [{"role": "assistant", "content": "Your spend breakdown: Groceries 340 SAR, Dining 290 SAR, Transport 180 SAR."}], "expect_domain": "wallet", "expect_action": "convert_currency"}
+{"message": "what's the breakdown?", "history": [{"role": "assistant", "content": "Your total spend in June was 497 SAR."}], "expect_domain": "wallet", "expect_action": "spend_breakdown"}
+{"message": "and last month?", "history": [{"role": "assistant", "content": "This month you spent 800 SAR."}], "expect_domain": "wallet", "expect_action": "spend_breakdown"}
+{"message": "put all currency in sar", "history": [{"role": "user", "content": "show my total"}, {"role": "assistant", "content": "Your total is 450 SAR + 2000 EGP."}], "expect_domain": "wallet", "expect_action": "convert_currency"}
+{"message": "did I pay the rent", "expect_domain": "wallet", "expect_action": "payment_check"}
+{"message": "have we paid electricity this month", "expect_domain": "wallet", "expect_action": "payment_check"}
+{"message": "did sara pay the school fees", "expect_domain": "wallet", "expect_action": "payment_check", "expect_subject": "sara"}
+{"message": "add 50 sar for lunch", "expect_domain": "wallet", "expect_action": "add_expense"}
+{"message": "put down 200 egp for groceries", "expect_domain": "wallet", "expect_action": "add_expense"}
+{"message": "I paid 30 riyals for coffee", "expect_domain": "wallet", "expect_action": "add_expense"}
+{"message": "throw 30 egp to groceries", "expect_domain": "wallet", "expect_action": "add_expense"}
+{"message": "حط ٥٠ ريال للغداء", "expect_domain": "wallet", "expect_action": "add_expense"}
+{"message": "how are my drivers doing", "expect_domain": "fleet"}
+{"message": "how are my drivers", "expect_domain": "fleet"}
+{"message": "net earnings yesterday", "expect_domain": "fleet"}
+{"message": "how's the fleet this week", "expect_domain": "fleet"}
+{"message": "which captains hit the 5k target", "expect_domain": "fleet"}
+{"message": "give me the fleet brief", "expect_domain": "fleet"}
+{"message": "what's the acceptance rate today", "expect_domain": "fleet"}
+{"message": "how many active drivers this week", "expect_domain": "fleet"}
+{"message": "daily fleet report", "expect_domain": "fleet"}
+{"message": "are the drivers on track for bonus", "expect_domain": "fleet"}
+{"message": "did any captain make it to 6k this week", "expect_domain": "fleet"}
+{"message": "كيف الأسطول اليوم", "expect_domain": "fleet"}
+{"message": "نسبة القبول للكباتن هذا الأسبوع", "expect_domain": "fleet"}
+{"message": "what's the company PnL this month", "expect_domain": "finance"}
+{"message": "monthly operating costs", "expect_domain": "finance"}
+{"message": "revenue breakdown for the fleet june", "expect_domain": "finance"}
+{"message": "add task: call Ahmad tomorrow", "expect_domain": "tasks", "expect_action": "add"}
+{"message": "what tasks do I have today", "expect_domain": "tasks", "expect_action": "list"}
+{"message": "mark the Ahmad task as done", "expect_domain": "tasks", "expect_action": "complete"}
+{"message": "show me my pending tasks", "expect_domain": "tasks", "expect_action": "list"}
+{"message": "remind me to check the dashboard at 6pm", "expect_domain": "tasks", "expect_action": "add"}
+{"message": "what did I have on my list for this week", "expect_domain": "tasks", "expect_action": "list"}
+{"message": "note: the Bolt meeting is on Thursday", "expect_domain": "notes", "expect_action": "add"}
+{"message": "take a note about the new hire process", "expect_domain": "notes", "expect_action": "add"}
+{"message": "what did I note about the Q3 plan", "expect_domain": "notes", "expect_action": "search"}
+{"message": "search my notes for fleet strategy", "expect_domain": "notes", "expect_action": "search"}
+{"message": "who is Ahmad", "expect_domain": "memory", "expect_action": "recall"}
+{"message": "what do you know about Bolt", "expect_domain": "memory", "expect_action": "recall"}
+{"message": "remember that Sara's birthday is in March", "expect_domain": "memory", "expect_action": "teach"}
+{"message": "what does Ibn Kathir say about the conquest of Mecca", "expect_domain": "knowledge", "expect_action": "rag_lookup"}
+{"message": "search my books for the Lychrel number definition", "expect_domain": "knowledge", "expect_action": "rag_lookup"}
+{"message": "write me a report on fleet performance for June", "expect_domain": "docs", "expect_action": "generate_report"}
+{"message": "generate a summary document for the board", "expect_domain": "docs", "expect_action": "generate_report"}
+{"message": "what's the weather in Riyadh today", "expect_domain": "web", "expect_action": "live_search"}
+{"message": "what's the current SAR to EGP exchange rate", "expect_domain": "web", "expect_action": "live_search"}
+{"message": "latest news about Bolt food delivery", "expect_domain": "web", "expect_action": "live_search"}
+{"message": "add a driver profile for Khalid", "expect_domain": "driver_profile", "expect_action": "add"}
+{"message": "show me Ahmad's driver profile", "expect_domain": "driver_profile", "expect_action": "view"}
+{"message": "make me rich", "expect_domain": "chat"}
+{"message": "good morning", "expect_domain": "chat"}
+{"message": "who is the president of Egypt", "expect_domain": "chat"}
+{"message": "tell me a joke", "expect_domain": "chat"}
+{"message": "i want to spend time with my family this weekend", "expect_domain": "chat"}
+{"message": "breakdown of the 497 sar", "history": [{"role": "assistant", "content": "Your wallet total for June is 497 SAR."}], "expect_domain": "wallet", "expect_action": "spend_breakdown"}
+{"message": "i want to see the amounts in sar", "history": [{"role": "assistant", "content": "Here is the fleet brief for today."}, {"role": "user", "content": "show me my wallet spend"}, {"role": "assistant", "content": "Your spend this month totals 890 SAR."}], "expect_domain": "wallet", "expect_action": "convert_currency"}
+{"message": "Sara called me about the drivers", "expect_domain": "fleet"}
+{"message": "how did we do on spending and driver costs", "expect_domain": "chat", "expect_ask": true}
