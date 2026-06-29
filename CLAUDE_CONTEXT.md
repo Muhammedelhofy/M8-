@@ -1,6 +1,23 @@
 # CLAUDE_CONTEXT.md
 *M8 System — Master Context File*
-*Last updated: 2026-06-12 (Build-13 / S6 — M1 structural probes + Odysseus-2 + coda-leak fix) · Read this at the start of every session*
+*Last updated: 2026-06-29 (Routing rebuild — B-155 registry → B-158 ask-my-docs/fleet; B-159 + enrich in flight) · Read this at the start of every session*
+
+---
+
+## ⚡ CURRENT STATE — 2026-06-29 (supersedes the "L4 / June 2026" snapshot below — that is now historical)
+
+**The routing rebuild shipped this session** — M8 went from a keyword-first router to a meaning-based one (the "end the keyword whack-a-mole" goal). All live on prod (`m8-alpha.vercel.app`, auto-deploys on push to `main`):
+
+- **B-155 — Registry router:** `lib/capability-registry.js` = ONE source of truth for **11 domains** (wallet/fleet/finance/tasks/notes/memory/knowledge/docs/web/chat/driver_profile); `lib/domain-arbiter.js` `classifyAll()` scores them. Shadow-logging via `M8_REGISTRY_ROUTER=1`.
+- **B-156 — Lookup flip:** memory/web/knowledge/chat routed by MEANING; opened the **ask-my-docs door**. Live (`M8_REGISTRY_LOOKUP=1`).
+- **B-157 — Wallet/fleet gate:** a central guard in `handleWalletCommand` — a confident fleet/finance decision vetoes ALL wallet sub-lanes (fixed the live "fleet question → personal numbers" bug). Live. The registry-owns-money flip is dormant behind `M8_REGISTRY_CRUD`.
+- **B-158a — Fleet:** per-driver date-range net-earning breakdown. **B-158b — Ask-my-docs:** his CV + vault notes in the knowledge graph (`m8_knowledge_sources` / `m8_graph_nodes`) with free 768-dim embeddings + semantic search. Live.
+- **Wallet (B-135→154, earlier):** personal/household expenses, per-member (Sara = wife), currency convert, breakdowns, income/net. Live.
+
+**Stack now:** free LLMs (Groq/Gemini/Cerebras) + Supabase `ltqpoupferwituusxwal` + Vercel Hobby **(12/12 functions — FULL; reuse `api/ops?fn=` / `api/knowledge?fn=`)**.
+**In flight (parallel, NOT merged):** B-159 (flip the last domains tasks/notes/driver_profile + currency-filter backlog) + D (enrich ask-my-docs career corpus). See `NEXT_SESSION_BRIEF.md` + `SESSION_BRIEFS/`.
+**Next:** Muhammad live-tests B-157/158 → if green, flip `M8_REGISTRY_CRUD=1` → merge B-159 + D. A council round on "deterministic vs free-embeddings routing" is deferred until ~1 week of `arbiter:reg:*` / `lk:*` shadow data accumulates.
+**Safety rails (unchanged):** confirm-before-write · privacy wall (money DATA never enters an LLM prompt/log) · free-stack default · every build kill-switched + a PS-5.1 mirror (Node is ABSENT on the host).
 
 ---
 
@@ -194,15 +211,7 @@ Mathematical and scientific reasoning. Starts with Collatz. Builds toward Navier
 
 **If something seems inconsistent with what Muhammad tells you:** Trust Muhammad's current message. This file describes the state as of 2026-06-10. Update this file when phases are completed.
 
-**Next immediate actions (updated 2026-06-12):**
-
-1. Muhammad: run `migrations/research_notes.sql` in Supabase (ltqpoupferwituusxwal) — 60 seconds; unblocks real notebook persistence (everything else about the notebook is now live)
-2. Next Claude Code session: pick from SESSION_HANDOFF_2026-06-12.md options — recommended Odysseus probe-generation automation or OEIS probing
-3. Done in prior sessions: multi-step exploration loops (Build-2), red-team battery (Build-3), notebook intelligence layer (Build-4 — registry / structured summaries / kind inference / hardened empty packet)
-
-Cowork/Chat — background:
-- Verify whether Tavily and voice.js actually exist in the codebase (Grok referenced both as live)
-- Profile Thrivve.sa and Noon in companies.js
+**Next immediate actions (updated 2026-06-29 — supersedes the June-12 list):** see the dated CURRENT STATE block at the top of this file + `NEXT_SESSION_BRIEF.md`. In short: Muhammad live-tests B-157/158 on his phone → if green, flip `M8_REGISTRY_CRUD=1` → merge the in-flight B-159 + enrich branches → B-159 finishes the all-domain flip + the currency-filter backlog. (The June-12 items below — research_notes.sql migration, Odysseus/OEIS — are long done or parked; the Collatz / Track-B engine is now a free nightly sidecar, not the active focus.)
 
 ---
 
