@@ -1,0 +1,59 @@
+{
+  "build": "B-156",
+  "stream": "router-core (lookup-boundary flip)",
+  "branch": "feat/b156-lookup-flip",
+  "worktree": "../../M8-b156 (isolated; off origin/main @ c9c8740)",
+  "status": "complete-pending-review-and-live-test",
+  "behavior_change": "NONE until M8_REGISTRY_LOOKUP=1 (default OFF = byte-for-byte pre-156). ON = the read-only lookup lanes {knowledge, web, memory} are routed by classifyAll(); wallet/fleet/finance/tasks/notes/driver_profile routing is UNTOUCHED.",
+  "what_it_does": {
+    "knowledge": "THE high-value win. A CLEAR (non-ambiguous) knowledge decision FORCES the EXISTING knowledge-graph cited path: suppresses web search (LLM tool-router + both regex search slots) and opens kgGateOpen so searchKnowledgeGraph() runs. 'what does my CV say about X' / 'search my books for Y' now answers from his OWN ingested content (m8_graph_nodes), cited, instead of a web search or generic reply. No graph hit => soft fall-through to a general answer + an honest 'not found in your ingested material' note.",
+    "web": "A NONE-intent turn the registry calls 'web' is nudged to INTENT.LOOKUP so the EXISTING search waterfall fires (classifyIntent already routes weather/news/rates; this only catches the ones it missed). Never overrides a fleet/finance/notebook turn.",
+    "memory": "Already served by the existing entity-card + cross-session recall injected every turn; B-156 only LOGS the decision (telemetry / routing dataset). No forcing.",
+    "chat": "The default general-answer path. classifyAll => chat means 'no lane' => no attach => unchanged (routing to chat is a no-op by definition)."
+  },
+  "design_safety": [
+    "ACTS only on a CLEAR (non-ambiguous) winner in {knowledge, web, memory}. An ambiguous winner (knowledge<->docs, knowledge<->fleet, knowledge<->wallet) => no attach => the pre-156 path wins => docs/fleet/notes turns are never stolen.",
+    "Every edit is a guard term that is ALWAYS-FALSE when the flag is OFF (&& !forceKnowledgeLookup / || forceKnowledgeLookup / if (_lk && ...)), so OFF is logically identical to pre-156.",
+    "Wired in orchestrate() ONLY. The stream path's `streamable` gate already sends every knowledge/web/general turn (no fleet/finance/etc. packet) to orchestrate() via the buffered delegate, so no separate stream wiring was needed.",
+    "Knowledge forcing still defers to the existing kgGate exclusions (!fleetCtx.text && !financeCtx.text && !computeMode && !knowledgeIngestMode && !imgTurn), so a fleet/finance/compute/ingest/image turn is never force-routed to the graph.",
+    "Privacy wall intact: classifyAll sees the message text only; the knowledge path reads m8_graph_nodes (his ingested docs), never wallet money data."
+  ],
+  "files": [
+    "lib/orchestrator.js (resolveDomainRoute() attaches _route.lookup; orchestrate() acts on it: 9 guarded inserts)",
+    "tests/build156_lookup.test.ps1 (NEW - PS-5.1 mirror + 3 hard gates + 11 inline cases)"
+  ],
+  "files_added_to_git": [
+    "lib/orchestrator.js",
+    "tests/build156_lookup.test.ps1",
+    "reports/build-156-done.json"
+  ],
+  "not_touched": [
+    "lib/capability-registry.js (UNCHANGED - classifyAll already returns the right lookup domains)",
+    "lib/domain-arbiter.js (UNCHANGED - arbitrate() wallet<->fleet seam frozen)",
+    "tests/routing_corpus.jsonl (READ-ONLY - shared Stream-3 file; extra knowledge/web/leak cases live INLINE in my test to avoid a cross-session merge conflict)",
+    "INGEST_MANIFEST.md / m8_knowledge_sources / m8_graph_nodes data (CV-ingest session owns ingestion; I only READ via searchKnowledgeGraph)"
+  ],
+  "kill_switches": [
+    "M8_REGISTRY_LOOKUP=1 enables the lookup flip (default unset = OFF = pre-156)",
+    "M8_REGISTRY_ROUTER=1 still independently enables the B-155 dormant shadow log (lane=reg:*)"
+  ],
+  "telemetry": "lane=lk:<knowledge|web|memory> in m8_router_misses when M8_REGISTRY_LOOKUP=1 (the dataset for the meaning-based-routing 'turning point' direction).",
+  "tests": {
+    "mirror": "tests/build156_lookup.test.ps1",
+    "corpus": "tests/routing_corpus.jsonl (87 rows) + 11 inline B-156 cases",
+    "rows_evaluated": 89, "arabic_skip": 8, "match": 80, "defer": 7, "noncritical_misroute": 2,
+    "lookup_coverage": "20/22 (knowledge/web/memory/chat routed correctly; the 2 not covered are the known soft rows below, neither gated)",
+    "GATE_A_money_safety_crit": 0,
+    "GATE_B_money_write_leaked_into_lookup": 0,
+    "GATE_C_clean_lookup_misrouted": 0,
+    "result": "PASS (zero money mis-routes; zero leaks; all clean knowledge|web rows routed)",
+    "regression": "build155_registry.test.ps1 = PASS (71/6/2, 0 crit, unchanged); build152_arbiter.test.ps1 = 36/0 PASS"
+  },
+  "known_soft_divergences": [
+    "'remember that Sara...' -> wallet (memberHit, frozen B-152 rule; real system then captures it as a NOTE). expect=memory. NOT gated; not a money mis-route.",
+    "'who is the president of egypt' -> memory over-capture (MEMORY_PRESENT 'who is'). expect=chat. Soft: memory recall finds nothing => general answer = chat outcome; B-156 only LOGS memory, never forces it."
+  ],
+  "rollback": "default is already OFF (unset M8_REGISTRY_LOOKUP) => instant revert with no redeploy; or revert the commit on feat/b156-lookup-flip. Nothing deployed.",
+  "deploy": "NOT deployed. No push to main without Muhammad's explicit OK. Code is SAFE to merge dormant (flag default OFF, like B-155); the flag flip is the gated step.",
+  "next": "Live phone test (tests/BUILD156_LIVE_TEST.md) with M8_REGISTRY_LOOKUP=1: confirm the knowledge lane cites his CV/books. Then B-157/158 flip the wallet/fleet/finance/tasks/notes/driver_profile boundaries, and the generalised free-LLM tie-breaker for non-wallet/fleet contests (currently deterministic-only)."
+}
