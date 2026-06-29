@@ -1,0 +1,35 @@
+{
+  "build": "B-155",
+  "stream": "1-router-core",
+  "branch": "feat/router-registry",
+  "status": "complete-pending-review-and-live-test",
+  "behavior_change": "NONE (dormant shadow behind M8_REGISTRY_ROUTER, default OFF = byte-for-byte pre-155)",
+  "files": [
+    "lib/capability-registry.js (NEW - single source of truth, 11 domains)",
+    "lib/domain-arbiter.js (classifyAll() added; generalises arbitrate())",
+    "lib/orchestrator.js (resolveDomainRoute() shadow wiring)",
+    "tests/build155_registry.test.ps1 (NEW - PS-5.1 mirror)"
+  ],
+  "domains": ["driver_profile","knowledge","docs","notes","tasks","wallet","finance","fleet","memory","web","chat"],
+  "tests": {
+    "mirror": "tests/build155_registry.test.ps1",
+    "corpus": "tests/routing_corpus.jsonl (Stream 3, 87 rows)",
+    "match": 71, "defer": 6, "misroute_noncritical": 2, "arabic_skip": 8, "of": 87,
+    "critical_money_misroutes": 0,
+    "result": "PASS (hard gate = zero wallet<->fleet/finance mis-routes)"
+  },
+  "kill_switches": [
+    "M8_REGISTRY_ROUTER=1 enables the dormant shadow (default unset = OFF)",
+    "M8_REGISTRY_LLM_DISABLED=1 disables the (already-off-in-B155) LLM tie-breaker"
+  ],
+  "shadow_log": "lane=arbiter:reg:<domain> in m8_router_misses when M8_REGISTRY_ROUTER=1 (redacted, fire-and-forget)",
+  "rollback": "default is already OFF; or revert the commit on feat/router-registry. Nothing deployed.",
+  "notes": [
+    "DORMANT: default-OFF = pre-155 behaviour exactly. ON = shadow-log only, ZERO routing change.",
+    "2 non-critical corpus divergences: 'remember that Sara...' (memberHit->wallet; real system->notes; corpus wants memory) and 'who is the president of egypt' (->memory; corpus wants chat). Both safe, non-money; refine at B-156/157.",
+    "Arabic rows validated in JS (patterns lifted from prod) + the live phone test; the ASCII PS mirror skips them.",
+    "routing_corpus.jsonl is Stream 3's file (feat/routing-corpus); materialized locally for testing only, NOT committed on this branch."
+  ],
+  "next": "Live phone test with M8_REGISTRY_ROUTER=1 to populate the shadow log on real traffic, then B-156 flips the lookup boundary (memory/web/knowledge/chat) using classifyAll.",
+  "deploy": "NOT deployed. No push to main without Muhammad's explicit OK."
+}
