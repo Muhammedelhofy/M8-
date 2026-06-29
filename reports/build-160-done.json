@@ -1,0 +1,66 @@
+{
+  "build": "B-160",
+  "title": "fix ask-my-docs retrieval (routes to knowledge, serves nothing)",
+  "branch": "feat/b160-askmydocs-fix",
+  "worktree": "../../M8-b160 (isolated; off origin/main @ b7f6298)",
+  "status": "complete-and-LIVE-VERIFIED-on-preview; pending Muhammad's OK to merge to main",
+  "root_cause": {
+    "one_liner": "searchKnowledgeGraph was a SWALLOWED ReferenceError -> kgContext was null on EVERY knowledge-routed turn.",
+    "detail": "searchKnowledgeGraph is destructured with `const` INSIDE the knowledge-INGEST block (lib/orchestrator.js ~line 3744, inside `if (!lemmaDagMode && !explicitLean) { try { ... } }` which closes ~line 3777). It is CALLED ~600 lines later in the kgGate (~line 4376), OUTSIDE that block scope. So the call threw `ReferenceError: searchKnowledgeGraph is not defined`, which the surrounding `try { kgContext = await searchKnowledgeGraph(...) } catch (_) {}` silently swallowed. kgContext stayed null, so the line-4554 'no match in your ingested material' note fired and M8 answered 'I don't have your CV / ingested documents' on every ask-my-docs turn.",
+    "why_offline_tests_missed_it": "Node is ABSENT on the host, so all M8 tests are PS-5.1 mirrors that pattern-match source text -- they do NOT execute the JS, so a scope/ReferenceError is invisible to them. The destructure and the call BOTH exist in the text, so it 'looked' correct. Only the live test exercises the runtime where the scope error fires. This is exactly the live-test-catches-what-offline-misses lesson.",
+    "ruled_out_first": [
+      "Routing: CORRECT -- 'what does my CV say about my Careem experience' logs lk:knowledge conf 0.90 (m8_router_misses).",
+      "Data: PRESENT -- m8_graph_nodes careem=14, operations=11, kafala=3; 226/226 embedded (768-dim); the keyword .or() query returns 12 CV nodes in raw SQL.",
+      "RLS/key: getDb() uses SUPABASE_SERVICE_KEY (service_role, bypasses RLS); router-log writes prove it works in prod. m8_graph_nodes has RLS on + no policies => only service_role reads it (anon read returns []).",
+      ".or() %-wildcard syntax: WORKS -- tested supabase-js form `or=(col.ilike.%25x%25)` against live PostgREST (anon key, fleet_data) -> matched. Not the bug.",
+      "Deploy lag: NONE -- prod is deployed from b7f6298 (= origin/main HEAD = this worktree's base). The failing code IS the current code.",
+      "Semantic path: match_kg_nodes RPC exists + correct (returns id/kind/label/content/similarity). Even when it fails it falls through to the keyword path, which works."
+    ]
+  },
+  "fix": {
+    "part1_root_cause": "orchestrate() kgGate: require searchKnowledgeGraph LOCALLY at the call site (`const { searchKnowledgeGraph } = require('./knowledge-intake')`, cached) so it is IN SCOPE; and change the silent `catch (_) {}` to `catch (e) { log('kg_search_failed', {err}) }` so a future failure is observable, not swallowed.",
+    "part2_streaming_divergence": "orchestrateStream() never consumed _routeS.lookup, so a knowledge turn that ALSO trips `streamable` (e.g. 'what does my CV say about my earnings' -> isPersonal) streamed inline with NO graph injection. Added forceKnowledgeLookupS = (_routeS.lookup?.domain === 'knowledge') and excluded it from the `streamable` gate, so a knowledge-routed turn is forced NON-streamable and delegates to the (now-fixed) buffered orchestrate(). Inert unless M8_REGISTRY_LOOKUP=1 (lookup is null)."
+  },
+  "files": [
+    "lib/orchestrator.js (2 edits: kgGate local require + observable catch; orchestrateStream forceKnowledgeLookupS + streamable gate)",
+    "tests/build160_askmydocs.test.ps1 (NEW - 17/17 PASS)"
+  ],
+  "files_added_to_git": [
+    "lib/orchestrator.js",
+    "tests/build160_askmydocs.test.ps1",
+    "reports/build-160-done.json"
+  ],
+  "not_touched": [
+    "lib/capability-registry.js (UNCHANGED - per brief: routing/registry is fine)",
+    "lib/domain-arbiter.js (UNCHANGED)",
+    "lib/knowledge-intake.js (UNCHANGED - searchKnowledgeGraph itself was correct; the bug was the caller's scope)",
+    "No new api/*.js (12-function Vercel cap is full)"
+  ],
+  "tests": {
+    "mirror": "tests/build160_askmydocs.test.ps1 = 17/17 PASS",
+    "what_it_guards": "STATIC scope/wiring invariants (the class that hid from the JS-less harness): searchKnowledgeGraph is required within the kgGate call block; the catch logs kg_search_failed (no silent swallow); orchestrateStream computes forceKnowledgeLookupS and streamable excludes it. Plus a behavioral mirror of the streamable gate + keyword-token extraction + an OPTIONAL live-DB retrieval check (skips without SUPABASE creds).",
+    "note": "PS mirrors can't execute JS, so the real proof is the live preview test below."
+  },
+  "live_verification": {
+    "preview_deploy": "dpl_BcVrthEhCCxX9f8piPLxD1pVZCXs @ 8c6acc9 (READY), https://m8-ncdhyrua5-hofy-s-projects.vercel.app (preview = my branch; prod untouched)",
+    "TEST1_CV_careem": "PASS (the brief's primary confirmed bug). POST /api/chat 'what does my CV say about my Careem experience' (clean history) -> cites his REAL CV: Supply Manager Egypt 2022-2025, Senior Supply Lead Alexandria 2019-2021, Supply Lead Alexandria 2018-2019, core competencies (source 37). Prod (b7f6298) returns 'I don't have access to your personal CV or any ingested documents.'",
+    "TEST2_kafala": "PARTIAL -- 'tell me about my kafala operation' routes to lk:memory (registry conf 0.70), NOT knowledge, so it does NOT force searchKnowledgeGraph and gives a general/web answer. This is a REGISTRY CLASSIFICATION matter (brief: do NOT touch the registry), not the retrieval-wiring bug. Logged as a follow-up.",
+    "TEST3_earnings_stream": "EXPECTED -- 'what does my CV say about my earnings...' is an ambiguous knowledge<->fleet contest (reg:knowledge contest|amb conf 0.50; arbiter fleet 0.85), so the registry correctly does NOT force knowledge => no delegation => streams a general answer. Ambiguity tuning is a registry matter (out of scope)."
+  },
+  "scope_statement": "The CONFIRMED, reproduced bug -- knowledge-routed (lk:knowledge) turns serving nothing -- is FIXED and live-verified. Any turn the registry routes to 'knowledge' now serves cited content from his ingested docs. Two adjacent queries DON'T route to 'knowledge' in the first place (kafala->memory; earnings->ambiguous contest); fixing THAT is registry/arbiter tuning, which the brief explicitly placed out of bounds.",
+  "constraints_honored": {
+    "privacy_wall": "intact -- the KG path reads m8_graph_nodes (his ingested CV/docs), never wallet money data; money text never enters an LLM prompt.",
+    "free_llm": "no LLM/model changes.",
+    "vercel_12fn_cap": "no new api/*.js.",
+    "no_push_to_main": "branch pushed only; prod (main @ b7f6298) untouched; preview deploy is the branch, not prod.",
+    "worktree_isolation": "all work in ../../M8-b160; git add only my own files."
+  },
+  "deploy": "Branch pushed (feat/b160-askmydocs-fix @ 8c6acc9). NOT merged to main. Awaiting Muhammad's OK to merge -> prod auto-deploys on push to main. Rollback: revert the 2 edits, or Vercel rollback to b7f6298.",
+  "followups_separate_builds": [
+    "REGISTRY TUNING (NOT this build, brief said hands-off): 'kafala operation' classifies as memory and 'CV + earnings' as an ambiguous knowledge<->fleet contest -> they never reach the knowledge lane. To make ALL doc-backed asks serve the corpus, the registry/arbiter needs tuning (or the memory lane could also try searchKnowledgeGraph).",
+    "OBSERVABILITY: the swallowed catch hid this for builds. Audit other `catch (_) {}` around required-symbol calls in orchestrator.js for the same block-scope-then-call-elsewhere pattern (the other ingest-block destructures: detectKnowledgeIngest/buildKnowledgeIngestContext/etc. are only used INSIDE the block, so they're safe -- only searchKnowledgeGraph escaped).",
+    "RESILIENCE (from brief): trim prompt/history before the LLM call (groq 413), add a non-Google fallback (gemini+gemini2 are both Google), ease cooldowns.",
+    "MEMORY FACT (from brief): 'what do you know about Bolt' -> 'a Family Wallet member' is WRONG (Bolt is the fleet/company); correct the stored fact.",
+    "POLISH (from brief): 'how many drivers >4000' miscounted mid-answer; 'write me a report on fleet performance' didn't auto-pull fleet data."
+  ]
+}
