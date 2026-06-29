@@ -1,0 +1,60 @@
+{
+  "build": "B-164",
+  "title": "semantic router (shadow only) -- meaning-based domain scorer, ZERO behaviour change",
+  "branch": "feat/b164-semantic-router-shadow",
+  "worktree": "../../M8-b164 (isolated; off origin/main @ 16ae73d)",
+  "status": "complete; shadow-only; PS-mirror + full regression green; NOT live-verified yet (Muhammad runs the preview live test with the flag ON); pending his OK for the B-165 flip",
+  "one_liner": "M8 now (optionally) understands a turn by MEANING: it embeds the message + cosine-compares to per-domain exemplars and SHADOW-LOGS what semantics WOULD pick (lane sem:*) alongside the real route. It reads nothing back into any decision -- this build only MEASURES whether meaning would fix the keyword misses, so B-165 can flip on real evidence. Same dormant-shadow pattern as B-155's reg:*.",
+  "flag": {
+    "name": "M8_SEMANTIC_ROUTER",
+    "default": "OFF (unset). OFF => byte-for-byte pre-164. Set to \"1\" on the PREVIEW deployment to collect shadow data.",
+    "kill": "unset M8_SEMANTIC_ROUTER (or set to anything != \"1\") -> the whole block is skipped."
+  },
+  "what_shipped": {
+    "new_module": "lib/semantic-router.js -- EXEMPLARS (all 11 DOMAINS, 7-8 natural phrasings each; knowledge seeded with the known misses 'tell me about my kafala operation' / 'what does my CV say about X' / 'search my books for Y'; wallet/fleet/memory include Arabic phrasings); embedExemplars() (lazy, idempotent, warm-instance cache, per-domain parallel warm-up, commits only on success so a no-key run can retry); scoreSemantic() (embeds the turn RETRIEVAL_QUERY, cosine vs every exemplar, returns {domain, confidence=top cosine, runnerUp, margin=top-runnerUp}); cosine() (robust, divides by norms, fail-safe 0 on bad input). Every public fn swallows its own errors -> null.",
+    "orchestrator_wire": "lib/orchestrator.js resolveDomainRoute() -- a new block AFTER the existing registry shadow/lookup/crud block and BEFORE the return, guarded by `if (process.env.M8_SEMANTIC_ROUTER === \"1\")`. COST GUARD: it first computes the FREE deterministic registry pick (capability-registry pickDomain(scoreMessage(msg))) and only embeds when that is NOT a clear win (ambiguous OR chat OR present-only/confidence < 0.9) -- a confident keyword turn costs nothing. On a gated turn it `await`s scoreSemantic and `await`s logRoute(baseMessage, \"sem:\"+domain, \"semantic conf=X margin=Y\", confidence). Wrapped in its own try/catch so it can NEVER affect the turn."
+  },
+  "how_to_read_the_shadow_data": {
+    "table": "m8_router_misses (Supabase BOLT project ltqpoupferwituusxwal), columns: id, created_at, message_redacted, lane, reason.",
+    "IMPORTANT_lane_prefix": "logRoute() PREPENDS \"arbiter:\" to the domain it is given. So the semantic rows are stored as lane = 'arbiter:sem:<domain>' (NOT bare 'sem:<domain>'), exactly like B-155's reg:* rows store as 'arbiter:reg:*'. Query for 'arbiter:sem:%'.",
+    "pull_semantic_rows": "select created_at, message_redacted, lane, reason from m8_router_misses where lane like 'arbiter:sem:%' order by created_at desc;",
+    "compare_to_real_route": "For each turn, the REAL route is logged in the SAME table on (about) the same timestamp as a non-sem lane: 'arbiter:<wallet|fleet|ask>' (the B-152 arbiter), 'lk:<domain>' (the B-156 lookup), or 'reg:*' (if M8_REGISTRY_ROUTER is also on). Group by message_redacted and compare the 'arbiter:sem:*' pick to the real-lane pick -- where they DISAGREE on a turn the keyword router got wrong is exactly the evidence that B-165's flip would fix. The reason field carries 'semantic conf=<topCosine> margin=<top-runnerUp>' so you can also see how DECISIVE each semantic pick was (high margin = confident; low margin = a real toss-up).",
+    "what_good_looks_like": "On the known misses ('tell me about my kafala operation', 'what does my CV say about ...'), expect arbiter:sem:knowledge with a healthy margin, while the real lane was memory/contest. That delta = the case for B-165."
+  },
+  "regression": {
+    "result": "6/6 GREEN (exit 0) -- proves zero behaviour change (only a new file + a flag-gated block were added).",
+    "detail": {
+      "build152_arbiter": "exit 0 (36 passed, 0 failed)",
+      "build155_registry": "exit 0 (match=71 defer=6 misroute=2 [pre-existing corpus divergences] CRITICAL money=0)",
+      "build156_lookup": "exit 0 (match=80; GATE A/B/C all 0)",
+      "build157_walletfleet": "exit 0 (43 passed, 0 failed)",
+      "build160_askmydocs": "exit 0 (17/17)",
+      "build163_routing": "exit 0 (26/26)"
+    },
+    "new_test": "tests/build164_semantic_router.test.ps1 = ALL checks PASS -- cosine math (identical/orthogonal/opposite/45deg/scale-invariant/bad-input); EXEMPLARS covers all 11 DOMAINS with no empties (7-8 each); orchestrator wire is shadow-only (flag-guarded, logs sem:*, reassigns none of arb/lookup/crud, has its own try/catch); fail-safe (scoreSemantic try/catch->null, cosine->0, lazy/idempotent cache, free embedText only)."
+  },
+  "files_added_to_git": [
+    "lib/semantic-router.js (NEW)",
+    "lib/orchestrator.js (1 edit: the flag-gated shadow block in resolveDomainRoute)",
+    "tests/build164_semantic_router.test.ps1 (NEW)",
+    "reports/build-164-done.json"
+  ],
+  "not_touched": [
+    "lib/capability-registry.js (UNCHANGED -- read-only reuse of scoreMessage/pickDomain for the cost guard; per brief: do NOT touch registry scoring)",
+    "lib/domain-arbiter.js (UNCHANGED)",
+    "lib/memory-graph.js (UNCHANGED -- reuse the existing free embedText)",
+    "lib/miss-logger.js (UNCHANGED -- reuse the existing logRoute)",
+    "No new api/*.js (Vercel 12-function cap is full)"
+  ],
+  "constraints_honored": {
+    "zero_behaviour_change": "Flag OFF => the only added cost is reading one env var (false) -> nothing runs. Flag ON => one extra shadow log row on the turns that matter; no routing decision reads the semantic result.",
+    "free_llm_only": "reuses memory-graph.embedText (gemini-embedding-001, the same free embedder searchKnowledgeGraph uses); no new/paid provider.",
+    "privacy_wall": "only the message TEXT is embedded; never any money figure or DB row -- the wallet privacy wall upstream is untouched.",
+    "vercel_12fn_cap": "no new api/*.js.",
+    "cost_guard": "embeds ONLY on non-clear-win turns (ambiguous/chat/low-confidence); a confident keyword turn never embeds.",
+    "no_push_to_main": "branch pushed only; prod (main @ 16ae73d) untouched.",
+    "worktree_isolation": "all work in ../../M8-b164; git add only my own 4 files (never -A)."
+  },
+  "live_test_plan_for_muhammad": "On the PREVIEW deployment of this branch, set env M8_SEMANTIC_ROUTER=1 (leave it OFF on prod). Send the known-miss phrasings (e.g. 'tell me about my kafala operation', 'what does my CV say about my logistics experience', plus a few of your normal turns). Confirm: (1) the ANSWER/route is UNCHANGED vs prod (shadow-only); (2) m8_router_misses gets new 'arbiter:sem:*' rows. Then pull the sem rows vs the real-lane rows (queries above) and tell me how often semantic would have fixed a miss -- that readout is the go/no-go for B-165 (the flip that lets semantics ACT as a tie-breaker).",
+  "next_build": "B-165 -- ACT on the semantic signal as a tie-breaker on the turns the deterministic router is NOT confident about (ambiguous/low-margin), gated behind its own flag, using the threshold the B-164 shadow data justifies (likely: adopt the semantic pick only when its margin exceeds some delta AND the deterministic pick was ambiguous/chat). Do NOT flip until the shadow data shows it helps without new money mis-routes."
+}
