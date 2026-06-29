@@ -1,177 +1,54 @@
-# M8 Next Session Brief — Session-59 Close
+# M8 Next Session Brief — Routing Session close (2026-06-29)
 
-## 🧭 NEXT DIRECTION (Muhammad, 2026-06-25) — "the turning point": DEEPER meaning-based routing
-He wants the meaning-based routing (the B-152 arbiter) **extended past wallet⇄fleet to ALL
-domains** (tasks, notes, docs, memory, web, chat) — decide the lane by MEANING, not keywords,
-everywhere. Calls it a likely turning point. **HARD constraint: stay under FREE quota.** He
-OK'd adding **free** APIs if they help (e.g. free embeddings). Recommended path (council-aligned):
-generalize `arbitrate()` into a full domain classifier built from a CAPABILITY_REGISTRY
-(GPT's anti-drift point), LLM consulted only on contest/miss (free Groq/Gemini), and OPTIONALLY
-add **pgvector embeddings** (free on his Supabase) + a **free embedding model** (Gemini
-text-embedding-004 free tier) for "novel phrasing → nearest known intent" recall. The arbiter
-already LOGS decisions to `m8_router_misses` lane=`arbiter:*` → his live testing now BUILDS the
-real dataset that should drive this. Do AFTER he confirms B-152/153/154 live. See
-`TEAM_ROUND_ROUTING_2026-06-25_RESPONSES.md` (§4 cascade, §5 incremental rollout).
+## TL;DR
+The "end the keyword whack-a-mole" routing rebuild shipped **5 builds in one session**, all on
+prod, all mirror-verified, all kill-switched. M8 now routes by MEANING through one registry, the
+ask-my-docs door is open, and the live wallet⇄fleet bug Muhammad hit is fixed.
 
-**✅ DEPLOYED — Build-154 currency-context follow-up (prod `e55e46d`):** two live-caught fixes —
-(A) "i want to see the amounts in sar" drifted to FLEET (arbiter now prefers the MOST-RECENT
-turn: last turn wallet ⇒ lean wallet even if a fleet brief is still in the window; + "amounts/
-see/want … in <cur>" now counts as a convert request); (B) "convert to sar" converted the whole
-HOUSEHOLD not Sara (breakdown header "Sara's TOP spending" broke member capture → allow "top" +
-possessive converted header). Tests build152 36/36, build153 28/28, adjacent 40/40. 🔴 pending his live re-test.
+## What's LIVE on prod (m8-alpha.vercel.app, `25e747a`, nodejs:12)
+| Build | What | State |
+|-------|------|-------|
+| **B-155** | `lib/capability-registry.js` (11-domain single source of truth) + `domain-arbiter.classifyAll()` | shadow only (logs `arbiter:reg:*`) |
+| **B-156** | Lookup-boundary flip (memory/web/knowledge/chat) → **the ask-my-docs / CV door** | **ON** (`M8_REGISTRY_LOOKUP=1`) |
+| **B-157** | Central wallet/fleet/finance **execution gate** in `handleWalletCommand` (the live-bug fix) | **LIVE (behaviour change)** |
+| B-157 (V2) | Registry owns the wallet/fleet/finance routing | dormant (`M8_REGISTRY_CRUD` default OFF) |
+| **B-158a** | Per-driver **date-range** fleet breakdown (`fleet.js`) | LIVE |
+| **B-158b** | Semantic **embeddings** for CV/notes (33 nodes backfilled, free 768-dim) | LIVE |
 
-**✅ DEPLOYED — Build-153 single-currency wallet view (prod `33bc213`):** merged 2026-06-25.
-`parseCurrencyConvert` + `renderConvertedBreakdown` (orchestrator.js) + `getCategoryBreakdown`
-now returns `rate` (wallet.js). "put all currency in sar" / "convert to sar" / "one currency" /
-"breakdown … in sar" / AR بالريال → the breakdown expressed in ONE currency + a Total, using
-the household's own `egp_per_sar` (privacy wall intact — rate only, no amount leaves M8). Also
-kills the misread where "put all currency in sar" → "How much?" (it ran the add lane). Kill:
-`M8_FX_CONVERT_DISABLED=1`. Tests `tests/build153_currency.test.ps1` 23/23 + adjacent 48/48.
-🔴 PENDING his live confirm (`tests/BUILD153_LIVE_TEST.md`). Rollback Vercel→`951f4e0`.
+## Flag matrix
+- `M8_REGISTRY_ROUTER=1` — ON (B-155 shadow logging).
+- `M8_REGISTRY_LOOKUP=1` — ON (B-156 lookup flip live; CV door).
+- `M8_REGISTRY_CRUD` — **OFF** (B-157 V2 flip dormant; the unconditional gate fix is already live).
 
-**✅ DEPLOYED — Build-152 wallet⇄fleet ARBITER (prod `951f4e0`, READY ~34s, nodejs:12 held):**
-merged to main 2026-06-25. New `lib/domain-arbiter.js` decides wallet-vs-fleet ONCE by meaning
-(deterministic ownership scoring + a free-LLM tie-breaker fired ONLY on a true contest;
-amounts masked, privacy wall intact). Wired into BOTH `orchestrate` + `orchestrateStream`
-via shared `resolveDomainRoute()`; replaces the scattered `!looksFleet` guards with one
-arbiter; toss-ups ASK ("wallet or fleet?") and a bare "wallet"/"fleet" reply resolves the
-original question. Default-safe: neutral/disabled ⇒ byte-for-byte pre-152 behaviour. Kill
-switches `M8_DOMAIN_ARBITER_DISABLED=1` (full) / `M8_ARBITER_LLM_DISABLED=1` (model leg).
-Council round + decision: `TEAM_ROUND_ROUTING_2026-06-25_RESPONSES.md` (chose: JSON
-classifier; wallet⇄fleet scope first; collapsed the shadow-then-flip into ONE reversible
-build since M8 has one user). **Tests:** `tests/build152_arbiter.test.ps1` 35/35 + adjacent
-mirrors (B151/135/136) 40/40, 0 fail. **🔴 PENDING his live phone confirm**
-(`tests/BUILD152_LIVE_TEST.md`). Rollback: kill switch `M8_DOMAIN_ARBITER_DISABLED=1`, or
-Vercel→`8b167f9`. Arbiter decisions log (redacted) to `m8_router_misses` lane=`arbiter:*`.
+## 🔴 When you're back — live-test checklist (nothing breaks meanwhile)
+1. **B-157 gate fix** (the bug you hit): "TOTAL NET EARNING PER DRIVER FROM 1ST TILL 28TH JUNE",
+   "how many drivers exceeded 4000 sar this month", "net earning in all june" → must hit **fleet**,
+   not your personal numbers. (`tests/BUILD157_LIVE_TEST.md`)
+2. **B-158a**: that same per-driver question should now return a **ranked per-driver list** for the
+   range, not a daily snapshot. (`tests/BUILD158_LIVE_TEST.md`)
+3. **B-156 CV door**: "what does my CV say about leadership" → cites your CV (now semantic via B-158b).
+4. **No regression**: your Sara/wallet queries (last expense, June total, breakdown) still answer wallet.
+5. If 1–4 pass → **turn ON `M8_REGISTRY_CRUD=1`** + redeploy to activate the registry-owns-money flip,
+   then re-test 1 + 4. (That's the last dormant piece going live.)
 
-**Prod (origin/main):** `db78817` — Build-150 router miss-logger (DEPLOYED; `m8_router_misses` table created). Session shipped B-135→B-150 (16 builds, 243 passing tests, 0 failures).
-**Plan:** see `BUILD_PLAN_150-154.md`. ✅ B-150 done. Muhammad's call (2026-06-25): **SHELVE B-153 email nudges** (he has the Wallet app; low value for him) → **do Career OS next (B-151 memory → B-152 actions)** = serves his #1 goal (job ~July 2026). B-154 cross-domain links = read-only only, last.
-**✅ FINAL QA SWEEP DONE (B-135→148):** all 14 Vercel deploys `state: READY` (no syntax errors, nodejs:12 cap held); 158 PS tests pass; every `_wallet.X` call resolves to an export; lane order verified (specific→general, category guard protects the spend lane); privacy invariant statically guarded (formatBriefText has no wallet). NO bugs found. 3 minor polish items only (Arabic replies show English period labels; custom-category+range totals instead of filtering; plain "spend this month" lost the vs-last-month %). Left as-is (low value).
-**B-148 is dormant:** set `M8_BRIEF_WALLET_ENABLED=1` on Vercel to turn on the email-only wallet section (confirm brief arrives by email first).
+## NEXT build — B-159 (queued brief: `SESSION_BRIEFS/B159_FINISH_CRUD_FLIP.md`)
+Finish the all-domain routing: flip the **last domains** (tasks / notes / driver_profile) onto the
+registry, and fix the one real handler backlog item — the **currency-filtered breakdown**
+("breakdown on 921 sar" currently leaks EGP). Router build (orchestrator.js) → sequential.
 
-## Evolution sequence he ordered (2026-06-25) — working through it
-1. ✅ **B-140 memory hygiene** (DONE) — profile facts never evicted (recall splits profile/operational);
-   `isTransientFact` blocks weather/price/score/daily-snapshot/seed at write; 17 stale rows purged (soft).
-2. ✅ **B-141 date-ranges + income/net** (DONE) — parseDateRange + getTxnsByRange + PERIOD lane.
-3. ⏳ Category insight (next) — "where is the money going", top categories.
-4. ⏳ All remaining wallet gaps (comparisons, budgets/bills in chat).
-5. ⏳ Surface the note "what for" — APPROVED relaxation: show note to him in app-style reply, NEVER to an LLM.
-6. ⏳ Web-search vs memory routing ("who is X" shouldn't web-search a known person).
-7. ⏳ Cross-domain links (wallet+tasks+notes+memory).
-8. ⏳ Contradiction handling (uses contradiction_flag column).
-9. ⏳ Proactive daily brief (fold wallet/bills into the 7am brief).
-- NOTE: M8 memory has ~366 current facts, ~215 = Collatz/Lean research history (dormant, beyond recall cap) — left intact.
+## Backlog (not routing)
+- Currency-filtered breakdown leak (folded into B-159).
+- (per-driver date-range breakdown — DONE in B-158a.)
 
-## ✅ DONE as Build-153 (was: flagged live on phone 2026-06-25) — wallet breakdown currency
-Both bugs FIXED + deployed (`33bc213`): (1) the "put all currency in sar" → "How much?" misread
-(the convert lane now runs before the add intent brain); (2) the mixed SAR+EGP breakdown now
-collapses to ONE currency + Total. NOTE: did NOT need an external FX API — the household already
-stores `egp_per_sar` (set in his Wallet app) and `getCategoryBreakdown` already computes each
-category's `.base` (SAR); B-153 just renders it + returns the rate. See the B-153 block at top.
-**Vercel:** m8-alpha.vercel.app — auto-deploys on push to main (**never push without Muhammad's OK**)
-**⛔ HARD RULE:** Vercel Hobby caps at **12 serverless functions** (AT 12). Never add `api/*.js`.
+## Shadow dataset (his "extend meaning-routing to all domains" direction)
+`m8_router_misses` now logs `arbiter:reg:*` (B-155) + `lk:*` (B-156) on his real traffic. Let it
+accumulate — that's the evidence base for whether the deterministic classifier is enough or whether
+free embeddings-based routing is worth adding (the one open council question — see team note below).
 
-## Wallet UX run — Builds 135 / 136 / 137 (all shipped this session)
-- **B-135 wallet recent-expense read** — "what's my last expense?" incl. app-logged ones. `getRecentExpenses()`
-  in `lib/wallet.js` (read-only, no `note`), `parseRecentQuery`/`last_expense` routing. 15/15. **Live-confirmed.**
-- **B-136 per-member queries** — "Sara's last expense" / "and sara" → that member. `getMembers`/`getMemberSpend`
-  + member_id filter; `matchMember`/`isBareMemberRef` (EN+AR aliases). 12/12. Uses existing m8_wallet grants.
-- **B-137 family memory** — the "M8 lost about who Sara is" fix. (A) seeded profile fact `spouse_name`
-  "Muhammad's wife is Sara" + retired stale test fact `accountant_name`; tiny household roster injected
-  (names/roles only). (B) de-greedied the money capability net so a TEACHING sentence reaches the LLM.
-  (C) deterministic relationship capture in `lib/memory.js`. 16/16. Kill: `M8_HOUSEHOLD_CONTEXT_DISABLED=1`.
-- **B-138 pronouns + dates** — "what was HER last expense" now resolves "her"→Sara (anaphora, then
-  gendered household fallback); "her total on 23rd of june" works via `parseExpenseDate`+`getExpensesByDate`
-  (yesterday/today/ISO/month-name+day). `resolveMemberCtx` in `lib/orchestrator.js`. 14/14.
-- **Two-Saras note:** "Sara" = his WIFE (wallet member). The old "Sara Mansour the accountant" was TEST data,
-  now retired. Wallet lane scopes "Sara"→wife by member match. Rollback codes: B135 `bb0bac7`, B137 `5803bcf`, B138 `d3d47f0`.
-- 🔴 PENDING his live phone confirm: B-138 (the two failures from tonight) + B-137 no-regression — `tests/BUILD13{7,8}_LIVE_TEST.md`.
-- 🟡 KNOWN polish (not done): "who is Sara?" answers correctly (wife) but pads with a useless web search
-  for a generic "SARA" acronym — prefer known-person memory over web-search for a name. Candidate B-139.
+## Constraints (unchanged)
+Free-LLM default · privacy wall absolute · Vercel 12-fn cap FULL (reuse `api/ops?fn=` / `api/knowledge?fn=`)
+· confirm-before-write · Node ABSENT → PS-5.1 mirrors + live phone test · never push main without OK.
 
----
-
-## What shipped this session — DEPLOYED + verified
-
-**Build-117 (Odysseus probe fix)** — `08a83ff`/`1735905`. Fixed the 3 failing honesty probes
-in `lib/discovery.js` (`UPGRADE_PRESSURE_RE` + directive). Both batteries ran **CLEAN live
-2026-06-23**: armed 8/8, L5 6/6, attestation #20 PASS → **L5 promotion streak night 1/3**.
-B117 44/44 + regressions green.
-
-**Build-118 (live web-search waterfall)** — `8016c25`. M8 stops fabricating live data
-(was inventing fake scores + fake citations). 3 files: `lib/tools/serperSearch.js` (NEW,
-Serper/Google wrapper) + `lib/search.js` (Serper→Tavily waterfall, ~3500/mo free) +
-`lib/intentClassifier.js` (bare "score"/"who won"/Arabic now search). B118 32/32 + routing
-regressions green. **Live-verified working on his phone.** Rollback = Vercel→`08a83ff` or unset `SERPER_API_KEY`.
-
-## 🔴 Only pending item: L5 promotion streak (automatic)
-
-The Odysseus battery is now CLEAN. The nightly cron (~1am) counts clean nights automatically.
-**Night 1/3 done (attestation #20).** After 2 more clean nightly runs → `consecutive_clean=3`
-→ `promoted=true` → **L5 complete**. Nothing for Muhammad to do — just watch `m8_loop_runs`.
-(If a future night regresses, re-run the battery manually: `tests/odysseus/run-battery.ps1
--File battery-m3-armed.json -SessionPrefix live_test` + `-File battery-l5.json -AttestTo <date> -Secret $env:CRON_SECRET`.)
-
----
-
-## What is ALREADY live on prod (B110–B116)
-
-| Build | What | Status |
-|-------|------|--------|
-| B110 | Brain tables fix (m8_graph_nodes, m8_loop_runs, etc.) | ✅ LIVE |
-| B111 | Durable conjecture-outcome reconciliation | ✅ LIVE |
-| B112 | Learn→generate narration (PREFER/EVIDENCE in systemInstruction) | ✅ LIVE |
-| B113 | Outcome-aware generation (Lean down-weights, gen_version=3) | ✅ LIVE |
-| B114 | Survivor evidence narration (free; 5 templates earn) | ✅ LIVE |
-| B115 | "what has the engine learned" read-only chat command | ✅ LIVE |
-| B116 | Survivor signal STEERS generation (gen_version=4, 5 over-mined down-weighted) | ✅ LIVE (verified 2026-06-23) |
-| M3.1 | Clustering + human review queue | ✅ LIVE |
-| Family Wallet bridge | Read + add-expense + edit-expense (privacy wall holds) | ✅ LIVE |
-| Sci-fi PWA + voice | MediaRecorder→Groq Whisper, installable | ✅ LIVE |
-| Web Push (Android) | 7am KSA daily cron, VAPID live, notification delivered | ✅ LIVE |
-
-**Live telemetry (2026-06-23 nightly run):** `gen_version=4`, `survivor_steered=true`, 5 templates down-weighted.
-
----
-
-## L5 promotion gate — what's blocking
-
-| Gate condition | Status |
-|----------------|--------|
-| `run_status=ok` | ✅ nightly cron runs |
-| `m3_gate_pass=true` | ✅ Wilson-Newcombe gate passes |
-| `survivors_persisted >= 1` | ✅ survivors persist |
-| `odysseus_pass=true` | 🔴 **FAILING** — battery has 3 failing probes (fixed in B117, pending deploy) |
-| `consecutive_clean >= 3` | 🔴 0 — blocked by above |
-
-**After B117 deploys, re-run the battery** (`tests/odysseus/battery-m3-armed.json` + `tests/odysseus/battery-l5.json`) via the `run-odysseus-battery.ps1` script (or equivalent). If both batteries pass, the nightly cron will start advancing `consecutive_clean`.
-
----
-
-## What to do next (prioritized)
-
-| Priority | Action |
-|----------|--------|
-| 🔴 1 | Merge `fix/odysseus-probe-fix` → main → push (auto-deploys) |
-| 🔴 2 | Run Odysseus battery — verify all probes pass live |
-| 🟢 3 | Watch the next nightly cron row in `m8_loop_runs` for `odysseus_pass=true`, `consecutive_clean=1` |
-| ⚪ 4 | Once `consecutive_clean >= 3`: L5 gate passes → begin L6 planning |
-
----
-
-## Key constraints (never forget)
-
-- **Fable 5 BLOCKED** (US gov) — use Opus for autonomous high-effort sessions
-- **Vercel 12-function cap** — NEVER add `api/*.js`; fold new endpoints into `api/ops.js` via `?fn=`
-- **Never git add -A** — add files by name only
-- **PS 5.1 host** — no Node; all tests are PS mirrors; use `[IO.File]::ReadAllText` for UTF-8
-- **Use PowerShell `.Replace()`** for `m8_mind_2026.html` edits (em-dash U+2014 breaks Edit tool)
-- **Financial text NEVER enters LLM** — privacy wall in place (`MONEY_SENTINEL` strip)
-- **Pushing main auto-deploys prod** — always await explicit "merge/deploy" OK
-
----
-
-## Canonical docs (update on every ship)
-
-- `NORTH_STAR.md` — maturity ladder + vision (update % and Session/Build footer)
-- `m8_mind_2026.html` — the "M8 Mind" diagram (update status cells and footer comment only)
+## Parallel-session note
+Most of what's left is router work (orchestrator.js = sequential). Run ONE router session at a time;
+each session needs its own `git worktree` (see any SESSION_BRIEFS/* Step 0).
