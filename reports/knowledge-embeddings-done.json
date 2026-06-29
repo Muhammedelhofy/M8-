@@ -1,0 +1,80 @@
+{
+  "build": "158",
+  "branch": "feat/knowledge-embeddings",
+  "date": "2026-06-29",
+  "title": "Semantic retrieval (embeddings) for knowledge-source nodes",
+  "status": "READY_FOR_REVIEW",
+
+  "gap_confirmed": {
+    "nodes_without_embeddings": 33,
+    "node_ids": "247-279",
+    "source_ids": [34, 35, 36, 37],
+    "source_descriptions": {
+      "34": "vault note: career-positioning",
+      "35": "vault note: job-search-strategy",
+      "36": "vault note: bolt-fleet-intelligence",
+      "37": "CV PDF (18 nodes)"
+    },
+    "rpc_exists": "match_kg_nodes (cosine <=> , vector(768), filters embedding IS NOT NULL)",
+    "embed_infra_exists": "embedText() in memory-graph.js (gemini-embedding-001, 768-dim, free, L2-normalized)"
+  },
+
+  "what_was_built": {
+    "backfillKnowledgeEmbeddings": {
+      "file": "lib/knowledge-intake.js",
+      "description": "Generates and stores embeddings for null-embedding nodes in given source_doc_ids",
+      "model": "gemini-embedding-001 (free, 768-dim) via existing embedText() -- same model as rest of graph so vectors are comparable",
+      "idempotent": true,
+      "default_sources": [34, 35, 36, 37]
+    },
+    "api_endpoint": {
+      "file": "api/knowledge.js",
+      "fn": "embed-backfill",
+      "method": "POST",
+      "body": "{ source_ids?: number[], limit?: number }",
+      "no_new_vercel_function": true
+    },
+    "searchKnowledgeGraph": {
+      "note": "UNCHANGED -- already hybrid (semantic via match_kg_nodes RPC -> keyword ILIKE fallback). Gap was the missing embeddings, not the search code.",
+      "signature_unchanged": true
+    },
+    "future_ingest": {
+      "note": "Already covered -- populateGraph() calls embedText() on every new node insert."
+    }
+  },
+
+  "test": {
+    "file": "tests/knowledge-embeddings.test.ps1",
+    "result": "45/45 PASS",
+    "covers": [
+      "hybrid routing: semantic >= 2 hits -> use semantic",
+      "hybrid routing: <2 hits / error -> keyword fallback",
+      "hybrid routing: exactly-at-threshold (2 hits)",
+      "output format [Claim] / [Entity] prefix",
+      "backfill default source IDs (34-37)",
+      "backfill accounting: all-success, partial-fail, empty, all-fail",
+      "CV content sanity: 'management' in content (not label) -> keyword miss on label but sem/content hit",
+      "careem node: 'team' in content (not label) -> same pattern"
+    ]
+  },
+
+  "model_note": "Brief specified text-embedding-004; used gemini-embedding-001 instead because: (1) existing graph nodes use gemini-embedding-001 -- mixing models produces incompatible vectors; (2) both are free tier; (3) user can override via GRAPH_EMBED_MODEL=text-embedding-004 env var + re-embed sweep if they want to migrate later.",
+
+  "live_test": {
+    "step1": "POST /api/knowledge?fn=embed-backfill with body {source_ids:[34,35,36,37]} -- expect embedded:33",
+    "step2": "M8 chat: 'what does my CV say about team leadership' -- expect nine-core-competencies-ops-supply node",
+    "step3": "M8 chat: 'Vodafone' -- expect vodafone-top-achiever-q4-2016 (keyword fallback)"
+  },
+
+  "files_changed": [
+    "lib/knowledge-intake.js (added backfillKnowledgeEmbeddings + export)",
+    "api/knowledge.js (added fn=embed-backfill case)",
+    "tests/knowledge-embeddings.test.ps1 (new, 45 assertions)",
+    "reports/knowledge-embeddings-done.json (this file)"
+  ],
+
+  "backward_compatible": true,
+  "no_new_api_file": true,
+  "orchestrator_untouched": true,
+  "searchKnowledgeGraph_signature_unchanged": true
+}
