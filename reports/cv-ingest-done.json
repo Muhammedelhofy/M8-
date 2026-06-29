@@ -1,0 +1,39 @@
+{
+  "status": "done",
+  "branch": "feat/cv-ingest",
+  "date": "2026-06-29",
+  "session": "CV Ingest parallel session",
+
+  "source_id": 37,
+  "source_title": "Mohamed El-Hofy -- Full CV (Updated 2025)",
+  "source_file": "Mohamed_ElHofy_CV_Updated.pdf",
+  "word_count": 490,
+
+  "node_ids": [262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279],
+  "node_count": 18,
+
+  "skipped": {
+    "phone_number": "excluded from raw_text and node content -- PII",
+    "email_address": "excluded from raw_text and node content -- PII",
+    "salary_figures": "none present in CV (no exclusion needed)",
+    "embeddings": "DEFERRED -- no free embedding path; nodes inserted with embedding=NULL; ILIKE keyword retrieval active"
+  },
+
+  "smoke_test": {
+    "pass": true,
+    "careem_hits": { "count": 9, "pass": true },
+    "supply_hits": { "count": 9, "pass": true },
+    "ops_hits": { "count": 4, "pass": true },
+    "total_cv_nodes": { "count": 18, "pass": true },
+    "source_row_present": { "id": 37, "pass": true }
+  },
+
+  "cumulative_totals": {
+    "sources": 4,
+    "nodes": 33,
+    "source_id_range": "34-37",
+    "node_id_range": "247-279"
+  },
+
+  "next": "B-158 (or equivalent) wires the knowledge lane in the orchestrator so M8 routes CV-related queries to searchKnowledgeGraph(). Content is live in DB; retrieval verified."
+}
