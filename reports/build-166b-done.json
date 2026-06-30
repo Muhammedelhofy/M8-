@@ -1,0 +1,33 @@
+{
+  "build": "B-166b",
+  "title": "KG retrieval fix -- relevance-rank the keyword fallback so a distinctive term ('kafala') beats a common one ('operation')",
+  "branch": "feat/b166b-kg-retrieval-rank",
+  "worktree": "../../M8-b166b (off origin/main @ 7c431b0 = the merged B-166)",
+  "status": "code complete; offline-verified (new PS mirror all-pass + 10/10 regression green); NOT deployed -- pending merge->main. This is the LAST MILE that makes the B-166 kafala routing fix actually serve his docs.",
+  "why_this_exists": "B-166 routing was PROVEN on prod (kafala -> sem-flip:knowledge -> lk:knowledge), but the live answer was still a GENERIC kafala definition. Vercel runtime logs showed the cause: searchKnowledgeGraph's semantic embed TIMED OUT ('graph embed error: embed timeout') -> fell to the keyword path -> which returned a confidence-ranked CAREER GRAB-BAG (6 items, 'legal' playbook) instead of his 3 specific kafala nodes. So routing was fixed but RETRIEVAL ranking buried the on-topic content.",
+  "root_cause": "lib/knowledge-intake.js searchKnowledgeGraph keyword fallback: `.or(<any word>).order('confidence', desc).limit(limit*2)`. The common word 'operation' matches ~13 high-confidence career nodes; 'kafala' matches only 3 (conf 0.8). Ordering by confidence + capping at limit*2 (=12) put the generic 0.9 career nodes first and truncated the specific kafala nodes (conf 0.8) out of the top-6 entirely.",
+  "content_was_there_all_along": "His graph HAS the right nodes (verified in m8_graph_nodes): id 249 'current-role-alkhair-alwaffer-riyadh ... kafala/delivery operations', id 285 'kafala-delivery-model-iqama-bikes-platform-profit (sponsors foreign workers/iqama, company bikes, Keeta/HungerStation/Noon/Jahez, platform profit)', id 287 'saudi-kafala-compliance-muqeem-tafweed-tamm'. This was a ranking miss, NOT a content gap.",
+  "fix": "Relevance-rank the keyword fallback (IDF-style), embed-independent: (1) fetch a BROAD candidate pool (KG_KW_CANDIDATES=50, >= the whole 226-node graph's match set today) WITHOUT confidence ordering, so a low-confidence on-topic node survives to ranking; (2) weight each query word by rarity in the pool -- weight(w)=log(1 + N/df(w)) -- so 'kafala' (df=3) outweighs 'operation' (df=5..13); (3) score each node = sum of matched-word weights; sort by score desc, tie-break confidence desc; (4) dedupe, take top `limit`. The SEMANTIC path (match_kg_nodes, threshold 0.65) is UNTOUCHED -- this only improves the fallback that runs when the embed is unavailable/thin.",
+  "verified_ranking": "PS mirror on a fixture faithful to his real nodes: node 249 (kafala+operation) ranks #1; nodes 285 + 287 (kafala-only, conf 0.8) outrank the conf-0.9 'operation'-only career nodes; ALL THREE kafala nodes land in the top-6. The OLD confidence order put all three 0.9 career nodes first (the bug).",
+  "files": [
+    "lib/knowledge-intake.js (searchKnowledgeGraph: + KG_KW_CANDIDATES const; keyword fetch selects confidence, drops the confidence .order(), broadens the limit; + IDF relevance ranking; docstring updated)",
+    "tests/build166b_kg_retrieval_rank.test.ps1 (NEW -- mirrors the IDF ranking on the real kafala fixture + static JS-wire checks; all pass)",
+    "reports/build-166b-done.json"
+  ],
+  "not_touched": [
+    "the SEMANTIC path (match_kg_nodes RPC, KG_SEM_THRESHOLD 0.65, KG_SEM_MIN_HITS 2) -- unchanged; the fallback fix is purely additive",
+    "the B-166 router/flip (orchestrator.js, semantic-router.js) -- routing already proven; this is the retrieval layer",
+    "the privacy wall / money lanes / Vercel 12-fn cap (no new api/*.js)"
+  ],
+  "tests": {
+    "new_mirror": "tests/build166b_kg_retrieval_rank.test.ps1 -- all PASS: [1] IDF ranking surfaces the 3 kafala nodes above the high-confidence career nodes (and the old confidence order buried them); [2] graceful single-word degrade (equal IDF -> confidence tie-break); [3] static JS wire (KG_KW_CANDIDATES, fetch NOT confidence-ordered, selects confidence, IDF Math.log/df ranking, semantic path intact).",
+    "regression": "10/10 GREEN: build152/155/156/157/160/163/164/165/166 + build166b(new).",
+    "ps_gotchas_hit": "two PS-5.1 mirror traps caught + fixed (per the standing note): (a) $n vs $N are the SAME variable (case-insensitive) -> duplicate-parameter; (b) a 1-element array returned from a PS function unwraps to a scalar string -> wrap the call site in @(). Both are mirror artifacts; the JS is array-correct."
+  },
+  "live_verification_prod": {
+    "status": "PENDING merge->main. After deploy I POST 'tell me about my kafala operation' to https://m8-alpha.vercel.app/api/chat and expect his ACTUAL operation (Alkhair Alwaffer, iqama/Muqeem/Tafweed/Tamm, bikes, Keeta/HungerStation) -- NOT a textbook definition.",
+    "note": "The semantic embed timeout is provider-latency variance; this fix makes the keyword fallback robust so the right nodes surface EVEN WHEN the embed times out (as it did live)."
+  },
+  "deploy": "Branch pushed; merge feat/b166b-kg-retrieval-rank -> main on OK (already have his 'fix retrieval now'). No new env flag needed (this is an unconditional retrieval-quality improvement; reversible via Vercel rollback to 7c431b0). Prod auto-deploys on push to main.",
+  "numbering": "Named B-166b (direct follow-on completing B-166's kafala headline). The planned B-167 grounding/honesty-guard build (SESSION_BRIEFS/B167) is unaffected and still next."
+}
