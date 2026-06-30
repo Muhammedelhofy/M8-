@@ -174,6 +174,7 @@ Check "decline SAVES then RETURNS (conversation continuity)" (($orc.Contains('aw
 Check "KG hit forces the CITED docs path (never web-scrape)" (($orc.Contains('grounding_guard_kg_hit')) -and ($orc.Contains('forceKnowledgeLookup = true;')))
 Check "consented search uses search(_ggAcceptedSearch, INTENT.LOOKUP)" ($orc.Contains('searchData = await search(_ggAcceptedSearch, INTENT.LOOKUP)'))
 Check "follow-up resolves the asked name via the arbiter helper" ($orc.Contains('_arbiter.originalQuestion(history)'))
+Check "offer detection has a visible-phrase fallback (zero-width sentinel can be stripped in transit)" ($orc.Contains('search the web for a public figure by that name'))
 Check "NONE-router gate carries the new !_ggAcceptedSearch term" ($orc.Contains('!entityCardSuppressSearch && !forceKnowledgeLookup && !_ggAcceptedSearch)'))
 Check "GROUNDING_SENTINEL marker defined" ($orc.Contains('const GROUNDING_SENTINEL'))
 Check "guard helpers present" (($orc.Contains('function looksLikePersonName')) -and ($orc.Contains('function asksContactInfo')) -and ($orc.Contains('function cleanEntityLabel')) -and ($orc.Contains('function lastWasGroundingOffer')) -and ($orc.Contains('function looksAffirmative')))
