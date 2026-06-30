@@ -1,0 +1,71 @@
+{
+  "build": "B-166",
+  "title": "SEMANTIC FLIP -- let the B-164 semantic router ACT as a tie-breaker (safe read-only lanes only), behind M8_SEMANTIC_FLIP",
+  "branch": "feat/b166-semantic-flip",
+  "worktree": "../../M8-b166 (off origin/main @ ec317ca = the merged B-164 shadow + B-165 wallet)",
+  "status": "code complete; offline-verified (new PS mirror all-pass + 9/9 regression green incl. updated B-164); NOT deployed -- pending Muhammad's OK to (1) merge feat/b166-semantic-flip -> main and (2) set M8_SEMANTIC_FLIP=1 on Vercel prod. Flag is DEFAULT OFF, so merging is inert/safe; the flip only activates when the env flag is set. Prod /api/chat is the only real proof (PS mirrors can't run the JS or embed).",
+  "goal": "On the turns where the DETERMINISTIC router is UNSURE, adopt the B-164 semantic pick -- but ONLY when it is confident+decisive AND lands in a SAFE read-only lane {knowledge, web, memory}. Headline win: 'tell me about my kafala operation' (and doc-topic questions like it) finally route to his INGESTED docs (cited KG path), not a generic memory/web answer.",
+
+  "threshold_decision": {
+    "chosen": "FLIP_CONF (T) = 0.85, FLIP_MARGIN (M) = 0.15, FLIP_SAFE_DOMAINS = {knowledge, web, memory}",
+    "where_from": "Set from the B-164 shadow dataset on BOLT Supabase ltqpoupferwituusxwal -> m8_router_misses, lane like 'arbiter:sem:%', 2026-06-29 -> 06-30 (the full shadow log since B-164 merged). Each arbiter:sem:<domain> row was paired (by redacted message + <=15s) to the SAME turn's REAL lane to sort true-fixes from false-positives.",
+    "only_safe_lane_picks_can_be_adopted": "Of all sem shadow picks, only domain in {knowledge, web, memory} is adoptable. Distribution: wallet 15, finance 12, chat 9, knowledge 3, docs 2, notes 2, tasks 1, fleet 1, memory 1, web 0. Everything except knowledge/web/memory is domain-excluded (cannot be flipped), which is ALSO what keeps the wallet/fleet/finance money-safety lanes on the B-152 arbiter.",
+    "safe_lane_evidence": {
+      "TRUE_FIX": "'tell me about my kafala operation' -> sem:knowledge conf=0.94 margin=0.28 (logged twice, identical). REAL route was fleet@0.60 + lk:memory/reg:memory@0.70 -> served a generic memory/web answer. THIS is the one the flip must capture.",
+      "FALSE_POSITIVES_in_safe_lanes": [
+        "'so the ones at the top of that queue ... present those as our key findings. confirm' -> sem:knowledge conf=0.62 margin=0.01 (really a chat confirm).",
+        "'why did sara [spend] on a car in june?' -> sem:memory conf=0.69 margin=0.04 (really WALLET; arb routed it wallet@0.90 correctly)."
+      ]
+    },
+    "separation": "True fix sits at conf 0.94 / margin 0.28; the MAX safe-lane false positive is conf 0.69 / margin 0.04. Huge gap. T=0.85 (FP max 0.69 + 0.16 cushion, below 0.94 by 0.09) and M=0.15 (FP max 0.04 + 0.11 cushion, below 0.28 by 0.13) cut cleanly between them. STRICT per 'data is thin -> a missed fix is fine, a wrong override is not'; not overfit to the lone 0.94 point. Highest-conf NON-safe pick (wallet 0.79) is excluded TWICE: by domain (not in safe set) AND by conf (<0.85)."
+  },
+
+  "what_flips": {
+    "kafala_and_like": "'tell me about my kafala operation' (knowledge 0.94/0.28) -> ADOPT -> lookup={knowledge} -> forceKnowledgeLookup -> the existing cited knowledge-graph path (suppresses web + fleet, opens kgGate). No KG hit => soft fall-through (unchanged B-156/B-160 contract).",
+    "nothing_else_in_the_shadow": "With T=0.85/M=0.15 + safe-domain, the flip adopts EXACTLY 1 turn in the entire shadow dataset (kafala) and ZERO false positives. Every other shadow turn is unchanged."
+  },
+
+  "critical_design_note_prod_flag_interaction": "M8_REGISTRY_LOOKUP=1 is ALREADY live on prod (proven by the shadow: kafala logged lk:memory). So B-156 PRE-ATTACHES lookup={memory} for kafala BEFORE the flip runs. A naive `!lookup` guard would therefore BLOCK the flip and the kafala fix would NEVER fire on prod (classic 'mirror passes, live fails'). FIX: the flip overrides an EMPTY lookup OR the INERT telemetry-only `memory` attach (memory does nothing downstream -- orchestrator only logs it), but NEVER overrides an ACTING B-156 knowledge/web lookup. Guard = `(!lookup || lookup.domain === \"memory\")`.",
+
+  "files": [
+    "lib/semantic-router.js (+FLIP_CONF/FLIP_MARGIN/FLIP_SAFE_DOMAINS consts + pure shouldFlip(sem) predicate + exports; scoreSemantic/EXEMPLARS/cosine UNCHANGED)",
+    "lib/orchestrator.js (resolveDomainRoute: import shouldFlip; inside the existing B-164 !_clearWin block, after the shadow log, the flip sets lookup via the B-156 channel behind M8_SEMANTIC_FLIP + logs a distinct 'sem-flip:' lane)",
+    "tests/build166_semantic_flip.test.ps1 (NEW -- 45 checks, all pass)",
+    "tests/build164_semantic_router.test.ps1 (UPDATED -- the 'shadow block does NOT reassign lookup' assertion now reads 'lookup reassigned ONLY behind M8_SEMANTIC_FLIP'; arb/crud 'never touched' checks kept)",
+    "reports/build-166-done.json"
+  ],
+  "not_touched": [
+    "domain-arbiter.js (the B-152 wallet<->fleet money-safety decision `arb` is NEVER reassigned by the flip -- proven statically in the mirror)",
+    "the privacy wall (only message TEXT is embedded -- the B-164 contract; no money figure ever enters an embed or LLM prompt)",
+    "scoreSemantic / EXEMPLARS / cosine / embedExemplars (B-164 logic unchanged)",
+    "the B-156 downstream lookup consumers (forceKnowledgeLookup / web->LOOKUP) -- the flip REUSES the same already-tested channel, no new downstream code",
+    "No new api/*.js (Vercel 12-fn cap is full)"
+  ],
+
+  "safety": {
+    "money_lanes": "wallet/fleet/finance are NOT in FLIP_SAFE_DOMAINS -> shouldFlip() returns false for them even at conf/margin 0.99 -> the route stays on the B-152 arbiter. The flip never reassigns `arb`.",
+    "flag_off": "M8_SEMANTIC_FLIP unset/!=1 => the new branch is dead => byte-for-byte B-164 (regression suite proves this).",
+    "fail_safe": "The flip lives inside the existing B-164 try/catch; any error => pre-flip behaviour. It also only runs inside the !_clearWin cost guard (det must be UNSURE) so a confident keyword turn never reaches it.",
+    "no_override": "Never overrides an ACTING B-156 knowledge/web lookup (only empty or inert memory)."
+  },
+
+  "tests": {
+    "new_mirror": "tests/build166_semantic_flip.test.ps1 (45 checks, all PASS): [1] parses FLIP_CONF/FLIP_MARGIN/FLIP_SAFE_DOMAINS from the JS and asserts 0.85/0.15/{knowledge,web,memory} (drift trips it); [2] shouldFlip() truth table on the REAL shadow rows (kafala 0.94/0.28 ADOPT; queue-confirm 0.62/0.01 NO; sara-car memory 0.69/0.04 NO; boundary 0.85/0.15 inclusive; money lanes NO even at 0.99/0.99); [3] FULL gate (flag OFF=no-op; det clear-win=no flip; B-156 pre-attached memory=FLIP override [the real prod case]; acting knowledge/web=NO override; money=NO); [4] static wire (flag-gated, inside !_clearWin + try/catch, assigns only lookup never arb/crud, why=semantic_flip, distinct sem-flip lane).",
+    "regression": "9/9 GREEN (exit 0): build152_arbiter, build155_registry, build156_lookup, build157_walletfleet, build160_askmydocs, build163_routing, build164_semantic_router (updated), build165_wallet_range_breakdown, build166_semantic_flip(new). Baseline of all 8 pre-existing was captured GREEN on pristine origin/main BEFORE editing.",
+    "node_absent_caveat": "Host has no Node, so the mirrors re-implement the gate logic in PS-5.1 and statically parse the JS; they cannot execute orchestrator.js or embed. Real proof = the prod /api/chat test below (per the deploy-and-self-verify rule)."
+  },
+
+  "live_verification_prod": {
+    "status": "PENDING -- requires merge->main + M8_SEMANTIC_FLIP=1 on prod. To be filled with the real {response} from POSTing to https://m8-alpha.vercel.app/api/chat after deploy.",
+    "headline_before_after": "BEFORE: 'tell me about my kafala operation' -> generic memory/web answer (no docs). AFTER (flag on): cited answer from his ingested docs ([KG:*]).",
+    "queries_to_post": [
+      "tell me about my kafala operation   -> EXPECT: cited from his ingested docs (the kafala fix).",
+      "how much did Sara spend in June   -> EXPECT: UNCHANGED wallet answer (money lane untouched).",
+      "what was my fleet net profit on a given day   -> EXPECT: UNCHANGED fleet/finance answer.",
+      "good morning   -> EXPECT: UNCHANGED chat."
+    ]
+  },
+
+  "deploy": "Branch will be pushed. NOT merged. Sequence on his OK: (1) merge feat/b166-semantic-flip -> main (prod auto-deploys, atomic, ~30-60s; flag OFF so still inert = zero risk); (2) set M8_SEMANTIC_FLIP=1 in Vercel prod env (this activates the flip); (3) confirm READY; (4) I POST the queries above to the OPEN prod /api/chat and paste the real before/after. Rollback = unset M8_SEMANTIC_FLIP (instant, no redeploy) or Vercel rollback to ec317ca.",
+  "kill_switch": "Unset M8_SEMANTIC_FLIP (or set !=1) -> instant revert to B-164 behaviour, no code change/redeploy needed."
+}

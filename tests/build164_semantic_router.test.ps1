@@ -5,9 +5,10 @@
 #       (identical / orthogonal / opposite / 45deg / scale-invariant / bad input);
 #   (2) STATICALLY parses lib/semantic-router.js + lib/capability-registry.js to prove
 #       the EXEMPLARS map covers EVERY domain with NO empty list;
-#   (3) proves the orchestrator wire is SHADOW-ONLY: gated on M8_SEMANTIC_ROUTER === "1",
-#       logs lane "sem:"+domain, and re-assigns NONE of arb/lookup/crud (reads nothing
-#       back into the route -> flag-OFF is byte-for-byte pre-164, flag-ON is +1 log row);
+#   (3) proves the orchestrator wire reads nothing back under M8_SEMANTIC_ROUTER alone:
+#       gated on M8_SEMANTIC_ROUTER === "1", logs lane "sem:"+domain, never touches arb/crud,
+#       and reassigns lookup ONLY behind the SEPARATE B-166 M8_SEMANTIC_FLIP flag (so the
+#       shadow path -> flag-OFF is byte-for-byte pre-164, flag-ON is +1 log row);
 #   (4) proves the FAIL-SAFE contract: cosine returns 0 on bad input (logic) and
 #       scoreSemantic try/catch-returns null (static).
 #
@@ -96,8 +97,13 @@ if (($gi -ge 0) -and ($ri -gt $gi)) {
   Check "shadow block calls scoreSemantic" ($block.Contains('scoreSemantic'))
   Check "shadow block calls logRoute"      ($block.Contains('logRoute'))
   Check "shadow block does NOT reassign arb"    (-not [regex]::IsMatch($block, '\barb\s*='))
-  Check "shadow block does NOT reassign lookup" (-not [regex]::IsMatch($block, '\blookup\s*='))
   Check "shadow block does NOT reassign crud"   (-not [regex]::IsMatch($block, '\bcrud\s*='))
+  # B-166: the block MAY now set lookup, but ONLY behind the NEW M8_SEMANTIC_FLIP flag —
+  # the M8_SEMANTIC_ROUTER shadow path itself still reads NOTHING back. Prove the flip flag
+  # is present and precedes any lookup assignment, so flag-OFF stays byte-for-byte pre-164.
+  $lkM = [regex]::Match($block, '\blookup\s*=')
+  $flipIdx = $block.IndexOf('M8_SEMANTIC_FLIP')
+  Check "lookup reassigned ONLY behind M8_SEMANTIC_FLIP (flag-OFF = pre-164 shadow)" ((-not $lkM.Success) -or (($flipIdx -ge 0) -and ($lkM.Index -gt $flipIdx)))
   Check "shadow block has its own try/catch (never affects the turn)" ($block.Contains('catch'))
 }
 
