@@ -187,6 +187,8 @@ if (($gi -ge 0) -and ($gj -gt $gi)) {
   $block = $orc.Substring($gi, $gj - $gi)
   Check "guard block has its own try/catch (fail-open)" ($block.Contains('catch (e)') -and $block.Contains('grounding guard error'))
   Check "guard declines ONLY on a clean KG no-hit (_kgOk && !_kgHit)" ($block.Contains('_kgOk && !_kgHit'))
+  Check "grounding check searches KG by the CLEANED LABEL (not the full turn)" ($block.Contains('searchKnowledgeGraph(_label, 6)'))
+  Check "grounding check does NOT search by the full message (avoids phone/number false hits)" (-not $block.Contains('searchKnowledgeGraph(effectiveMessage'))
   Check "guard never reassigns arb/searchData inside the decision" ((-not [regex]::IsMatch($block, '\barb\s*=')) -and (-not [regex]::IsMatch($block, '\bsearchData\s*=')))
 }
 
