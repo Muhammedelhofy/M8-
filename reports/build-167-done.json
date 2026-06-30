@@ -3,7 +3,7 @@
   "title": "grounding / honesty guard -- stop the 'false info, off-topic' on personal-entity no-match",
   "branch": "feat/b167-grounding-guard",
   "worktree": "../../M8-b167 (isolated; off origin/main @ c715423 = B-166b merged)",
-  "status": "code-complete; PS mirror 54/54 + regression 10/10 GREEN; pending Muhammad's deploy OK to merge to main + flip M8_GROUNDING_GUARD=1, then SELF-VERIFY on prod",
+  "status": "DONE + PROD-VERIFIED. Merged to main (c9992be) + M8_GROUNDING_GUARD=1 set on prod by Muhammad. PS mirror 56/56 + regression 10/10 GREEN. Live before/after captured on prod /api/chat; all 6 probes pass. Live verify caught 3 follow-on bugs (167b/c/d), all fixed + re-verified.",
   "flag": "M8_GROUNDING_GUARD (default OFF). OFF = byte-for-byte pre-167 (proven by the regression set passing untouched).",
   "problem": {
     "one_liner": "A question framed about HIS world with NO match in HIS data reached for the web/generic-LLM and returned irrelevant junk instead of saying 'I don't have that.'",
@@ -50,12 +50,38 @@
     "syntax_backstop": "Node ABSENT on host; JS-aware bracket-balance check on orchestrator.js = balanced (5985 lines). Authoritative gate is Vercel's atomic build."
   },
   "live_verification": {
-    "status": "PENDING -- requires merge to main (flag OFF = safe, no behavior change) + M8_GROUNDING_GUARD=1 on Vercel prod, then I POST the probes to https://m8-alpha.vercel.app/api/chat and paste real before/after.",
-    "TEST1_khalid_phone": "PENDING -- expect: declines honestly, NO stranger's phone/email. (before = scrapes strangers' PII)",
-    "TEST2_kafala": "PENDING -- expect: cites his ingested docs (KG hit) OR declines honestly if no doc match. (before = generic encyclopedia answer)",
-    "TEST3_president_egypt_MUST_NOT_REGRESS": "PENDING -- expect: still answers (public/role web path).",
-    "TEST4_dubai_drivers_MUST_NOT_REGRESS": "PENDING -- expect: still 'no Dubai data, only your Saudi fleet'."
+    "status": "VERIFIED on prod (POST https://m8-alpha.vercel.app/api/chat). Flag M8_GROUNDING_GUARD=1 set on prod by Muhammad. Prod logs (get_runtime_logs) confirm the exact path per turn. NOTE: live verify caught TWO bugs (fixed in 167b/167c) -- see live_bugs_caught.",
+    "live_bugs_caught": [
+      "167b: searchKnowledgeGraph(effectiveMessage) keyword-matched 'phone'/'number' against unrelated nodes -> non-null for ANY name -> decline branch was dead (force-KG'd everything, regurgitating the prior turn's web strangers from MEMORY). Fixed: search the cleaned LABEL only.",
+      "167c: consent 'yes' didn't trigger the search -- lastWasGroundingOffer relied on the zero-width GROUNDING_SENTINEL which a JSON/client round-trip strips. Added a visible-phrase fallback.",
+      "167d (the real consent bug): GROUNDING_SENTINEL was built from U+2063 -- the EXACT MONEY_SENTINEL codepoint -- so the decline reply CONTAINED MONEY_SENTINEL. stripMoneyHistory (runs before the follow-up block) DELETED the decline turn from history, so lastWasGroundingOffer found nothing, and walletRefContext misrouted the 'yes' to the wallet lane. Switched the marker to U+2062 (codepoint-verified: decline no longer contains MONEY_SENTINEL). The arbiter's clarifier dodges this only because it is checked BEFORE stripMoneyHistory."
+    ],
+    "memory_hygiene": "Deleted my 20 probe rows (m8_conversations) + probe reflections, scoped session_id LIKE 'b167-%', so his real testing isn't polluted by the BEFORE strangers answer. m8_entities verified clean (no probe-created person cards). Probe rows from the v2 re-verify cleaned at the end too.",
+    "TEST1_khalid_phone": {
+      "before_guard_off": "FABRICATION/OFF-TOPIC: listed FIVE unrelated strangers from the web (OpenSanctions / World Aquatics athlete / Al Nassr lawyer / two professors) + a phone-less memory note. searchExecuted -> web.",
+      "after_guard_on": "FIXED. 'Boss, Khaled Otaibi is your warehouse manager. I don't have his phone number in my records.' -> grounded to HIS real person (fuzzy match suppressed the guard), NO strangers, NO web search (logs: searchExecuted:false). No stranger PII surfaced."
+    },
+    "TEST1b_fresh_unknown_name": {
+      "probe": "who is Tariq Bensaid and his phone number? (a name with no match anywhere)",
+      "after_guard_on": "FIXED + is the clean guard proof. Returned the decline VERBATIM: 'I don't have anyone or anything called \"Tariq Bensaid\" in your notes, contacts, or docs. Want me to search the web for a public figure by that name? (reply \"yes\" and I'll look)'. Logs: grounding_guard_declined, searchExecuted:false. NO stranger PII."
+    },
+    "TEST2_kafala": {
+      "before_guard_off": "ALREADY GOOD (B-166b): cited his real ops.",
+      "after_guard_on": "UNCHANGED/GOOD: cites his Muqeem/Tafweed/Tamm + Alkhair Alwafeer model. Logs: grounding_guard_kg_hit -> forceKnowledgeLookup -> kg_context_injected, searchExecuted:false. Preserved."
+    },
+    "TEST3_president_egypt_MUST_NOT_REGRESS": {
+      "before_guard_off": "Correct (el-Sisi, cited).",
+      "after_guard_on": "UNCHANGED: 'Abdel Fattah al-Sisi ... since 2014', cited BBC/Britannica/Wikipedia. isCheckableFact -> guard skipped -> public web path."
+    },
+    "TEST4_dubai_drivers_MUST_NOT_REGRESS": {
+      "before_guard_off": "Honest no-location-data.",
+      "after_guard_on": "UNCHANGED: 'I don't have your fleet data loaded for driver locations ...'. Not entity-card-shaped -> guard skipped."
+    },
+    "TEST5_consent_followup": {
+      "after_167d": "FIXED + VERIFIED. After the Tariq decline, 'yes' ran the CONSENTED web search. Prod logs: grounding_guard_offer_accepted q:'Tariq Bensaid' -> grounding_guard_search_done searchResults:8 -> toolDecision:search. Answer reported public LinkedIn/philosopher hits with an [unverified] prefix and STILL refused to hand over a phone number. The one place a bare name is web-searched -- explicit consent -- works, and privacy holds."
+    }
   },
+  "verdict": "ALL GREEN on prod (commit c9992be, flag M8_GROUNDING_GUARD=1). The #1 annoyance is fixed: a personal no-match no longer scrapes strangers' PII -- it declines honestly (or points to his real person), and only web-searches a bare name on an explicit 'yes'. The three working-honesty cases (public figure, fleet-no-data) did not regress. Memory probe rows cleaned (0 b167% rows remain).",
   "constraints_honored": {
     "privacy_wall": "intact -- never surfaces a third party's scraped PII for a bare-name query; KG path reads his ingested docs, never wallet money.",
     "free_llm": "no LLM/model changes; the guard is deterministic + reuses the existing free search.",
@@ -64,5 +90,5 @@
     "worktree_isolation": "all work in ../../M8-b167; git add only my own files.",
     "ran_after_b166": "branched off origin/main @ c715423 (B-166 semantic flip + B-166b KG rank already merged), so routing is already meaning-based; this guard handles the NO-MATCH case."
   },
-  "deploy": "Branch to be pushed (feat/b167-grounding-guard). NOT merged to main without explicit OK. Sequence on OK: merge to main (auto-deploys prod, flag still OFF = no change) -> Muhammad sets Vercel env M8_GROUNDING_GUARD=1 -> redeploy/effect -> I self-verify on prod + paste before/after. Rollback: unset the env var (instant, no code change), or revert the single orchestrator.js commit (Vercel rollback to c715423)."
+  "deploy": "DONE. main @ c9992be (prod dpl_5cqtu, READY, aliased to m8-alpha.vercel.app). Commits: 13dbf12 (guard) -> e810086 (167b label) -> 1351da0 (167c phrase) -> c9992be (167d sentinel codepoint). Flag M8_GROUNDING_GUARD=1 on Production. INSTANT ROLLBACK for Muhammad: unset/zero the M8_GROUNDING_GUARD env var + redeploy (no code change), or Vercel 'Rollback' to the c715423 (pre-B-167) deployment. Branch feat/b167-grounding-guard remains; main fast-forwarded to it."
 }
