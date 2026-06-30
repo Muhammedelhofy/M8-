@@ -1,0 +1,68 @@
+{
+  "build": "B-167",
+  "title": "grounding / honesty guard -- stop the 'false info, off-topic' on personal-entity no-match",
+  "branch": "feat/b167-grounding-guard",
+  "worktree": "../../M8-b167 (isolated; off origin/main @ c715423 = B-166b merged)",
+  "status": "code-complete; PS mirror 54/54 + regression 10/10 GREEN; pending Muhammad's deploy OK to merge to main + flip M8_GROUNDING_GUARD=1, then SELF-VERIFY on prod",
+  "flag": "M8_GROUNDING_GUARD (default OFF). OFF = byte-for-byte pre-167 (proven by the regression set passing untouched).",
+  "problem": {
+    "one_liner": "A question framed about HIS world with NO match in HIS data reached for the web/generic-LLM and returned irrelevant junk instead of saying 'I don't have that.'",
+    "real_prod_cases_2026-06-29": [
+      "'who is Khalid Al-Otaibi and his phone number?' -> web-scraped 4 random real strangers + handed back a phone # + email (off-topic + a stranger's PII).",
+      "'tell me about my kafala operation' -> a generic Wikipedia-style answer instead of HIS ingested docs (the no-match case; B-166b already serves it when his docs DO match)."
+    ],
+    "what_already_worked": "Data questions ground well: 'how many drivers in Dubai?' -> 'only your Saudi/Riyadh fleet, no Dubai data'; 'Feb 30 profit?' -> invalid date + no data. The guard must NOT regress these."
+  },
+  "root_cause": {
+    "path": "orchestrate() (api/chat; api/chat-stream delegates the bare 'who is X' case here and itself never web-searches). A 'who is <bare name>' classifies INTENT.NONE (isPersonal is narrow; isCheckableFact only matches role asks). The entity-card block finds no tracked card / member / profile -> entityCardSuppressSearch=false -> the NONE tool-decision router (decideAction) picks 'search' -> search() scrapes strangers. There was NO 'check his OWN stores, else decline' step for the no-match personal case."
+  },
+  "fix": {
+    "where": "lib/orchestrator.js orchestrate() entity-card block (single insertion point; covers both /api/chat and the delegating /api/chat-stream).",
+    "guard": "Behind M8_GROUNDING_GUARD: for an entity-card-shaped ask that is (a) NOT a public/role lookup (!isCheckableFact) and (b) PERSONAL-framed (a contact-info request, OR possessive 'tell me about my X', OR a bare proper-name label) with no tracked card / member / profile, check the remaining store -- the ingested KNOWLEDGE GRAPH. KG hit -> set forceKnowledgeLookup=true (serve CITED docs, never web-scrape). Clean KG no-hit -> return an honest bilingual decline + offer ('I don't have anyone/anything called \"X\" in your notes, contacts, or docs. Want me to search the web for a public figure by that name?') with an invisible GROUNDING_SENTINEL. Fail-OPEN: any error (incl. a KG error) falls through to pre-167 behaviour -- never a wrong decline.",
+    "consent_followup": "A short affirmative ('yes', 'go ahead', 'ابحث') right after that offer (detected via GROUNDING_SENTINEL in history + _arbiter.originalQuestion, mirroring the B-152 clarifier pattern) is the ONE place a bare personal name is web-searched -- explicit consent. It runs search() for the cleaned name and the existing compose injects results (or the empty-search honesty guard fires if nothing comes back).",
+    "privacy": "A bare-name personal query NEVER surfaces a stranger's PII: the no-match case declines; the consented search strips the contact tail (searches the NAME, not '...phone number')."
+  },
+  "no_over_block": {
+    "public_role": "'who is the president of Egypt' / 'who is the CEO of Uber' / 'who founded Google' -> isCheckableFact=true -> guard skipped -> normal web/LOOKUP path (unchanged).",
+    "concepts": "'tell me about quantum computing' -> not contact/possessive/name -> guard skipped -> normal path.",
+    "live_data": "'what is the score of brazil and morocco' / 'who is winning the match' -> not entity-shaped or 'match' stopword -> guard skipped -> LIVE_DATA search (unchanged).",
+    "fleet_data": "'how many drivers in Dubai?' -> not entity-card-shaped -> guard skipped -> the existing (working) fleet-honesty path answers it."
+  },
+  "files": [
+    "lib/orchestrator.js (import isCheckableFact; module helpers GROUNDING_SENTINEL/asksContactInfo/looksAffirmative/lastWasGroundingOffer/cleanEntityLabel/looksLikePersonName; orchestrate(): follow-up consent block, the guard block, the consented-search, and `&& !_ggAcceptedSearch` on the NONE-router gate)",
+    "tests/build167_grounding_guard.test.ps1 (NEW - 54/54 PASS)",
+    "reports/build-167-done.json"
+  ],
+  "files_added_to_git": [
+    "lib/orchestrator.js",
+    "tests/build167_grounding_guard.test.ps1",
+    "reports/build-167-done.json"
+  ],
+  "not_touched": [
+    "lib/intentClassifier.js (only ADDED isCheckableFact to orchestrator's import -- intentClassifier already exported it; file unchanged)",
+    "lib/domain-arbiter.js, lib/knowledge-intake.js, lib/search.js (UNCHANGED -- reused getEntityCard/matchMember/searchKnowledgeGraph/search/originalQuestion)",
+    "No new api/*.js (Vercel 12-function cap is full)"
+  ],
+  "tests": {
+    "mirror": "tests/build167_grounding_guard.test.ps1 = 54/54 PASS",
+    "what_it_guards": "[1] PS ports of every helper (entityCardName, isCheckableFact, asksContactInfo, possessive, cleanEntityLabel, looksLikePersonName, looksAffirmative) with truth tables. [2] the FULL personal-vs-public gate over the brief's real probes: Khalid+phone/no-match->DECLINE; flag OFF->off; public president/CEO->WEB; kafala+KG-hit->cited; kafala+no-hit->DECLINE; drivers-in-Dubai/score->SKIP. [3] STATIC orchestrator wire: flag-gated, fail-open try/catch, decline saves+returns, KG-hit forces cited path, consented search, router gate carries !_ggAcceptedSearch, guard never reassigns arb/searchData.",
+    "regression": "build152/155/156/157/160/163/164/165/166/166b = 10/10 PASS (flag OFF => byte-for-byte).",
+    "syntax_backstop": "Node ABSENT on host; JS-aware bracket-balance check on orchestrator.js = balanced (5985 lines). Authoritative gate is Vercel's atomic build."
+  },
+  "live_verification": {
+    "status": "PENDING -- requires merge to main (flag OFF = safe, no behavior change) + M8_GROUNDING_GUARD=1 on Vercel prod, then I POST the probes to https://m8-alpha.vercel.app/api/chat and paste real before/after.",
+    "TEST1_khalid_phone": "PENDING -- expect: declines honestly, NO stranger's phone/email. (before = scrapes strangers' PII)",
+    "TEST2_kafala": "PENDING -- expect: cites his ingested docs (KG hit) OR declines honestly if no doc match. (before = generic encyclopedia answer)",
+    "TEST3_president_egypt_MUST_NOT_REGRESS": "PENDING -- expect: still answers (public/role web path).",
+    "TEST4_dubai_drivers_MUST_NOT_REGRESS": "PENDING -- expect: still 'no Dubai data, only your Saudi fleet'."
+  },
+  "constraints_honored": {
+    "privacy_wall": "intact -- never surfaces a third party's scraped PII for a bare-name query; KG path reads his ingested docs, never wallet money.",
+    "free_llm": "no LLM/model changes; the guard is deterministic + reuses the existing free search.",
+    "vercel_12fn_cap": "no new api/*.js.",
+    "flag_default_off": "M8_GROUNDING_GUARD default OFF => OFF is byte-for-byte (regression set proves it).",
+    "worktree_isolation": "all work in ../../M8-b167; git add only my own files.",
+    "ran_after_b166": "branched off origin/main @ c715423 (B-166 semantic flip + B-166b KG rank already merged), so routing is already meaning-based; this guard handles the NO-MATCH case."
+  },
+  "deploy": "Branch to be pushed (feat/b167-grounding-guard). NOT merged to main without explicit OK. Sequence on OK: merge to main (auto-deploys prod, flag still OFF = no change) -> Muhammad sets Vercel env M8_GROUNDING_GUARD=1 -> redeploy/effect -> I self-verify on prod + paste before/after. Rollback: unset the env var (instant, no code change), or revert the single orchestrator.js commit (Vercel rollback to c715423)."
+}
