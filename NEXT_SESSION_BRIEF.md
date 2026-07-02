@@ -1,34 +1,47 @@
 # M8 Next Session Brief — Session 61 close (2026-07-02, Fable 5)
 
 ## TL;DR
-Strategy H2-2026 is LOCKED (`STRATEGY_2026H2.md`) and **B-168 context telemetry is LIVE on prod
-+ self-verified**. The first real measurement already exposed the first diet candidate: a simple
-fleet question with ZERO history ships a **38,201-char** instruction packet, and **COMPANY context
-is the single biggest block (11,469 — 30%)** on a question that never asked about companies.
+Strategy H2-2026 LOCKED (`STRATEGY_2026H2.md`). **B-168 telemetry LIVE** exposed the packet
+(24–38k chars/turn). Muhammad's live screenshots + the `m8_router_misses` logs then pinpointed
+his #1 pain in code: **the wallet/fleet context lean (0.60) hijacked full novel questions**
+(Senegal→"No expenses this month"; weather→fleet, which also SUPPRESSED web search).
+**B-169a shipped the fix**: a follow-up gate — the lean fires only on bare follow-ups.
 
-## What's LIVE (m8-alpha, `dfd5137`, nodejs:12)
+## What's LIVE (m8-alpha, nodejs:12)
 | Build | What | State |
 |-------|------|-------|
-| Strategy | Goal + Track B bar (obstruction-driven) + STOP list + E1–E8 | `f80b59d`/`9105b94` |
-| **B-168** | Context-packet telemetry — per-turn section sizes → Vercel logs (`ctx:telemetry`) + `m8_router_misses` lane `ctx:packet`. Sizes/labels only, no content. | **LIVE + prod-verified** |
+| Strategy | Goal + Track B bar (obstruction-driven) + STOP + E1–E8 | `f80b59d`/`9105b94` |
+| B-168 | Context telemetry — sizes → Vercel logs + `m8_router_misses` lane `ctx:packet` (kill: `M8_CTX_TELEMETRY=off`) | LIVE + prod-verified |
+| **B-169a** | Follow-up gate on the context lean (kill: `M8_LEAN_GATE=off`); `why=lean_gated` logged | ✅ LIVE + prod-replay-verified |
+| **B-169b** | Sub-lanes respect the gate: wallet `lean_gated` veto + fleet date-leg bare-follow-up gate + wallet-SAR decontamination | ✅ LIVE `44ece47` — replay: Senegal→web ✓, weather→live forecast ✓, fleet paths intact ✓ |
 
-Kill switch: `M8_CTX_TELEMETRY=off`. First prod row:
-`L:fleet TOT:38201 H:0t/0c COMPANY:11469 FLEET:10626 SYS:8581 MEM:6190 HH:1335`
+Observed (not a bug, note it): after a weather turn, "and in EGP?" now gets a clarifying question
+instead of silently converting the OLD wallet total — the money chain broke at the topic change.
+Defensible; revisit only if it annoys in real use.
 
-## NEXT — B-169 (context diet, E2 step 2) · Fable 5 · High effort
-Let telemetry accumulate 1–3 days of real traffic first (esp. long chats — H growth is the
-drift suspect), then cut from evidence:
-1. **COMPANY 11.5k on a fleet turn** — why is the full company packet injected there? First cut.
-2. **SYS 8.6k** — audit M8_SYSTEM_PROMPT for dead directives.
-3. **MEM 6.2k on a trivial ask** — recall cap / relevance threshold.
-4. **H growth curve** in long chats (drift) — check `ctx:packet` rows with big `H:` values.
-Rule for every cut: flag-gated, byte-for-byte when OFF, PS mirror + live re-test.
+Baseline packet evidence (fleet turn, no history): `TOT:38201 COMPANY:11469 FLEET:10626 SYS:8581 MEM:6190`
+Every turn of the screenshot conversation carried FLEET ~9.6k + SYS 8581 + MEM ~6000 regardless of topic.
 
-## Also queued (strategy order)
-- **E1 turn integrity** (Fable, days 4–5): in-flight turn guard + version-checked memory writes.
-- **E3 Groq migration** (Opus, spec by Fable): deadline **2026-08-16**.
-- **E4 = B-159** CRUD flip + currency-breakdown leak (Opus, brief exists: `SESSION_BRIEFS/B159_FINISH_CRUD_FLIP.md`).
+## NEXT — B-169b+ (context diet continues) · Fable 5 · High effort
+1. **COMPANY 11.5k on fleet turns** — why is the full company packet on every fleet question?
+2. **SYS 8581 audit** — incl. the "Note: additional context may exist in knowledge base" line
+   that LEAKED into a World-Cup answer (screenshot 04:21) and confused him.
+3. **MEM ~6k floor on trivial asks** — recall cap/threshold.
+4. **Double routing per turn** (~2s apart in logs) — the streaming path evaluates, then delegates
+   to the buffered path which re-runs the router + LLM calls. Latency tax on every message.
+5. Then **E1 turn integrity** (the stale-state races).
+
+## New backlog from the 2026-07-02 live screenshots
+- **B-170 Reminder lane**: "Remind me … at 11 am" gets saved as task TEXT (time swallowed), no
+  scheduled push — Web Push plumbing EXISTS (`lib/handlers/push-cron.js`), intent never wired.
+  Also: the chat lane PARROTED his notify questions back verbatim (echo loop) — find + kill.
+- **B-171 Task ordinals**: M8 prints a numbered task list, then can't resolve "mark the 1st task
+  as complete". Resolve ordinals/indices against the last-listed tasks.
+- **Wallet coverage**: "credit card amount I have to pay" → generic "no access to your accounts"
+  hallucinated-capability decline, though bills/budgets shipped in B-143. Route + honest answer.
+- Clarifier loop: reminder clarifier repeated the same question, ignoring his answers.
 
 ## Constraints (unchanged)
 Free-LLM default · privacy wall absolute · Vercel 12-fn cap FULL · confirm-before-write ·
-PS-5.1 mirrors (Node ABSENT) · never push main without explicit OK (auto-deploys prod).
+PS-5.1 mirrors (Node ABSENT; save .ps1 with UTF-8 BOM for Arabic literals) · never push main
+without explicit OK · shell cwd resets between tool calls → always `git -C <path>`.

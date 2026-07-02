@@ -15,7 +15,9 @@ None.
 
 | Build | What | Status | Tests | Commit | Date | Notes |
 |-------|------|--------|-------|--------|------|-------|
-| 168 | Context-packet telemetry (E2 step 1 MEASURE): per-turn section sizes → Vercel logs + m8_router_misses lane `ctx:packet`; sizes/labels only, no content | 🟡 DONE | 21/21 | a94bfce | 2026-07-02 | Shadow-only, kill switch `M8_CTX_TELEMETRY=off`; insert awaited ≤1.5s; feeds B-169 (the context diet / drift fix) |
+| 169b | Downstream lanes respect the gate: wallet lean_gated veto (central, B-157 pattern) + fleet date-only leg requires bare follow-up + wallet-SAR decontamination of recentlyDiscussedFleet | ✅ LIVE-VERIFIED | 27/27 | 2ee7c5e | 2026-07-02 | Prod replay: Senegal→web answer ✓, weather→live cited forecast mid-money-chat ✓, direct fleet + "what about the 30th of June?" + highest-earner all intact ✓. Kill: `M8_LEAN_GATE=off` (whole family) |
+| 169a | Follow-up gate on the wallet/fleet context lean — novel questions can't be hijacked by topic stickiness (the "catch a word" fix) | ✅ LIVE-VERIFIED | 19/19 | fa3d360 | 2026-07-02 | Arbiter logs `lean_gated` on prod ✓; replay exposed 2 sub-lane bypasses → fixed in 169b. Evidence: live screenshots + m8_router_misses |
+| 168 | Context-packet telemetry (E2 step 1 MEASURE): per-turn section sizes → Vercel logs + m8_router_misses lane `ctx:packet`; sizes/labels only, no content | ✅ LIVE-VERIFIED | 21/21 | a94bfce | 2026-07-02 | Prod row confirmed (`L:fleet TOT:38201 …`). Kill switch `M8_CTX_TELEMETRY=off`; insert awaited ≤1.5s; feeds the context diet |
 | — | STRATEGY H2-2026 locked: goal + Track B bar (engine→census artifact→Mathlib, obstruction-driven) + STOP list + E1–E8 roadmap + model assignment | ✅ LIVE | — | f80b59d/9105b94 | 2026-07-02 | `STRATEGY_2026H2.md`; Career OS + ecommerce OUT of M8; NORTH_STAR + diagram updated |
 
 ---
