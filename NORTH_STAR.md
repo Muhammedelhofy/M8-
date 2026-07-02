@@ -33,6 +33,10 @@ smarter each session.
 M8 is a deterministic harness around a frontier model's spark — it enforces the
 structure, honesty, and persistence the raw model won't maintain on its own.
 
+**Design principle (hardened 2026-07-02, Fable strategy session):** *M8 exists to compound
+verified understanding — of Muhammad's world and of unsolved structure — one honest,
+machine-checked increment per session; narration never exceeds evidence.*
+
 ---
 
 ## Track A — Personal AI OS *(the proving ground)*
@@ -152,6 +156,13 @@ upgrade-pressure guard now deterministic in both paths. M3-armed probes specifie
 consecutive unattended runs with zero battery regressions. *Explicitly de-scoped:
 Navier-Stokes / Millennium-tier targets — PDE numerics do not fit this stack; number
 theory and combinatorics adjacency only. Autonomous proof-tree search — same verdict.*
+
+### Track B success bar (set 2026-07-02 — see STRATEGY_2026H2.md)
+Cracking a famous problem is the *direction*, never the deliverable. Measured goals:
+1. **The engine** (autonomous conjecture→falsify→Lean-verify→learn loop) — ✅ ~built, already the first prize.
+2. **A citable artifact** — public "Collatz/196 verified-conjecture census v1" ← **the 12-month deliverable**.
+3. **Mathlib contributions** — formalized Collatz-adjacent lemmas accepted upstream.
+4. **A new verified result** — comes *through* 2–3, never instead of them.
 
 ---
 

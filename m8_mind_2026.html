@@ -245,9 +245,9 @@
         <text x="48" y="60" text-anchor="middle" font-size="9" fill="#93a2c8">early</text>
       </svg>
       <div class="gtext">
-        <div class="glabel">Toward cracking unsolved problems</div>
-        <div class="gbig">Early — it generalizes, but nothing cracked</div>
-        <div class="gdesc">It can <b>run on its own nightly</b> and fires even when the PC is <b>logged off</b>. The promotion gate needs <b>3 clean nights</b> in a row. <b>Build-117</b> fixed the 3 honesty probes that were blocking it &#8212; the battery now runs <b>CLEAN (8/8 + 6/6)</b>, so the streak has started: <b>1/3</b>. Two more clean nightly runs &#8594; L5 unlocks automatically. <i>(capability live &#183; streak 1/3)</i></div>
+        <div class="glabel">Toward the Track B bar (2026-07-02)</div>
+        <div class="gbig">Early — engine ~built, artifact not yet shipped</div>
+        <div class="gdesc">The bar is <b>honest and measurable</b> now: the autonomous <b>engine itself</b> is prize #1 (~built, L5 streak 1/3) &#8594; next is a <b>citable census artifact</b> on Collatz/196 (the 12-month deliverable) &#8594; then <b>Mathlib contributions</b>. Cracking a famous problem is the <b>direction, never the deliverable</b> &#8212; Millennium-tier targets stay de-scoped. <i>(see STRATEGY_2026H2.md)</i></div>
       </div>
     </div>
   </div>
@@ -397,23 +397,23 @@
       </ul>
     </div>
     <div class="evo-col">
-      <h4>Next &#8212; in order</h4>
+      <h4>Next &#8212; in order (STRATEGY_2026H2.md, locked 2026-07-02)</h4>
       <ul>
-        <li><b>Enter real driver profiles NOW</b>: B100 live &#8212; type "set [driver] rental [amount] SAR" in M8 chat for each driver to make fleet P&amp;L real</li>
-        <li><b>B102 Knowledge re-ingestion</b> (landing): re-extract source 6, then re-ingest real books via /api/ingest-full</li>
-        <li><b>Enter real driver profiles</b>: type driver costs in M8 chat to make B95 fleet report real</li>
-        <li><b>Ingest &#x627;&#x644;&#x628;&#x62F;&#x627;&#x64A;&#x629; (bn01+)</b>: attach PDF + ingest command &#8212; pipeline now atomic, Gemini quota reset (6 providers healthy)</li>
-        <li><b>Islamic Geometry domain</b>: Girih tiling identities as formal conjectures (Track B)</li>
+        <li><b>E1 Turn integrity</b>: in-flight turn guard + version-checked memory writes &#8212; kills stale answers after rapid messages <span class="tg">Fable 5</span></li>
+        <li><b>E2 Context diet</b>: instrument the context packet per lane, cut what pushes instructions out &#8212; kills mid-chat drift/hallucination <span class="tg">Fable 5</span></li>
+        <li><b>E3 Groq migration</b>: llama-3.3-70b decommissions <b style="color:#e55">2026-08-16</b> &#8212; swap + live-test the waterfall <span class="tg">Opus</span></li>
+        <li><b>E4 = B-159</b>: finish registry CRUD flip + currency-filtered breakdown leak <span class="tg">Opus</span></li>
+        <li><b>E5&#8594;E8</b>: miss-loop teach ritual &#183; L5 promotion (2 clean nights) &#183; Track B census artifact v1 &#183; corpus enrichment</li>
       </ul>
     </div>
     <div class="evo-col">
-      <h4>Backlog (honest pending)</h4>
+      <h4>Backlog (honest pending &#8212; refreshed 2026-07-02)</h4>
       <ul>
-        <li><b style="color:#e55">driver_cost_profiles: 1 placeholder row</b> &#8212; B100 chat commands unblock real P&amp;L</li>
-        <li><b style="color:#e55">Book nodes: 0 in DB</b> &#8212; B101 confirmed; pipeline rebuilt; re-ingest needed</li>
-        <li><b style="color:#e55">Conjecture outcomes: 0 rows</b> &#8212; B92/B99 wired but not yet run with real data</li>
-        <li><b style="color:#e55">Nudge log: 0 rows</b> &#8212; B96 wired, no live nudges fired yet</li>
-        <li><b style="color:#e55">P&amp;L overlay in orchestrator</b> &#8212; lines ~1030-1039 still old gross-minus-costs model; needs rewiring to pnl-engine.js</li>
+        <li><b style="color:#e55">Groq decommission 2026-08-16</b> &#8212; waterfall migration (E3) is a hard deadline</li>
+        <li><b style="color:#e55">Mid-chat drift + stale-state races</b> &#8212; the 2 confirmed daily pains; E1/E2 fix them first</li>
+        <li><b>Currency-filtered breakdown leak</b> ("breakdown on 921 sar" leaks EGP) &#8212; folded into B-159</li>
+        <li><b>L5 streak 1/3</b> &#8212; 2 more clean nightly runs &#8594; promotion; then define L6 before building</li>
+        <li><i>Cleared (were stale here): book nodes now 25 sources/182 in DB &#183; conjecture outcomes recording (learn&#8594;generate loop live, gen_version=4)</i></li>
       </ul>
     </div>
   </div>  <div class="timeline">
@@ -479,7 +479,7 @@
     <span class="tl done">Build-160 ask-my-docs FIXED &#8212; "what does my CV say about X" now cites your CV [KG]; root cause was a block-scoped searchKnowledgeGraph called out of scope (swallowed ReferenceError &#8594; null context); PROD-verified on m8-alpha &#10003;</span>
     <span class="tl done">Build-161&#8594;163 follow-ups &#8212; fleet report auto-pull + deterministic driver count · provider resilience (history trim &#8212; no more groq-413 "all providers failed" cascade) · read-my-docs routing DOMINATES ("my CV&#8230;earnings"); all PROD-verified &#10003;</span>
     <span class="tl done">Build-164&#8594;167 meaning-based routing + honesty &#8212; semantic router shadow&#8594;FLIP ("my kafala operation" now cites your REAL ops, not a textbook def) + KG rarity-rank + GROUNDING GUARD ("who is X + phone" with no match in your data declines honestly instead of scraping strangers' PII; "yes" &#8594; consented web search); all PROD-verified &#10003;</span>
-    <span class="tl cur">NEXT (Muhammad's call): enrich the ingested corpus (more of your real docs) · Career OS job-hunt memory (companies/contacts/applications) &#8212; serves the #1 goal (market-rate job ~July)</span>
+    <span class="tl cur">NEXT (locked 2026-07-02): E1 turn integrity + E2 context diet (kill drift &amp; stale-state) &#8594; E3 Groq migration (deadline 08-16) &#8594; B-159 &#8594; Track B census artifact v1 · Career OS DROPPED from M8 (job hunt stays separate)</span>
     <span class="tl future">then: evolving memory · L6 compound mind</span>
   </div>
 
@@ -490,12 +490,11 @@
       <tr><th>Problem</th><th>The pain point</th><th>What M8 must grow</th><th>Now</th></tr>
       <tr><td><b>Collatz</b></td><td>no measure that always shrinks (3n+1 vs ÷2)</td><td>discharge real Lean-checked leaves; deeper lemma-DAGs</td><td class="st active">active · early</td></tr>
       <tr><td><b>Reverse-and-add (196)</b></td><td>can't prove a number never reaches a palindrome</td><td>stronger structural invariants</td><td class="st active">active · early</td></tr>
-      <tr><td><b>Riemann hypothesis</b></td><td>the behaviour of the zeta zeros</td><td>a complex-analysis domain — none yet</td><td class="st none">not started</td></tr>
-      <tr><td><b>Twin prime</b></td><td>are prime pairs infinite?</td><td>sieve / prime-gap machinery — none yet</td><td class="st none">not started</td></tr>
-      <tr><td><b>Navier–Stokes</b></td><td>do fluid equations stay smooth?</td><td>PDE capability — far out of scope now</td><td class="st none">not started</td></tr>
+      <tr><td><b>Riemann hypothesis</b></td><td>the behaviour of the zeta zeros</td><td>—</td><td class="st none">not a goal (de-scoped)</td></tr>
+      <tr><td><b>Twin prime</b></td><td>are prime pairs infinite?</td><td>—</td><td class="st none">not a goal (de-scoped)</td></tr>
+      <tr><td><b>Navier–Stokes</b></td><td>do fluid equations stay smooth?</td><td>—</td><td class="st none">not a goal (de-scoped)</td></tr>
     </table>
-    </table>
-    <div class="note" style="margin-top:10px;">Honest: a real (if early) angle on two problems; no attack path yet on the famous three.</div>
+    <div class="note" style="margin-top:10px;">The bar (2026-07-02): cracking a famous problem is the <b>direction</b>, never the deliverable. Measured goals = the engine (✅ ~built) → a <b>citable census artifact</b> (12-month deliverable) → Mathlib contributions → a new verified result <i>through</i> those. See STRATEGY_2026H2.md.</div>
   </div>
 
   <div class="legend">
@@ -510,7 +509,8 @@
   </div>
 
   <div class="footer">
-    Plain-language map of <b>The M8 Mind</b> · drawn from NORTH_STAR.md, the live build list & HONESTY_TRACK_PLAN.md ·
+    Plain-language map of <b>The M8 Mind</b> · drawn from NORTH_STAR.md, STRATEGY_2026H2.md, the live build list & HONESTY_TRACK_PLAN.md ·
+    <b>STRATEGY LOCKED 2026-07-02 (Fable 5 session): goal = run my world reliably + ship citable math artifacts, never claim more than proven · Track B bar = engine→census artifact→Mathlib · Career OS + ecommerce OUT of M8 · next = E1 turn integrity + E2 context diet (the drift/stale fixes) · Groq migration deadline 2026-08-16</b> ·
     status as of <b>Session-60 &#183; Builds 135&#8594;149 (2026-06-25): the Family Wallet became a real personal-finance assistant (reads, per-person, dates/ranges, itemized "what for", income/net, category insight, compare, budgets/bills, "did I pay X") AND M8 gained FAMILY MEMORY (knows your household, learns the people you name, protects its own memory, flags conflicts) — 15 builds, 168 tests, 0 fails, all Vercel READY, the privacy wall held throughout (money never reaches an LLM). Prior: Build-118 live web search + Build-117 Odysseus battery + the learn&#8594;generate loop on the nightly cron</b> (2026-06-25) · priorities set with the AI Council (GPT · Gemini · Grok · Manus).<br>
     The one claim we never make: that we’re already there.
   </div>
