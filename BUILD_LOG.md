@@ -11,6 +11,15 @@ None.
 
 ---
 
+## Shipped — Session 61 (2026-07-02, Fable 5 · strategy + E2 start)
+
+| Build | What | Status | Tests | Commit | Date | Notes |
+|-------|------|--------|-------|--------|------|-------|
+| 168 | Context-packet telemetry (E2 step 1 MEASURE): per-turn section sizes → Vercel logs + m8_router_misses lane `ctx:packet`; sizes/labels only, no content | 🟡 DONE | 21/21 | a94bfce | 2026-07-02 | Shadow-only, kill switch `M8_CTX_TELEMETRY=off`; insert awaited ≤1.5s; feeds B-169 (the context diet / drift fix) |
+| — | STRATEGY H2-2026 locked: goal + Track B bar (engine→census artifact→Mathlib, obstruction-driven) + STOP list + E1–E8 roadmap + model assignment | ✅ LIVE | — | f80b59d/9105b94 | 2026-07-02 | `STRATEGY_2026H2.md`; Career OS + ecommerce OUT of M8; NORTH_STAR + diagram updated |
+
+---
+
 ## Shipped — Session 58 (2026-06-20)
 
 | Build | What | Status | Tests | Commit | Date | Notes |
