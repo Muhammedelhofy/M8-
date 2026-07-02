@@ -25,6 +25,20 @@ What we measure against instead — the prize ladder:
    The most legitimate path to "contributed to unsolved math."
 4. **A new verified result** — comes *through* 2–3, never instead of them.
 
+### The method: obstruction-driven (Muhammad's clarification, 2026-07-02)
+"Unlocking" a famous problem means: **map WHY it resists everyone** (the known
+obstructions, from the M2 literature packs — e.g. Collatz: no monotone decreasing
+measure; 196: no provable structural invariant), then **build M8 capabilities that
+attack a specific named obstruction** — only where buildable on this stack.
+- The census artifact (E7) therefore ships WITH an **obstruction map**: each problem's
+  known barriers, which M8 capability targets which barrier, and an honest "no
+  capability exists / not buildable here" label where true.
+- The conjecture generator already IS this method for Collatz: proposing and
+  falsifying candidate measures/invariants = attacking the known obstruction.
+- Riemann / twin prime / Navier-Stokes: their obstructions need domains (complex
+  analysis, sieve theory, PDE) that don't fit this stack — mapped honestly in the
+  obstruction map, but no capability build. De-scope holds.
+
 ## STOP (ranked)
 
 1. 🔴 Millennium framing (incl. the Riemann/twin-prime/Navier-Stokes "not started" rows as goals).
