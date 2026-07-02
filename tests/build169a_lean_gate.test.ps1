@@ -58,6 +58,22 @@ foreach ($m in [regex]::Matches($js, '(?s)leanAllowed\(s\).{0,400}?opts\.walletR
 if (([regex]::Matches($js, '(?s)if \(!leanAllowed\(s\)\)[^\r\n]*\r?\n\s*if \(opts\.walletRef\)')).Count -ne 2) { $orderOk = $false }
 Check "s6 gate precedes the lean (x2)"  $orderOk
 
+# ── B-169b static checks (downstream lanes must respect the gate) ─────────────
+$fleet = Get-Content (Join-Path $root "lib\fleet.js") -Raw
+$orch2 = Get-Content (Join-Path $root "lib\orchestrator.js") -Raw
+
+Check "b1 wallet-sentinel skip in recentlyDiscussedFleet" ($fleet.Contains("_MONEY_REPLY_SENTINEL"))
+Check "b2 sentinel skip is assistant-only"                ($fleet.Contains('m.role === "assistant" && m.content.indexOf(_MONEY_REPLY_SENTINEL)'))
+Check "b3 date-only fleet follow-up gated"                ($fleet.Contains("!!dateRef && _dateFollowOk"))
+Check "b4 fleet gate shares the M8_LEAN_GATE kill switch" (([regex]::Matches($fleet, "M8_LEAN_GATE")).Count -ge 1)
+Check "b5 fleet gate fails OPEN on require error"         ($fleet.Contains("catch (_) { return true; }"))
+Check "b6 wallet lanes veto lean_gated turns"             ($orch2.Contains('arb.why === "lean_gated"') -and $orch2.Contains("return null"))
+# the veto must sit inside handleWalletCommand, right after the B-157 fleet/finance gate
+$vetoPlaced = ([regex]::Matches($orch2, '(?s)arb\.domain === "fleet" \|\| arb\.domain === "finance"\)\) return null;.{0,700}?lean_gated.{0,80}?return null;')).Count
+Check "b7 veto placed after the B-157 central gate"       ($vetoPlaced -eq 1)
+# regression guards: range/verb-phrase fleet follow-ups must NOT be gated
+Check "b8 range follow-up leg untouched"                  ($fleet.Contains("rangeRef(message) || hasVerbCands"))
+
 Write-Host ""
 Write-Host ("RESULT: {0} passed, {1} failed" -f $pass, $fail)
 if ($fail -gt 0) { exit 1 } else { exit 0 }
